@@ -85,10 +85,19 @@ export default function TutorProfilePage() {
   const [isBookingOpen, setIsBookingOpen] = React.useState(false);
   const [isPlayingVideo, setIsPlayingVideo] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState("about");
-  const [selectedScheduleDate, setSelectedScheduleDate] = React.useState<string>("");
+  const [selectedScheduleDate, setSelectedScheduleDate] = React.useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  });
   const [selectedScheduleTime, setSelectedScheduleTime] = React.useState<string>("14:00");
   const [expandedFaq, setExpandedFaq] = React.useState<number | null>(0);
   const [copiedLink, setCopiedLink] = React.useState(false);
+
+  const handleSelectSlot = React.useCallback((date: string, time: string) => {
+    setSelectedScheduleDate(date);
+    setSelectedScheduleTime(time);
+  }, []);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -806,10 +815,7 @@ export default function TutorProfilePage() {
             <BookingCalendar
               selectedDate={selectedScheduleDate}
               selectedTime={selectedScheduleTime}
-              onSelectSlot={(d, t) => {
-                setSelectedScheduleDate(d);
-                setSelectedScheduleTime(t);
-              }}
+              onSelectSlot={handleSelectSlot}
               durationMinutes={50}
             />
 

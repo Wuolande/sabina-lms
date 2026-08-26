@@ -70,11 +70,14 @@ export function BookingCalendar({
     return days;
   }, [weekOffset]);
 
-  // If selectedDate is not in current week, default to first available
+  const initializedRef = React.useRef(false);
   React.useEffect(() => {
-    if (!selectedDate && weekDays.length > 0) {
+    if (!initializedRef.current && !selectedDate && weekDays.length > 0) {
+      initializedRef.current = true;
       const firstValid = weekDays.find((d) => !d.isPast) || weekDays[0];
-      onSelectSlot(firstValid.iso, "14:00");
+      if (firstValid) {
+        onSelectSlot(firstValid.iso, "14:00");
+      }
     }
   }, [weekDays, selectedDate, onSelectSlot]);
 

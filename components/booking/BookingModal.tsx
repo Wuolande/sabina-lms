@@ -249,7 +249,7 @@ export function BookingModal({
                   >
                     <div className="flex items-center justify-between">
                       <p className="font-bold text-sm">
-                        {s.subject.name}
+                        {s.subject?.name || s.name || "1-on-1 Lesson"}
                       </p>
                       {s.isPrimary && (
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${isSelected ? "bg-emerald-500 text-slate-950" : "bg-slate-100 text-slate-600"}`}>
@@ -258,7 +258,7 @@ export function BookingModal({
                       )}
                     </div>
                     <p className={`text-[11px] mt-1 ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
-                      Levels: {s.levels.slice(0, 2).join(", ")}
+                      Levels: {(s.levels || ["All Levels"]).slice(0, 2).join(", ")}
                     </p>
                   </button>
                 );

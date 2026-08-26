@@ -45,8 +45,9 @@ const gradients = [
   "from-pink-400 to-rose-700",
 ];
 
-function getGradient(name: string): string {
-  const charCode = name.charCodeAt(0) || 0;
+function getGradient(name?: string): string {
+  const str = name || "User";
+  const charCode = str.charCodeAt(0) || 0;
   return gradients[charCode % gradients.length];
 }
 
