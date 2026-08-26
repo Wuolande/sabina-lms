@@ -279,4 +279,20 @@ export const tutorService = {
       return null;
     }
   },
+
+  async getHomepageContent(): Promise<any | null> {
+    try {
+      const res = await fetch('/api/homepage');
+      if (res.ok) {
+        return await res.json();
+      }
+      const adminRes = await fetch('/api/admin/homepage');
+      if (adminRes.ok) {
+        return await adminRes.json();
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  },
 };

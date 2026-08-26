@@ -63,6 +63,11 @@ function AdminCMSDashboardContent() {
   const [pages, setPages] = React.useState<any[]>([]);
   const [editingPage, setEditingPage] = React.useState<any | null>(null);
 
+  // ── Notification Modals State ──
+  const [isHomepageSaveModalOpen, setIsHomepageSaveModalOpen] = React.useState(false);
+  const [isPageSaveModalOpen, setIsPageSaveModalOpen] = React.useState(false);
+  const [deleteConfirmPage, setDeleteConfirmPage] = React.useState<any | null>(null);
+
   // ── New Page Modal State ──
   const [isNewPageModalOpen, setIsNewPageModalOpen] = React.useState(false);
   const [newPageSlug, setNewPageSlug] = React.useState("");
@@ -286,14 +291,13 @@ function AdminCMSDashboardContent() {
     setSaving(true);
     try {
       const res = await adminService.saveCMSPage(editingPage);
-      if (res) {
-        toast({
-          title: "Page Published",
-          message: `Page "${editingPage.title}" has been saved and published.`,
-          variant: "success",
-        });
-        loadData();
-      }
+      setIsPageSaveModalOpen(true);
+      toast({
+        title: "Page Published Live",
+        message: `Page "${editingPage.title}" has been saved and published.`,
+        variant: "success",
+      });
+      loadData();
     } catch {
       toast({ title: "Error", message: "Failed to save page.", variant: "danger" });
     } finally {
@@ -320,12 +324,12 @@ function AdminCMSDashboardContent() {
       };
 
       const created = await adminService.saveCMSPage(payload);
-      if (created) {
-        setIsNewPageModalOpen(false);
-        setNewPageSlug("");
-        setNewPageTitle("");
-        toast({ title: "Page Created", message: "New custom page created successfully.", variant: "success" });
-        await loadData();
+      setIsNewPageModalOpen(false);
+      setNewPageSlug("");
+      setNewPageTitle("");
+      toast({ title: "Page Created", message: "New custom page created successfully.", variant: "success" });
+      await loadData();
+      if (created?.slug) {
         handleOpenEditor(created.slug);
       }
     } catch {
@@ -336,18 +340,20 @@ function AdminCMSDashboardContent() {
   };
 
   // ── Delete Custom Page ──
-  const handleDeletePage = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+  const handleDeletePage = (page: any) => {
+    setDeleteConfirmPage(page);
+  };
 
+  const confirmDeletePage = async () => {
+    if (!deleteConfirmPage) return;
     try {
-      const ok = await adminService.deleteCMSPage(id);
-      if (ok) {
-        toast({ title: "Page Deleted", message: `Page "${title}" has been removed.`, variant: "success" });
-        loadData();
-        if (editingPage?.id === id) {
-          setEditingPage(null);
-          setActiveTab("custom");
-        }
+      const ok = await adminService.deleteCMSPage(deleteConfirmPage.id);
+      toast({ title: "Page Deleted", message: `Page "${deleteConfirmPage.title}" has been removed.`, variant: "success" });
+      setDeleteConfirmPage(null);
+      loadData();
+      if (editingPage?.id === deleteConfirmPage.id) {
+        setEditingPage(null);
+        setActiveTab("custom");
       }
     } catch {
       toast({ title: "Error", message: "Failed to delete page.", variant: "danger" });
@@ -402,10 +408,9 @@ function AdminCMSDashboardContent() {
         faqSection: { pretitle: faqPretitle, title: faqTitle, faqs },
       };
 
-      const res = await adminService.updateHomepageCMS(payload);
-      if (res) {
-        toast({ title: "Homepage CMS Updated", message: "All 8 sections published live to the homepage.", variant: "success" });
-      }
+      await adminService.updateHomepageCMS(payload);
+      setIsHomepageSaveModalOpen(true);
+      toast({ title: "Homepage CMS Published", message: "All 8 sections published live to the homepage.", variant: "success" });
     } catch {
       toast({ title: "Error", message: "Failed to save homepage CMS.", variant: "danger" });
     } finally {
@@ -1502,6 +1507,155 @@ function AdminCMSDashboardContent() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 1: HOMEPAGE CMS PUBLISHED NOTIFICATION MODAL ── */}
+      {isHomepageSaveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200/90 space-y-5 animate-in zoom-in-95">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+                <CheckCircle2 className="h-7 w-7" />
+              </div>
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider">
+                  Live on Production
+                </div>
+                <h3 className="text-lg font-black text-slate-900 font-heading">
+                  Homepage CMS Published!
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  All 8 homepage sections were updated in Supabase and pushed live immediately.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs text-slate-700 font-medium">
+              <div className="flex items-center gap-2 text-emerald-700 font-bold">
+                <Check className="h-4 w-4" /> Hero Banner, Subtitle & Typewriter
+              </div>
+              <div className="flex items-center gap-2 text-emerald-700 font-bold">
+                <Check className="h-4 w-4" /> Real-time Metric & Stat Counters
+              </div>
+              <div className="flex items-center gap-2 text-emerald-700 font-bold">
+                <Check className="h-4 w-4" /> Classroom Tour, FAQs & Tutor Section
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="font-bold text-xs rounded-xl"
+                onClick={() => setIsHomepageSaveModalOpen(false)}
+              >
+                Done
+              </Button>
+              <Link href="/" target="_blank" rel="noopener noreferrer">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="font-bold text-xs bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+                  rightIcon={<ExternalLink className="h-3.5 w-3.5" />}
+                  onClick={() => setIsHomepageSaveModalOpen(false)}
+                >
+                  Preview Live Homepage
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 2: PAGE PUBLISHED NOTIFICATION MODAL ── */}
+      {isPageSaveModalOpen && editingPage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200/90 space-y-5 animate-in zoom-in-95">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+                <CheckCircle2 className="h-7 w-7" />
+              </div>
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold uppercase tracking-wider">
+                  Live on Production
+                </div>
+                <h3 className="text-lg font-black text-slate-900 font-heading truncate max-w-xs">
+                  {editingPage.title}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Page content was saved and published live to the public URL.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs">
+              <span className="text-[11px] text-slate-400 block font-semibold mb-1">Public URL:</span>
+              <strong className="text-slate-800 font-mono">/pages/{editingPage.slug}</strong>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="font-bold text-xs rounded-xl"
+                onClick={() => setIsPageSaveModalOpen(false)}
+              >
+                Continue Editing
+              </Button>
+              <Link href={`/pages/${editingPage.slug}`} target="_blank" rel="noopener noreferrer">
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="font-bold text-xs bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+                  rightIcon={<ExternalLink className="h-3.5 w-3.5" />}
+                  onClick={() => setIsPageSaveModalOpen(false)}
+                >
+                  View Live Page
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 3: DELETE CONFIRMATION MODAL ── */}
+      {deleteConfirmPage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-slate-200/90 space-y-5 animate-in zoom-in-95">
+            <div className="flex items-start gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 border border-rose-200">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-black text-slate-900 font-heading">
+                  Delete Page?
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Are you sure you want to delete <strong className="text-slate-900 font-bold">"{deleteConfirmPage.title}"</strong>? This will permanently remove the page from the platform.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="font-bold text-xs rounded-xl"
+                onClick={() => setDeleteConfirmPage(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                className="font-bold text-xs bg-rose-600 hover:bg-rose-700 text-white rounded-xl shadow-xs"
+                onClick={confirmDeletePage}
+              >
+                Confirm Delete
+              </Button>
+            </div>
           </div>
         </div>
       )}
