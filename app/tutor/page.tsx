@@ -61,9 +61,9 @@ export default function TutorDashboardPage() {
 
   const nextLesson = upcomingLessons[0] || null;
 
-  const displayName = user.displayName || "Sarah Jenkins, M.Ed.";
-  const headline = dashboardData?.headline || "Certified ESL Master Instructor | Harvard Graduate";
-  const slug = dashboardData?.slug || "sarah-jenkins";
+  const displayName = user.displayName || "Dr. Elena Rostova";
+  const headline = dashboardData?.headline || "Senior Mathematics & Physics Professor | Oxford PhD";
+  const slug = dashboardData?.slug || "dr-elena-rostova";
 
   // Filter lessons
   const filteredLessons = React.useMemo(() => {

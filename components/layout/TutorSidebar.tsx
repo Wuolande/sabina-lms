@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
+import { tutorService } from "@/services/tutorService";
 
 const links = [
   { href: "/tutor",               label: "Dashboard",          icon: LayoutDashboard, exact: true },
@@ -33,6 +34,17 @@ interface TutorSidebarProps {
 
 export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
   const pathname = usePathname();
+  const [tutorName, setTutorName] = React.useState<string>("Dr. Elena Rostova");
+
+  React.useEffect(() => {
+    tutorService.getDashboardData()
+      .then((data) => {
+        if (data?.user?.displayName) {
+          setTutorName(data.user.displayName);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
@@ -73,9 +85,9 @@ export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
             <div className="h-8 w-8 rounded-lg bg-emerald-600 flex items-center justify-center shrink-0">
               <TrendingUp className="h-4 w-4 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-bold text-white leading-tight">Tutor Console</p>
-              <p className="text-[10px] text-slate-400 font-medium leading-tight">Maria Garcia · Approved</p>
+              <p className="text-[10px] text-slate-400 font-medium leading-tight truncate">{tutorName} · Approved</p>
             </div>
           </div>
         </div>

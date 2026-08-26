@@ -74,7 +74,7 @@ export function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
             </div>
             <div>
               <p className="text-xs font-bold text-brand-900 leading-tight">Student Portal</p>
-              <p className="text-[10px] text-brand-600 font-medium leading-tight">Alex Johnson</p>
+              <p className="text-[10px] text-brand-600 font-medium leading-tight">Alex Rivera</p>
             </div>
           </div>
         </div>
