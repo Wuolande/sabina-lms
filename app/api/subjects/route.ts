@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
       slug: s.slug,
       category: s.category,
       description: s.description || `Master ${s.name} with certified 1-on-1 educators.`,
+      iconName: s.icon_name || s.iconName || 'BookOpen',
       popular: s.is_featured ?? true,
       tutorCount: s.tutors?.[0]?.count || 12,
     }));

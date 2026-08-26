@@ -245,7 +245,7 @@ export default function HomePage() {
       // Type or delete character by character
       const speed = isDeleting ? 28 : 55;
       timer = setTimeout(() => {
-        setDisplayText((prev) =>
+        setDisplayText((prev: string) =>
           isDeleting
             ? fullText.substring(0, prev.length - 1)
             : fullText.substring(0, prev.length + 1)

@@ -487,6 +487,16 @@ export const adminService = {
     }
   },
 
+  async deleteCMSPage(id: string): Promise<boolean> {
+    try {
+      await apiFetch<any>(`/cms/pages/${id}`, { method: 'DELETE' });
+      return true;
+    } catch (err) {
+      console.error('[adminService.deleteCMSPage]', err);
+      return false;
+    }
+  },
+
   // ─── Platform Taxonomy & Reference Data ─────────────────────────────────────
   async getTaxonomy360(): Promise<any> {
     try {

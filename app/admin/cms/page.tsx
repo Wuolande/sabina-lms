@@ -48,7 +48,7 @@ import { adminService } from "@/services/adminService";
 import { RichTextEditor } from "@/components/cms/RichTextEditor";
 import { formatDate } from "@/lib/utils";
 
-export default function AdminCMSDashboardPage() {
+function AdminCMSDashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "homepage";
@@ -1506,5 +1506,13 @@ export default function AdminCMSDashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminCMSDashboardPage() {
+  return (
+    <React.Suspense fallback={<div className="p-8 flex justify-center"><div className="w-8 h-8 border-4 border-amber-600 border-t-transparent rounded-full animate-spin" /></div>}>
+      <AdminCMSDashboardContent />
+    </React.Suspense>
   );
 }

@@ -25,9 +25,9 @@ export interface Subject {
   id: string;
   name: string;
   slug: string;
-  category: "Languages" | "Mathematics" | "Sciences" | "Technology" | "Business" | "Humanities" | "Arts & Music" | "Test Prep";
+  category: "Languages" | "Mathematics" | "Sciences" | "Technology" | "Business" | "Humanities" | "Arts & Music" | "Test Prep" | string;
   description: string;
-  iconName: string;
+  iconName?: string;
   tutorCount?: number;
   popular?: boolean;
 }

@@ -52,6 +52,8 @@ interface EducationItem {
   startYear: number;
   endYear: number;
   honors?: string;
+  documentUrl?: string;
+  documentName?: string;
   isVerified?: boolean;
 }
 
@@ -62,6 +64,8 @@ interface CertificationItem {
   issueYear: number;
   credentialId?: string;
   certificateUrl?: string;
+  documentUrl?: string;
+  documentName?: string;
   isVerified?: boolean;
 }
 
