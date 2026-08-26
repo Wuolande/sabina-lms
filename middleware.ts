@@ -26,7 +26,10 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/auth') ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
     pathname.startsWith('/api/upload') ||
+    pathname.startsWith('/tutor/training/certificates') ||
     pathname === '/' ||
     pathname.startsWith('/(public)')
   ) {
@@ -56,7 +59,7 @@ export async function middleware(request: NextRequest) {
         { status: 401 }
       );
     }
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Verify the token
@@ -70,7 +73,7 @@ export async function middleware(request: NextRequest) {
       if (isApiAdmin) {
         return NextResponse.json({ error: 'Unauthorized', message: 'Invalid session.' }, { status: 401 });
       }
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+      return NextResponse.redirect(new URL('/login', request.url));
     }
 
     // All good — attach user id to request headers for downstream use
@@ -82,7 +85,7 @@ export async function middleware(request: NextRequest) {
     if (isApiAdmin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 }
 
