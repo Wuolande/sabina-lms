@@ -340,8 +340,12 @@ function AdminCMSDashboardContent() {
   };
 
   // ── Delete Custom Page ──
-  const handleDeletePage = (page: any) => {
-    setDeleteConfirmPage(page);
+  const handleDeletePage = (pageOrId: any, maybeTitle?: string) => {
+    if (typeof pageOrId === "string") {
+      setDeleteConfirmPage({ id: pageOrId, title: maybeTitle || "this page" });
+    } else {
+      setDeleteConfirmPage(pageOrId);
+    }
   };
 
   const confirmDeletePage = async () => {
