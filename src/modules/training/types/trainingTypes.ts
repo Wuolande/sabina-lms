@@ -106,3 +106,91 @@ export interface QuizSubmissionResult {
     explanation: string;
   }[];
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   LIVE GROUP TRAINING & COHORT WORKSHOP TYPES
+═══════════════════════════════════════════════════════════════ */
+
+export interface LiveTrainingSession {
+  id: string;
+  slug: string;
+  title: string;
+  headline: string;
+  description: string;
+  trainerName: string;
+  trainerAvatar?: string;
+  trainerRole: string;
+  category: CourseCategory;
+  scheduledAt: string;
+  durationMinutes: number;
+  maxAttendees: number;
+  currentAttendees: number;
+  status: 'scheduled' | 'live' | 'completed' | 'cancelled';
+  videoRoomId: string;
+  streamUrl?: string;
+  slidesUrl?: string;
+  recordingUrl?: string;
+  attendanceCode?: string;
+  isMandatory: boolean;
+  badgeTitle?: string;
+  // Tutor registration state:
+  isRegistered?: boolean;
+  hasAttended?: boolean;
+  certificateIssued?: boolean;
+  certificateCode?: string;
+  registeredAttendees?: Array<{
+    id: string;
+    tutorId: string;
+    tutorName: string;
+    tutorAvatar?: string;
+    registeredAt: string;
+    attended: boolean;
+  }>;
+}
+
+export interface LiveTrainingRegistration {
+  id: string;
+  sessionId: string;
+  tutorId: string;
+  tutorName: string;
+  tutorAvatar?: string;
+  registeredAt: string;
+  attended: boolean;
+  attendedMinutes: number;
+  certificateIssued: boolean;
+  certificateCode?: string;
+  feedbackRating?: number;
+  feedbackNotes?: string;
+}
+
+export interface LivePoll {
+  id: string;
+  sessionId: string;
+  question: string;
+  options: string[];
+  correctOptionIndex?: number;
+  isActive: boolean;
+  totalVotes?: number;
+  results?: number[];
+}
+
+export interface LiveChatMessage {
+  id: string;
+  senderName: string;
+  senderRole: 'trainer' | 'tutor' | 'admin';
+  senderAvatar?: string;
+  text: string;
+  timestamp: string;
+  isPinned?: boolean;
+}
+
+export interface LiveQnAItem {
+  id: string;
+  authorName: string;
+  authorAvatar?: string;
+  question: string;
+  upvotes: number;
+  isAnswered: boolean;
+  answerText?: string;
+  createdAt: string;
+}

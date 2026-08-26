@@ -466,3 +466,92 @@ export const mockTutorCertificates: TutorCertificate[] = [
     isValid: true
   }
 ];
+
+export const mockLiveTrainingSessions: any[] = [
+  {
+    id: 'live-1',
+    slug: 'live-interactive-classroom-and-latex-whiteboard-masterclass',
+    title: 'Live Workshop: Sabina Interactive Classroom & LaTeX Whiteboard Mastery',
+    headline: 'Hands-on live broadcast demonstrating LaTeX formulas, PDF annotations, and screen-sharing tools with live Q&A.',
+    description: 'Join our Lead Educational Technologist for an interactive group training workshop. Learn keyboard shortcuts, mathematical formula rendering, diagram plotting on the digital whiteboard, and troubleshooting audio/video issues under pressure.',
+    trainerName: 'Dr. Marcus Vance',
+    trainerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+    trainerRole: 'Lead Educational Technologist & Master Trainer',
+    category: 'Classroom Tools',
+    scheduledAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+    durationMinutes: 60,
+    maxAttendees: 100,
+    currentAttendees: 34,
+    status: 'scheduled',
+    videoRoomId: 'room-live-classroom-mastery',
+    isMandatory: true,
+    badgeTitle: 'Sabina Live Classroom Pro',
+    isRegistered: true,
+    registeredAttendees: [
+      { id: 'att-1', tutorId: 'f9e96316-0e63-44ef-a08a-6b2862a3c55f', tutorName: 'Dr. Elena Rostova', tutorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80', registeredAt: '2026-08-25T12:00:00Z', attended: false },
+      { id: 'att-2', tutorId: 'tut-2', tutorName: 'David Chen', tutorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80', registeredAt: '2026-08-25T13:00:00Z', attended: false },
+      { id: 'att-3', tutorId: 'tut-3', tutorName: 'Fatima Al-Mansoor', tutorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80', registeredAt: '2026-08-26T09:00:00Z', attended: false }
+    ]
+  },
+  {
+    id: 'live-2',
+    slug: 'live-safeguarding-gdpr-and-boundary-compliance-simulation',
+    title: 'Live Cohort: Safeguarding, GDPR & Ethical Boundary Simulation',
+    headline: 'Mandatory interactive group session analyzing real-world ethical dilemmas and child protection scenarios.',
+    description: 'A mandatory live cohort workshop focusing on UK/US child safeguarding standards, reporting obligations, avoiding unmonitored communication channels, and handling sensitive student situations appropriately.',
+    trainerName: 'Sarah Jenkins, JD',
+    trainerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80',
+    trainerRole: 'Head of Trust, Safety & Compliance',
+    category: 'Safeguarding',
+    scheduledAt: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString(),
+    durationMinutes: 75,
+    maxAttendees: 150,
+    currentAttendees: 68,
+    status: 'scheduled',
+    videoRoomId: 'room-live-safeguarding-cohort',
+    isMandatory: true,
+    badgeTitle: 'Certified Safeguarding Practitioner',
+    isRegistered: false
+  },
+  {
+    id: 'live-3',
+    slug: 'live-socratic-questioning-and-active-pedagogy-lab',
+    title: 'Live Practice Lab: Socratic Questioning & 70/30 Student Talk-Time',
+    headline: 'Live peer breakout practice session on active student engagement and conceptual diagnostic questioning.',
+    description: 'Step up your teaching impact. In this live practice lab, tutors practice diagnostic questioning techniques and participate in live peer simulations with instant master trainer feedback.',
+    trainerName: 'Prof. Alistair Finch',
+    trainerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80',
+    trainerRole: 'Professor of Educational Psychology',
+    category: 'Pedagogy',
+    scheduledAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString(),
+    durationMinutes: 60,
+    maxAttendees: 80,
+    currentAttendees: 29,
+    status: 'scheduled',
+    videoRoomId: 'room-live-socratic-lab',
+    isMandatory: false,
+    badgeTitle: 'Master Socratic Facilitator',
+    isRegistered: false
+  },
+  {
+    id: 'live-4',
+    slug: 'live-high-converting-trial-lessons-and-parent-retention-clinic',
+    title: 'Live Clinic: High-Converting Trial Lessons & Parent Consultations',
+    headline: 'Actionable framework to convert 85%+ of 25-minute trial lessons into long-term recurrent tutoring subscriptions.',
+    description: 'Master the anatomy of high-converting intro classes. Learn how to conduct rapid student diagnostics, co-design customized study roadmaps, and communicate effectively with parents during post-lesson wrap-ups.',
+    trainerName: 'Elena Rostova, M.Ed.',
+    trainerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=300&q=80',
+    trainerRole: 'Top 1% Super Tutor & Retention Coach',
+    category: 'Business & Growth',
+    scheduledAt: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString(),
+    durationMinutes: 60,
+    maxAttendees: 100,
+    currentAttendees: 47,
+    status: 'scheduled',
+    videoRoomId: 'room-live-trial-clinic',
+    isMandatory: false,
+    badgeTitle: 'Top Converter & Retention Specialist',
+    isRegistered: true
+  }
+];
+
