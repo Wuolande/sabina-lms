@@ -40,11 +40,18 @@ export function TutorCard({
     setIsFavorite(updated);
   };
 
-  const subjectsList = tutor.subjects || [];
-  const languagesList = tutor.languages || [];
-  const primarySubject =
-    subjectsList.find((s) => s.isPrimary)?.subject || subjectsList[0]?.subject;
-  const nativeLanguage = languagesList.find((l) => l.proficiency === "Native")?.language;
+  const subjectsList: any[] = tutor.subjects || [];
+  const languagesList: any[] = tutor.languages || [];
+  const primarySubObj: any = subjectsList.find((s: any) => s.isPrimary) || subjectsList[0];
+  const primarySubjectName = primarySubObj?.subject?.name || primarySubObj?.name || "Academic Subject";
+
+  const nativeLangObj: any = languagesList.find((l: any) => l.proficiency === "Native" || l.proficiency === "NATIVE" || l.proficiency === "FLUENT") || languagesList[0];
+  const nativeLanguageName = nativeLangObj?.language?.name || nativeLangObj?.name || nativeLangObj?.code;
+
+  const tutorDisplayName = tutor.user?.displayName || (tutor as any).tutorName || (tutor as any).displayName || "Verified Tutor";
+  const tutorAvatarUrl = tutor.user?.avatarUrl || (tutor as any).tutorAvatar || (tutor as any).avatarUrl;
+  const tutorCountry = tutor.user?.country || (tutor as any).country || "Global";
+  const tutorSlugOrId = tutor.slug || tutor.id;
 
   return (
     <div className="group relative flex flex-col justify-between rounded-3xl border border-slate-200/70 bg-white p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.07)] hover:-translate-y-0.5 transition-all duration-200">
@@ -55,11 +62,11 @@ export function TutorCard({
           
           {/* Avatar + Main Info */}
           <div className="flex items-start gap-4 min-w-0">
-            <Link href={`/tutors/${tutor.slug || tutor.id}`} className="relative shrink-0">
+            <Link href={`/tutors/${tutorSlugOrId}`} className="relative shrink-0">
               <Avatar
-                src={tutor.user?.avatarUrl || (tutor as any).tutorAvatar || (tutor as any).avatarUrl}
-                alt={tutor.user?.displayName || (tutor as any).tutorName || "Tutor"}
-                fallbackName={tutor.user?.displayName || (tutor as any).tutorName || "Tutor"}
+                src={tutorAvatarUrl}
+                alt={tutorDisplayName}
+                fallbackName={tutorDisplayName}
                 size="lg"
                 statusIndicator="online"
                 superTutor={tutor.isSuperTutor}
@@ -71,10 +78,10 @@ export function TutorCard({
               {/* Name & Badges */}
               <div className="flex items-center gap-2 flex-wrap">
                 <Link
-                  href={`/tutors/${tutor.slug || tutor.id}`}
+                  href={`/tutors/${tutorSlugOrId}`}
                   className="font-bold text-slate-900 text-base sm:text-lg hover:text-emerald-700 transition-colors leading-tight"
                 >
-                  {tutor.user?.displayName || (tutor as any).tutorName || "Verified Tutor"}
+                  {tutorDisplayName}
                 </Link>
                 {tutor.verificationStatus === "APPROVED" && (
                   <span title="Identity & Credentials Verified">
@@ -90,7 +97,7 @@ export function TutorCard({
 
               {/* Subject & Origin */}
               <p className="text-xs text-slate-500 font-medium">
-                {primarySubject ? primarySubject.name : "Tutor"} · From {tutor.user.country}
+                {primarySubjectName} · From {tutorCountry}
               </p>
 
               {/* Clean Rating & Lessons */}
@@ -100,11 +107,11 @@ export function TutorCard({
                   {tutor.averageRating > 0 ? tutor.averageRating.toFixed(1) : "5.0"}
                 </span>
                 <span className="text-slate-400">
-                  ({tutor.reviewCount} {tutor.reviewCount === 1 ? "review" : "reviews"})
+                  ({tutor.reviewCount || 0} {(tutor.reviewCount || 0) === 1 ? "review" : "reviews"})
                 </span>
                 <span className="text-slate-300">·</span>
                 <span className="font-medium text-slate-600">
-                  {tutor.totalLessons.toLocaleString()} lessons
+                  {(tutor.totalLessons || 0).toLocaleString()} lessons
                 </span>
               </div>
             </div>
@@ -131,7 +138,7 @@ export function TutorCard({
 
             <div className="text-right mt-1">
               <span className="text-2xl font-black text-slate-950 tracking-tight font-heading leading-none">
-                {formatCurrency(tutor.hourlyRate, tutor.currency)}
+                {formatCurrency(tutor.hourlyRate || 35, tutor.currency || "USD")}
               </span>
               <span className="text-[11px] text-slate-400 block font-medium mt-0.5">
                 / 50-min
@@ -142,28 +149,31 @@ export function TutorCard({
 
         {/* Headline */}
         <p className="mt-4 text-[14px] font-bold text-slate-900 line-clamp-2 leading-snug">
-          {tutor.headline}
+          {tutor.headline || "Certified Educator & Academic Coach"}
         </p>
 
         {/* Short Bio */}
         <p className="mt-1.5 text-xs sm:text-[13px] text-slate-500 line-clamp-2 leading-relaxed">
-          {tutor.bio}
+          {tutor.bio || "Dedicated to helping students master concepts through engaging, personalized 1-on-1 lessons."}
         </p>
 
         {/* Subject & Language Badges */}
         <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-          {tutor.subjects.slice(0, 3).map((sub) => (
-            <span
-              key={sub.id}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold bg-slate-50 border border-slate-200/80 text-slate-700 px-2.5 py-1 rounded-lg"
-            >
-              <BookOpen className="h-3 w-3 text-slate-400" />
-              {sub.subject.name}
-            </span>
-          ))}
-          {nativeLanguage && (
+          {subjectsList.slice(0, 3).map((sub: any) => {
+            const name = sub.subject?.name || sub.name || "Subject";
+            return (
+              <span
+                key={sub.id || name}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold bg-slate-50 border border-slate-200/80 text-slate-700 px-2.5 py-1 rounded-lg"
+              >
+                <BookOpen className="h-3 w-3 text-slate-400" />
+                {name}
+              </span>
+            );
+          })}
+          {nativeLanguageName && (
             <span className="inline-flex items-center text-[11px] font-semibold bg-emerald-50 border border-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg">
-              Native {nativeLanguage.name}
+              {nativeLanguageName}
             </span>
           )}
         </div>
@@ -183,7 +193,7 @@ export function TutorCard({
 
       {/* ─── Footer Action Buttons ─── */}
       <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-        <Link href={`/tutors/${tutor.slug}`} className="flex-1">
+        <Link href={`/tutors/${tutorSlugOrId}`} className="flex-1">
           <button
             type="button"
             className="w-full h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs shadow-xs transition-all active:scale-[0.98]"

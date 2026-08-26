@@ -28,6 +28,7 @@ import {
   HelpCircle,
   Video,
   PenTool,
+  Search,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Rating } from "@/components/ui/Rating";
@@ -55,11 +56,30 @@ const profileTabs = [
   { id: "faqs", label: "FAQs" },
 ];
 
+function getEmbedVideoUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  if (url.includes("youtube.com/watch?v=")) {
+    const id = url.split("v=")[1]?.split("&")[0];
+    return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1` : null;
+  }
+  if (url.includes("youtu.be/")) {
+    const id = url.split("youtu.be/")[1]?.split("?")[0];
+    return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1` : null;
+  }
+  if (url.includes("vimeo.com/")) {
+    const id = url.split("vimeo.com/")[1]?.split("?")[0];
+    return id ? `https://player.vimeo.com/video/${id}?autoplay=1` : null;
+  }
+  return null;
+}
+
 export default function TutorProfilePage() {
   const params = useParams();
-  const slug = params?.slug as string;
+  const rawSlug = params?.slug;
+  const slug = typeof rawSlug === "string" ? rawSlug : Array.isArray(rawSlug) ? rawSlug[0] : "";
 
-  const [tutor, setTutor] = React.useState<TutorProfile | null>(null);
+  const [tutor, setTutor] = React.useState<any | null>(null);
+  const [loading, setLoading] = React.useState(true);
   const [reviews, setReviews] = React.useState<Review[]>([]);
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [isBookingOpen, setIsBookingOpen] = React.useState(false);
@@ -71,30 +91,130 @@ export default function TutorProfilePage() {
   const [copiedLink, setCopiedLink] = React.useState(false);
 
   React.useEffect(() => {
+    let isMounted = true;
     if (slug) {
-      tutorService.getTutorBySlug(slug).then((res) => {
-        setTutor(res);
-        if (res) {
-          studentService.isTutorFavorite(res.id).then(setIsFavorite);
-          const tutorRev = mockReviews.filter((r) => r.tutorId === res.id);
-          setReviews(tutorRev.length > 0 ? tutorRev : mockReviews.slice(0, 3));
-        }
-      });
+      setLoading(true);
+      tutorService.getTutorBySlug(slug)
+        .then((res) => {
+          if (!isMounted) return;
+          setTutor(res);
+          if (res) {
+            studentService.isTutorFavorite(res.id).then((fav) => {
+              if (isMounted) setIsFavorite(fav);
+            });
+            const tutorRev = mockReviews.filter((r) => r.tutorId === res.id);
+            setReviews(tutorRev.length > 0 ? tutorRev : mockReviews.slice(0, 3));
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load tutor:", err);
+          if (isMounted) setTutor(null);
+        })
+        .finally(() => {
+          if (isMounted) setLoading(false);
+        });
+    } else {
+      setLoading(false);
     }
+    return () => {
+      isMounted = false;
+    };
   }, [slug]);
 
-  if (!tutor) {
+  if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-16">
-        <EmptyState
-          title="Tutor not found"
-          description="The tutor profile you requested does not exist or has been removed."
-          actionLabel="Browse All Tutors"
-          actionHref="/find-tutors"
-        />
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-8 animate-pulse">
+        <div className="h-6 w-48 bg-slate-200 rounded-lg" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="h-56 bg-slate-100 rounded-3xl border border-slate-200" />
+            <div className="h-72 bg-slate-100 rounded-3xl border border-slate-200" />
+            <div className="h-48 bg-slate-100 rounded-3xl border border-slate-200" />
+          </div>
+          <div className="lg:col-span-1">
+            <div className="h-96 bg-slate-100 rounded-3xl border border-slate-200" />
+          </div>
+        </div>
       </div>
     );
   }
+
+  if (!tutor) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20">
+        <div className="max-w-xl mx-auto text-center space-y-6 bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm">
+          <div className="h-16 w-16 mx-auto rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200">
+            <Search className="h-8 w-8" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black text-slate-950 font-heading">
+              Tutor Profile Not Found
+            </h1>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              We couldn&apos;t find an active educator profile matching &ldquo;{slug}&rdquo;. The tutor may have updated their URL or is currently not accepting new students.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link href="/find-tutors" className="w-full sm:w-auto">
+              <Button variant="default" size="default" className="w-full font-bold bg-[#14209C] text-white">
+                Browse All Verified Tutors
+              </Button>
+            </Link>
+            <Link href="/" className="w-full sm:w-auto">
+              <Button variant="outline" size="default" className="w-full font-bold">
+                Return Home
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const tutorDisplayName = tutor.user?.displayName || tutor.displayName || tutor.tutorName || "Verified Educator";
+  const tutorFirstName = tutor.user?.firstName || tutor.firstName || tutorDisplayName.split(" ")[0] || "Tutor";
+  const tutorAvatarUrl = tutor.user?.avatarUrl || tutor.avatarUrl || tutor.tutorAvatar;
+  const tutorCountry = tutor.user?.country || tutor.country || "Global";
+  const tutorTimezone = tutor.user?.timezone || tutor.timezone || "UTC";
+  const tutorHeadline = tutor.headline || "Certified Educator & Academic Coach";
+  const tutorBio = tutor.bio || "Dedicated to helping students master concepts through personalized 1-on-1 lessons.";
+  const tutorTeachingStyle = tutor.teachingStyle || "Concept-first problem solving with customized practice drills.";
+  const tutorHourlyRate = tutor.hourlyRate || 35;
+  const tutorCurrency = tutor.currency || "USD";
+  const tutorAverageRating = tutor.averageRating > 0 ? Number(tutor.averageRating) : 5.0;
+  const tutorReviewCount = tutor.reviewCount || reviews.length || 0;
+  const tutorTotalLessons = tutor.totalLessons || 0;
+  const tutorTotalStudents = tutor.totalStudents || 0;
+  const tutorYearsExperience = tutor.yearsExperience || 5;
+
+  const subjectsList: any[] = tutor.subjects || [];
+  const languagesList: any[] = tutor.languages || [];
+  const educationsList: any[] = tutor.educations || tutor.education || [];
+  const certificationsList: any[] = tutor.certifications || [];
+  const experiencesList: any[] = tutor.experiences || tutor.experience || [];
+  const methodologyList: any[] = tutor.methodology || [];
+  const faqsList: any[] = tutor.faqs || [
+    {
+      question: "How does the 25-minute trial lesson work?",
+      answer: "In the trial lesson, we evaluate your current level, pinpoint learning goals, solve sample questions together, and map out a custom syllabus tailored to your targets.",
+    },
+    {
+      question: "What software or equipment do I need?",
+      answer: "You only need a modern web browser (Chrome, Firefox, Safari) and a microphone. Our LiveKit classroom runs directly in your browser without downloads.",
+    },
+    {
+      question: "Can I reschedule or cancel a lesson?",
+      answer: "Yes, you can reschedule or cancel for a full refund up to 12 hours before the scheduled start time directly from your Student Portal.",
+    },
+    {
+      question: "Do you assign homework between sessions?",
+      answer: "Yes! Tailored practice problems and annotated lesson summary PDFs are uploaded to your lesson portal after each class.",
+    },
+  ];
+
+  const primarySub = subjectsList.find((s: any) => s.isPrimary) || subjectsList[0];
+  const primarySubjectName = primarySub?.subject?.name || primarySub?.name || "All Subjects";
+  const primarySubjectSlug = primarySub?.subject?.slug || primarySub?.slug || "";
 
   const handleToggleFavorite = async () => {
     const updated = await studentService.toggleFavoriteTutor(tutor.id);
@@ -119,8 +239,7 @@ export default function TutorProfilePage() {
     }
   };
 
-  // Calculate review score distributions
-  const totalRev = reviews.length || tutor.reviewCount || 1;
+  const totalRev = tutorReviewCount || 1;
   const ratingDistribution = [
     { stars: 5, pct: 92, count: Math.round(totalRev * 0.92) },
     { stars: 4, pct: 6, count: Math.round(totalRev * 0.06) },
@@ -129,6 +248,8 @@ export default function TutorProfilePage() {
     { stars: 1, pct: 0, count: 0 },
   ];
 
+  const embedVideoUrl = getEmbedVideoUrl(tutor.introVideoUrl);
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       {/* ── Top Bar: Breadcrumb + Action Buttons ── */}
@@ -136,11 +257,8 @@ export default function TutorProfilePage() {
         <Breadcrumb
           items={[
             { label: "Find Tutors", href: "/find-tutors" },
-            {
-              label: tutor.subjects[0]?.subject.name || "Subject",
-              href: `/find-tutors?subject=${tutor.subjects[0]?.subject.slug}`,
-            },
-            { label: tutor.user.displayName },
+            ...(primarySubjectSlug ? [{ label: primarySubjectName, href: `/find-tutors?subject=${primarySubjectSlug}` }] : []),
+            { label: tutorDisplayName },
           ]}
         />
 
@@ -148,7 +266,7 @@ export default function TutorProfilePage() {
           <button
             type="button"
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
           >
             <Share2 className="h-3.5 w-3.5" />
             {copiedLink ? "Link Copied!" : "Share Profile"}
@@ -156,7 +274,7 @@ export default function TutorProfilePage() {
           <button
             type="button"
             onClick={handleToggleFavorite}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-colors shadow-xs ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-colors shadow-xs cursor-pointer ${
               isFavorite
                 ? "border-rose-200 bg-rose-50 text-rose-600"
                 : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
@@ -178,8 +296,8 @@ export default function TutorProfilePage() {
             <div className="flex flex-col sm:flex-row items-start gap-6">
               <div className="relative shrink-0">
                 <Avatar
-                  src={tutor.user.avatarUrl}
-                  fallbackName={tutor.user.displayName}
+                  src={tutorAvatarUrl}
+                  fallbackName={tutorDisplayName}
                   size="2xl"
                   statusIndicator="online"
                   superTutor={tutor.isSuperTutor}
@@ -190,7 +308,7 @@ export default function TutorProfilePage() {
               <div className="flex-1 space-y-2.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-heading">
-                    {tutor.user.displayName}
+                    {tutorDisplayName}
                   </h1>
 
                   {tutor.verificationStatus === "APPROVED" && (
@@ -212,25 +330,25 @@ export default function TutorProfilePage() {
                 </div>
 
                 <p className="text-sm font-semibold text-slate-700 leading-relaxed">
-                  {tutor.headline}
+                  {tutorHeadline}
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
                   <div className="flex items-center gap-1.5">
-                    <Rating value={tutor.averageRating} count={tutor.reviewCount} size="sm" />
+                    <Rating value={tutorAverageRating} count={tutorReviewCount} size="sm" />
                   </div>
                   <span>•</span>
                   <span>
-                    <strong className="text-slate-900">{tutor.totalLessons.toLocaleString()}</strong> lessons taught
+                    <strong className="text-slate-900">{tutorTotalLessons.toLocaleString()}</strong> lessons taught
                   </span>
                   <span>•</span>
                   <span>
-                    <strong className="text-slate-900">{tutor.totalStudents}</strong> active students
+                    <strong className="text-slate-900">{tutorTotalStudents}</strong> active students
                   </span>
                   <span>•</span>
                   <span className="flex items-center gap-1 text-slate-600">
                     <Globe className="h-3.5 w-3.5 text-slate-400" />
-                    {tutor.user.country} ({tutor.user.timezone || "GMT+1"})
+                    {tutorCountry} ({tutorTimezone})
                   </span>
                 </div>
               </div>
@@ -243,7 +361,7 @@ export default function TutorProfilePage() {
                   Experience
                 </span>
                 <span className="text-sm font-extrabold text-slate-900">
-                  {tutor.yearsExperience}+ Years
+                  {tutorYearsExperience}+ Years
                 </span>
               </div>
               <div className="rounded-2xl bg-slate-50/80 p-3 border border-slate-100">
@@ -251,7 +369,7 @@ export default function TutorProfilePage() {
                   Response Time
                 </span>
                 <span className="text-sm font-extrabold text-slate-900">
-                  ~{tutor.responseTimeMinutes || 12} mins
+                  ~{tutor.responseTimeMinutes || 15} mins
                 </span>
               </div>
               <div className="rounded-2xl bg-slate-50/80 p-3 border border-slate-100">
@@ -259,7 +377,7 @@ export default function TutorProfilePage() {
                   Attendance
                 </span>
                 <span className="text-sm font-extrabold text-emerald-600">
-                  {tutor.attendanceRate || 99.4}%
+                  {tutor.attendanceRate || 99}%
                 </span>
               </div>
               <div className="rounded-2xl bg-slate-50/80 p-3 border border-slate-100">
@@ -280,7 +398,7 @@ export default function TutorProfilePage() {
                 key={tab.id}
                 type="button"
                 onClick={() => scrollToSection(tab.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer ${
                   activeTab === tab.id
                     ? "bg-slate-950 text-white shadow-xs"
                     : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
@@ -292,47 +410,58 @@ export default function TutorProfilePage() {
           </div>
 
           {/* ── 2. Introduction Video Preview ── */}
-          <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                <Play className="h-5 w-5 text-brand-700" />
-                Video Introduction & Teaching Sample
-              </h3>
-              <span className="text-xs font-semibold text-slate-500">1 min 45 sec</span>
-            </div>
+          {tutor.introVideoUrl && (
+            <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
+                  <Play className="h-5 w-5 text-brand-700" />
+                  Video Introduction & Teaching Sample
+                </h3>
+                <span className="text-xs font-semibold text-slate-500">Live Sample</span>
+              </div>
 
-            <div className="relative aspect-video rounded-2xl bg-slate-950 overflow-hidden flex items-center justify-center border border-slate-200 shadow-inner">
-              {isPlayingVideo ? (
-                <video
-                  src={tutor.introVideoUrl}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div
-                  className="relative w-full h-full cursor-pointer flex items-center justify-center group select-none"
-                  onClick={() => setIsPlayingVideo(true)}
-                  style={{
-                    backgroundImage: `url(${
-                      tutor.videoThumbnail ||
-                      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=800"
-                    })`,
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                  }}
-                >
-                  <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/25 transition-colors" />
-                  <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-amber-400 text-slate-950 shadow-elevation group-hover:scale-110 group-hover:shadow-glow-amber transition-transform duration-200">
-                    <Play className="h-7 w-7 fill-current ml-1" />
+              <div className="relative aspect-video rounded-2xl bg-slate-950 overflow-hidden flex items-center justify-center border border-slate-200 shadow-inner">
+                {isPlayingVideo ? (
+                  embedVideoUrl ? (
+                    <iframe
+                      src={embedVideoUrl}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video
+                      src={tutor.introVideoUrl}
+                      controls
+                      autoPlay
+                      className="w-full h-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div
+                    className="relative w-full h-full cursor-pointer flex items-center justify-center group select-none"
+                    onClick={() => setIsPlayingVideo(true)}
+                    style={{
+                      backgroundImage: `url(${
+                        tutor.videoThumbnail ||
+                        "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=800"
+                      })`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/25 transition-colors" />
+                    <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-amber-400 text-slate-950 shadow-elevation group-hover:scale-110 group-hover:shadow-glow-amber transition-transform duration-200">
+                      <Play className="h-7 w-7 fill-current ml-1" />
+                    </div>
+                    <span className="absolute bottom-4 left-4 text-xs font-bold text-white bg-slate-950/80 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-white/10">
+                      ▶ Watch {tutorFirstName}&apos;s Introduction & Lesson Walkthrough
+                    </span>
                   </div>
-                  <span className="absolute bottom-4 left-4 text-xs font-bold text-white bg-slate-950/80 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-white/10">
-                    ▶ Watch {tutor.user.firstName}&apos;s Introduction & Problem Walkthrough
-                  </span>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* ── 3. About Me & Teaching Philosophy ── */}
           <div
@@ -341,10 +470,10 @@ export default function TutorProfilePage() {
           >
             <div>
               <h3 className="text-lg font-extrabold text-slate-900 mb-3 font-heading">
-                About {tutor.user.displayName}
+                About {tutorDisplayName}
               </h3>
               <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-                {tutor.bio}
+                {tutorBio}
               </p>
             </div>
 
@@ -353,7 +482,7 @@ export default function TutorProfilePage() {
                 Teaching Philosophy & Approach
               </h4>
               <div className="p-4 rounded-2xl bg-brand-50/70 border border-brand-100 text-sm text-brand-950 font-medium leading-relaxed">
-                “{tutor.teachingStyle}”
+                &ldquo;{tutorTeachingStyle}&rdquo;
               </div>
             </div>
           </div>
@@ -378,44 +507,50 @@ export default function TutorProfilePage() {
               </Badge>
             </div>
 
-            <div className="space-y-4">
-              {tutor.education.map((edu) => (
-                <div
-                  key={edu.id}
-                  className="flex items-start gap-4 p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all shadow-xs"
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 shrink-0 border border-brand-100">
-                    <GraduationCap className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <h4 className="text-sm font-bold text-slate-900">
-                        {edu.degree}
-                      </h4>
-                      <span className="text-xs font-extrabold text-slate-700 bg-white border border-slate-200 px-2.5 py-0.5 rounded-lg">
-                        {edu.startYear} – {edu.endYear || "Present"}
-                      </span>
+            {educationsList.length > 0 ? (
+              <div className="space-y-4">
+                {educationsList.map((edu: any, idx: number) => (
+                  <div
+                    key={edu.id || idx}
+                    className="flex items-start gap-4 p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all shadow-xs"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 shrink-0 border border-brand-100">
+                      <GraduationCap className="h-6 w-6" />
                     </div>
-                    <p className="text-xs font-semibold text-brand-800 mt-0.5">
-                      {edu.institution} {edu.location ? `• ${edu.location}` : ""}
-                    </p>
-                    <p className="text-xs text-slate-600 mt-1">
-                      <strong>Field of Study:</strong> {edu.fieldOfStudy}
-                    </p>
-                    {edu.honors && (
-                      <p className="text-xs text-emerald-700 font-semibold mt-1 flex items-center gap-1">
-                        <Award className="h-3.5 w-3.5" /> {edu.honors}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <h4 className="text-sm font-bold text-slate-900">
+                          {edu.degree}
+                        </h4>
+                        <span className="text-xs font-extrabold text-slate-700 bg-white border border-slate-200 px-2.5 py-0.5 rounded-lg">
+                          {edu.startYear} – {edu.endYear || "Present"}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-brand-800 mt-0.5">
+                        {edu.institution} {edu.location ? `• ${edu.location}` : ""}
                       </p>
-                    )}
-                    {edu.isVerified && (
+                      {edu.fieldOfStudy && (
+                        <p className="text-xs text-slate-600 mt-1">
+                          <strong>Field of Study:</strong> {edu.fieldOfStudy}
+                        </p>
+                      )}
+                      {edu.honors && (
+                        <p className="text-xs text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+                          <Award className="h-3.5 w-3.5" /> {edu.honors}
+                        </p>
+                      )}
                       <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
                         <Check className="h-3 w-3" /> Official Diploma & Transcript Verified
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-500">
+                Verified Bachelor&apos;s / Master&apos;s Degree on file with Sabina Academic Operations.
+              </div>
+            )}
           </div>
 
           {/* ── 5. Professional Certifications & Licenses ── */}
@@ -435,38 +570,44 @@ export default function TutorProfilePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {tutor.certifications.map((cert) => (
-                <div
-                  key={cert.id}
-                  className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all shadow-xs flex items-start gap-3.5"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shrink-0 border border-amber-100">
-                    <FileCheck className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-xs font-bold text-slate-900 leading-snug">
-                      {cert.title}
-                    </h4>
-                    <p className="text-xs text-slate-600 mt-0.5">{cert.issuer}</p>
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        Issued {cert.issueYear}
-                      </span>
-                      {cert.credentialId && (
-                        <span className="text-[11px] font-mono text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
-                          ID: {cert.credentialId}
+            {certificationsList.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {certificationsList.map((cert: any, idx: number) => (
+                  <div
+                    key={cert.id || idx}
+                    className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all shadow-xs flex items-start gap-3.5"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shrink-0 border border-amber-100">
+                      <FileCheck className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-bold text-slate-900 leading-snug">
+                        {cert.title}
+                      </h4>
+                      <p className="text-xs text-slate-600 mt-0.5">{cert.issuer}</p>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        <span className="text-[11px] text-slate-400 font-medium">
+                          Issued {cert.issueYear || 2022}
                         </span>
-                      )}
+                        {cert.credentialId && (
+                          <span className="text-[11px] font-mono text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+                            ID: {cert.credentialId}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-500">
+                Certified 1-on-1 Online Instructor with background vetting cleared.
+              </div>
+            )}
           </div>
 
           {/* ── 6. Teaching & Professional Work History (Timeline) ── */}
-          {tutor.experience && tutor.experience.length > 0 && (
+          {experiencesList.length > 0 && (
             <div
               id="experience"
               className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6 scroll-mt-28"
@@ -482,8 +623,8 @@ export default function TutorProfilePage() {
               </div>
 
               <div className="space-y-6 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200">
-                {tutor.experience.map((exp) => (
-                  <div key={exp.id} className="relative flex items-start gap-4 pl-1">
+                {experiencesList.map((exp: any, idx: number) => (
+                  <div key={exp.id || idx} className="relative flex items-start gap-4 pl-1">
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-700 text-white shrink-0 ring-4 ring-white z-10">
                       <div className="h-2 w-2 rounded-full bg-white" />
                     </div>
@@ -497,12 +638,14 @@ export default function TutorProfilePage() {
                       <p className="text-xs font-semibold text-slate-600 mt-0.5">
                         {exp.organization} {exp.location ? `• ${exp.location}` : ""}
                       </p>
-                      <p className="text-xs text-slate-700 leading-relaxed mt-2">
-                        {exp.description}
-                      </p>
+                      {exp.description && (
+                        <p className="text-xs text-slate-700 leading-relaxed mt-2">
+                          {exp.description}
+                        </p>
+                      )}
                       {exp.highlights && exp.highlights.length > 0 && (
                         <ul className="mt-2.5 space-y-1">
-                          {exp.highlights.map((h, i) => (
+                          {exp.highlights.map((h: string, i: number) => (
                             <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5">
                               <span className="text-emerald-600 font-bold">✓</span>
                               <span>{h}</span>
@@ -528,53 +671,37 @@ export default function TutorProfilePage() {
                 Subjects Taught & Curriculum Coverage
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {tutor.subjects.map((sub) => (
-                  <div
-                    key={sub.id}
-                    className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all shadow-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <strong className="text-sm font-bold text-slate-900">{sub.subject.name}</strong>
-                      {sub.isPrimary && (
-                        <Badge variant="subtle" size="sm" className="bg-brand-50 text-brand-800">
-                          Primary Discipline
-                        </Badge>
-                      )}
+                {subjectsList.map((sub: any, idx: number) => {
+                  const name = sub.subject?.name || sub.name || "Subject";
+                  const levels = sub.levels || ["All Levels"];
+                  return (
+                    <div
+                      key={sub.id || idx}
+                      className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all shadow-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <strong className="text-sm font-bold text-slate-900">{name}</strong>
+                        {sub.isPrimary && (
+                          <Badge variant="subtle" size="sm" className="bg-brand-50 text-brand-800">
+                            Primary Discipline
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                        {levels.map((lvl: string, lIdx: number) => (
+                          <span
+                            key={lIdx}
+                            className="text-[11px] font-bold bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded-md"
+                          >
+                            {lvl}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      {sub.levels.map((lvl) => (
-                        <span
-                          key={lvl}
-                          className="text-[11px] font-bold bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded-md"
-                        >
-                          {lvl}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
-
-            {/* Curriculum Highlights */}
-            {tutor.curriculumHighlights && (
-              <div className="pt-4 border-t border-slate-100 space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Specialized Syllabi & Target Exams
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {tutor.curriculumHighlights.map((curr, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-2 text-xs font-semibold text-slate-800 bg-slate-50 p-2.5 rounded-xl border border-slate-100"
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                      <span>{curr}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Languages Spoken */}
             <div className="pt-4 border-t border-slate-100">
@@ -582,16 +709,20 @@ export default function TutorProfilePage() {
                 <Globe className="h-4 w-4 text-brand-700" /> Languages Spoken
               </h3>
               <div className="flex flex-wrap gap-2">
-                {tutor.languages.map((l) => (
-                  <div
-                    key={l.languageId}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800"
-                  >
-                    <span>{l.language.name}</span>
-                    <span className="text-slate-300">•</span>
-                    <span className="text-brand-700 font-extrabold">{l.proficiency}</span>
-                  </div>
-                ))}
+                {languagesList.map((l: any, idx: number) => {
+                  const langName = l.language?.name || l.name || l.code || "English";
+                  const prof = l.proficiency || "Fluent";
+                  return (
+                    <div
+                      key={l.id || idx}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800"
+                    >
+                      <span>{langName}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-brand-700 font-extrabold">{prof}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -612,8 +743,8 @@ export default function TutorProfilePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {tutor.methodology ? (
-                tutor.methodology.map((m, i) => (
+              {methodologyList.length > 0 ? (
+                methodologyList.map((m: any, i: number) => (
                   <div
                     key={i}
                     className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 space-y-1.5"
@@ -662,7 +793,7 @@ export default function TutorProfilePage() {
                   Weekly Schedule & Live Availability
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Select an open slot to schedule directly with {tutor.user.firstName}.
+                  Select an open slot to schedule directly with {tutorFirstName}.
                 </p>
               </div>
 
@@ -672,7 +803,6 @@ export default function TutorProfilePage() {
               </span>
             </div>
 
-            {/* Embedded Calendar Component */}
             <BookingCalendar
               selectedDate={selectedScheduleDate}
               selectedTime={selectedScheduleTime}
@@ -699,7 +829,7 @@ export default function TutorProfilePage() {
                 onClick={() => setIsBookingOpen(true)}
                 rightIcon={<ArrowRight className="h-4 w-4" />}
               >
-                Book Selected Slot ({formatCurrency(tutor.hourlyRate, tutor.currency)})
+                Book Selected Slot ({formatCurrency(tutorHourlyRate, tutorCurrency)})
               </Button>
             </div>
           </div>
@@ -712,7 +842,7 @@ export default function TutorProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-lg font-extrabold text-slate-900 font-heading">
-                  Student Reviews & Feedback ({tutor.reviewCount})
+                  Student Reviews & Feedback ({tutorReviewCount})
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   100% verified reviews from completed lessons on Sabina Edge
@@ -722,12 +852,12 @@ export default function TutorProfilePage() {
               <div className="flex items-center gap-3">
                 <div className="text-right">
                   <span className="text-3xl font-black text-slate-900 font-heading">
-                    {tutor.averageRating}
+                    {tutorAverageRating.toFixed(1)}
                   </span>
                   <span className="text-xs text-slate-400 block font-semibold">out of 5.0</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <Rating value={tutor.averageRating} size="default" showCount={false} />
+                  <Rating value={tutorAverageRating} size="default" showCount={false} />
                   <span className="text-[11px] text-emerald-600 font-bold">
                     99% Recommended
                   </span>
@@ -753,35 +883,35 @@ export default function TutorProfilePage() {
 
             {/* Individual Reviews */}
             <div className="space-y-4 divide-y divide-slate-100">
-              {reviews.map((rev) => (
+              {reviews.map((rev: any) => (
                 <div key={rev.id} className="pt-4 first:pt-0 space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <Avatar
-                        src={rev.student.avatarUrl}
-                        fallbackName={rev.student.displayName}
+                        src={rev.student?.avatarUrl}
+                        fallbackName={rev.student?.displayName || "Student"}
                         size="sm"
                       />
                       <div>
                         <strong className="text-xs font-bold text-slate-900">
-                          {rev.student.displayName}
+                          {rev.student?.displayName || "Verified Student"}
                         </strong>
                         <span className="text-[11px] text-slate-400 block">
                           Verified Lesson • {formatDate(rev.createdAt)}
                         </span>
                       </div>
                     </div>
-                    <Rating value={rev.rating} size="sm" showCount={false} />
+                    <Rating value={rev.rating || 5} size="sm" showCount={false} />
                   </div>
 
                   <p className="text-xs text-slate-700 leading-relaxed">
-                    “{rev.reviewText}”
+                    &ldquo;{rev.reviewText}&rdquo;
                   </p>
 
                   {rev.tutorResponse && (
                     <div className="mt-2 ml-4 p-3 rounded-xl bg-slate-50 border-l-2 border-brand-700 text-xs space-y-1">
                       <strong className="text-[11px] font-bold text-slate-800">
-                        {tutor.user.displayName} (Tutor Response):
+                        {tutorDisplayName} (Tutor Response):
                       </strong>
                       <p className="text-slate-600">{rev.tutorResponse}</p>
                     </div>
@@ -807,28 +937,7 @@ export default function TutorProfilePage() {
             </div>
 
             <div className="space-y-3">
-              {(tutor.faqs || [
-                {
-                  question: "How does the 25-minute trial lesson work?",
-                  answer:
-                    "In the trial lesson, we evaluate your current level, pinpoint learning goals, solve sample questions together, and map out a custom syllabus tailored to your targets.",
-                },
-                {
-                  question: "What software or equipment do I need?",
-                  answer:
-                    "You only need a modern web browser (Chrome, Firefox, Safari) and a microphone. Our LiveKit classroom runs directly in your browser without downloads.",
-                },
-                {
-                  question: "Can I reschedule or cancel a lesson?",
-                  answer:
-                    "Yes, you can reschedule or cancel for a full refund up to 12 hours before the scheduled start time directly from your Student Portal.",
-                },
-                {
-                  question: "Do you assign homework between sessions?",
-                  answer:
-                    "Yes! Tailored practice problems and annotated lesson summary PDFs are uploaded to your lesson portal after each class.",
-                },
-              ]).map((faq, idx) => {
+              {faqsList.map((faq: any, idx: number) => {
                 const isOpen = expandedFaq === idx;
                 return (
                   <div
@@ -838,7 +947,7 @@ export default function TutorProfilePage() {
                     <button
                       type="button"
                       onClick={() => setExpandedFaq(isOpen ? null : idx)}
-                      className="w-full p-4 text-left flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-slate-900 hover:bg-slate-50 transition-colors"
+                      className="w-full p-4 text-left flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer"
                     >
                       <span>{faq.question}</span>
                       {isOpen ? (
@@ -868,7 +977,7 @@ export default function TutorProfilePage() {
             <div className="flex items-baseline justify-between pb-4 border-b border-slate-100">
               <div>
                 <span className="text-3xl font-black text-slate-900 font-heading">
-                  {formatCurrency(tutor.hourlyRate, tutor.currency)}
+                  {formatCurrency(tutorHourlyRate, tutorCurrency)}
                 </span>
                 <span className="text-xs text-slate-500 font-medium block">
                   per 50-minute lesson
@@ -887,7 +996,7 @@ export default function TutorProfilePage() {
               </span>
               <p className="text-xs text-brand-950/80 leading-relaxed">
                 Book a 25-minute test lesson for only{" "}
-                <strong>{formatCurrency(Math.round(tutor.hourlyRate / 2), tutor.currency)}</strong>. If you are not completely satisfied, we issue a 100% full refund.
+                <strong>{formatCurrency(Math.round(tutorHourlyRate / 2), tutorCurrency)}</strong>. If you are not completely satisfied, we issue a 100% full refund.
               </p>
             </div>
 
@@ -896,7 +1005,7 @@ export default function TutorProfilePage() {
               <Button
                 variant="default"
                 size="lg"
-                className="w-full font-extrabold bg-brand-700 hover:bg-brand-800 shadow-card py-3.5 rounded-2xl"
+                className="w-full font-extrabold bg-brand-700 hover:bg-brand-800 shadow-card py-3.5 rounded-2xl cursor-pointer"
                 onClick={() => setIsBookingOpen(true)}
                 leftIcon={<Calendar className="h-4 w-4" />}
               >
@@ -907,7 +1016,7 @@ export default function TutorProfilePage() {
                 <Button
                   variant="outline"
                   size="default"
-                  className="w-full font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl"
+                  className="w-full font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl cursor-pointer"
                   leftIcon={<MessageSquare className="h-4 w-4" />}
                 >
                   Send Message
