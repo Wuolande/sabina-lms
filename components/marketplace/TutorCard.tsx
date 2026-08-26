@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Calendar,
   BookOpen,
+  GraduationCap,
 } from "lucide-react";
 import { studentService } from "@/services/studentService";
 
@@ -88,6 +89,9 @@ export function TutorCard({
                     <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
                   </span>
                 )}
+                <span title="Sabina Academy Certified Educator">
+                  <GraduationCap className="h-4 w-4 text-[#14209C] shrink-0" />
+                </span>
                 {tutor.isFeatured && (
                   <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100/80 px-2 py-0.5 rounded-full">
                     Featured

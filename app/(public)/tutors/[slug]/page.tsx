@@ -330,6 +330,14 @@ export default function TutorProfilePage() {
                     </span>
                   )}
 
+                  <span
+                    title="Certified by Sabina Tutor Training Academy"
+                    className="inline-flex items-center gap-1 text-xs font-bold bg-blue-50 text-[#14209C] border border-blue-200/90 px-2.5 py-1 rounded-full"
+                  >
+                    <GraduationCap className="h-3.5 w-3.5 text-[#14209C] shrink-0" />
+                    Academy Certified
+                  </span>
+
                   {tutor.isSuperTutor && (
                     <span className="inline-flex items-center gap-1 text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/90 px-2.5 py-1 rounded-full">
                       <Sparkles className="h-3.5 w-3.5 text-amber-500 fill-amber-400 shrink-0" />

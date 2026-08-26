@@ -7,21 +7,23 @@ import {
   LayoutDashboard, Calendar, Clock, BookOpen,
   Users, MessageSquare, DollarSign, Star,
   Settings, User, Bell, LogOut, X, TrendingUp,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 
 const links = [
-  { href: "/tutor",               label: "Dashboard",         icon: LayoutDashboard, exact: true },
-  { href: "/tutor/calendar",      label: "Schedule",          icon: Calendar },
-  { href: "/tutor/lessons",       label: "Lessons",           icon: BookOpen },
-  { href: "/tutor/students",      label: "My Students",       icon: Users },
-  { href: "/tutor/messages",      label: "Messages",          icon: MessageSquare, badge: "2" },
-  { href: "/tutor/availability",  label: "Availability",      icon: Clock },
-  { href: "/tutor/earnings",      label: "Earnings & Payouts",icon: DollarSign },
-  { href: "/tutor/reviews",       label: "Student Reviews",   icon: Star },
-  { href: "/tutor/profile",       label: "Public Profile",    icon: User },
-  { href: "/tutor/settings",      label: "Settings & Rates",  icon: Settings },
+  { href: "/tutor",               label: "Dashboard",          icon: LayoutDashboard, exact: true },
+  { href: "/tutor/calendar",      label: "Schedule",           icon: Calendar },
+  { href: "/tutor/lessons",       label: "Lessons",            icon: BookOpen },
+  { href: "/tutor/training",      label: "Academy & Training", icon: GraduationCap, badge: "Certify" },
+  { href: "/tutor/students",      label: "My Students",        icon: Users },
+  { href: "/tutor/messages",      label: "Messages",           icon: MessageSquare, badge: "2" },
+  { href: "/tutor/availability",  label: "Availability",       icon: Clock },
+  { href: "/tutor/earnings",      label: "Earnings & Payouts", icon: DollarSign },
+  { href: "/tutor/reviews",       label: "Student Reviews",    icon: Star },
+  { href: "/tutor/profile",       label: "Public Profile",     icon: User },
+  { href: "/tutor/settings",      label: "Settings & Rates",   icon: Settings },
 ];
 
 interface TutorSidebarProps {

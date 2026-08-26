@@ -6,23 +6,24 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, GraduationCap, UserCheck,
   Calendar, CreditCard, DollarSign, Star, BarChart3,
-  Settings, ShieldAlert, FileText, LogOut, X, Shield, LayoutTemplate,
+  Settings, ShieldAlert, FileText, LogOut, X, Shield, LayoutTemplate, BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminService } from "@/services/adminService";
 
 const staticLinks = [
-  { href: "/admin",                label: "Overview",          icon: LayoutDashboard, exact: true },
-  { href: "/admin/cms",            label: "CMS",               icon: LayoutTemplate },
-  { href: "/admin/tutors/pending", label: "Tutor Applications",icon: UserCheck, isPendingTutors: true },
-  { href: "/admin/tutors",         label: "Manage Tutors",     icon: GraduationCap },
-  { href: "/admin/users",          label: "Users & Students",  icon: Users },
-  { href: "/admin/bookings",       label: "Bookings & Lessons",icon: Calendar },
-  { href: "/admin/payments",       label: "Payments",          icon: CreditCard },
-  { href: "/admin/payouts",        label: "Tutor Payouts",     icon: DollarSign },
-  { href: "/admin/reviews",        label: "Review Moderation", icon: Star },
-  { href: "/admin/reports",        label: "Analytics",         icon: BarChart3 },
-  { href: "/admin/audit-logs",     label: "Audit Logs",        icon: FileText },
+  { href: "/admin",                label: "Overview",           icon: LayoutDashboard, exact: true },
+  { href: "/admin/cms",            label: "CMS",                icon: LayoutTemplate },
+  { href: "/admin/training",       label: "Tutor Academy",      icon: BookOpen },
+  { href: "/admin/tutors/pending", label: "Tutor Applications", icon: UserCheck, isPendingTutors: true },
+  { href: "/admin/tutors",         label: "Manage Tutors",      icon: GraduationCap },
+  { href: "/admin/users",          label: "Users & Students",   icon: Users },
+  { href: "/admin/bookings",       label: "Bookings & Lessons", icon: Calendar },
+  { href: "/admin/payments",       label: "Payments",           icon: CreditCard },
+  { href: "/admin/payouts",        label: "Tutor Payouts",      icon: DollarSign },
+  { href: "/admin/reviews",        label: "Review Moderation",  icon: Star },
+  { href: "/admin/reports",        label: "Analytics",          icon: BarChart3 },
+  { href: "/admin/audit-logs",     label: "Audit Logs",         icon: FileText },
   { href: "/admin/settings",       label: "Taxonomy & Settings",icon: Settings },
 ];
 
