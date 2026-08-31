@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
+import { studentService } from "@/services/studentService";
 
 const links = [
   { href: "/student",               label: "Dashboard",        icon: LayoutDashboard, exact: true },
@@ -31,6 +32,24 @@ interface StudentSidebarProps {
 
 export function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
   const pathname = usePathname();
+  const [studentName, setStudentName] = React.useState<string>("Student");
+  const [streakDays, setStreakDays] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    studentService.getCurrentStudent()
+      .then((u) => {
+        if (u?.displayName) setStudentName(u.displayName);
+      })
+      .catch(() => {});
+
+    studentService.getLearningProgress()
+      .then((p) => {
+        if (p?.learningStreakDays !== undefined) {
+          setStreakDays(p.learningStreakDays);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
@@ -74,7 +93,7 @@ export function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
             </div>
             <div>
               <p className="text-xs font-bold text-brand-900 leading-tight">Student Portal</p>
-              <p className="text-[10px] text-brand-600 font-medium leading-tight">Alex Rivera</p>
+              <p className="text-[10px] text-brand-600 font-medium leading-tight truncate">{studentName}</p>
             </div>
           </div>
         </div>
@@ -124,7 +143,7 @@ export function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
             <span className="text-xs font-extrabold text-accent-400 uppercase tracking-wide">Learning Streak</span>
           </div>
           <p className="text-[13px] font-semibold text-brand-100">
-            🔥 14-day streak! 2 lessons this week.
+            🔥 {streakDays}-day streak active!
           </p>
           <Link
             href="/student/progress"

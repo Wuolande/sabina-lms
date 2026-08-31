@@ -49,22 +49,22 @@ export const studentService = {
         updatedAt: data.createdAt,
       };
     } catch {
-      // Graceful fallback for initial layout rendering
+      // Graceful clean fallback
       return {
-        id: "usr-student-current",
-        email: "alex.rivera@example.com",
+        id: "",
+        email: "",
         role: "STUDENT",
-        firstName: "Alex",
-        lastName: "Rivera",
-        displayName: "Alex Rivera",
-        avatarUrl: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400",
-        phone: "+1 (555) 987-6543",
-        country: "United States",
-        timezone: "America/New_York",
+        firstName: "",
+        lastName: "",
+        displayName: "Student",
+        avatarUrl: undefined,
+        phone: "",
+        country: "Global",
+        timezone: "UTC",
         preferredLanguage: "English",
         status: "ACTIVE",
-        createdAt: "2026-05-10T12:00:00Z",
-        updatedAt: "2026-08-20T16:00:00Z",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
     }
   },
@@ -76,13 +76,13 @@ export const studentService = {
     try {
       const data = await apiFetch<any>('/progress');
       return {
-        totalHoursLearned: data.totalHoursLearned || 0,
-        completedLessons: data.completedLessons || 0,
-        activeSubjects: data.activeSubjects || 1,
-        learningStreakDays: data.learningStreakDays || 0,
-        weeklyStudyHoursTarget: data.weeklyStudyHoursTarget || 6,
-        targetExam: data.targetExam || 'General Learning & Mastery',
-        currentLevel: data.currentLevel || 'Intermediate',
+        totalHoursLearned: data.totalHoursLearned ?? 0,
+        completedLessons: data.completedLessons ?? 0,
+        activeSubjects: data.activeSubjects ?? 0,
+        learningStreakDays: data.learningStreakDays ?? 0,
+        weeklyStudyHoursTarget: data.weeklyStudyHoursTarget ?? 0,
+        targetExam: data.targetExam || '',
+        currentLevel: data.currentLevel || '',
         enrolledTutors: data.enrolledTutors || [],
         goals: (data.goals || []).map((g: any) => ({
           id: g.id,
@@ -99,13 +99,13 @@ export const studentService = {
       };
     } catch {
       return {
-        totalHoursLearned: 50.1,
-        completedLessons: 34,
-        activeSubjects: 3,
-        learningStreakDays: 14,
-        weeklyStudyHoursTarget: 6,
-        targetExam: 'IELTS 7.5+ & Advanced Math',
-        currentLevel: 'Intermediate',
+        totalHoursLearned: 0,
+        completedLessons: 0,
+        activeSubjects: 0,
+        learningStreakDays: 0,
+        weeklyStudyHoursTarget: 0,
+        targetExam: '',
+        currentLevel: '',
         enrolledTutors: [],
         goals: [],
       };

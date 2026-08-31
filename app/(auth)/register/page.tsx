@@ -134,6 +134,35 @@ function RegisterContent() {
                 onChange={(e) => setPassword(e.target.value)}
                 leftIcon={<Lock className="h-4 w-4" />}
               />
+
+              {password && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-slate-500">Strength:</span>
+                    <span
+                      className={`font-bold ${
+                        password.length < 8
+                          ? "text-slate-400"
+                          : password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)
+                          ? "text-emerald-600"
+                          : "text-amber-600"
+                      }`}
+                    >
+                      {password.length < 8
+                        ? "Min 8 characters required"
+                        : password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)
+                        ? "Strong & Compliant"
+                        : "Fair (add uppercase & number)"}
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden flex gap-1">
+                    <div className={`h-full flex-1 rounded-full ${password.length >= 8 ? "bg-emerald-500" : "bg-slate-200"}`} />
+                    <div className={`h-full flex-1 rounded-full ${password.length >= 8 && /[A-Z]/.test(password) ? "bg-emerald-500" : "bg-slate-200"}`} />
+                    <div className={`h-full flex-1 rounded-full ${password.length >= 8 && /[0-9]/.test(password) ? "bg-emerald-500" : "bg-slate-200"}`} />
+                    <div className={`h-full flex-1 rounded-full ${password.length >= 8 && /[^A-Za-z0-9]/.test(password) ? "bg-emerald-500" : "bg-slate-200"}`} />
+                  </div>
+                </div>
+              )}
             </div>
 
             <Button
@@ -142,6 +171,7 @@ function RegisterContent() {
               size="lg"
               className="w-full font-bold bg-brand-700 hover:bg-brand-800 shadow-card"
               isLoading={isLoading}
+              disabled={isLoading || (password.length > 0 && password.length < 8)}
             >
               Continue to {role === "STUDENT" ? "Student" : "Tutor"} Setup
             </Button>

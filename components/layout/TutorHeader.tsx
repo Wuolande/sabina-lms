@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
-import { mockTutors } from "@/lib/mock-data/tutors";
 import { notificationService } from "@/services/notificationService";
 import { messagingService } from "@/services/messagingService";
 import { tutorService } from "@/services/tutorService";
@@ -122,12 +121,12 @@ export function TutorHeader({ onToggleSidebar }: TutorHeaderProps) {
     }
   };
 
-  const displayName = profileData?.user?.displayName || "Sarah Jenkins, M.Ed.";
-  const avatarUrl = profileData?.user?.avatarUrl || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80";
-  const email = profileData?.user?.email || "sarah.jenkins@example.com";
+  const displayName = profileData?.user?.displayName || "Tutor";
+  const avatarUrl = profileData?.user?.avatarUrl || undefined;
+  const email = profileData?.user?.email || "";
   const hourlyRate = profileData?.hourlyRate || 45;
   const averageRating = profileData?.averageRating || 5.0;
-  const slug = profileData?.slug || "sarah-jenkins";
+  const slug = profileData?.slug || "";
 
   return (
     <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-800 bg-slate-950/95 backdrop-blur-md px-4 sm:px-6 shadow-xs">

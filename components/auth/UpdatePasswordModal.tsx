@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Lock, Eye, EyeOff, CheckCircle2, AlertCircle, KeyRound, ShieldCheck } from "lucide-react";
+import { AlertCircle, KeyRound } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -17,9 +17,6 @@ export function UpdatePasswordModal({ isOpen, onClose }: UpdatePasswordModalProp
   const [currentPassword, setCurrentPassword] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [showCurrent, setShowCurrent] = React.useState(false);
-  const [showNew, setShowNew] = React.useState(false);
-  const [showConfirm, setShowConfirm] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
 
   const calculateStrength = (pass: string) => {
@@ -106,23 +103,13 @@ export function UpdatePasswordModal({ isOpen, onClose }: UpdatePasswordModalProp
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
             Current Password
           </label>
-          <div className="relative">
-            <Input
-              type={showCurrent ? "text" : "password"}
-              required
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Enter current password"
-              className="pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
+          <Input
+            type="password"
+            required
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Enter current password"
+          />
         </div>
 
         {/* New Password */}
@@ -130,23 +117,13 @@ export function UpdatePasswordModal({ isOpen, onClose }: UpdatePasswordModalProp
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
             New Password
           </label>
-          <div className="relative">
-            <Input
-              type={showNew ? "text" : "password"}
-              required
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="At least 8 characters"
-              className="pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setShowNew(!showNew)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
+          <Input
+            type="password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="At least 8 characters"
+          />
 
           {/* Strength Bar */}
           {newPassword && (
@@ -170,23 +147,13 @@ export function UpdatePasswordModal({ isOpen, onClose }: UpdatePasswordModalProp
           <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
             Confirm New Password
           </label>
-          <div className="relative">
-            <Input
-              type={showConfirm ? "text" : "password"}
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter new password"
-              className="pr-10"
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
+          <Input
+            type="password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Re-enter new password"
+          />
           {confirmPassword && confirmPassword !== newPassword && (
             <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" /> Passwords do not match

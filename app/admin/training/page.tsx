@@ -29,19 +29,18 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Avatar } from "@/components/ui/Avatar";
 import { TrainingCourse, LiveTrainingSession } from "@/src/modules/training/types/trainingTypes";
-import { mockTrainingCourses, mockLiveTrainingSessions } from "@/lib/mock-data/training";
 import { trainingService } from "@/services/trainingService";
 import { formatDate } from "@/lib/utils";
 
 export default function AdminTrainingDashboard() {
-  const [courses, setCourses] = React.useState<TrainingCourse[]>(mockTrainingCourses);
-  const [liveSessions, setLiveSessions] = React.useState<LiveTrainingSession[]>(mockLiveTrainingSessions);
+  const [courses, setCourses] = React.useState<TrainingCourse[]>([]);
+  const [liveSessions, setLiveSessions] = React.useState<LiveTrainingSession[]>([]);
   const [activeTab, setActiveTab] = React.useState<"live" | "courses" | "compliance">("live");
   const [stats, setStats] = React.useState({
-    totalCourses: 5,
-    totalCertificatesIssued: 18,
-    totalEnrollments: 42,
-    averageCompletionRate: 85,
+    totalCourses: 0,
+    totalCertificatesIssued: 0,
+    totalEnrollments: 0,
+    averageCompletionRate: 0,
   });
   const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState("");

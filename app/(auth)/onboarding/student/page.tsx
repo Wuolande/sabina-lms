@@ -2,20 +2,29 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, ArrowRight, ArrowLeft, CheckCircle2, BookOpen, Clock, Target } from "lucide-react";
+import { ArrowRight, ArrowLeft, BookOpen, Clock, Target, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { mockSubjects } from "@/lib/mock-data/subjects";
-
+import { tutorService } from "@/services/tutorService";
 import { studentService } from "@/services/studentService";
+import { Subject } from "@/types";
 
 export default function StudentOnboardingPage() {
   const router = useRouter();
   const [step, setStep] = React.useState(1);
-  const [selectedSubjects, setSelectedSubjects] = React.useState<string[]>(["sub-1", "sub-15"]);
-  const [goalTitle, setGoalTitle] = React.useState("Score 7.5+ in IELTS Speaking & Writing");
+  const [subjectsList, setSubjectsList] = React.useState<Subject[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = React.useState<string[]>([]);
+  const [goalTitle, setGoalTitle] = React.useState("Master key concepts & pass exams");
   const [frequency, setFrequency] = React.useState("2-3 times a week");
   const [level, setLevel] = React.useState("Intermediate");
   const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    tutorService.getAllSubjects().then((subs) => {
+      if (subs && subs.length > 0) {
+        setSubjectsList(subs);
+      }
+    });
+  }, []);
 
   const toggleSubject = (id: string) => {
     if (selectedSubjects.includes(id)) {
@@ -73,23 +82,29 @@ export default function StudentOnboardingPage() {
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-80 overflow-y-auto pr-1">
-                {mockSubjects.map((sub) => {
-                  const isSelected = selectedSubjects.includes(sub.id);
-                  return (
-                    <button
-                      key={sub.id}
-                      type="button"
-                      onClick={() => toggleSubject(sub.id)}
-                      className={`p-3 rounded-xl border text-left text-xs font-bold transition-all ${
-                        isSelected
-                          ? "border-brand-700 bg-brand-50 text-brand-900 ring-2 ring-brand-700"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                      }`}
-                    >
-                      <span>{sub.name}</span>
-                    </button>
-                  );
-                })}
+                {subjectsList.length === 0 ? (
+                  <div className="col-span-full py-8 text-center text-xs text-slate-400">
+                    Loading available subject disciplines...
+                  </div>
+                ) : (
+                  subjectsList.map((sub) => {
+                    const isSelected = selectedSubjects.includes(sub.id);
+                    return (
+                      <button
+                        key={sub.id}
+                        type="button"
+                        onClick={() => toggleSubject(sub.id)}
+                        className={`p-3 rounded-xl border text-left text-xs font-bold transition-all ${
+                          isSelected
+                            ? "border-brand-700 bg-brand-50 text-brand-900 ring-2 ring-brand-700"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        <span>{sub.name}</span>
+                      </button>
+                    );
+                  })
+                )}
               </div>
 
               <div className="flex justify-end pt-4 border-t border-slate-100">
@@ -106,7 +121,7 @@ export default function StudentOnboardingPage() {
             </div>
           )}
 
-          {/* Step 2: Goals & Level */}
+          {/* Step 2: Goal & Level */}
           {step === 2 && (
             <div className="space-y-6 animate-fade-in">
               <div className="space-y-1">
@@ -114,51 +129,45 @@ export default function StudentOnboardingPage() {
                   Define your learning target
                 </h2>
                 <p className="text-xs text-slate-500">
-                  Setting clear goals helps your tutor prepare the right materials.
+                  What specific exam, target score, or milestone are you working toward?
                 </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Primary Learning Objective
-                </label>
-                <input
-                  type="text"
-                  value={goalTitle}
-                  onChange={(e) => setGoalTitle(e.target.value)}
-                  placeholder="e.g. Master IELTS Speaking or Pass AP Physics"
-                  className="w-full rounded-xl border border-slate-300 p-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700"
-                />
-              </div>
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Primary Goal or Target Exam</label>
+                  <input
+                    type="text"
+                    value={goalTitle}
+                    onChange={(e) => setGoalTitle(e.target.value)}
+                    placeholder="e.g. IELTS 7.5+, AP Calculus BC, Conversational German"
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm font-medium focus:border-brand-700 focus:ring-1 focus:ring-brand-700 outline-none"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Current Knowledge Level
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {["Beginner (A1-A2)", "Intermediate (B1-B2)", "Advanced (C1-C2)"].map((lvl) => (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => setLevel(lvl)}
-                      className={`p-3 rounded-xl border text-xs font-bold text-center transition-all ${
-                        level === lvl
-                          ? "border-brand-700 bg-brand-50 text-brand-900 ring-1 ring-brand-700"
-                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                      }`}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Current Proficiency Level</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["Beginner", "Intermediate", "Advanced"].map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setLevel(lvl)}
+                        className={`py-3 rounded-xl border text-center text-xs font-bold transition-all ${
+                          level === lvl
+                            ? "border-brand-700 bg-brand-50 text-brand-900 ring-2 ring-brand-700"
+                            : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(1)}
-                  leftIcon={<ArrowLeft className="h-4 w-4" />}
-                >
+              <div className="flex justify-between pt-4 border-t border-slate-100">
+                <Button variant="outline" size="lg" onClick={() => setStep(1)} leftIcon={<ArrowLeft className="h-4 w-4" />}>
                   Back
                 </Button>
                 <Button
@@ -174,63 +183,58 @@ export default function StudentOnboardingPage() {
             </div>
           )}
 
-          {/* Step 3: Frequency & Timezone */}
+          {/* Step 3: Frequency & Finish */}
           {step === 3 && (
             <div className="space-y-6 animate-fade-in">
               <div className="space-y-1">
                 <h2 className="text-2xl font-black text-slate-900">
-                  Preferred Lesson Frequency
+                  How often do you want to learn?
                 </h2>
                 <p className="text-xs text-slate-500">
-                  How often would you like to have 1-on-1 sessions?
+                  Pick your ideal weekly lesson cadence. You can change this at any time.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-2.5">
                 {[
-                  { title: "Casual", desc: "1 lesson per week", val: "1 lesson/wk" },
-                  { title: "Steady", desc: "2-3 lessons per week", val: "2-3 times a week" },
-                  { title: "Intensive", desc: "4+ lessons per week", val: "4+ lessons/wk" },
-                ].map((f) => (
+                  { label: "1 time a week", desc: "Light revision & homework assistance (~2 hrs/week)" },
+                  { label: "2-3 times a week", desc: "Standard progress & steady mastery (~5 hrs/week)" },
+                  { label: "4+ times a week", desc: "Intensive exam cramming & fluency boot camp (~8+ hrs/week)" },
+                ].map((item) => (
                   <button
-                    key={f.val}
+                    key={item.label}
                     type="button"
-                    onClick={() => setFrequency(f.val)}
-                    className={`p-4 rounded-xl border text-left transition-all ${
-                      frequency === f.val
-                        ? "border-brand-700 bg-brand-50 text-brand-900 ring-2 ring-brand-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    onClick={() => setFrequency(item.label)}
+                    className={`w-full p-4 rounded-2xl border text-left transition-all flex items-start gap-3 ${
+                      frequency === item.label
+                        ? "border-brand-700 bg-brand-50 ring-2 ring-brand-700"
+                        : "border-slate-200 hover:bg-slate-50"
                     }`}
                   >
-                    <span className="block text-sm font-bold">{f.title}</span>
-                    <span className="block text-xs text-slate-500 mt-1">{f.desc}</span>
+                    <Clock className={`h-5 w-5 shrink-0 mt-0.5 ${frequency === item.label ? "text-brand-700" : "text-slate-400"}`} />
+                    <div>
+                      <strong className={`block text-xs font-bold ${frequency === item.label ? "text-brand-900" : "text-slate-900"}`}>
+                        {item.label}
+                      </strong>
+                      <span className="text-[11px] text-slate-500">{item.desc}</span>
+                    </div>
                   </button>
                 ))}
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
-                <span className="font-semibold">Detected Local Timezone:</span>
-                <strong className="font-mono text-brand-700">
-                  {Intl.DateTimeFormat().resolvedOptions().timeZone}
-                </strong>
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(2)}
-                  leftIcon={<ArrowLeft className="h-4 w-4" />}
-                >
+              <div className="flex justify-between pt-4 border-t border-slate-100">
+                <Button variant="outline" size="lg" onClick={() => setStep(2)} leftIcon={<ArrowLeft className="h-4 w-4" />}>
                   Back
                 </Button>
                 <Button
                   variant="default"
                   size="lg"
-                  className="font-bold bg-brand-700 hover:bg-brand-800 shadow-card"
+                  disabled={loading}
+                  className="font-bold bg-brand-700 hover:bg-brand-800"
                   onClick={handleFinish}
-                  leftIcon={<CheckCircle2 className="h-4 w-4" />}
+                  rightIcon={<Sparkles className="h-4 w-4" />}
                 >
-                  Complete Setup & Open Dashboard
+                  {loading ? "Personalizing..." : "Complete Setup & Launch"}
                 </Button>
               </div>
             </div>

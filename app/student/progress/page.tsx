@@ -52,7 +52,7 @@ export default function StudentProgressPage() {
   // Target Settings Modal
   const [isTargetSettingsOpen, setIsTargetSettingsOpen] = React.useState(false);
   const [targetHours, setTargetHours] = React.useState(6);
-  const [targetExam, setTargetExam] = React.useState("IELTS 7.5+ & Advanced Math");
+  const [targetExam, setTargetExam] = React.useState("");
   const [targetLevel, setTargetLevel] = React.useState("Intermediate");
   const [savingTarget, setSavingTarget] = React.useState(false);
 
@@ -62,8 +62,8 @@ export default function StudentProgressPage() {
       const data = await studentService.getLearningProgress();
       setProgress(data);
       if (data) {
-        setTargetHours(data.weeklyStudyHoursTarget || 6);
-        setTargetExam(data.targetExam || "IELTS 7.5+ & Advanced Math");
+        setTargetHours(data.weeklyStudyHoursTarget ?? 6);
+        setTargetExam(data.targetExam || "");
         setTargetLevel(data.currentLevel || "Intermediate");
       }
     } catch {
@@ -171,9 +171,9 @@ export default function StudentProgressPage() {
       : completedGoals;
 
   const enrolledTutors = progress?.enrolledTutors || [];
-  const weeklyTarget = progress?.weeklyStudyHoursTarget || 6;
-  const hoursThisWeek = 4.5; // Calculated from current week scheduled hours
-  const weeklyPacePercent = Math.min(100, Math.round((hoursThisWeek / weeklyTarget) * 100));
+  const weeklyTarget = progress?.weeklyStudyHoursTarget ?? 0;
+  const hoursThisWeek = progress?.weeklyPaceHours ?? 0;
+  const weeklyPacePercent = weeklyTarget > 0 ? Math.min(100, Math.round((hoursThisWeek / weeklyTarget) * 100)) : 0;
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-16">
@@ -184,24 +184,24 @@ export default function StudentProgressPage() {
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
               Learning Progress & Mastery
             </h1>
-            <Badge variant="neutral" size="sm" className="bg-indigo-50 text-[#14209C] border-indigo-200">
-              Student Analytics
+            <Badge variant="subtle" size="sm" className="bg-indigo-50 text-[#14209C] border-indigo-200 font-bold">
+              {progress?.currentLevel || "Student"}
             </Badge>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Track your cumulative learning hours, subject mastery, enrolled instructors, and target milestones.
+            Track your milestones, homework assignments, and scheduled curriculum study targets.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsTargetSettingsOpen(true)}
-            className="text-xs font-bold flex items-center gap-1.5 shadow-xs"
+            className="font-bold text-xs flex items-center gap-1.5"
           >
-            <Sliders className="w-3.5 h-3.5 text-slate-500" />
-            <span>Study Target Settings</span>
+            <Sliders className="h-4 w-4 text-slate-500" />
+            <span>Target Settings</span>
           </Button>
 
           <Button
@@ -220,25 +220,25 @@ export default function StudentProgressPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard
           title="Total Hours Learned"
-          value={`${progress?.totalHoursLearned || 50.1} hrs`}
+          value={`${progress?.totalHoursLearned ?? 0} hrs`}
           icon={<Clock className="h-5 w-5 text-[#14209C]" />}
           description="Cumulative 1-on-1 time"
         />
         <StatCard
           title="Completed Lessons"
-          value={progress?.completedLessons || 34}
+          value={progress?.completedLessons ?? 0}
           icon={<BookOpen className="h-5 w-5 text-emerald-600" />}
           description="Finished tutoring sessions"
         />
         <StatCard
           title="Active Subjects"
-          value={progress?.activeSubjects || 3}
+          value={progress?.activeSubjects ?? 0}
           icon={<Target className="h-5 w-5 text-blue-600" />}
           description="Subject specializations"
         />
         <StatCard
           title="Learning Streak"
-          value={`${progress?.learningStreakDays || 14} Days`}
+          value={`${progress?.learningStreakDays ?? 0} Days`}
           icon={<Flame className="h-5 w-5 text-amber-500 fill-amber-500" />}
           description="Active consecutive days"
         />
@@ -255,7 +255,7 @@ export default function StudentProgressPage() {
               </h3>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Goal: <strong className="text-slate-900">{weeklyTarget} hours/week</strong> • Target Exam: <strong className="text-slate-900">{progress?.targetExam || "IELTS 7.5+ & Advanced Math"}</strong>
+              Goal: <strong className="text-slate-900">{weeklyTarget} hours/week</strong> • Target Exam: <strong className="text-slate-900">{progress?.targetExam || "Active Target"}</strong>
             </p>
           </div>
 

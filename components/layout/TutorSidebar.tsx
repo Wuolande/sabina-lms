@@ -9,7 +9,7 @@ import {
   Settings, User, Bell, LogOut, X, TrendingUp,
   GraduationCap,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 import { tutorService } from "@/services/tutorService";
 
@@ -34,13 +34,17 @@ interface TutorSidebarProps {
 
 export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
   const pathname = usePathname();
-  const [tutorName, setTutorName] = React.useState<string>("Dr. Elena Rostova");
+  const [tutorName, setTutorName] = React.useState<string>("Tutor");
+  const [monthlyEarnings, setMonthlyEarnings] = React.useState<number>(0);
 
   React.useEffect(() => {
     tutorService.getDashboardData()
       .then((data) => {
         if (data?.user?.displayName) {
           setTutorName(data.user.displayName);
+        }
+        if (data?.stats?.monthlyEarnings !== undefined) {
+          setMonthlyEarnings(data.stats.monthlyEarnings);
         }
       })
       .catch(() => {});
@@ -134,7 +138,7 @@ export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
             This Month
           </span>
           <div className="text-2xl font-black text-accent-400 font-heading leading-none">
-            $3,977
+            {formatCurrency(monthlyEarnings)}
           </div>
           <p className="text-[11px] text-slate-500 leading-tight">
             Net earnings after 18% platform fee.

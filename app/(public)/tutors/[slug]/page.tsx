@@ -40,7 +40,6 @@ import { BookingModal } from "@/components/booking/BookingModal";
 import { BookingCalendar } from "@/components/booking/BookingCalendar";
 import { tutorService } from "@/services/tutorService";
 import { studentService } from "@/services/studentService";
-import { mockReviews } from "@/lib/mock-data/reviews";
 import { TutorProfile, Review } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -111,8 +110,7 @@ export default function TutorProfilePage() {
             studentService.isTutorFavorite(res.id).then((fav) => {
               if (isMounted) setIsFavorite(fav);
             });
-            const tutorRev = mockReviews.filter((r) => r.tutorId === res.id);
-            setReviews(tutorRev.length > 0 ? tutorRev : mockReviews.slice(0, 3));
+            setReviews((res as any).reviews || []);
           }
         })
         .catch((err) => {

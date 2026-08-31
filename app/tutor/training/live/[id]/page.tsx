@@ -34,6 +34,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { trainingService } from "@/services/trainingService";
+import { tutorService } from "@/services/tutorService";
 import { LiveTrainingSession, LiveChatMessage, LiveQnAItem, LivePoll } from "@/src/modules/training/types/trainingTypes";
 
 export default function MultiTutorLiveClassroomPage() {
@@ -122,8 +123,15 @@ export default function MultiTutorLiveClassroomPage() {
   const [hasConfirmedAttendance, setHasConfirmedAttendance] = React.useState(false);
   const [certificateCode, setCertificateCode] = React.useState<string | null>(null);
   const [isConfirmingAttendance, setIsConfirmingAttendance] = React.useState(false);
+  const [currentTutorName, setCurrentTutorName] = React.useState("Tutor");
 
   React.useEffect(() => {
+    tutorService.getMyProfile()
+      .then((data) => {
+        if (data?.user?.displayName) setCurrentTutorName(data.user.displayName);
+      })
+      .catch(() => {});
+
     if (id) {
       trainingService.getLiveSessionById(id)
         .then((data) => {
@@ -142,7 +150,7 @@ export default function MultiTutorLiveClassroomPage() {
     if (!chatInput.trim()) return;
     const newMessage: LiveChatMessage = {
       id: `m-${Date.now()}`,
-      senderName: "Dr. Elena Rostova",
+      senderName: currentTutorName,
       senderRole: "tutor",
       text: chatInput.trim(),
       timestamp: "Just now"
@@ -156,7 +164,7 @@ export default function MultiTutorLiveClassroomPage() {
     if (!qnaInput.trim()) return;
     const newQ: LiveQnAItem = {
       id: `q-${Date.now()}`,
-      authorName: "Dr. Elena Rostova",
+      authorName: currentTutorName,
       question: qnaInput.trim(),
       upvotes: 1,
       isAnswered: false,
@@ -322,7 +330,7 @@ export default function MultiTutorLiveClassroomPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center p-2 text-center">
-                  <Avatar fallbackName="Dr. Elena Rostova" size="sm" />
+                  <Avatar fallbackName={currentTutorName} size="sm" />
                   <span className="text-[10px] text-slate-300 font-semibold mt-1">You (Muted)</span>
                 </div>
               )}

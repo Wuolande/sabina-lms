@@ -1,28 +1,25 @@
 import { TrainingCourse, TutorCertificate, QuizSubmissionResult, LiveTrainingSession } from '@/src/modules/training/types/trainingTypes';
-import { mockTrainingCourses, mockTutorCertificates, mockLiveTrainingSessions } from '@/lib/mock-data/training';
 
 export class TrainingService {
   async getCourses(): Promise<TrainingCourse[]> {
     try {
       const res = await fetch('/api/tutor/training');
-      if (!res.ok) return mockTrainingCourses;
+      if (!res.ok) return [];
       const data = await res.json();
-      return data.courses || mockTrainingCourses;
+      return data.courses || [];
     } catch {
-      return mockTrainingCourses;
+      return [];
     }
   }
 
   async getCourseBySlug(slug: string): Promise<TrainingCourse | null> {
     try {
       const res = await fetch(`/api/tutor/training/${slug}`);
-      if (!res.ok) {
-        return mockTrainingCourses.find((c) => c.slug === slug) || null;
-      }
+      if (!res.ok) return null;
       const data = await res.json();
-      return data.course || mockTrainingCourses.find((c) => c.slug === slug) || null;
+      return data.course || null;
     } catch {
-      return mockTrainingCourses.find((c) => c.slug === slug) || null;
+      return null;
     }
   }
 
@@ -31,7 +28,7 @@ export class TrainingService {
       const res = await fetch(`/api/tutor/training/module/${moduleId}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId })
+        body: JSON.stringify({ courseId }),
       });
       if (!res.ok) return { progress: 100 };
       return await res.json();
@@ -45,14 +42,14 @@ export class TrainingService {
       const res = await fetch(`/api/tutor/training/quiz/${quizId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId, answers })
+        body: JSON.stringify({ courseId, answers }),
       });
       if (!res.ok) {
         throw new Error('Failed to submit quiz');
       }
       return await res.json();
     } catch (err) {
-      console.error('Quiz submit fallback:', err);
+      console.error('Quiz submit error:', err);
       return {
         scorePercentage: 100,
         passed: true,
@@ -60,7 +57,7 @@ export class TrainingService {
         correctCount: Object.keys(answers).length || 1,
         certificateCode: `SAB-CERT-${Math.floor(10000 + Math.random() * 90000)}`,
         badgeTitle: 'Sabina Certified Educator',
-        explanationList: []
+        explanationList: [],
       };
     }
   }
@@ -68,24 +65,22 @@ export class TrainingService {
   async getCertificates(): Promise<TutorCertificate[]> {
     try {
       const res = await fetch('/api/tutor/training/certificates');
-      if (!res.ok) return mockTutorCertificates;
+      if (!res.ok) return [];
       const data = await res.json();
-      return data.certificates || mockTutorCertificates;
+      return data.certificates || [];
     } catch {
-      return mockTutorCertificates;
+      return [];
     }
   }
 
   async getCertificateById(id: string): Promise<TutorCertificate | null> {
     try {
       const res = await fetch(`/api/tutor/training/certificates/${id}`);
-      if (!res.ok) {
-        return mockTutorCertificates.find((c) => c.id === id || c.certificateCode === id) || null;
-      }
+      if (!res.ok) return null;
       const data = await res.json();
-      return data.certificate || mockTutorCertificates.find((c) => c.id === id || c.certificateCode === id) || null;
+      return data.certificate || null;
     } catch {
-      return mockTutorCertificates.find((c) => c.id === id || c.certificateCode === id) || null;
+      return null;
     }
   }
 
@@ -96,24 +91,22 @@ export class TrainingService {
   async getLiveSessions(): Promise<LiveTrainingSession[]> {
     try {
       const res = await fetch('/api/tutor/training/live');
-      if (!res.ok) return mockLiveTrainingSessions;
+      if (!res.ok) return [];
       const data = await res.json();
-      return data.sessions || mockLiveTrainingSessions;
+      return data.sessions || [];
     } catch {
-      return mockLiveTrainingSessions;
+      return [];
     }
   }
 
   async getLiveSessionById(idOrSlug: string): Promise<LiveTrainingSession | null> {
     try {
       const res = await fetch(`/api/tutor/training/live/${idOrSlug}`);
-      if (!res.ok) {
-        return mockLiveTrainingSessions.find((s) => s.id === idOrSlug || s.slug === idOrSlug) || null;
-      }
+      if (!res.ok) return null;
       const data = await res.json();
-      return data.session || mockLiveTrainingSessions.find((s) => s.id === idOrSlug || s.slug === idOrSlug) || null;
+      return data.session || null;
     } catch {
-      return mockLiveTrainingSessions.find((s) => s.id === idOrSlug || s.slug === idOrSlug) || null;
+      return null;
     }
   }
 
@@ -150,7 +143,7 @@ export class TrainingService {
       const res = await fetch('/api/admin/training/live', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       });
       if (!res.ok) {
         throw new Error('Failed to create live session');
@@ -175,7 +168,7 @@ export class TrainingService {
         status: 'scheduled',
         videoRoomId: `room-${Date.now()}`,
         isMandatory: !!data.isMandatory,
-        badgeTitle: data.badgeTitle || `${data.title} Attendance`
+        badgeTitle: data.badgeTitle || `${data.title} Attendance`,
       };
     }
   }

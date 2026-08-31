@@ -67,19 +67,19 @@ export default function AdminOverviewPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Gross Bookings Volume"
-          value={formatCurrency(stats?.grossRevenue || 342500)}
+          value={formatCurrency(stats?.grossRevenue ?? 0)}
           icon={<DollarSign className="h-5 w-5" />}
           trend={{ value: 18, isPositive: true, label: "vs last month" }}
         />
         <StatCard
           title="Platform Net Commission (18%)"
-          value={formatCurrency(stats?.platformFees || 61650)}
+          value={formatCurrency(stats?.platformFees ?? 0)}
           icon={<TrendingUp className="h-5 w-5" />}
           variant="brand"
         />
         <StatCard
           title="Active Approved Tutors"
-          value={stats?.activeTutors || 195}
+          value={stats?.activeTutors ?? 0}
           icon={<GraduationCap className="h-5 w-5" />}
           description="Across 16+ subject categories"
         />

@@ -187,26 +187,26 @@ export async function getStudentContext(request: NextRequest): Promise<{ userId:
     }
   }
 
-  // Fallback in dev: load Alex Rivera
-  const { data: alex } = await adminClient
+  // In development/test mode without active auth cookie: load first registered student
+  const { data: studentUser } = await adminClient
     .from('users')
     .select('id, email, display_name')
-    .eq('email', 'alex.rivera@example.com')
+    .limit(1)
     .single();
 
-  if (alex) {
-    return { userId: alex.id, email: alex.email, displayName: alex.display_name };
+  if (studentUser) {
+    return { userId: studentUser.id, email: studentUser.email, displayName: studentUser.display_name };
   }
 
   return {
-    userId: 'usr-student-current',
-    email: 'alex.rivera@example.com',
-    displayName: 'Alex Rivera',
+    userId: '',
+    email: '',
+    displayName: 'Student',
   };
 }
 
 /**
- * Extracts the current tutor's Profile ID from session or resolves to demo tutor.
+ * Extracts the current tutor's Profile ID from session or resolves to first registered tutor.
  */
 export async function getTutorContext(request: NextRequest): Promise<{ tutorProfileId: string; userId: string; displayName: string }> {
   const token = extractToken(request);
@@ -234,7 +234,7 @@ export async function getTutorContext(request: NextRequest): Promise<{ tutorProf
     }
   }
 
-  // Fallback in dev: load first tutor profile
+  // In development/test mode without active auth cookie: load first approved tutor profile from DB
   const { data: firstTutor } = await adminClient
     .from('tutor_profiles')
     .select('id, user_id, user:users(display_name)')
@@ -245,14 +245,14 @@ export async function getTutorContext(request: NextRequest): Promise<{ tutorProf
     return {
       tutorProfileId: firstTutor.id,
       userId: firstTutor.user_id,
-      displayName: (firstTutor.user as any)?.display_name || 'Sarah Jenkins',
+      displayName: (firstTutor.user as any)?.display_name || 'Verified Tutor',
     };
   }
 
   return {
-    tutorProfileId: '8893c7dd-d576-4987-9ed2-b322d0562634',
-    userId: '5aee7d42-54d7-4926-b00a-e7301c91d082',
-    displayName: 'Sarah Jenkins',
+    tutorProfileId: '',
+    userId: '',
+    displayName: 'Verified Tutor',
   };
 }
 

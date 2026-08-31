@@ -61,9 +61,9 @@ export default function TutorDashboardPage() {
 
   const nextLesson = upcomingLessons[0] || null;
 
-  const displayName = user.displayName || "Dr. Elena Rostova";
-  const headline = dashboardData?.headline || "Senior Mathematics & Physics Professor | Oxford PhD";
-  const slug = dashboardData?.slug || "dr-elena-rostova";
+  const displayName = user.displayName || "Tutor";
+  const headline = dashboardData?.headline || "Verified Educator";
+  const slug = dashboardData?.slug || "";
 
   // Filter lessons
   const filteredLessons = React.useMemo(() => {
@@ -220,27 +220,27 @@ export default function TutorDashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Estimated Monthly Earnings"
-          value={formatCurrency(stats.monthlyEarnings || 14535)}
+          value={formatCurrency(stats.monthlyEarnings ?? 0)}
           icon={<DollarSign className="h-5 w-5 text-emerald-600" />}
           trend={{ value: 18, isPositive: true, label: "vs last month" }}
         />
         <StatCard
           title="Total Lessons Taught"
-          value={stats.completedLessons || 342}
+          value={stats.completedLessons ?? 0}
           icon={<BookOpen className="h-5 w-5 text-[#14209C]" />}
           description="Lifetime sessions completed"
         />
         <StatCard
           title="Active Students"
-          value={stats.activeStudents || 118}
+          value={stats.activeStudents ?? 0}
           icon={<Users className="h-5 w-5 text-indigo-600" />}
           description="Enrolled learners"
         />
         <StatCard
           title="Reputation Score"
-          value={`${stats.averageRating || 5.0} ★`}
+          value={`${stats.averageRating ?? 5.0} ★`}
           icon={<Star className="h-5 w-5 text-amber-500 fill-amber-400" />}
-          description={`${stats.reviewCount || 87} verified reviews`}
+          description={`${stats.reviewCount ?? 0} verified reviews`}
         />
       </div>
 

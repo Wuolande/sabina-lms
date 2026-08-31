@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, GraduationCap, UserCheck,
   Calendar, CreditCard, DollarSign, Star, BarChart3,
-  Settings, ShieldAlert, FileText, LogOut, X, Shield, LayoutTemplate, BookOpen,
+  Settings, ShieldAlert, FileText, LogOut, X, Shield, LayoutTemplate, BookOpen, Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminService } from "@/services/adminService";
@@ -15,6 +15,7 @@ const staticLinks = [
   { href: "/admin",                label: "Overview",           icon: LayoutDashboard, exact: true },
   { href: "/admin/cms",            label: "CMS",                icon: LayoutTemplate },
   { href: "/admin/training",       label: "Tutor Academy",      icon: BookOpen },
+  { href: "/admin/emails",         label: "Email Broadcasts",   icon: Mail },
   { href: "/admin/tutors/pending", label: "Tutor Applications", icon: UserCheck, isPendingTutors: true },
   { href: "/admin/tutors",         label: "Manage Tutors",      icon: GraduationCap },
   { href: "/admin/users",          label: "Users & Students",   icon: Users },
@@ -99,7 +100,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             <ShieldAlert className="h-4 w-4 text-amber-400 shrink-0" />
             <div>
               <p className="text-xs font-bold text-amber-300 leading-tight">Super Admin</p>
-              <p className="text-[10px] text-amber-600 font-medium leading-tight">Henry · All Access</p>
+              <p className="text-[10px] text-amber-600 font-medium leading-tight">Operator · Full Access</p>
             </div>
           </div>
         </div>

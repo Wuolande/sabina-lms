@@ -3,28 +3,55 @@
 import * as React from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { BookOpen, Search, ArrowRight, ShieldCheck, Star } from "lucide-react";
-import { mockSubjects } from "@/lib/mock-data/subjects";
-import { mockTutors } from "@/lib/mock-data/tutors";
+import { ShieldCheck } from "lucide-react";
 import { TutorCard } from "@/components/marketplace/TutorCard";
 import { BookingModal } from "@/components/booking/BookingModal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
-import { TutorProfile } from "@/types";
+import { TutorProfile, Subject } from "@/types";
+import { tutorService } from "@/services/tutorService";
 
 export default function SubjectDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
 
-  const subject = mockSubjects.find((s) => s.slug === slug);
-  const subjectTutors = mockTutors.filter((t) =>
-    t.subjects.some((s) => s.subject.slug === slug)
-  );
-
+  const [subject, setSubject] = React.useState<Subject | null>(null);
+  const [tutors, setTutors] = React.useState<TutorProfile[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [bookingTutor, setBookingTutor] = React.useState<TutorProfile | null>(null);
   const [isBookingOpen, setIsBookingOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      try {
+        const subjects = await tutorService.getAllSubjects();
+        const found = subjects.find((s) => s.slug === slug || s.id === slug);
+        if (found) {
+          setSubject(found);
+          const res = await tutorService.getTutors({ subject: found.slug || found.name, limit: 6 });
+          setTutors(res.tutors || []);
+        }
+      } catch (err) {
+        console.error("[SubjectDetailPage] Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (slug) {
+      loadData();
+    }
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-24 text-center text-sm text-slate-500 font-medium">
+        Loading subject and verified instructors...
+      </div>
+    );
+  }
 
   if (!subject) {
     return (
@@ -62,13 +89,13 @@ export default function SubjectDetailPage() {
           {subject.name} Tutors & Online Lessons
         </h1>
         <p className="text-base text-brand-100 max-w-2xl leading-relaxed">
-          {subject.description} Learn 1-on-1 with accredited tutors, prepare for exams, or gain practical conversational confidence.
+          {subject.description || "Learn 1-on-1 with accredited tutors, prepare for exams, or gain practical conversational confidence."}
         </p>
 
         <div className="flex flex-wrap items-center gap-4 pt-4">
           <Link href={`/find-tutors?subject=${subject.slug}`}>
             <Button variant="secondary" size="lg" className="font-extrabold bg-accent-400 hover:bg-accent-500 text-slate-950">
-              Browse All {subject.name} Tutors ({subject.tutorCount || 30}+)
+              Browse All {subject.name} Tutors ({subject.tutorCount || tutors.length})
             </Button>
           </Link>
           <div className="flex items-center gap-2 text-xs text-brand-200">
@@ -89,17 +116,15 @@ export default function SubjectDetailPage() {
           </Link>
         </div>
 
-        {subjectTutors.length > 0 ? (
+        {tutors.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {subjectTutors.map((tutor) => (
+            {tutors.map((tutor) => (
               <TutorCard key={tutor.id} tutor={tutor} onBook={handleBook} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {mockTutors.slice(0, 2).map((tutor) => (
-              <TutorCard key={tutor.id} tutor={tutor} onBook={handleBook} />
-            ))}
+          <div className="p-12 text-center text-xs text-slate-500 border border-slate-200 rounded-3xl bg-white">
+            No instructors currently available for this subject. Check back shortly or browse other subjects.
           </div>
         )}
       </div>

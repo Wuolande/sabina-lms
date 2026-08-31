@@ -279,4 +279,27 @@ export const tutorService = {
       return null;
     }
   },
+
+  async getEarnings(): Promise<any | null> {
+    try {
+      const res = await fetch('/api/tutor/earnings');
+      if (!res.ok) return null;
+      return res.json();
+    } catch {
+      return null;
+    }
+  },
+
+  async requestPayout(amount: number, currency: string = 'USD'): Promise<any> {
+    try {
+      const res = await fetch('/api/tutor/earnings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, currency }),
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, error: e.message || 'Failed to request payout' };
+    }
+  },
 };

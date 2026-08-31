@@ -106,7 +106,7 @@ export default function StudentDashboardPage() {
 
   const weeklyPacePercent = Math.min(
     100,
-    Math.round(((stats?.weeklyPaceHours || 4.5) / (stats?.weeklyStudyHoursTarget || 6)) * 100)
+    Math.round(((stats?.weeklyPaceHours ?? 0) / (stats?.weeklyStudyHoursTarget || 1)) * 100)
   );
 
   return (
@@ -116,22 +116,22 @@ export default function StudentDashboardPage() {
         <div className="flex items-center gap-4">
           <Avatar
             src={student?.avatarUrl}
-            fallbackName={student?.displayName || "Alex Rivera"}
+            fallbackName={student?.displayName || "Student"}
             size="lg"
             className="ring-4 ring-slate-100 shadow-sm"
           />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-heading">
-                Good morning, {student?.firstName || "Alex"} 👋
+                Good morning, {student?.firstName || student?.displayName || "Student"} 👋
               </h1>
               <span className="hidden sm:inline-flex items-center gap-1 text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 px-2.5 py-0.5 rounded-full shadow-xs">
                 <Flame className="h-3.5 w-3.5 text-amber-500 fill-amber-400" />
-                {stats?.learningStreakDays || 14}-Day Streak
+                {stats?.learningStreakDays ?? 0}-Day Streak
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Live schedule in <strong className="text-slate-800">{student?.timezone || "America/New_York"}</strong> • Target: <strong className="text-[#14209C]">{student?.targetExam || "IELTS 7.5+ & Advanced Math"}</strong>
+              Live schedule in <strong className="text-slate-800">{student?.timezone || "UTC"}</strong> • Target: <strong className="text-[#14209C]">{student?.targetExam || "Active Learning"}</strong>
             </p>
           </div>
         </div>
@@ -275,7 +275,7 @@ export default function StudentDashboardPage() {
           </div>
           <div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
-              {stats?.totalHoursLearned || 50.1} <span className="text-sm font-semibold text-slate-500">hrs</span>
+              {stats?.totalHoursLearned ?? 0} <span className="text-sm font-semibold text-slate-500">hrs</span>
             </div>
             <p className="text-[11px] font-semibold text-emerald-600 mt-1 flex items-center gap-1">
               <TrendingUp className="h-3.5 w-3.5" /> +12% vs last month
@@ -295,7 +295,7 @@ export default function StudentDashboardPage() {
           </div>
           <div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
-              {stats?.completedLessons || 34} <span className="text-sm font-semibold text-slate-500">sessions</span>
+              {stats?.completedLessons ?? 0} <span className="text-sm font-semibold text-slate-500">sessions</span>
             </div>
             <p className="text-[11px] font-semibold text-emerald-600 mt-1 flex items-center gap-1">
               <Check className="h-3.5 w-3.5" /> All reviews confirmed
@@ -315,10 +315,10 @@ export default function StudentDashboardPage() {
           </div>
           <div>
             <div className="text-2xl sm:text-3xl font-black text-slate-950 font-heading">
-              {stats?.learningStreakDays || 14} <span className="text-sm font-semibold text-slate-700">Days</span>
+              {stats?.learningStreakDays ?? 0} <span className="text-sm font-semibold text-slate-700">Days</span>
             </div>
             <p className="text-[11px] font-semibold text-amber-800 mt-1">
-              🔥 Top 5% consistency this week
+              🔥 Active learning streak
             </p>
           </div>
         </div>
@@ -335,7 +335,7 @@ export default function StudentDashboardPage() {
           </div>
           <div>
             <div className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
-              {stats?.weeklyPaceHours || 4.5} <span className="text-sm font-semibold text-slate-500">/ {stats?.weeklyStudyHoursTarget || 6} hrs</span>
+              {stats?.weeklyPaceHours ?? 0} <span className="text-sm font-semibold text-slate-500">/ {stats?.weeklyStudyHoursTarget ?? 0} hrs</span>
             </div>
             <p className="text-[11px] font-semibold text-[#14209C] mt-1">
               {weeklyPacePercent}% of weekly goal achieved

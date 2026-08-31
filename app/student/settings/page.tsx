@@ -115,18 +115,18 @@ export default function StudentSettingsPage() {
       setSettingsData(data);
       if (data) {
         // User
-        setDisplayName(data.user?.displayName || "Alex Rivera");
-        setFirstName(data.user?.firstName || "Alex");
-        setLastName(data.user?.lastName || "Rivera");
-        setEmail(data.user?.email || "alex.rivera@example.com");
-        setPhone(data.user?.phone || "+1 (555) 987-6543");
+        setDisplayName(data.user?.displayName || "");
+        setFirstName(data.user?.firstName || "");
+        setLastName(data.user?.lastName || "");
+        setEmail(data.user?.email || "");
+        setPhone(data.user?.phone || "");
         setCountry(data.user?.country || "United States");
-        setTimezone(data.user?.timezone || "America/New_York");
+        setTimezone(data.user?.timezone || "UTC");
         setPreferredLanguage(data.user?.preferredLanguage || "English");
         setAvatarUrl(data.user?.avatarUrl || "");
 
         // Learning Preferences
-        setTargetExam(data.learningPreferences?.targetExam || "IELTS 7.5+ & Advanced Math");
+        setTargetExam(data.learningPreferences?.targetExam || "");
         setCurrentLevel(data.learningPreferences?.currentLevel || "Intermediate");
         setWeeklyStudyHoursTarget(data.learningPreferences?.weeklyStudyHoursTarget || 6);
         setHomeworkPreference(data.learningPreferences?.homeworkPreference || "moderate");

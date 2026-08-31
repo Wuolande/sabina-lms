@@ -20,12 +20,13 @@ import {
   Settings,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
-import { mockCurrentUser } from "@/lib/mock-data/students";
+import { studentService } from "@/services/studentService";
 import { notificationService } from "@/services/notificationService";
 import { messagingService } from "@/services/messagingService";
 import { UserNotificationItem } from "@/src/modules/notifications/repositories/notificationRepository";
 import { formatDate } from "@/lib/utils";
 import { UpdatePasswordModal } from "@/components/auth/UpdatePasswordModal";
+import { UserProfile } from "@/types";
 
 interface StudentHeaderProps {
   onToggleSidebar?: () => void;
@@ -41,7 +42,17 @@ export function StudentHeader({ onToggleSidebar }: StudentHeaderProps) {
   // Profile dropdown & Password modal
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = React.useState(false);
+  const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
   const profileMenuRef = React.useRef<HTMLDivElement>(null);
+
+  const fetchProfile = React.useCallback(async () => {
+    try {
+      const user = await studentService.getCurrentStudent();
+      setCurrentUser(user);
+    } catch {
+      // Clean fallback
+    }
+  }, []);
 
   const fetchCounts = React.useCallback(async () => {
     try {
@@ -58,10 +69,11 @@ export function StudentHeader({ onToggleSidebar }: StudentHeaderProps) {
   }, []);
 
   React.useEffect(() => {
+    fetchProfile();
     fetchCounts();
     const interval = setInterval(fetchCounts, 5000);
     return () => clearInterval(interval);
-  }, [fetchCounts]);
+  }, [fetchProfile, fetchCounts]);
 
   // Click outside listener for dropdowns
   React.useEffect(() => {
@@ -267,13 +279,13 @@ export function StudentHeader({ onToggleSidebar }: StudentHeaderProps) {
             aria-expanded={isProfileMenuOpen}
           >
             <Avatar
-              src={mockCurrentUser.avatarUrl}
-              fallbackName={mockCurrentUser.displayName}
+              src={currentUser?.avatarUrl}
+              fallbackName={currentUser?.displayName || "Student"}
               size="sm"
               statusIndicator="online"
             />
             <div className="hidden md:block">
-              <p className="text-xs font-bold text-slate-900 leading-none">{mockCurrentUser.displayName}</p>
+              <p className="text-xs font-bold text-slate-900 leading-none">{currentUser?.displayName || "Student"}</p>
               <p className="text-[10px] text-slate-500 font-medium mt-0.5">Student Account</p>
             </div>
             <ChevronDown className={`hidden md:block h-3.5 w-3.5 text-slate-400 transition-transform ${isProfileMenuOpen ? "rotate-180" : ""}`} />
@@ -285,14 +297,14 @@ export function StudentHeader({ onToggleSidebar }: StudentHeaderProps) {
               {/* User Identity Header */}
               <div className="p-4 border-b border-slate-100 bg-slate-50/80 flex items-center gap-3">
                 <Avatar
-                  src={mockCurrentUser.avatarUrl}
-                  fallbackName={mockCurrentUser.displayName}
+                  src={currentUser?.avatarUrl}
+                  fallbackName={currentUser?.displayName || "Student"}
                   size="md"
                   statusIndicator="online"
                 />
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-xs font-bold text-slate-900 truncate">{mockCurrentUser.displayName}</h4>
-                  <p className="text-[11px] text-slate-500 truncate">{mockCurrentUser.email}</p>
+                  <h4 className="text-xs font-bold text-slate-900 truncate">{currentUser?.displayName || "Student"}</h4>
+                  <p className="text-[11px] text-slate-500 truncate">{currentUser?.email || ""}</p>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-[#14209C] border border-indigo-100 text-[10px] font-bold">
                       Student

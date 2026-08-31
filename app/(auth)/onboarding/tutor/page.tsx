@@ -32,8 +32,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Avatar } from "@/components/ui/Avatar";
 import { Logo } from "@/components/ui/Logo";
 import { FileUploadWithLink } from "@/components/ui/FileUploadWithLink";
-import { mockSubjects } from "@/lib/mock-data/subjects";
-import { mockLanguages } from "@/lib/mock-data/languages";
+import { Subject } from "@/types";
 
 const ONBOARDING_STEPS = [
   { id: 1, title: "About You", desc: "Identity & photo", icon: Users },
@@ -51,17 +50,27 @@ export default function TutorOnboardingPage() {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [showLivePreview, setShowLivePreview] = React.useState(false);
+  const [subjectsList, setSubjectsList] = React.useState<Subject[]>([]);
+
+  React.useEffect(() => {
+    fetch('/api/subjects')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSubjectsList(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // ── STEP 1: ABOUT YOU ──
-  const [firstName, setFirstName] = React.useState("Elena");
-  const [lastName, setLastName] = React.useState("Rostova");
-  const [displayName, setDisplayName] = React.useState("Dr. Elena Rostova");
+  const [firstName, setFirstName] = React.useState("");
+  const [lastName, setLastName] = React.useState("");
+  const [displayName, setDisplayName] = React.useState("");
   const [country, setCountry] = React.useState("United Kingdom");
   const [timezone, setTimezone] = React.useState("Europe/London (GMT+1)");
-  const [phone, setPhone] = React.useState("+44 20 7946 0912");
-  const [avatarPreview, setAvatarPreview] = React.useState(
-    "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400"
-  );
+  const [phone, setPhone] = React.useState("");
+  const [avatarPreview, setAvatarPreview] = React.useState("");
 
   // ── STEP 2: TEACHING PROFILE & BIO ──
   const [headline, setHeadline] = React.useState(
@@ -1062,7 +1071,7 @@ export default function TutorOnboardingPage() {
                       onChange={(e) => setPrimarySubjectId(e.target.value)}
                       className="w-full rounded-2xl border border-slate-300 p-3.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700 shadow-xs"
                     >
-                      {mockSubjects.map((s) => (
+                      {subjectsList.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.name} ({s.category})
                         </option>

@@ -708,8 +708,8 @@ export default function StudentPaymentsPage() {
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Billed To (Student)</span>
-                <strong className="text-slate-900 font-bold block">{billingName || "Alex Rivera"}</strong>
-                <p className="text-slate-500">{billingEmail || "alex.rivera@example.com"}</p>
+                <strong className="text-slate-900 font-bold block">{billingName || "Student"}</strong>
+                <p className="text-slate-500">{billingEmail || ""}</p>
                 <p className="text-slate-500">{addressLine1}, {city} {postalCode}</p>
                 {taxId && <p className="text-slate-700 font-mono font-bold">Tax ID: {taxId}</p>}
               </div>

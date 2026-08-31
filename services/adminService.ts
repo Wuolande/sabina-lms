@@ -49,26 +49,32 @@ export const adminService = {
   // ─── Dashboard Stats ──────────────────────────────────────────────────────
   async getStats(): Promise<AdminStats> {
     const data = await apiFetch<{
-      totalUsers: number;
-      totalStudents: number;
-      totalTutors: number;
-      activeTutors: number;
-      pendingTutorApplications: number;
+      totalUsers?: number;
+      totalStudents?: number;
+      totalTutors?: number;
+      activeTutors?: number;
+      pendingTutorApplications?: number;
+      totalBookings?: number;
+      completedLessons?: number;
+      grossRevenue?: number;
+      platformFees?: number;
+      tutorPayouts?: number;
+      activeDisputes?: number;
       applicationStatusCounts?: Record<string, number>;
     }>('/stats');
 
     return {
-      totalUsers: data.totalUsers || 0,
-      totalStudents: data.totalStudents || 0,
-      totalTutors: data.totalTutors || 0,
-      activeTutors: data.activeTutors || 0,
-      pendingTutorApplications: data.pendingTutorApplications || 0,
-      totalBookings: 842,
-      completedLessons: 789,
-      grossRevenue: 342500,
-      platformFees: 61650,
-      tutorPayouts: 280850,
-      activeDisputes: 0,
+      totalUsers: data.totalUsers ?? 0,
+      totalStudents: data.totalStudents ?? 0,
+      totalTutors: data.totalTutors ?? 0,
+      activeTutors: data.activeTutors ?? 0,
+      pendingTutorApplications: data.pendingTutorApplications ?? 0,
+      totalBookings: data.totalBookings ?? 0,
+      completedLessons: data.completedLessons ?? 0,
+      grossRevenue: data.grossRevenue ?? 0,
+      platformFees: data.platformFees ?? 0,
+      tutorPayouts: data.tutorPayouts ?? 0,
+      activeDisputes: data.activeDisputes ?? 0,
     };
   },
 
@@ -615,5 +621,64 @@ export const adminService = {
       console.error('[adminService.updatePolicySettings]', err);
       return false;
     }
+  },
+
+  // ─── Payments & Financial Ledger ──────────────────────────────────────────
+  async getPayments(): Promise<any> {
+    return apiFetch<any>('/payments');
+  },
+
+  // ─── Tutor Payouts & Disbursements ────────────────────────────────────────
+  async getPayouts(): Promise<any> {
+    return apiFetch<any>('/payouts');
+  },
+
+  async processPayout(tutorId: string, action: string = 'process'): Promise<any> {
+    return apiFetch<any>('/payouts', {
+      method: 'POST',
+      body: JSON.stringify({ tutorId, action }),
+    });
+  },
+
+  // ─── Student Reviews Moderation ───────────────────────────────────────────
+  async getReviews(): Promise<any> {
+    return apiFetch<any>('/reviews');
+  },
+
+  async deleteReview(id: string): Promise<boolean> {
+    try {
+      await apiFetch<any>(`/reviews/${id}`, { method: 'DELETE' });
+      return true;
+    } catch (err) {
+      console.error('[adminService.deleteReview]', err);
+      return false;
+    }
+  },
+
+  // ─── Analytics & Platform Reports ─────────────────────────────────────────
+  async getReports(): Promise<any> {
+    return apiFetch<any>('/reports');
+  },
+
+  // ─── Communications & Email Broadcasts ────────────────────────────────────
+  async getEmails(): Promise<{ data: any[]; total: number }> {
+    return apiFetch<{ data: any[]; total: number }>('/emails');
+  },
+
+  async sendEmail(payload: {
+    audience: string;
+    recipientEmail?: string;
+    templateType: string;
+    subject: string;
+    content: string;
+  }): Promise<{ success: boolean; message: string; record?: any }> {
+    return apiFetch<{ success: boolean; message: string; record?: any }>('/emails', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getEmailTemplates(): Promise<{ templates: any[] }> {
+    return apiFetch<{ templates: any[] }>('/emails/templates');
   },
 };
