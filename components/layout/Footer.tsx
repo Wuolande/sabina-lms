@@ -17,6 +17,7 @@ const footerLinks = {
   platform: [
     { href: "/find-tutors", label: "Find a Tutor" },
     { href: "/become-a-tutor", label: "Become a Tutor" },
+    { href: "/blog", label: "Learning Hub & Blog" },
     { href: "/how-it-works", label: "How It Works" },
     { href: "/student", label: "Student Dashboard" },
     { href: "/tutor", label: "Tutor Dashboard" },

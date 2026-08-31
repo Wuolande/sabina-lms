@@ -29,6 +29,7 @@ const mainNavLinks = [
   { href: "/subjects", label: "Subjects" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/become-a-tutor", label: "Become a Tutor" },
+  { href: "/blog", label: "Blog" },
 ];
 
 const portalItems = [

@@ -712,5 +712,48 @@ export const adminService = {
       body: JSON.stringify(payload),
     });
   },
+
+  // ─── Blog Articles & Editorial CMS ────────────────────────────────────────
+  async getAdminBlogs(options: {
+    search?: string;
+    category?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  } = {}): Promise<any> {
+    const params = new URLSearchParams();
+    if (options.search) params.set('search', options.search);
+    if (options.category && options.category !== 'All') params.set('category', options.category);
+    if (options.status && options.status !== 'all') params.set('status', options.status);
+    if (options.page) params.set('page', String(options.page));
+    if (options.pageSize) params.set('pageSize', String(options.pageSize));
+
+    return apiFetch<any>(`/blogs?${params.toString()}`);
+  },
+
+  async getAdminBlog(id: string): Promise<any> {
+    return apiFetch<any>(`/blogs/${id}`);
+  },
+
+  async createAdminBlog(payload: any): Promise<{ success: boolean; post?: any }> {
+    return apiFetch<{ success: boolean; post?: any }>('/blogs', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async updateAdminBlog(id: string, payload: any): Promise<{ success: boolean; post?: any }> {
+    return apiFetch<{ success: boolean; post?: any }>(`/blogs/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteAdminBlog(id: string): Promise<{ success: boolean }> {
+    return apiFetch<{ success: boolean }>(`/blogs/${id}`, {
+      method: 'DELETE',
+    });
+  },
 };
+
 

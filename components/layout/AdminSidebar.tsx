@@ -6,13 +6,14 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, GraduationCap, UserCheck,
   Calendar, CreditCard, DollarSign, Star, BarChart3,
-  Settings, ShieldAlert, FileText, LogOut, X, Shield, LayoutTemplate, BookOpen, Mail,
+  Settings, ShieldAlert, FileText, LogOut, X, Shield, LayoutTemplate, BookOpen, Mail, Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { adminService } from "@/services/adminService";
 
 const staticLinks = [
   { href: "/admin",                label: "Overview",           icon: LayoutDashboard, exact: true },
+  { href: "/admin/blogs",          label: "Blog & Articles",    icon: Newspaper },
   { href: "/admin/cms",            label: "CMS",                icon: LayoutTemplate },
   { href: "/admin/training",       label: "Tutor Academy",      icon: BookOpen },
   { href: "/admin/emails",         label: "Email Broadcasts",   icon: Mail },

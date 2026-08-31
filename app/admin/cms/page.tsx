@@ -457,6 +457,17 @@ function AdminCMSDashboardContent() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <Link href="/admin/blogs">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs font-bold bg-indigo-50 text-[#14209C] border-indigo-200 hover:bg-indigo-100 shadow-xs"
+              leftIcon={<FileText className="w-3.5 h-3.5" />}
+            >
+              Blog & Articles
+            </Button>
+          </Link>
+
           <Button
             variant="outline"
             size="sm"

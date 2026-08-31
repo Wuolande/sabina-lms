@@ -41,6 +41,7 @@ import { CountUp } from "@/components/ui/CountUp";
 import { TutorCardSkeleton, SubjectCardSkeleton } from "@/components/ui/Skeleton";
 import { tutorService } from "@/services/tutorService";
 import { TutorProfile, Subject } from "@/types";
+import { HomeBlogSection } from "@/components/home/HomeBlogSection";
 
 export default function HomePage() {
   const router = useRouter();
@@ -1034,7 +1035,12 @@ export default function HomePage() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          8. FREQUENTLY ASKED QUESTIONS (Dynamic CMS FAQs)
+          8. SABINA LEARNING HUB & EDITORIAL BLOG SECTION
+      ───────────────────────────────────────────────────────────── */}
+      <HomeBlogSection />
+
+      {/* ─────────────────────────────────────────────────────────────
+          9. FREQUENTLY ASKED QUESTIONS (Dynamic CMS FAQs)
       ───────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-2 mb-10">
