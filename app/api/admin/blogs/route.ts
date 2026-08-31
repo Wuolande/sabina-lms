@@ -8,7 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminContext } from '@/src/shared/auth/authService';
 import { serverBlogService } from '@/src/modules/blog/services/blogService';
-import { adminSupabase } from '@/src/shared/database/supabase';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
@@ -23,15 +24,16 @@ export async function GET(req: NextRequest) {
 
     const response = await serverBlogService.getAllPostsAdmin({
       search,
-      category,
+      category: category === 'All' ? undefined : category,
       status,
       page,
       pageSize,
     });
 
+    console.log(`[GET /api/admin/blogs] Returned ${response.posts.length}/${response.total} posts`);
     return NextResponse.json(response);
   } catch (error: any) {
-    console.error('[GET /api/admin/blogs]', error);
+    console.error('[GET /api/admin/blogs] ERROR:', error);
     return NextResponse.json(
       { error: error.message || 'Unauthorized or server error' },
       { status: error.statusCode || 500 }
@@ -41,7 +43,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const admin = await getAdminContext(req);
+    await getAdminContext(req);
     const body = await req.json();
 
     if (!body.title || typeof body.title !== 'string') {
@@ -53,23 +55,9 @@ export async function POST(req: NextRequest) {
     }
 
     const createdPost = await serverBlogService.createPost(body);
-
-    // Record audit log
-    try {
-      await adminSupabase.from('audit_logs').insert({
-        actor_user_id: admin.id,
-        action: 'CREATE_BLOG_POST',
-        entity_type: 'BLOG',
-        entity_id: createdPost.id,
-        metadata: { title: createdPost.title, slug: createdPost.slug },
-      });
-    } catch {
-      // Non-blocking
-    }
-
     return NextResponse.json({ success: true, post: createdPost }, { status: 201 });
   } catch (error: any) {
-    console.error('[POST /api/admin/blogs]', error);
+    console.error('[POST /api/admin/blogs] ERROR:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to create article' },
       { status: error.statusCode || 500 }

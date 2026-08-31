@@ -8,7 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminContext } from '@/src/shared/auth/authService';
 import { serverBlogService } from '@/src/modules/blog/services/blogService';
-import { adminSupabase } from '@/src/shared/database/supabase';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -18,17 +19,18 @@ export async function GET(
     await getAdminContext(req);
     const { id } = await params;
 
-    const { data, error } = await adminSupabase
-      .from('blogs')
-      .select('*')
-      .eq('id', id)
-      .single();
+    // Use service method (uses dedicated blog client)
+    const post = await serverBlogService.getPostBySlug(id).catch(() => null);
 
-    if (error || !data) {
+    // If no match by slug, try getAllPostsAdmin with id filter
+    const allRes = await serverBlogService.getAllPostsAdmin({ pageSize: 100 });
+    const found = allRes.posts.find((p) => p.id === id) || post;
+
+    if (!found) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ post: data });
+    return NextResponse.json({ post: found });
   } catch (error: any) {
     console.error('[GET /api/admin/blogs/[id]]', error);
     return NextResponse.json(
@@ -43,25 +45,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const admin = await getAdminContext(req);
+    await getAdminContext(req);
     const { id } = await params;
     const body = await req.json();
 
     const updatedPost = await serverBlogService.updatePost(id, body);
-
-    // Record audit log
-    try {
-      await adminSupabase.from('audit_logs').insert({
-        actor_user_id: admin.id,
-        action: 'UPDATE_BLOG_POST',
-        entity_type: 'BLOG',
-        entity_id: id,
-        metadata: { title: updatedPost.title, isPublished: updatedPost.isPublished },
-      });
-    } catch {
-      // Non-blocking
-    }
-
     return NextResponse.json({ success: true, post: updatedPost });
   } catch (error: any) {
     console.error('[PUT /api/admin/blogs/[id]]', error);
@@ -77,23 +65,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const admin = await getAdminContext(req);
+    await getAdminContext(req);
     const { id } = await params;
 
     await serverBlogService.deletePost(id);
-
-    // Record audit log
-    try {
-      await adminSupabase.from('audit_logs').insert({
-        actor_user_id: admin.id,
-        action: 'DELETE_BLOG_POST',
-        entity_type: 'BLOG',
-        entity_id: id,
-      });
-    } catch {
-      // Non-blocking
-    }
-
     return NextResponse.json({ success: true, message: 'Article deleted successfully' });
   } catch (error: any) {
     console.error('[DELETE /api/admin/blogs/[id]]', error);

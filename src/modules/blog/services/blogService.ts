@@ -2,10 +2,12 @@
  * Server Blog Service
  * -----------------------------------------------------------------------
  * Robust data access layer for published articles and admin blog CMS.
+ * Uses a dedicated Supabase client created inline to avoid singleton
+ * caching issues during Next.js hot-reload / cold boot.
  * -----------------------------------------------------------------------
  */
 
-import { adminSupabase } from '@/src/shared/database/supabase';
+import { createClient } from '@supabase/supabase-js';
 import {
   BlogPost,
   BlogPostPayload,
@@ -13,6 +15,31 @@ import {
   BlogListResponse,
 } from '../types/blogTypes';
 
+// ─── Dedicated blog Supabase client ───────────────────────────────────────────
+// We create this lazily so environment variables are always available at call time.
+let _blogClient: ReturnType<typeof createClient> | null = null;
+
+function getBlogClient(): any {
+  if (_blogClient) return _blogClient as any;
+
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    'https://bgfpmbvucrzqyqlxbsdy.supabase.co';
+
+  // Prefer service role key (bypasses RLS), fall back to anon key
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZnBtYnZ1Y3J6cXlxbHhic2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NDM0OTEsImV4cCI6MjEwMDExOTQ5MX0.Bn3Xa1KaPXUtHc0nTtxvpHcPgAfC7LbdE-WVSBFv2gw';
+
+  _blogClient = createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  return _blogClient as any;
+}
+
+// ─── DB row → BlogPost mapper ──────────────────────────────────────────────────
 function mapDbRowToBlogPost(row: any): BlogPost {
   let parsedTags: string[] = [];
   if (Array.isArray(row.tags)) {
@@ -37,10 +64,12 @@ function mapDbRowToBlogPost(row: any): BlogPost {
     authorBio: row.author_bio || '',
     authorTwitter: row.author_twitter || '',
     category: row.category || 'General',
-    featuredImage: row.featured_image || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=1200&q=80',
+    featuredImage:
+      row.featured_image ||
+      'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=1200&q=80',
     readTime: row.read_time || '5 min read',
     tags: parsedTags,
-    isPublished: row.is_published ?? (row.status === 'published'),
+    isPublished: row.is_published ?? row.status === 'published',
     status: (row.status as any) || (row.is_published ? 'published' : 'draft'),
     publishedAt: row.published_at || row.created_at,
     seoTitle: row.seo_title || row.title,
@@ -70,16 +99,18 @@ export function calculateReadTime(content: string): string {
   return `${minutes} min read`;
 }
 
+// ─── Public & Admin service methods ───────────────────────────────────────────
 export const serverBlogService = {
   /**
    * Fetch published blog posts for public frontend with filters & pagination
    */
   async getPublishedPosts(options: BlogFilterOptions = {}): Promise<BlogListResponse> {
+    const db = getBlogClient();
     const page = Math.max(1, options.page || 1);
     const pageSize = Math.min(50, Math.max(1, options.pageSize || 9));
     const offset = (page - 1) * pageSize;
 
-    let query = adminSupabase
+    let query = db
       .from('blogs')
       .select('*', { count: 'exact' })
       .eq('is_published', true);
@@ -97,7 +128,10 @@ export const serverBlogService = {
       .order('published_at', { ascending: false, nullsFirst: false })
       .range(offset, offset + pageSize - 1);
 
-    const { data, count, error } = await query;
+    const { data: rawData, count: rawCount, error } = await query;
+
+    const data = (rawData as any[]) || [];
+    const count = (rawCount as number) || 0;
 
     if (error) {
       console.error('[serverBlogService.getPublishedPosts]', error);
@@ -105,27 +139,28 @@ export const serverBlogService = {
     }
 
     // Fetch categories with live counts
-    const { data: allPosts } = await adminSupabase
+    const { data: rawCatData } = await db
       .from('blogs')
-      .select('category')
+      .select('*')
       .eq('is_published', true);
 
+    const allCatPosts = (rawCatData as any[]) || [];
     const categoryMap: Record<string, number> = {};
-    allPosts?.forEach((p) => {
-      const cat = p.category || 'General';
+    allCatPosts.forEach((p: any) => {
+      const cat = (p.category as string) || 'General';
       categoryMap[cat] = (categoryMap[cat] || 0) + 1;
     });
 
-    const categories = Object.entries(categoryMap).map(([name, count]) => ({
+    const categories = Object.entries(categoryMap).map(([name, cnt]) => ({
       name,
-      count,
+      count: cnt,
     }));
 
-    const total = count || 0;
+    const total = count;
     const totalPages = Math.ceil(total / pageSize) || 1;
 
     return {
-      posts: (data || []).map(mapDbRowToBlogPost),
+      posts: data.map(mapDbRowToBlogPost),
       total,
       page,
       pageSize,
@@ -138,7 +173,8 @@ export const serverBlogService = {
    * Fetch a single post by URL slug
    */
   async getPostBySlug(slug: string): Promise<BlogPost | null> {
-    const { data, error } = await adminSupabase
+    const db = getBlogClient();
+    const { data, error } = await db
       .from('blogs')
       .select('*')
       .eq('slug', slug)
@@ -155,7 +191,8 @@ export const serverBlogService = {
    * Fetch recent posts (for homepage showcase or sidebar)
    */
   async getRecentPosts(limit: number = 3): Promise<BlogPost[]> {
-    const { data, error } = await adminSupabase
+    const db = getBlogClient();
+    const { data, error } = await db
       .from('blogs')
       .select('*')
       .eq('is_published', true)
@@ -173,8 +210,13 @@ export const serverBlogService = {
   /**
    * Fetch related posts (by same category, excluding current post)
    */
-  async getRelatedPosts(category: string, currentPostId: string, limit: number = 3): Promise<BlogPost[]> {
-    const { data, error } = await adminSupabase
+  async getRelatedPosts(
+    category: string,
+    currentPostId: string,
+    limit: number = 3
+  ): Promise<BlogPost[]> {
+    const db = getBlogClient();
+    const { data, error } = await db
       .from('blogs')
       .select('*')
       .neq('id', currentPostId)
@@ -194,17 +236,18 @@ export const serverBlogService = {
    * Admin: Fetch all posts (including drafts) with full filtering
    */
   async getAllPostsAdmin(options: BlogFilterOptions = {}): Promise<BlogListResponse> {
+    const db = getBlogClient();
     const page = Math.max(1, options.page || 1);
     const pageSize = Math.min(100, Math.max(1, options.pageSize || 15));
     const offset = (page - 1) * pageSize;
 
-    let query = adminSupabase.from('blogs').select('*', { count: 'exact' });
+    let query = db.from('blogs').select('*', { count: 'exact' });
 
     if (options.status && options.status !== 'all') {
       if (options.status === 'published') {
-        query = query.or('is_published.eq.true,status.eq.published');
+        query = query.eq('is_published', true);
       } else if (options.status === 'draft') {
-        query = query.or('is_published.eq.false,status.eq.draft');
+        query = query.eq('is_published', false);
       }
     }
 
@@ -245,9 +288,10 @@ export const serverBlogService = {
    * Admin: Create a new blog post
    */
   async createPost(payload: BlogPostPayload): Promise<BlogPost> {
+    const db = getBlogClient();
     const slug = payload.slug?.trim() || generateSlug(payload.title);
     const readTime = payload.readTime || calculateReadTime(payload.content || '');
-    const isPublished = payload.isPublished ?? (payload.status === 'published');
+    const isPublished = payload.isPublished ?? payload.status === 'published';
     const status = payload.status || (isPublished ? 'published' : 'draft');
     const publishedAt = isPublished ? new Date().toISOString() : null;
 
@@ -279,11 +323,7 @@ export const serverBlogService = {
       updated_at: new Date().toISOString(),
     };
 
-    const { data, error } = await adminSupabase
-      .from('blogs')
-      .insert(row)
-      .select()
-      .single();
+    const { data, error } = await db.from('blogs').insert(row).select().single();
 
     if (error) {
       console.error('[serverBlogService.createPost]', error);
@@ -297,12 +337,14 @@ export const serverBlogService = {
    * Admin: Update an existing blog post
    */
   async updatePost(id: string, payload: Partial<BlogPostPayload>): Promise<BlogPost> {
+    const db = getBlogClient();
     const updateData: Record<string, any> = {
       updated_at: new Date().toISOString(),
     };
 
     if (payload.title !== undefined) updateData.title = payload.title;
-    if (payload.slug !== undefined) updateData.slug = payload.slug.trim() || generateSlug(payload.title || '');
+    if (payload.slug !== undefined)
+      updateData.slug = payload.slug.trim() || generateSlug(payload.title || '');
     if (payload.excerpt !== undefined) updateData.excerpt = payload.excerpt;
     if (payload.content !== undefined) {
       updateData.content = payload.content;
@@ -321,10 +363,10 @@ export const serverBlogService = {
     if (payload.tags !== undefined) updateData.tags = payload.tags;
 
     if (payload.isPublished !== undefined || payload.status !== undefined) {
-      const isPub = payload.isPublished ?? (payload.status === 'published');
+      const isPub = payload.isPublished ?? payload.status === 'published';
       updateData.is_published = isPub;
       updateData.status = isPub ? 'published' : 'draft';
-      if (isPub && !payload.slug) {
+      if (isPub) {
         updateData.published_at = new Date().toISOString();
       }
     }
@@ -337,7 +379,7 @@ export const serverBlogService = {
     if (payload.schemaType !== undefined) updateData.schema_type = payload.schemaType;
     if (payload.metaRobots !== undefined) updateData.meta_robots = payload.metaRobots;
 
-    const { data, error } = await adminSupabase
+    const { data, error } = await db
       .from('blogs')
       .update(updateData)
       .eq('id', id)
@@ -356,7 +398,8 @@ export const serverBlogService = {
    * Admin: Delete a blog post
    */
   async deletePost(id: string): Promise<boolean> {
-    const { error } = await adminSupabase.from('blogs').delete().eq('id', id);
+    const db = getBlogClient();
+    const { error } = await db.from('blogs').delete().eq('id', id);
     if (error) {
       console.error('[serverBlogService.deletePost]', error);
       throw new Error(error.message);
