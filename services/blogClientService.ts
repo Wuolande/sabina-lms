@@ -24,7 +24,7 @@ export const blogClientService = {
     if (options.pageSize) params.set('pageSize', String(options.pageSize));
 
     const res = await fetch(`/api/blogs?${params.toString()}`, {
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
 
     if (!res.ok) {
@@ -40,7 +40,7 @@ export const blogClientService = {
   async getRecentPosts(limit: number = 3): Promise<BlogPost[]> {
     try {
       const res = await fetch(`/api/blogs?recent=${limit}`, {
-        next: { revalidate: 60 },
+        cache: 'no-store',
       });
       if (!res.ok) return [];
       const data = await res.json();
@@ -56,7 +56,7 @@ export const blogClientService = {
   async getPostBySlug(slug: string): Promise<{ post: BlogPost; relatedPosts: BlogPost[] } | null> {
     try {
       const res = await fetch(`/api/blogs/${encodeURIComponent(slug)}`, {
-        next: { revalidate: 60 },
+        cache: 'no-store',
       });
       if (!res.ok) return null;
       return res.json();

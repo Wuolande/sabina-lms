@@ -82,7 +82,7 @@ export const serverBlogService = {
     let query = adminSupabase
       .from('blogs')
       .select('*', { count: 'exact' })
-      .or('is_published.eq.true,status.eq.published');
+      .eq('is_published', true);
 
     if (options.category && options.category !== 'All') {
       query = query.ilike('category', `%${options.category}%`);
@@ -108,7 +108,7 @@ export const serverBlogService = {
     const { data: allPosts } = await adminSupabase
       .from('blogs')
       .select('category')
-      .or('is_published.eq.true,status.eq.published');
+      .eq('is_published', true);
 
     const categoryMap: Record<string, number> = {};
     allPosts?.forEach((p) => {
@@ -158,7 +158,7 @@ export const serverBlogService = {
     const { data, error } = await adminSupabase
       .from('blogs')
       .select('*')
-      .or('is_published.eq.true,status.eq.published')
+      .eq('is_published', true)
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(limit);
 
@@ -178,7 +178,7 @@ export const serverBlogService = {
       .from('blogs')
       .select('*')
       .neq('id', currentPostId)
-      .or('is_published.eq.true,status.eq.published')
+      .eq('is_published', true)
       .ilike('category', `%${category}%`)
       .order('published_at', { ascending: false, nullsFirst: false })
       .limit(limit);
