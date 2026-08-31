@@ -336,7 +336,7 @@ export function BookingCalendar({
                 {selectedDateFormatted}
               </p>
               <p className="text-slate-500 font-medium truncate">
-                {selectedTime} – {formatEndTime(selectedTime, durationMinutes)} ({durationMinutes} min session)
+                {selectedTime} – {formatEndTime(selectedTime, durationMinutes)} ({durationMinutes} min session · <span className="font-mono text-slate-700">{timezone}</span>)
               </p>
             </div>
           </div>

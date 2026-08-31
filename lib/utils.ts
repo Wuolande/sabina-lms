@@ -23,7 +23,19 @@ export function formatCurrency(amount: number | undefined | null, currency: stri
   }
 }
 
-export function formatDate(dateString: string | Date | undefined | null, options?: Intl.DateTimeFormatOptions): string {
+export function getUserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
+export function formatDate(
+  dateString: string | Date | undefined | null,
+  options?: Intl.DateTimeFormatOptions,
+  timezone?: string
+): string {
   if (!dateString) return "";
   try {
     const date = typeof dateString === "string" ? new Date(dateString) : dateString;
@@ -32,6 +44,7 @@ export function formatDate(dateString: string | Date | undefined | null, options
       month: "short",
       day: "numeric",
       year: "numeric",
+      timeZone: timezone || undefined,
       ...options,
     };
     return new Intl.DateTimeFormat("en-US", defaultOptions).format(date);
@@ -53,6 +66,29 @@ export function formatTime(timeString: string | Date | undefined | null, timezon
     }).format(date);
   } catch {
     return String(timeString);
+  }
+}
+
+export function formatDateTime(
+  dateString: string | Date | undefined | null,
+  timezone?: string
+): string {
+  if (!dateString) return "";
+  try {
+    const date = typeof dateString === "string" ? new Date(dateString) : dateString;
+    if (isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZoneName: "short",
+      timeZone: timezone || undefined,
+    }).format(date);
+  } catch {
+    return String(dateString);
   }
 }
 
