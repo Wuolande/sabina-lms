@@ -20,6 +20,10 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/api/upload') ||
     pathname.startsWith('/api/homepage') ||
+    pathname.startsWith('/api/blogs') ||
+    pathname.startsWith('/api/tutors') ||
+    pathname.startsWith('/blog') ||
+    pathname.startsWith('/tutors') ||
     pathname.startsWith('/tutor/training/certificates') ||
     pathname === '/' ||
     pathname.startsWith('/find-tutors') ||
@@ -99,5 +103,9 @@ export const config = {
     '/tutor/:path*',
     '/student/:path*',
     '/api/admin/:path*',
+    /*
+     * Explicitly exclude public routes so Vercel edge never intercepts them:
+     * /blog, /api/blogs, /, /find-tutors, etc. are handled above via pathname checks.
+     */
   ],
 };
