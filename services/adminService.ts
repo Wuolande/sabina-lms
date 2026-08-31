@@ -681,4 +681,36 @@ export const adminService = {
   async getEmailTemplates(): Promise<{ templates: any[] }> {
     return apiFetch<{ templates: any[] }>('/emails/templates');
   },
+
+  // ─── Security & Google reCAPTCHA ──────────────────────────────────────────
+  async getSecuritySettings(): Promise<any> {
+    return apiFetch<any>('/settings/security');
+  },
+
+  async updateSecuritySettings(payload: any): Promise<{ success: boolean; settings?: any }> {
+    return apiFetch<{ success: boolean; settings?: any }>('/settings/security', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // ─── Email Providers & SMTP Configuration ─────────────────────────────────
+  async getEmailProviderConfig(): Promise<any> {
+    return apiFetch<any>('/settings/email-providers');
+  },
+
+  async updateEmailProviderConfig(payload: any): Promise<{ success: boolean; config?: any }> {
+    return apiFetch<{ success: boolean; config?: any }>('/settings/email-providers', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async sendTestEmail(payload: { recipientEmail: string; provider?: string; customMessage?: string }): Promise<any> {
+    return apiFetch<any>('/settings/email-providers/test', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
 };
+

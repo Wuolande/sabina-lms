@@ -4,6 +4,8 @@ import * as React from "react";
 import {
   Settings,
   ShieldCheck,
+  ShieldAlert,
+  Shield,
   CheckCircle2,
   Percent,
   Clock,
@@ -28,15 +30,36 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  Mail,
+  Send,
+  Key,
+  Lock,
+  Server,
+  Terminal,
+  Copy,
+  Eye,
+  EyeOff,
+  Zap,
+  MessageSquare,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { adminService } from "@/services/adminService";
+import {
+  SecuritySettings,
+  DEFAULT_SECURITY_SETTINGS,
+} from "@/src/shared/security/securityTypes";
+import {
+  EmailProviderConfig,
+  DEFAULT_EMAIL_PROVIDER_CONFIG,
+  EmailProviderType,
+} from "@/src/modules/communications/types/emailProviderTypes";
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = React.useState<
-    "policies" | "subjects" | "languages" | "countries" | "timezones" | "currencies"
+    "policies" | "security" | "email" | "subjects" | "languages" | "countries" | "timezones" | "currencies"
   >("policies");
 
   const [loading, setLoading] = React.useState(true);
@@ -71,6 +94,18 @@ export default function AdminSettingsPage() {
     },
   });
 
+  // Security & reCAPTCHA state
+  const [securitySettings, setSecuritySettings] = React.useState<SecuritySettings>(DEFAULT_SECURITY_SETTINGS);
+  const [showSecretKey, setShowSecretKey] = React.useState(false);
+
+  // Email Providers & SMTP state
+  const [emailConfig, setEmailConfig] = React.useState<EmailProviderConfig>(DEFAULT_EMAIL_PROVIDER_CONFIG);
+  const [showEmailApiKey, setShowEmailApiKey] = React.useState(false);
+  const [testEmailRecipient, setTestEmailRecipient] = React.useState("");
+  const [testEmailLoading, setTestEmailLoading] = React.useState(false);
+  const [testEmailLogs, setTestEmailLogs] = React.useState<string[] | null>(null);
+  const [testEmailSuccess, setTestEmailSuccess] = React.useState<boolean | null>(null);
+
   // Search & Filter states
   const [subjectSearch, setSubjectSearch] = React.useState("");
   const [subjectCatFilter, setSubjectCatFilter] = React.useState("ALL");
@@ -101,14 +136,24 @@ export default function AdminSettingsPage() {
   const [modalMode, setModalMode] = React.useState<"subject" | "language" | "country" | "timezone" | null>(null);
   const [editingItem, setEditingItem] = React.useState<any | null>(null);
 
-  // Load live taxonomy
+  // Load live taxonomy, security, and email provider configurations
   const loadTaxonomy = React.useCallback(async () => {
     setLoading(true);
-    const data = await adminService.getTaxonomy360();
-    if (data) {
-      setTaxonomy(data);
+    try {
+      const [taxData, secData, emailData] = await Promise.all([
+        adminService.getTaxonomy360(),
+        adminService.getSecuritySettings(),
+        adminService.getEmailProviderConfig(),
+      ]);
+
+      if (taxData) setTaxonomy(taxData);
+      if (secData) setSecuritySettings(secData);
+      if (emailData) setEmailConfig(emailData);
+    } catch (err) {
+      console.error("[loadTaxonomy Error]", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   React.useEffect(() => {
@@ -149,6 +194,65 @@ export default function AdminSettingsPage() {
     setSaving(false);
     if (ok) {
       triggerToast("Platform economic policies saved successfully");
+    }
+  };
+
+  // Security & reCAPTCHA Save
+  const handleSaveSecuritySettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const res = await adminService.updateSecuritySettings(securitySettings);
+    setSaving(false);
+    if (res?.success) {
+      triggerToast("Google reCAPTCHA & security settings saved successfully");
+      loadTaxonomy();
+    } else {
+      triggerToast("Failed to save security settings");
+    }
+  };
+
+  // Email Providers Save
+  const handleSaveEmailConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const res = await adminService.updateEmailProviderConfig(emailConfig);
+    setSaving(false);
+    if (res?.success) {
+      triggerToast("Email provider & SMTP configuration saved successfully");
+      loadTaxonomy();
+    } else {
+      triggerToast("Failed to save email provider configuration");
+    }
+  };
+
+  // Send Live Test Email
+  const handleSendTestEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!testEmailRecipient || !testEmailRecipient.includes("@")) {
+      triggerToast("Please enter a valid recipient email");
+      return;
+    }
+    setTestEmailLoading(true);
+    setTestEmailLogs(null);
+    setTestEmailSuccess(null);
+
+    try {
+      const res = await adminService.sendTestEmail({
+        recipientEmail: testEmailRecipient,
+        provider: emailConfig.activeProvider,
+      });
+      setTestEmailLogs(res.logs || [res.error || "No logs available."]);
+      setTestEmailSuccess(res.success);
+      if (res.success) {
+        triggerToast(`Test email delivered via ${emailConfig.activeProvider.toUpperCase()}!`);
+      } else {
+        triggerToast(`Test delivery failed: ${res.error}`);
+      }
+    } catch (err: any) {
+      setTestEmailLogs([`Error: ${err.message || "Failed to execute test"}`]);
+      setTestEmailSuccess(false);
+    } finally {
+      setTestEmailLoading(false);
     }
   };
 
@@ -482,6 +586,8 @@ export default function AdminSettingsPage() {
       <div className="flex border-b border-slate-200 gap-2 overflow-x-auto pb-px">
         {[
           { id: "policies", label: "Economics & Policies", icon: Settings },
+          { id: "security", label: "Security & reCAPTCHA", icon: ShieldCheck },
+          { id: "email", label: "Email Providers & SMTP", icon: Mail },
           { id: "subjects", label: `Subjects (${taxonomy.subjects?.length || 0})`, icon: BookOpen },
           { id: "languages", label: `Languages (${taxonomy.languages?.length || 0})`, icon: Languages },
           { id: "countries", label: `Countries (${taxonomy.countries?.length || 0})`, icon: MapPin },
@@ -651,7 +757,778 @@ export default function AdminSettingsPage() {
         </form>
       )}
 
-      {/* ─── TAB 2: Subjects & Categories ─── */}
+      {/* ─── TAB: Security & Google reCAPTCHA ─── */}
+      {activeTab === "security" && (
+        <form onSubmit={handleSaveSecuritySettings} className="space-y-6 max-w-4xl animate-fade-in">
+          
+          {/* Hero: Google reCAPTCHA Bot Protection */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-start gap-3">
+                <div className="p-3 rounded-2xl bg-indigo-50 text-[#14209C] border border-indigo-100 shrink-0">
+                  <ShieldCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900">
+                    Google reCAPTCHA & Bot Shield
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Prevent automated bot spam, brute-force credential attacks, and fake registrations.
+                  </p>
+                </div>
+              </div>
+
+              {/* Master Toggle */}
+              <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-2 rounded-2xl shrink-0">
+                <span className="text-xs font-bold text-slate-700">reCAPTCHA Protection:</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSecuritySettings({
+                      ...securitySettings,
+                      recaptchaEnabled: !securitySettings.recaptchaEnabled,
+                    })
+                  }
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    securitySettings.recaptchaEnabled ? "bg-emerald-600" : "bg-slate-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                      securitySettings.recaptchaEnabled ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+                <Badge
+                  variant={securitySettings.recaptchaEnabled ? "emerald-solid" : "neutral"}
+                  size="sm"
+                  className="text-[10px] font-bold uppercase"
+                >
+                  {securitySettings.recaptchaEnabled ? "Active" : "Disabled"}
+                </Badge>
+              </div>
+            </div>
+
+            {/* reCAPTCHA Version & API Keys */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                  reCAPTCHA Version
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { id: "v3", label: "reCAPTCHA v3", desc: "Invisible & score-based without user friction (Recommended)" },
+                    { id: "v2_checkbox", label: "reCAPTCHA v2 Checkbox", desc: "'I am not a robot' visual challenge checkbox" },
+                    { id: "v2_invisible", label: "reCAPTCHA v2 Invisible", desc: "Triggered on background form submission" },
+                  ].map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() =>
+                        setSecuritySettings({
+                          ...securitySettings,
+                          recaptchaVersion: v.id as any,
+                        })
+                      }
+                      className={`p-3.5 rounded-2xl border text-left transition-all ${
+                        securitySettings.recaptchaVersion === v.id
+                          ? "border-[#14209C] bg-indigo-50/50 ring-2 ring-[#14209C]/20 shadow-xs"
+                          : "border-slate-200 hover:bg-slate-50/70 bg-white"
+                      }`}
+                    >
+                      <strong className={`block text-xs font-bold ${securitySettings.recaptchaVersion === v.id ? "text-[#14209C]" : "text-slate-900"}`}>
+                        {v.label}
+                      </strong>
+                      <span className="text-[10px] text-slate-500 block mt-1 leading-relaxed">{v.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Google Site Key (Public)
+                    </label>
+                    <span className="text-[10px] text-slate-400">Exposed to frontend</span>
+                  </div>
+                  <Input
+                    type="text"
+                    value={securitySettings.recaptchaSiteKey}
+                    onChange={(e) =>
+                      setSecuritySettings({
+                        ...securitySettings,
+                        recaptchaSiteKey: e.target.value,
+                      })
+                    }
+                    placeholder="6Lf... (from Google reCAPTCHA Console)"
+                    leftIcon={<Key className="h-4 w-4" />}
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Google Secret Key (Server-Only)
+                    </label>
+                    <span className="text-[10px] text-emerald-600 font-semibold">Encrypted</span>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      type={showSecretKey ? "text" : "password"}
+                      value={securitySettings.recaptchaSecretKey}
+                      onChange={(e) =>
+                        setSecuritySettings({
+                          ...securitySettings,
+                          recaptchaSecretKey: e.target.value,
+                        })
+                      }
+                      placeholder={securitySettings.recaptchaSecretKey ? "••••••••••••••••••••••••••••••" : "Enter Google Secret Key"}
+                      leftIcon={<Lock className="h-4 w-4" />}
+                      showPasswordToggle={false}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSecretKey(!showSecretKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showSecretKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Score threshold for v3 */}
+              {securitySettings.recaptchaVersion === "v3" && (
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-slate-900">Minimum Bot Score Threshold</span>
+                      <p className="text-[11px] text-slate-500">Scores below this threshold are blocked as automated traffic.</p>
+                    </div>
+                    <span className="text-sm font-black text-[#14209C] bg-white border border-slate-200 px-3 py-1 rounded-xl">
+                      {securitySettings.recaptchaMinScore.toFixed(2)}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="0.9"
+                    step="0.05"
+                    value={securitySettings.recaptchaMinScore}
+                    onChange={(e) =>
+                      setSecuritySettings({
+                        ...securitySettings,
+                        recaptchaMinScore: Number(e.target.value),
+                      })
+                    }
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#14209C]"
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
+                    <span>0.10 (Permissive)</span>
+                    <span>0.50 (Balanced - Default)</span>
+                    <span>0.90 (Strict)</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Protected Forms Checkboxes */}
+              <div className="pt-3 border-t border-slate-100">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5">
+                  Forms Protected by reCAPTCHA
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {[
+                    { key: "login", label: "User Login" },
+                    { key: "register", label: "Registration" },
+                    { key: "forgotPassword", label: "Forgot Password" },
+                    { key: "resetPassword", label: "Password Reset" },
+                    { key: "contactUs", label: "Contact Form" },
+                    { key: "tutorApplication", label: "Tutor Application" },
+                    { key: "reviewSubmission", label: "Reviews" },
+                    { key: "bookingCheckout", label: "Booking Checkout" },
+                  ].map((form) => {
+                    const isChecked = securitySettings.protectedForms?.[form.key as keyof typeof securitySettings.protectedForms] ?? true;
+                    return (
+                      <button
+                        key={form.key}
+                        type="button"
+                        onClick={() =>
+                          setSecuritySettings({
+                            ...securitySettings,
+                            protectedForms: {
+                              ...securitySettings.protectedForms,
+                              [form.key]: !isChecked,
+                            },
+                          })
+                        }
+                        className={`p-3 rounded-xl border text-left transition-all flex items-center justify-between ${
+                          isChecked
+                            ? "border-emerald-600 bg-emerald-50/50 text-emerald-950 font-bold"
+                            : "border-slate-200 text-slate-500 bg-white"
+                        }`}
+                      >
+                        <span className="text-xs truncate">{form.label}</span>
+                        <div
+                          className={`h-4 w-4 rounded-md border flex items-center justify-center shrink-0 ${
+                            isChecked ? "bg-emerald-600 border-emerald-600 text-white" : "border-slate-300 bg-white"
+                          }`}
+                        >
+                          {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Anti-Circumvention & Content Moderation Shield */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
+              <div className="p-3 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
+                <MessageSquare className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">
+                  Anti-Circumvention & In-App Chat Safety Filter
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Protects students from off-platform fraud and preserves platform revenue by preventing direct fee disintermediation.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-200 bg-slate-50/60">
+                <div>
+                  <strong className="block text-xs font-bold text-slate-900">
+                    Auto-Redact Direct Contact Info & External Payment Handles
+                  </strong>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Detects and redacts phone numbers, WhatsApp/Telegram links, PayPal/Venmo accounts, and crypto wallets in chat messages.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSecuritySettings({
+                      ...securitySettings,
+                      antiSpamChatFilter: !securitySettings.antiSpamChatFilter,
+                    })
+                  }
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    securitySettings.antiSpamChatFilter ? "bg-emerald-600" : "bg-slate-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                      securitySettings.antiSpamChatFilter ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-slate-200 bg-slate-50/60">
+                <div>
+                  <strong className="block text-xs font-bold text-slate-900">
+                    Block External Video Meeting Links (Zoom, Google Meet, Skype)
+                  </strong>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Enforces that all classes take place within Sabina Encrypted LiveKit Classroom for attendance tracking and safety.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSecuritySettings({
+                      ...securitySettings,
+                      blockExternalVideoLinksInChat: !securitySettings.blockExternalVideoLinksInChat,
+                    })
+                  }
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    securitySettings.blockExternalVideoLinksInChat ? "bg-emerald-600" : "bg-slate-300"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                      securitySettings.blockExternalVideoLinksInChat ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Brute Force Defense & Rate Limiting */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
+              <div className="p-3 rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">
+                  Brute Force Defense & Session Hardening
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Configure token bucket rate limits, session timeouts, and IP access restrictions.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Max Login Attempts
+                </label>
+                <Input
+                  type="number"
+                  min="3"
+                  max="20"
+                  value={securitySettings.maxLoginAttempts}
+                  onChange={(e) =>
+                    setSecuritySettings({
+                      ...securitySettings,
+                      maxLoginAttempts: Number(e.target.value),
+                    })
+                  }
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Failed attempts before IP lockout</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Lockout Duration (Mins)
+                </label>
+                <Input
+                  type="number"
+                  min="5"
+                  max="120"
+                  value={securitySettings.lockoutDurationMinutes}
+                  onChange={(e) =>
+                    setSecuritySettings({
+                      ...securitySettings,
+                      lockoutDurationMinutes: Number(e.target.value),
+                    })
+                  }
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Temporary cooldown window</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Session Timeout (Mins)
+                </label>
+                <Input
+                  type="number"
+                  min="15"
+                  max="480"
+                  value={securitySettings.sessionInactivityTimeoutMinutes}
+                  onChange={(e) =>
+                    setSecuritySettings({
+                      ...securitySettings,
+                      sessionInactivityTimeoutMinutes: Number(e.target.value),
+                    })
+                  }
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Auto-logout upon inactivity</p>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Blocked IP Addresses (Blacklist)
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. 192.168.1.100, 10.0.0.0/24 (comma-separated)"
+                  value={securitySettings.ipBlacklist?.join(", ") || ""}
+                  onChange={(e) =>
+                    setSecuritySettings({
+                      ...securitySettings,
+                      ipBlacklist: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                    })
+                  }
+                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                />
+              </div>
+
+              <div className="flex-1">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Trusted IPs (Whitelist)
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. 203.0.113.50 (bypass rate limiting)"
+                  value={securitySettings.ipWhitelist?.join(", ") || ""}
+                  onChange={(e) =>
+                    setSecuritySettings({
+                      ...securitySettings,
+                      ipWhitelist: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                    })
+                  }
+                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Submit CTA */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            <span className="text-xs text-slate-400">Security configurations take effect immediately platform-wide.</span>
+            <Button
+              type="submit"
+              disabled={saving}
+              className="bg-[#14209C] hover:bg-[#0e176b] text-white font-bold px-6 shadow-xs flex items-center gap-2"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              <span>{saving ? "Saving Security..." : "Save Security & reCAPTCHA Settings"}</span>
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {/* ─── TAB: Email Providers & SMTP ─── */}
+      {activeTab === "email" && (
+        <form onSubmit={handleSaveEmailConfig} className="space-y-6 max-w-4xl animate-fade-in">
+          
+          {/* Provider Selection Ribbon */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
+              <div className="p-3 rounded-2xl bg-indigo-50 text-[#14209C] border border-indigo-100 shrink-0">
+                <Mail className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">
+                  Email Providers & Transactional Gateway
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Choose your email delivery infrastructure for booking confirmations, password recovery, and admin announcements.
+                </p>
+              </div>
+            </div>
+
+            {/* Provider Grid */}
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Select Active Provider
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {[
+                  { id: "resend", label: "Resend", badge: "Recommended", desc: "Modern developer API with instant setup" },
+                  { id: "sendgrid", label: "SendGrid", badge: "Enterprise", desc: "High-volume transactional email engine" },
+                  { id: "ses", label: "Amazon SES", badge: "AWS Cloud", desc: "Highly scalable cost-effective delivery" },
+                  { id: "postmark", label: "Postmark", badge: "Fastest Inbox", desc: "Best-in-class transactional inbox rates" },
+                  { id: "mailgun", label: "Mailgun", badge: "Powerful", desc: "Advanced email routing & validation" },
+                  { id: "smtp", label: "Custom SMTP", badge: "Universal", desc: "Direct connection to any standard mail server" },
+                ].map((p) => {
+                  const isSelected = emailConfig.activeProvider === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() =>
+                        setEmailConfig({
+                          ...emailConfig,
+                          activeProvider: p.id as any,
+                        })
+                      }
+                      className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                        isSelected
+                          ? "border-[#14209C] bg-indigo-50/50 ring-2 ring-[#14209C]/20 shadow-xs scale-[1.01]"
+                          : "border-slate-200 bg-white hover:bg-slate-50/70"
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <strong className={`text-xs font-bold ${isSelected ? "text-[#14209C]" : "text-slate-900"}`}>
+                            {p.label}
+                          </strong>
+                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${isSelected ? "bg-[#14209C] text-white" : "bg-slate-100 text-slate-600"}`}>
+                            {p.badge}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">{p.desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Provider Credentials Form */}
+            <div className="pt-4 border-t border-slate-100 space-y-4">
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                {emailConfig.activeProvider.toUpperCase()} Connection Credentials
+              </h4>
+
+              {emailConfig.activeProvider === "resend" && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Resend API Key *
+                  </label>
+                  <Input
+                    type={showEmailApiKey ? "text" : "password"}
+                    value={emailConfig.resendApiKey || ""}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, resendApiKey: e.target.value })}
+                    placeholder="re_1234567890abcdef..."
+                    leftIcon={<Key className="h-4 w-4" />}
+                    rightElement={
+                      <button
+                        type="button"
+                        onClick={() => setShowEmailApiKey(!showEmailApiKey)}
+                        className="text-slate-400 hover:text-slate-600 pr-2"
+                      >
+                        {showEmailApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    }
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">Obtain from your Resend Dashboard &gt; API Keys.</p>
+                </div>
+              )}
+
+              {emailConfig.activeProvider === "sendgrid" && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    SendGrid API Key *
+                  </label>
+                  <Input
+                    type={showEmailApiKey ? "text" : "password"}
+                    value={emailConfig.sendgridApiKey || ""}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, sendgridApiKey: e.target.value })}
+                    placeholder="SG.1234567890..."
+                    leftIcon={<Key className="h-4 w-4" />}
+                  />
+                </div>
+              )}
+
+              {emailConfig.activeProvider === "ses" && (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      AWS Access Key ID
+                    </label>
+                    <Input
+                      type="text"
+                      value={emailConfig.sesAccessKeyId || ""}
+                      onChange={(e) => setEmailConfig({ ...emailConfig, sesAccessKeyId: e.target.value })}
+                      placeholder="AKIA..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      AWS Secret Access Key
+                    </label>
+                    <Input
+                      type="password"
+                      value={emailConfig.sesSecretAccessKey || ""}
+                      onChange={(e) => setEmailConfig({ ...emailConfig, sesSecretAccessKey: e.target.value })}
+                      placeholder="Secret key..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      AWS Region
+                    </label>
+                    <select
+                      value={emailConfig.sesRegion || "us-east-1"}
+                      onChange={(e) => setEmailConfig({ ...emailConfig, sesRegion: e.target.value })}
+                      className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white"
+                    >
+                      <option value="us-east-1">US East (N. Virginia)</option>
+                      <option value="us-west-2">US West (Oregon)</option>
+                      <option value="eu-west-1">EU (Ireland)</option>
+                      <option value="eu-central-1">EU (Frankfurt)</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {emailConfig.activeProvider === "postmark" && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Postmark Server API Token *
+                  </label>
+                  <Input
+                    type="password"
+                    value={emailConfig.postmarkServerToken || ""}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, postmarkServerToken: e.target.value })}
+                    placeholder="xxxx-xxxx-xxxx-xxxx"
+                  />
+                </div>
+              )}
+
+              {emailConfig.activeProvider === "smtp" && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        SMTP Host *
+                      </label>
+                      <Input
+                        type="text"
+                        value={emailConfig.smtpHost || ""}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpHost: e.target.value })}
+                        placeholder="smtp.mailgun.org, smtp.sendgrid.net..."
+                        leftIcon={<Server className="h-4 w-4" />}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        SMTP Port *
+                      </label>
+                      <Input
+                        type="number"
+                        value={emailConfig.smtpPort || 587}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpPort: Number(e.target.value) })}
+                        placeholder="587 / 465 / 25"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        SMTP Username
+                      </label>
+                      <Input
+                        type="text"
+                        value={emailConfig.smtpUsername || ""}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpUsername: e.target.value })}
+                        placeholder="postmaster@yourdomain.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        SMTP Password
+                      </label>
+                      <Input
+                        type="password"
+                        value={emailConfig.smtpPassword || ""}
+                        onChange={(e) => setEmailConfig({ ...emailConfig, smtpPassword: e.target.value })}
+                        placeholder="Password or API key"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Sender Identity */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-100">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Default &quot;From Name&quot; *
+                  </label>
+                  <Input
+                    type="text"
+                    value={emailConfig.fromName}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, fromName: e.target.value })}
+                    placeholder="Sabina LMS"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Default &quot;From Email&quot; *
+                  </label>
+                  <Input
+                    type="email"
+                    value={emailConfig.fromEmail}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, fromEmail: e.target.value })}
+                    placeholder="notifications@sabina.education"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Reply-To Email
+                  </label>
+                  <Input
+                    type="email"
+                    value={emailConfig.replyToEmail}
+                    onChange={(e) => setEmailConfig({ ...emailConfig, replyToEmail: e.target.value })}
+                    placeholder="support@sabina.education"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Live Deliverability Test Suite */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-4">
+            <div className="flex items-start gap-3 pb-3 border-b border-slate-100">
+              <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                <Send className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-slate-900">
+                  Live Deliverability Diagnostic Console
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Send a real-time verification email to any inbox to confirm API keys, SPF/DKIM alignment, and SMTP handshake.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1">
+                <Input
+                  type="email"
+                  placeholder="Enter your email to receive test message (e.g. admin@company.com)..."
+                  value={testEmailRecipient}
+                  onChange={(e) => setTestEmailRecipient(e.target.value)}
+                  leftIcon={<Mail className="h-4 w-4" />}
+                />
+              </div>
+              <Button
+                type="button"
+                onClick={handleSendTestEmail}
+                disabled={testEmailLoading}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold shrink-0 flex items-center gap-2"
+              >
+                <Zap className={`h-4 w-4 ${testEmailLoading ? "animate-spin" : ""}`} />
+                <span>{testEmailLoading ? "Testing..." : "Send Test Email"}</span>
+              </Button>
+            </div>
+
+            {/* Diagnostic Logs Box */}
+            {testEmailLogs && (
+              <div className="p-4 rounded-2xl bg-slate-950 text-slate-200 font-mono text-xs space-y-1.5 animate-in fade-in duration-150">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-[11px] text-slate-400">
+                  <div className="flex items-center gap-1.5">
+                    <Terminal className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>DELIVERABILITY DIAGNOSTIC LOG</span>
+                  </div>
+                  <Badge variant={testEmailSuccess ? "emerald-solid" : "destructive"} size="sm">
+                    {testEmailSuccess ? "HANDSHAKE OK" : "FAILED"}
+                  </Badge>
+                </div>
+                {testEmailLogs.map((log, idx) => (
+                  <p key={idx} className={log.includes("ERROR") ? "text-rose-400 font-bold" : log.includes("successful") ? "text-emerald-400" : "text-slate-300"}>
+                    {log}
+                  </p>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Submit CTA */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            <span className="text-xs text-slate-400">All transactional emails will route through the selected provider.</span>
+            <Button
+              type="submit"
+              disabled={saving}
+              className="bg-[#14209C] hover:bg-[#0e176b] text-white font-bold px-6 shadow-xs flex items-center gap-2"
+            >
+              <Mail className="h-4 w-4" />
+              <span>{saving ? "Saving Configuration..." : "Save Email Provider Configuration"}</span>
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {/* ─── TAB: Subjects & Categories ─── */}
       {activeTab === "subjects" && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">

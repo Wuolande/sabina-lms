@@ -1,13 +1,15 @@
 /**
  * API Route: POST /api/messages/send
  * -----------------------------------------------------------------------
- * Sends a message atomically and generates recipient notification.
+ * Sends a message atomically with anti-circumvention and spam filtering.
  * -----------------------------------------------------------------------
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { domainMessageService } from '@/src/modules/messaging/services/messageService';
 import { getStudentContext, getTutorContext } from '@/src/shared/auth/authService';
+import { getSecuritySettings } from '@/src/shared/security/recaptchaService';
+import { sanitizeMessageContent } from '@/src/shared/security/contentFilter';
 import { z } from 'zod';
 
 const SendMessageSchema = z.object({
@@ -34,10 +36,23 @@ export async function POST(req: NextRequest) {
       userId = tutor.userId;
     }
 
+    // Apply security content & anti-circumvention filter
+    const securitySettings = await getSecuritySettings();
+    let finalContent = parsed.data.content;
+
+    if (securitySettings.antiSpamChatFilter) {
+      const filterResult = sanitizeMessageContent(parsed.data.content, {
+        filterEnabled: true,
+        redactSensitiveInfo: true,
+        allowEmails: false,
+      });
+      finalContent = filterResult.sanitizedContent;
+    }
+
     const message = await domainMessageService.sendMessage(
       parsed.data.conversationId,
       userId,
-      parsed.data.content,
+      finalContent,
       parsed.data.attachments
     );
 

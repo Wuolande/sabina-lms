@@ -2,8 +2,8 @@
  * API Route: POST /api/auth/reset-password
  * -----------------------------------------------------------------------
  * Enterprise Password Reset Confirmation.
- * Validates new password strength, confirms token/code, updates credentials,
- * and records security audit trail.
+ * Validates new password strength, verifies reCAPTCHA, confirms token/code,
+ * updates credentials, and records security audit trail.
  * -----------------------------------------------------------------------
  */
 
@@ -11,17 +11,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/src/shared/security/rateLimiter';
 import { adminSupabase } from '@/src/shared/database/supabase';
 import { createClient } from '@supabase/supabase-js';
+import { verifyRecaptchaToken } from '@/src/shared/security/recaptchaService';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cgppcryxlyerofydivnq.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '127.0.0.1';
     const body = await req.json().catch(() => ({}));
-    const { password, accessToken } = body;
+    const { password, accessToken, recaptchaToken } = body;
 
-    // Rate Limiting (max 5 attempts per 5 minutes)
+    // 1. Verify Google reCAPTCHA
+    const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'reset_password', ip);
+    if (!recaptchaResult.success) {
+      return NextResponse.json(
+        { error: recaptchaResult.error || 'Anti-bot verification failed.' },
+        { status: 400 }
+      );
+    }
+
+    // 2. Rate Limiting (max 5 attempts per 5 minutes)
     const rateLimit = checkRateLimit(`pwd_update_${ip}`, {
       maxAttempts: 5,
       windowMs: 5 * 60 * 1000,
@@ -42,7 +51,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Password Complexity Verification
+    // 3. Password Complexity Verification
     const hasUpperCase = /[A-Z]/.test(password);
     const hasLowerCase = /[a-z]/.test(password);
     const hasDigit = /[0-9]/.test(password);
@@ -57,7 +66,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // If access token is provided, update password for that session
+    // 4. If access token is provided, update password for that session
     if (accessToken) {
       const userClient = createClient(supabaseUrl, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '', {
         auth: { persistSession: false, autoRefreshToken: false },
