@@ -22,15 +22,12 @@ let _blogClient: ReturnType<typeof createClient> | null = null;
 function getBlogClient(): any {
   if (_blogClient) return _blogClient as any;
 
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    'https://bgfpmbvucrzqyqlxbsdy.supabase.co';
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  // Prefer service role key (bypasses RLS), fall back to anon key
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZnBtYnZ1Y3J6cXlxbHhic2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NDM0OTEsImV4cCI6MjEwMDExOTQ5MX0.Bn3Xa1KaPXUtHc0nTtxvpHcPgAfC7LbdE-WVSBFv2gw';
+  if (!url || !key) {
+    throw new Error('[blogService] Supabase environment variables are not configured.');
+  }
 
   _blogClient = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },

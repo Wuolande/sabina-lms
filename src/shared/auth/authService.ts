@@ -16,9 +16,9 @@ import { UserContext } from '../permissions/rbac';
 import { UserRole } from '../permissions/roles';
 import { UnauthorizedError } from '../errors';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://bgfpmbvucrzqyqlxbsdy.supabase.co';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZnBtYnZ1Y3J6cXlxbHhic2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NDM0OTEsImV4cCI6MjEwMDExOTQ5MX0.Bn3Xa1KaPXUtHc0nTtxvpHcPgAfC7LbdE-WVSBFv2gw';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnZnBtYnZ1Y3J6cXlxbHhic2R5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ1NDM0OTEsImV4cCI6MjEwMDExOTQ5MX0.Bn3Xa1KaPXUtHc0nTtxvpHcPgAfC7LbdE-WVSBFv2gw';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
 
 export interface SignUpPayload {
   email: string;
