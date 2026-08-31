@@ -34,6 +34,8 @@ function mapDbRowToBlogPost(row: any): BlogPost {
     author: row.author || 'Sabina Editorial Team',
     authorTitle: row.author_title || 'Education Specialist',
     authorAvatar: row.author_avatar || '',
+    authorBio: row.author_bio || '',
+    authorTwitter: row.author_twitter || '',
     category: row.category || 'General',
     featuredImage: row.featured_image || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=1200&q=80',
     readTime: row.read_time || '5 min read',
@@ -44,6 +46,10 @@ function mapDbRowToBlogPost(row: any): BlogPost {
     seoTitle: row.seo_title || row.title,
     seoDescription: row.seo_description || row.excerpt,
     seoKeywords: row.seo_keywords || '',
+    canonicalUrl: row.canonical_url || '',
+    ogImage: row.og_image || row.featured_image || '',
+    schemaType: row.schema_type || 'EducationalArticle',
+    metaRobots: row.meta_robots || 'index, follow',
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString(),
   };
@@ -251,6 +257,10 @@ export const serverBlogService = {
       excerpt: payload.excerpt,
       content: payload.content,
       author: payload.author || 'Sabina Editorial Team',
+      author_title: payload.authorTitle || 'Education Specialist',
+      author_avatar: payload.authorAvatar || '',
+      author_bio: payload.authorBio || '',
+      author_twitter: payload.authorTwitter || '',
       category: payload.category || 'General',
       featured_image: payload.featuredImage,
       read_time: readTime,
@@ -261,6 +271,10 @@ export const serverBlogService = {
       seo_title: payload.seoTitle || payload.title,
       seo_description: payload.seoDescription || payload.excerpt,
       seo_keywords: payload.seoKeywords || '',
+      canonical_url: payload.canonicalUrl || '',
+      og_image: payload.ogImage || payload.featuredImage,
+      schema_type: payload.schemaType || 'EducationalArticle',
+      meta_robots: payload.metaRobots || 'index, follow',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -297,6 +311,10 @@ export const serverBlogService = {
       }
     }
     if (payload.author !== undefined) updateData.author = payload.author;
+    if (payload.authorTitle !== undefined) updateData.author_title = payload.authorTitle;
+    if (payload.authorAvatar !== undefined) updateData.author_avatar = payload.authorAvatar;
+    if (payload.authorBio !== undefined) updateData.author_bio = payload.authorBio;
+    if (payload.authorTwitter !== undefined) updateData.author_twitter = payload.authorTwitter;
     if (payload.category !== undefined) updateData.category = payload.category;
     if (payload.featuredImage !== undefined) updateData.featured_image = payload.featuredImage;
     if (payload.readTime !== undefined) updateData.read_time = payload.readTime;
@@ -314,6 +332,10 @@ export const serverBlogService = {
     if (payload.seoTitle !== undefined) updateData.seo_title = payload.seoTitle;
     if (payload.seoDescription !== undefined) updateData.seo_description = payload.seoDescription;
     if (payload.seoKeywords !== undefined) updateData.seo_keywords = payload.seoKeywords;
+    if (payload.canonicalUrl !== undefined) updateData.canonical_url = payload.canonicalUrl;
+    if (payload.ogImage !== undefined) updateData.og_image = payload.ogImage;
+    if (payload.schemaType !== undefined) updateData.schema_type = payload.schemaType;
+    if (payload.metaRobots !== undefined) updateData.meta_robots = payload.metaRobots;
 
     const { data, error } = await adminSupabase
       .from('blogs')

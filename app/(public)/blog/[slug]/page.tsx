@@ -18,6 +18,12 @@ import {
   GraduationCap,
   ShieldCheck,
   Users,
+  ListOrdered,
+  FileText,
+  ExternalLink,
+  MessageSquare,
+  Globe,
+  Tag,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -35,6 +41,7 @@ export default function BlogPostDetailPage() {
   const [relatedPosts, setRelatedPosts] = React.useState<BlogPost[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [copied, setCopied] = React.useState(false);
+  const [activeTocId, setActiveTocId] = React.useState<string>("");
 
   React.useEffect(() => {
     if (!slug) return;
@@ -78,6 +85,21 @@ export default function BlogPostDetailPage() {
     }
   };
 
+  const shareOnFacebook = () => {
+    if (typeof window !== "undefined") {
+      const url = encodeURIComponent(window.location.href);
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank");
+    }
+  };
+
+  const shareOnWhatsApp = () => {
+    if (typeof window !== "undefined" && post) {
+      const url = encodeURIComponent(window.location.href);
+      const text = encodeURIComponent(`Check out "${post.title}": ${window.location.href}`);
+      window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white py-16">
@@ -103,7 +125,7 @@ export default function BlogPostDetailPage() {
           <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-[#14209C] flex items-center justify-center mx-auto">
             <BookOpen className="h-6 w-6" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Article Not Found</h2>
+          <h2 className="text-xl font-bold text-slate-900 font-heading">Article Not Found</h2>
           <p className="text-xs text-slate-500">
             The article you are looking for may have been moved, renamed, or unpublished.
           </p>
@@ -118,10 +140,47 @@ export default function BlogPostDetailPage() {
   }
 
   const formattedDate = post.publishedAt ? formatDate(post.publishedAt) : "Recently";
+  const canonicalUrl = post.canonicalUrl || `https://sabina.education/blog/${post.slug}`;
+  const isHtmlContent = post.content.includes("<p>") || post.content.includes("<div>") || post.content.includes("<h");
+
+  // Schema.org JSON-LD Structured Data for Google Rich Snippets
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": post.schemaType || "EducationalArticle",
+    "headline": post.seoTitle || post.title,
+    "description": post.seoDescription || post.excerpt,
+    "image": [post.ogImage || post.featuredImage],
+    "datePublished": post.publishedAt || post.createdAt,
+    "dateModified": post.updatedAt || post.publishedAt || post.createdAt,
+    "author": {
+      "@type": "Person",
+      "name": post.author,
+      "jobTitle": post.authorTitle || "Educator",
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Sabina LMS",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://sabina.education/logo.png",
+      },
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": canonicalUrl,
+    },
+  };
 
   return (
     <article className="min-h-screen bg-white">
-      {/* ─── Breadcrumbs & Back Bar ─── */}
+      
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
+      {/* ─── Breadcrumbs Bar ─── */}
       <div className="border-b border-slate-100 bg-slate-50/50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between text-xs text-slate-500 font-medium">
           <Link
@@ -195,9 +254,11 @@ export default function BlogPostDetailPage() {
             </div>
           </div>
 
-          {/* Social Share Ribbon */}
+          {/* Social Share Buttons */}
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs text-slate-400 font-medium mr-1 hidden sm:inline">Share:</span>
+            
+            {/* X / Twitter */}
             <button
               onClick={shareOnTwitter}
               title="Share on X (Twitter)"
@@ -207,6 +268,8 @@ export default function BlogPostDetailPage() {
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
             </button>
+
+            {/* LinkedIn */}
             <button
               onClick={shareOnLinkedIn}
               title="Share on LinkedIn"
@@ -216,6 +279,17 @@ export default function BlogPostDetailPage() {
                 <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.68 1.68 0 1 0 0-3.36 1.68 1.68 0 0 0 0 3.36m1.39 9.74v-8.37H5.07v8.37z" />
               </svg>
             </button>
+
+            {/* WhatsApp */}
+            <button
+              onClick={shareOnWhatsApp}
+              title="Share on WhatsApp"
+              className="h-9 w-9 rounded-xl border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 flex items-center justify-center text-slate-700 hover:text-emerald-600 transition-colors"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+            </button>
+
+            {/* Copy Link */}
             <button
               onClick={handleCopyLink}
               title="Copy article link"
@@ -243,65 +317,108 @@ export default function BlogPostDetailPage() {
 
       {/* ─── Main Article Body ─── */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 pb-16">
-        <div className="prose prose-slate prose-headings:font-heading prose-headings:font-black prose-h2:text-2xl sm:prose-h2:text-3xl prose-h3:text-xl prose-p:leading-relaxed prose-p:text-slate-700 prose-li:text-slate-700 max-w-none space-y-6">
-          {/* Simple Markdown-to-HTML parser for clean formatted rendering */}
-          {post.content.split("\n\n").map((block, idx) => {
-            const trimmed = block.trim();
-            if (trimmed.startsWith("## ")) {
+        
+        {/* Render HTML from Rich-Text Editor OR Markdown */}
+        {isHtmlContent ? (
+          <div
+            className="prose prose-slate prose-headings:font-heading prose-headings:font-black prose-h2:text-2xl sm:prose-h2:text-3xl prose-h2:pt-6 prose-h2:pb-2 prose-h2:border-b prose-h2:border-slate-100 prose-h3:text-xl prose-h3:pt-4 prose-p:leading-relaxed prose-p:text-slate-700 prose-li:text-slate-700 prose-table:border-collapse prose-table:border prose-table:border-slate-200 prose-th:bg-slate-50 prose-th:p-3 prose-td:p-3 prose-td:border prose-td:border-slate-100 max-w-none space-y-4"
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
+        ) : (
+          <div className="prose prose-slate prose-headings:font-heading prose-headings:font-black prose-h2:text-2xl sm:prose-h2:text-3xl prose-h3:text-xl prose-p:leading-relaxed prose-p:text-slate-700 prose-li:text-slate-700 max-w-none space-y-6">
+            {post.content.split("\n\n").map((block, idx) => {
+              const trimmed = block.trim();
+              if (trimmed.startsWith("## ")) {
+                return (
+                  <h2 key={idx} className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight pt-6 pb-2 border-b border-slate-100 font-heading">
+                    {trimmed.replace("## ", "")}
+                  </h2>
+                );
+              }
+              if (trimmed.startsWith("### ")) {
+                return (
+                  <h3 key={idx} className="text-xl font-bold text-slate-900 tracking-tight pt-4 font-heading">
+                    {trimmed.replace("### ", "")}
+                  </h3>
+                );
+              }
+              if (trimmed.startsWith("- ")) {
+                const listItems = trimmed.split("\n").map((li) => li.replace(/^-\s*/, ""));
+                return (
+                  <ul key={idx} className="space-y-2 list-disc pl-5 my-4">
+                    {listItems.map((li, liIdx) => (
+                      <li key={liIdx} className="text-slate-700 text-sm sm:text-base leading-relaxed">
+                        {li}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }
               return (
-                <h2 key={idx} className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight pt-6 pb-2 border-b border-slate-100 font-heading">
-                  {trimmed.replace("## ", "")}
-                </h2>
+                <p key={idx} className="text-slate-700 text-sm sm:text-base leading-relaxed">
+                  {trimmed}
+                </p>
               );
-            }
-            if (trimmed.startsWith("### ")) {
-              return (
-                <h3 key={idx} className="text-xl font-bold text-slate-900 tracking-tight pt-4 font-heading">
-                  {trimmed.replace("### ", "")}
-                </h3>
-              );
-            }
-            if (trimmed.startsWith("- ")) {
-              const listItems = trimmed.split("\n").map((li) => li.replace(/^-\s*/, ""));
-              return (
-                <ul key={idx} className="space-y-2 list-disc pl-5 my-4">
-                  {listItems.map((li, liIdx) => (
-                    <li key={liIdx} className="text-slate-700 text-sm sm:text-base leading-relaxed">
-                      {li}
-                    </li>
-                  ))}
-                </ul>
-              );
-            }
-            return (
-              <p key={idx} className="text-slate-700 text-sm sm:text-base leading-relaxed">
-                {trimmed}
-              </p>
-            );
-          })}
-        </div>
+            })}
+          </div>
+        )}
 
         {/* Tags List */}
         {post.tags && post.tags.length > 0 && (
           <div className="pt-10 mt-10 border-t border-slate-100">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3">
-              Topics in this article:
+              Topics & Focus Keywords:
             </span>
             <div className="flex flex-wrap gap-2">
               {post.tags.map((tag, i) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors inline-flex items-center gap-1"
                 >
-                  #{tag}
+                  <Tag className="h-3 w-3 text-slate-400" />
+                  <span>{tag}</span>
                 </span>
               ))}
             </div>
           </div>
         )}
 
-        {/* ─── 1-on-1 Tutoring Call to Action ─── */}
-        <div className="mt-12 rounded-3xl bg-linear-to-br from-indigo-900 to-slate-950 p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
+        {/* ─── Author Box ─── */}
+        <div className="mt-10 p-6 sm:p-8 rounded-3xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          {post.authorAvatar ? (
+            <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-white shrink-0 border border-slate-200 shadow-xs">
+              <Image
+                src={post.authorAvatar}
+                alt={post.author}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="h-16 w-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#14209C] font-black text-xl shrink-0">
+              {post.author.charAt(0)}
+            </div>
+          )}
+          <div className="space-y-1 flex-1">
+            <div className="flex items-center gap-2">
+              <h4 className="text-base font-bold text-slate-900 font-heading">{post.author}</h4>
+              <Badge variant="neutral" size="sm" className="text-[10px] font-bold">
+                {post.authorTitle || "Author"}
+              </Badge>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              {post.authorBio || `${post.author} writes on language pedagogy, exam preparation, and effective tutoring methodologies on Sabina.`}
+            </p>
+            {post.authorTwitter && (
+              <p className="text-[11px] text-[#14209C] font-semibold pt-1">
+                Follow on Twitter: {post.authorTwitter}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* ─── 1-on-1 Tutoring CTA Banner ─── */}
+        <div className="mt-12 rounded-3xl bg-linear-to-br from-indigo-950 via-slate-900 to-[#14209C] p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
           <div className="absolute -top-12 -right-12 w-64 h-64 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
           
           <div className="relative z-10 space-y-4 max-w-xl">
@@ -325,6 +442,7 @@ export default function BlogPostDetailPage() {
             </div>
           </div>
         </div>
+
       </div>
 
       {/* ─── Related Articles Section ─── */}
@@ -354,6 +472,7 @@ export default function BlogPostDetailPage() {
           </div>
         </section>
       )}
+
     </article>
   );
 }
