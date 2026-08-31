@@ -418,7 +418,7 @@ export default function BlogPostDetailPage() {
         </div>
 
         {/* ─── 1-on-1 Tutoring CTA Banner ─── */}
-        <div className="mt-12 rounded-3xl bg-linear-to-br from-indigo-950 via-slate-900 to-[#14209C] p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
+        <div className="mt-12 rounded-3xl bg-slate-900 bg-gradient-to-br from-indigo-950 via-slate-900 to-[#14209C] p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
           <div className="absolute -top-12 -right-12 w-64 h-64 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
           
           <div className="relative z-10 space-y-4 max-w-xl">
@@ -426,7 +426,7 @@ export default function BlogPostDetailPage() {
               <Sparkles className="h-3.5 w-3.5" />
               <span>PUT THEORY INTO PRACTICE</span>
             </div>
-            <h3 className="text-xl sm:text-2xl font-black font-heading leading-tight">
+            <h3 className="text-xl sm:text-2xl font-black font-heading leading-tight text-white">
               Ready to accelerate your learning with a verified 1-on-1 tutor?
             </h3>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">

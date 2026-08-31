@@ -31,7 +31,7 @@ export function FeaturedBlogCard({ post }: FeaturedBlogCardProps) {
           sizes="(max-width: 1024px) 100vw, 60vw"
           className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-linear-to-t from-slate-950/40 via-transparent to-transparent lg:hidden" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent lg:hidden" />
         
         <div className="absolute top-5 left-5 z-10 flex items-center gap-2">
           <Badge
