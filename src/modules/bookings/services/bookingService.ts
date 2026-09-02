@@ -49,12 +49,18 @@ export class BookingService {
       .single();
       
     if (tutorProfile.data) {
-      const hourlyRate = Number(tutorProfile.data.hourly_rate);
-      let expectedPrice = (hourlyRate * payload.durationMinutes) / 60;
+      const baseRate = Number(tutorProfile.data.hourly_rate);
+      // The platform standard is that the "base rate" covers a 50 minute lesson.
+      // 25 mins = baseRate / 2
+      // 50 mins = baseRate
+      // 80 mins = baseRate * 1.6
+      let expectedPrice = 0;
+      if (payload.durationMinutes === 25) expectedPrice = baseRate / 2;
+      else if (payload.durationMinutes === 50) expectedPrice = baseRate;
+      else if (payload.durationMinutes === 80) expectedPrice = (baseRate * 8) / 5;
+      else expectedPrice = (baseRate * payload.durationMinutes) / 50; // Fallback for custom durations
       
       // If client marked this as a trial, apply platform trial discount
-      // E.g. we might infer it's a trial based on a specific flag or price.
-      // For now, if the requested price is lower, we check if it matches the trial discount.
       const requestedPrice = Number(payload.price);
       const trialDiscountedPrice = expectedPrice * (1 - policies.trialLessonDiscountPercent / 100);
       
