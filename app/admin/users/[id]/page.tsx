@@ -181,6 +181,29 @@ export default function AdminUser360Page() {
     }
   };
 
+  const handleImpersonate = async () => {
+    if (!user) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: user.id }),
+      });
+      const data = await res.json();
+      if (res.ok && data.redirectUrl) {
+        toast({ title: "Impersonation Started", message: `You are now browsing as ${user.displayName}.`, variant: "success" });
+        router.push(data.redirectUrl);
+      } else {
+        toast({ title: "Error", message: data.error || "Failed to start impersonation.", variant: "danger" });
+      }
+    } catch (err) {
+      toast({ title: "Error", message: "Failed to start impersonation.", variant: "danger" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const toggleRole = (r: string) => {
     if (selectedRoles.includes(r)) {
       if (selectedRoles.length === 1) {
@@ -645,6 +668,18 @@ export default function AdminUser360Page() {
                 >
                   <Ban className="w-3.5 h-3.5 mr-1.5" />
                   Suspend Account
+                </Button>
+              )}
+              
+              {!isSuspended && (
+                <Button
+                  variant="outline"
+                  className="w-full text-xs font-bold text-amber-700 border-amber-200 hover:bg-amber-50 mt-2"
+                  onClick={handleImpersonate}
+                  disabled={actionLoading}
+                >
+                  <User className="w-3.5 h-3.5 mr-1.5" />
+                  Impersonate User
                 </Button>
               )}
             </div>

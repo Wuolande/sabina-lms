@@ -155,13 +155,42 @@ export async function getAdminContext(request: NextRequest): Promise<UserContext
 }
 
 /**
- * Extracts the current student's User ID from session.
+ * Extracts the current student's User ID from session (or impersonation cookie).
  */
 export async function getStudentContext(request: NextRequest): Promise<{ userId: string; email: string; displayName: string }> {
   try {
     const supabase = await getServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new UnauthorizedError();
+
+    // ── IMPERSONATION CHECK ──
+    const impersonateCookie = request.cookies.get('sb-impersonate');
+    if (impersonateCookie) {
+      // 1. Verify the current real user is an Admin
+      const { data: realProfile } = await adminSupabase
+        .from('users')
+        .select('id, roles:user_roles!user_roles_user_id_fkey(role_id)')
+        .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
+        .single();
+
+      if (realProfile) {
+        const roles = (realProfile.roles as any[]).map(r => r.role_id);
+        if (roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')) {
+          // 2. Fetch the target student's profile
+          const targetUserId = impersonateCookie.value;
+          const { data: targetProfile } = await adminSupabase
+            .from('users')
+            .select('id, email, display_name')
+            .eq('id', targetUserId)
+            .single();
+
+          if (targetProfile) {
+            return { userId: targetProfile.id, email: targetProfile.email, displayName: targetProfile.display_name };
+          }
+        }
+      }
+    }
+    // ── END IMPERSONATION CHECK ──
 
     const { data: profile } = await adminSupabase
       .from('users')
@@ -178,13 +207,46 @@ export async function getStudentContext(request: NextRequest): Promise<{ userId:
 }
 
 /**
- * Extracts the current tutor's Profile ID from session.
+ * Extracts the current tutor's Profile ID from session (or impersonation cookie).
  */
 export async function getTutorContext(request: NextRequest): Promise<{ tutorProfileId: string; userId: string; displayName: string }> {
   try {
     const supabase = await getServerSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new UnauthorizedError();
+
+    // ── IMPERSONATION CHECK ──
+    const impersonateCookie = request.cookies.get('sb-impersonate');
+    if (impersonateCookie) {
+      // 1. Verify the current real user is an Admin
+      const { data: realProfile } = await adminSupabase
+        .from('users')
+        .select('id, roles:user_roles!user_roles_user_id_fkey(role_id)')
+        .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
+        .single();
+
+      if (realProfile) {
+        const roles = (realProfile.roles as any[]).map(r => r.role_id);
+        if (roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')) {
+          // 2. Fetch the target tutor's profile
+          const targetUserId = impersonateCookie.value;
+          const { data: targetProfile } = await adminSupabase
+            .from('users')
+            .select('id, display_name, tutor:tutor_profiles!tutor_profiles_user_id_fkey(id)')
+            .eq('id', targetUserId)
+            .single();
+
+          if (targetProfile && (targetProfile as any).tutor?.[0]?.id) {
+            return {
+              tutorProfileId: (targetProfile as any).tutor[0].id,
+              userId: targetProfile.id,
+              displayName: targetProfile.display_name,
+            };
+          }
+        }
+      }
+    }
+    // ── END IMPERSONATION CHECK ──
 
     const { data: profile } = await adminSupabase
       .from('users')
