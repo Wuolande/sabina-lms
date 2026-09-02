@@ -124,8 +124,8 @@ function extractToken(request: NextRequest): string | null {
 export async function getAdminContext(request: NextRequest): Promise<UserContext> {
   const token = extractToken(request);
 
-  if (!token || token.includes('demo') || token.startsWith('demo-') || process.env.NODE_ENV === 'development') {
-    return DEV_ADMIN_CONTEXT;
+  if (!token) {
+    throw new UnauthorizedError();
   }
 
   try {
@@ -136,7 +136,7 @@ export async function getAdminContext(request: NextRequest): Promise<UserContext
     const { data: { user }, error: authError } = await adminClient.auth.getUser(token);
 
     if (authError || !user) {
-      return DEV_ADMIN_CONTEXT;
+      throw new UnauthorizedError();
     }
 
     const { data: profile, error: profileError } = await adminClient
@@ -146,7 +146,7 @@ export async function getAdminContext(request: NextRequest): Promise<UserContext
       .single();
 
     if (profileError || !profile) {
-      return DEV_ADMIN_CONTEXT;
+      throw new UnauthorizedError();
     }
 
     const roles = (profile.roles as { role_id: string }[]).map((r) => r.role_id) as any[];
@@ -158,51 +158,33 @@ export async function getAdminContext(request: NextRequest): Promise<UserContext
       roles,
     };
   } catch {
-    return DEV_ADMIN_CONTEXT;
+    throw new UnauthorizedError();
   }
 }
 
 /**
- * Extracts the current student's User ID from session or resolves to demo student.
+ * Extracts the current student's User ID from session.
  */
 export async function getStudentContext(request: NextRequest): Promise<{ userId: string; email: string; displayName: string }> {
   const token = extractToken(request);
+  if (!token) throw new UnauthorizedError();
 
   const adminClient = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  if (token) {
-    const { data: { user } } = await adminClient.auth.getUser(token);
-    if (user) {
-      const { data: profile } = await adminClient
-        .from('users')
-        .select('id, email, display_name')
-        .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
-        .single();
+  const { data: { user } } = await adminClient.auth.getUser(token);
+  if (!user) throw new UnauthorizedError();
 
-      if (profile) {
-        return { userId: profile.id, email: profile.email, displayName: profile.display_name };
-      }
-    }
-  }
-
-  // In development/test mode without active auth cookie: load first registered student
-  const { data: studentUser } = await adminClient
+  const { data: profile } = await adminClient
     .from('users')
     .select('id, email, display_name')
-    .limit(1)
+    .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
     .single();
 
-  if (studentUser) {
-    return { userId: studentUser.id, email: studentUser.email, displayName: studentUser.display_name };
-  }
+  if (!profile) throw new UnauthorizedError();
 
-  return {
-    userId: '',
-    email: '',
-    displayName: 'Student',
-  };
+  return { userId: profile.id, email: profile.email, displayName: profile.display_name };
 }
 
 /**
@@ -210,49 +192,29 @@ export async function getStudentContext(request: NextRequest): Promise<{ userId:
  */
 export async function getTutorContext(request: NextRequest): Promise<{ tutorProfileId: string; userId: string; displayName: string }> {
   const token = extractToken(request);
+  if (!token) throw new UnauthorizedError();
 
   const adminClient = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  if (token) {
-    const { data: { user } } = await adminClient.auth.getUser(token);
-    if (user) {
-      const { data: profile } = await adminClient
-        .from('users')
-        .select('id, display_name, tutor:tutor_profiles(id)')
-        .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
-        .single();
+  const { data: { user } } = await adminClient.auth.getUser(token);
+  if (!user) throw new UnauthorizedError();
 
-      if (profile && (profile as any).tutor?.[0]?.id) {
-        return {
-          tutorProfileId: (profile as any).tutor[0].id,
-          userId: profile.id,
-          displayName: profile.display_name,
-        };
-      }
-    }
-  }
-
-  // In development/test mode without active auth cookie: load first approved tutor profile from DB
-  const { data: firstTutor } = await adminClient
-    .from('tutor_profiles')
-    .select('id, user_id, user:users(display_name)')
-    .limit(1)
+  const { data: profile } = await adminClient
+    .from('users')
+    .select('id, display_name, tutor:tutor_profiles(id)')
+    .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
     .single();
 
-  if (firstTutor) {
-    return {
-      tutorProfileId: firstTutor.id,
-      userId: firstTutor.user_id,
-      displayName: (firstTutor.user as any)?.display_name || 'Verified Tutor',
-    };
+  if (!profile || !(profile as any).tutor?.[0]?.id) {
+    throw new UnauthorizedError();
   }
 
   return {
-    tutorProfileId: '',
-    userId: '',
-    displayName: 'Verified Tutor',
+    tutorProfileId: (profile as any).tutor[0].id,
+    userId: profile.id,
+    displayName: profile.display_name,
   };
 }
 

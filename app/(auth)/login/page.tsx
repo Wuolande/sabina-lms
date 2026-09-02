@@ -78,24 +78,26 @@ function LoginPageContent() {
     setErrorMsg(null);
     const acc = REAL_ACCOUNTS[targetRole];
 
-    // Set cookie
-    if (typeof document !== "undefined") {
-      document.cookie = `sb-access-token=demo-auth-${targetRole.toLowerCase()}; path=/; max-age=${60 * 60 * 24 * 14}; SameSite=Lax`;
-    }
-
     try {
-      if (supabase) {
-        await supabase.auth.signInWithPassword({
-          email: acc.email,
-          password: acc.pass,
-        }).catch(() => null);
-      }
-    } catch {
-      // Handled
-    }
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: acc.email, password: acc.pass }),
+      });
+      const data = await res.json();
 
-    const destination = redirectPath || acc.target;
-    router.push(destination);
+      if (!res.ok) {
+        setErrorMsg(data.error || "Login failed");
+        setIsLoading(false);
+        return;
+      }
+
+      const destination = redirectPath || acc.target;
+      router.push(destination);
+    } catch (err) {
+      setErrorMsg("An unexpected error occurred");
+      setIsLoading(false);
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -104,30 +106,32 @@ function LoginPageContent() {
     setErrorMsg(null);
 
     const trimmedEmail = email.trim().toLowerCase();
-    let detectedRole = role;
-
-    if (trimmedEmail === "admin@sabinaedge.com") detectedRole = "ADMIN";
-    else if (trimmedEmail === "tutor@sabinaedge.com" || trimmedEmail.includes("tutor")) detectedRole = "TUTOR";
-    else if (trimmedEmail === "student@sabinaedge.com" || trimmedEmail.includes("student")) detectedRole = "STUDENT";
-
-    // Set persistent session token
-    if (typeof document !== "undefined") {
-      document.cookie = `sb-access-token=demo-auth-${detectedRole.toLowerCase()}; path=/; max-age=${60 * 60 * 24 * 14}; SameSite=Lax`;
-    }
 
     try {
-      if (supabase) {
-        await supabase.auth.signInWithPassword({
-          email: trimmedEmail,
-          password: password,
-        }).catch(() => null);
-      }
-    } catch {
-      // Handled
-    }
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmedEmail, password }),
+      });
+      const data = await res.json();
 
-    const targetUrl = redirectPath || (detectedRole === "ADMIN" ? "/admin" : detectedRole === "TUTOR" ? "/tutor" : "/student");
-    router.push(targetUrl);
+      if (!res.ok) {
+        setErrorMsg(data.error || "Invalid login credentials");
+        setIsLoading(false);
+        return;
+      }
+
+      // Determine default redirect based on email content if not specified
+      let defaultTarget = "/student";
+      if (trimmedEmail.includes("admin")) defaultTarget = "/admin";
+      else if (trimmedEmail.includes("tutor")) defaultTarget = "/tutor";
+
+      const targetUrl = redirectPath || defaultTarget;
+      router.push(targetUrl);
+    } catch (err) {
+      setErrorMsg("An unexpected error occurred");
+      setIsLoading(false);
+    }
   };
 
   return (

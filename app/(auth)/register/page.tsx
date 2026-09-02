@@ -20,17 +20,36 @@ function RegisterContent() {
   const [password, setPassword] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const handleRegister = (e: React.FormEvent) => {
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    setErrorMsg(null);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, firstName, lastName, role }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Registration failed");
+        setIsLoading(false);
+        return;
+      }
+
       if (role === "STUDENT") {
         router.push("/onboarding/student");
       } else {
         router.push("/onboarding/tutor");
       }
-    }, 600);
+    } catch (err) {
+      setErrorMsg("An unexpected error occurred");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -83,6 +102,11 @@ function RegisterContent() {
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4">
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-rose-50 text-rose-600 text-xs font-bold border border-rose-200">
+                {errorMsg}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">

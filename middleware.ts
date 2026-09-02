@@ -1,17 +1,42 @@
-/**
- * Next.js Middleware — Authentication & Role-Based Access Control
- * -----------------------------------------------------------------------
- * Protects /admin, /tutor, /student, and /api/admin routes.
- * Redirects unauthenticated requests to /login.
- * -----------------------------------------------------------------------
- */
-
-import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // IMPORTANT: Avoid writing any logic between createServerClient and
+  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+  // issues with cross-browser cookies, so just do it here.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   const { pathname } = request.nextUrl;
 
-  // ─── 1. Public Routes ──────────────────────────────────────────────────────
+  // 1. Public Routes bypass check completely
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/auth') ||
@@ -39,17 +64,11 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/refund-policy') ||
     pathname.startsWith('/pages')
   ) {
-    return NextResponse.next();
+    return supabaseResponse;
   }
 
-  // ─── 2. Extract Session Token ──────────────────────────────────────────────
-  const accessTokenCookie = request.cookies.getAll().find(
-    (c) => c.name.includes('auth-token') || c.name === 'sb-access-token'
-  );
-  const accessToken = accessTokenCookie?.value;
-
-  // ─── 3. Unauthenticated Guard ──────────────────────────────────────────────
-  if (!accessToken) {
+  // 2. Unauthenticated Guard
+  if (!user) {
     if (pathname.startsWith('/api/admin')) {
       return NextResponse.json({ error: 'Unauthorized: Authentication required.' }, { status: 401 });
     }
@@ -58,43 +77,41 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // ─── 4. Role-Based Route Validation ────────────────────────────────────────
-  const response = NextResponse.next();
+  const role = user?.user_metadata?.role || 'STUDENT';
 
-  if (accessToken.includes('admin') || accessToken.includes('135e8c7a') || accessToken.includes('01e7aeaa')) {
+  // 3. Role-Based Route Validation
+  if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     // Admin has access to all portals
-    response.headers.set('X-Auth-User-Id', '01e7aeaa-1da1-4a61-bb8d-886b39844867');
-    response.headers.set('X-User-Role', 'ADMIN');
-    return response;
+    supabaseResponse.headers.set('X-Auth-User-Id', user.id);
+    supabaseResponse.headers.set('X-User-Role', role);
+    return supabaseResponse;
   }
 
-  if (accessToken.includes('tutor') || accessToken.includes('f9e96316')) {
-    // Tutor has access to /tutor and /student
+  if (role === 'TUTOR') {
     if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('error', 'Admin access required');
       return NextResponse.redirect(loginUrl);
     }
-    response.headers.set('X-Auth-User-Id', 'f9e96316-0e63-44ef-a08a-6b2862a3c55e');
-    response.headers.set('X-User-Role', 'TUTOR');
-    return response;
+    supabaseResponse.headers.set('X-Auth-User-Id', user.id);
+    supabaseResponse.headers.set('X-User-Role', 'TUTOR');
+    return supabaseResponse;
   }
 
-  if (accessToken.includes('student') || accessToken.includes('d70e4403')) {
-    // Student has access to /student only
+  if (role === 'STUDENT') {
     if (pathname.startsWith('/admin') || pathname.startsWith('/tutor') || pathname.startsWith('/api/admin')) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('error', 'Higher privilege required');
       return NextResponse.redirect(loginUrl);
     }
-    response.headers.set('X-Auth-User-Id', 'd70e4403-eb27-480f-bf70-d3da639c4b4c');
-    response.headers.set('X-User-Role', 'STUDENT');
-    return response;
+    supabaseResponse.headers.set('X-Auth-User-Id', user.id);
+    supabaseResponse.headers.set('X-User-Role', 'STUDENT');
+    return supabaseResponse;
   }
 
-  // Default authenticated pass-through
-  response.headers.set('X-Auth-User-Id', '01e7aeaa-1da1-4a61-bb8d-886b39844867');
-  return response;
+  // Fallback
+  supabaseResponse.headers.set('X-Auth-User-Id', user.id);
+  return supabaseResponse;
 }
 
 export const config = {
@@ -103,9 +120,5 @@ export const config = {
     '/tutor/:path*',
     '/student/:path*',
     '/api/admin/:path*',
-    /*
-     * Explicitly exclude public routes so Vercel edge never intercepts them:
-     * /blog, /api/blogs, /, /find-tutors, etc. are handled above via pathname checks.
-     */
   ],
 };
