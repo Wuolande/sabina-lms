@@ -86,11 +86,27 @@ export function BookingModal({
     setStep("duration");
   }, [tutor, isOpen, initialDate, initialTime, tutorSubjects]);
 
+  const [trialDiscountPercent, setTrialDiscountPercent] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    fetch('/api/policies')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.trialLessonDiscountPercent !== undefined) {
+          setTrialDiscountPercent(data.trialLessonDiscountPercent);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch policies', err));
+  }, []);
+
   if (!tutor) return null;
+
+  const basePrice25 = hourlyRate / 2;
+  const trialPrice = Math.round(basePrice25 * (1 - trialDiscountPercent / 100));
 
   const calculatedPrice =
     selectedDuration === 25
-      ? Math.round(hourlyRate / 2)
+      ? trialPrice
       : selectedDuration === 80
       ? Math.round((hourlyRate * 8) / 5)
       : hourlyRate;
@@ -284,7 +300,7 @@ export function BookingModal({
                 }`}
               >
                 <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
-                  Trial 50% Off
+                  {trialDiscountPercent > 0 ? `Trial ${trialDiscountPercent}% Off` : 'Trial Lesson'}
                 </span>
                 <h5 className="font-black text-slate-900 text-base mt-2 font-heading">
                   25 Minutes
@@ -293,7 +309,7 @@ export function BookingModal({
                   Targeted question solving & concept check.
                 </p>
                 <div className="mt-3 pt-2 border-t border-slate-100 font-extrabold text-slate-950 text-sm">
-                  {formatCurrency(Math.round(hourlyRate / 2), tutor.currency)}
+                  {formatCurrency(trialPrice, tutor.currency)}
                 </div>
               </button>
 
