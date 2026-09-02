@@ -236,9 +236,11 @@ export async function getTutorContext(request: NextRequest): Promise<{ tutorProf
             .eq('id', targetUserId)
             .single();
 
-          if (targetProfile && (targetProfile as any).tutor?.[0]?.id) {
+          const tutorData = targetProfile ? (Array.isArray((targetProfile as any).tutor) ? (targetProfile as any).tutor[0] : (targetProfile as any).tutor) : null;
+
+          if (targetProfile && tutorData?.id) {
             return {
-              tutorProfileId: (targetProfile as any).tutor[0].id,
+              tutorProfileId: tutorData.id,
               userId: targetProfile.id,
               displayName: targetProfile.display_name,
             };
@@ -254,12 +256,14 @@ export async function getTutorContext(request: NextRequest): Promise<{ tutorProf
       .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
       .single();
 
-    if (!profile || !(profile as any).tutor?.[0]?.id) {
+    const tutorData = profile ? (Array.isArray((profile as any).tutor) ? (profile as any).tutor[0] : (profile as any).tutor) : null;
+
+    if (!profile || !tutorData?.id) {
       throw new UnauthorizedError();
     }
 
     return {
-      tutorProfileId: (profile as any).tutor[0].id,
+      tutorProfileId: tutorData.id,
       userId: profile.id,
       displayName: profile.display_name,
     };
