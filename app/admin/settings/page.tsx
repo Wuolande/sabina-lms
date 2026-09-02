@@ -42,6 +42,9 @@ import {
   Zap,
   MessageSquare,
   Info,
+  Video,
+  ExternalLink,
+  MonitorPlay,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -56,10 +59,15 @@ import {
   DEFAULT_EMAIL_PROVIDER_CONFIG,
   EmailProviderType,
 } from "@/src/modules/communications/types/emailProviderTypes";
+import {
+  VideoProviderConfig,
+  DEFAULT_VIDEO_PROVIDER_CONFIG,
+  VideoProviderType,
+} from "@/src/modules/video/types/videoProviderTypes";
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = React.useState<
-    "policies" | "security" | "email" | "subjects" | "languages" | "countries" | "timezones" | "currencies"
+    "policies" | "security" | "email" | "video" | "subjects" | "languages" | "countries" | "timezones" | "currencies"
   >("policies");
 
   const [loading, setLoading] = React.useState(true);
@@ -106,6 +114,10 @@ export default function AdminSettingsPage() {
   const [testEmailLogs, setTestEmailLogs] = React.useState<string[] | null>(null);
   const [testEmailSuccess, setTestEmailSuccess] = React.useState<boolean | null>(null);
 
+  // Live Classroom Video Provider state
+  const [videoConfig, setVideoConfig] = React.useState<VideoProviderConfig>(DEFAULT_VIDEO_PROVIDER_CONFIG);
+  const [showVideoSecret, setShowVideoSecret] = React.useState(false);
+
   // Search & Filter states
   const [subjectSearch, setSubjectSearch] = React.useState("");
   const [subjectCatFilter, setSubjectCatFilter] = React.useState("ALL");
@@ -136,19 +148,21 @@ export default function AdminSettingsPage() {
   const [modalMode, setModalMode] = React.useState<"subject" | "language" | "country" | "timezone" | null>(null);
   const [editingItem, setEditingItem] = React.useState<any | null>(null);
 
-  // Load live taxonomy, security, and email provider configurations
+  // Load live taxonomy, security, email provider, and video provider configurations
   const loadTaxonomy = React.useCallback(async () => {
     setLoading(true);
     try {
-      const [taxData, secData, emailData] = await Promise.all([
+      const [taxData, secData, emailData, videoData] = await Promise.all([
         adminService.getTaxonomy360(),
         adminService.getSecuritySettings(),
         adminService.getEmailProviderConfig(),
+        adminService.getVideoProviderConfig(),
       ]);
 
       if (taxData) setTaxonomy(taxData);
       if (secData) setSecuritySettings(secData);
       if (emailData) setEmailConfig(emailData);
+      if (videoData) setVideoConfig(videoData);
     } catch (err) {
       console.error("[loadTaxonomy Error]", err);
     } finally {
@@ -222,6 +236,20 @@ export default function AdminSettingsPage() {
       loadTaxonomy();
     } else {
       triggerToast("Failed to save email provider configuration");
+    }
+  };
+
+  // Live Classroom Video Provider Save
+  const handleSaveVideoConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const res = await adminService.updateVideoProviderConfig(videoConfig);
+    setSaving(false);
+    if (res?.success) {
+      triggerToast(`Live classroom provider set to ${videoConfig.activeProvider.toUpperCase()} — saved successfully`);
+      loadTaxonomy();
+    } else {
+      triggerToast("Failed to save live classroom configuration");
     }
   };
 
@@ -588,6 +616,7 @@ export default function AdminSettingsPage() {
           { id: "policies", label: "Economics & Policies", icon: Settings },
           { id: "security", label: "Security & reCAPTCHA", icon: ShieldCheck },
           { id: "email", label: "Email Providers & SMTP", icon: Mail },
+          { id: "video", label: "Live Classroom", icon: Video },
           { id: "subjects", label: `Subjects (${taxonomy.subjects?.length || 0})`, icon: BookOpen },
           { id: "languages", label: `Languages (${taxonomy.languages?.length || 0})`, icon: Languages },
           { id: "countries", label: `Countries (${taxonomy.countries?.length || 0})`, icon: MapPin },
@@ -1523,6 +1552,428 @@ export default function AdminSettingsPage() {
             >
               <Mail className="h-4 w-4" />
               <span>{saving ? "Saving Configuration..." : "Save Email Provider Configuration"}</span>
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {/* ─── TAB: Live Classroom Provider ─── */}
+      {activeTab === "video" && (
+        <form onSubmit={handleSaveVideoConfig} className="space-y-6 max-w-4xl animate-fade-in">
+
+          {/* Provider Selection */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
+              <div className="p-3 rounded-2xl bg-violet-50 text-violet-700 border border-violet-100 shrink-0">
+                <MonitorPlay className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">
+                  Live Classroom Provider
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Choose the video platform that powers all 1-on-1 and group live sessions. Credentials are stored securely and used server-side to generate meeting links automatically — no manual meeting creation required.
+                </p>
+              </div>
+            </div>
+
+            {/* Provider Card Grid */}
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Select Active Classroom Provider
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  {
+                    id: "livekit",
+                    label: "Livekit",
+                    badge: "Built-in",
+                    desc: "Native WebRTC classroom with full platform integration",
+                    color: "indigo",
+                  },
+                  {
+                    id: "classin",
+                    label: "ClassIn",
+                    badge: "Education",
+                    desc: "Dedicated edtech classroom platform with interactive tools",
+                    color: "blue",
+                  },
+                  {
+                    id: "google_meet",
+                    label: "Google Meet",
+                    badge: "Google",
+                    desc: "Google Meet video calls via Google Calendar integration",
+                    color: "emerald",
+                  },
+                  {
+                    id: "zoom",
+                    label: "Zoom",
+                    badge: "Enterprise",
+                    desc: "Zoom meetings via Server-to-Server OAuth API",
+                    color: "sky",
+                  },
+                ].map((p) => {
+                  const isSelected = videoConfig.activeProvider === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() =>
+                        setVideoConfig({ ...videoConfig, activeProvider: p.id as VideoProviderType })
+                      }
+                      className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between min-h-[110px] ${
+                        isSelected
+                          ? "border-violet-600 bg-violet-50/50 ring-2 ring-violet-600/20 shadow-xs scale-[1.01]"
+                          : "border-slate-200 bg-white hover:bg-slate-50/70"
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <strong className={`text-xs font-bold ${isSelected ? "text-violet-700" : "text-slate-900"}`}>
+                            {p.label}
+                          </strong>
+                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${isSelected ? "bg-violet-600 text-white" : "bg-slate-100 text-slate-600"}`}>
+                            {p.badge}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 leading-relaxed">{p.desc}</p>
+                      </div>
+                      {isSelected && (
+                        <div className="mt-2 flex items-center gap-1 text-[10px] font-bold text-violet-600">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span>Active</span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ─── Livekit Credentials ─── */}
+            {videoConfig.activeProvider === "livekit" && (
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Key className="h-4 w-4 text-indigo-500" /> Livekit Connection Credentials
+                </h4>
+                <div className="rounded-2xl bg-indigo-50/50 border border-indigo-100 p-3">
+                  <p className="text-[11px] text-indigo-700">
+                    <strong>Where to get credentials:</strong> Sign in at{" "}
+                    <a href="https://cloud.livekit.io" target="_blank" rel="noreferrer" className="underline">cloud.livekit.io</a>{" "}
+                    → Project → Settings → Keys. For self-hosted, use your Livekit server's configured API key/secret.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Livekit API Key *
+                    </label>
+                    <Input
+                      type="text"
+                      value={videoConfig.livekitApiKey || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, livekitApiKey: e.target.value })}
+                      placeholder="APInxxxxxxxxxxxx"
+                      leftIcon={<Key className="h-4 w-4" />}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Livekit API Secret *
+                    </label>
+                    <Input
+                      type={showVideoSecret ? "text" : "password"}
+                      value={videoConfig.livekitApiSecret || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, livekitApiSecret: e.target.value })}
+                      placeholder={videoConfig.livekitApiSecretMasked || "••••••••••••••••"}
+                      leftIcon={<Lock className="h-4 w-4" />}
+                      rightElement={
+                        <button
+                          type="button"
+                          onClick={() => setShowVideoSecret(!showVideoSecret)}
+                          className="text-slate-400 hover:text-slate-600 pr-2"
+                        >
+                          {showVideoSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Livekit WebSocket URL *
+                  </label>
+                  <Input
+                    type="text"
+                    value={videoConfig.livekitUrl || ""}
+                    onChange={(e) => setVideoConfig({ ...videoConfig, livekitUrl: e.target.value })}
+                    placeholder="wss://your-project.livekit.cloud"
+                    leftIcon={<Server className="h-4 w-4" />}
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Leave blank to use the <code className="bg-slate-100 px-1 rounded text-[10px]">NEXT_PUBLIC_LIVEKIT_URL</code> environment variable.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ─── ClassIn Credentials ─── */}
+            {videoConfig.activeProvider === "classin" && (
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Key className="h-4 w-4 text-blue-500" /> ClassIn Partner API Credentials
+                </h4>
+                <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-3">
+                  <p className="text-[11px] text-blue-700">
+                    <strong>Where to get credentials:</strong> Apply for a ClassIn Partner account at{" "}
+                    <a href="https://www.classin.com/en/cooperation" target="_blank" rel="noreferrer" className="underline">classin.com/en/cooperation</a>.
+                    Once approved, you will receive your Partner ID, API Key, and API Secret.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Partner ID *
+                    </label>
+                    <Input
+                      type="text"
+                      value={videoConfig.classinPartnerId || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, classinPartnerId: e.target.value })}
+                      placeholder="P-12345"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      API Key *
+                    </label>
+                    <Input
+                      type="text"
+                      value={videoConfig.classinApiKey || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, classinApiKey: e.target.value })}
+                      placeholder="ck_live_..."
+                      leftIcon={<Key className="h-4 w-4" />}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      API Secret *
+                    </label>
+                    <Input
+                      type={showVideoSecret ? "text" : "password"}
+                      value={videoConfig.classinApiSecret || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, classinApiSecret: e.target.value })}
+                      placeholder={videoConfig.classinApiSecretMasked || "••••••••"}
+                      leftIcon={<Lock className="h-4 w-4" />}
+                      rightElement={
+                        <button
+                          type="button"
+                          onClick={() => setShowVideoSecret(!showVideoSecret)}
+                          className="text-slate-400 hover:text-slate-600 pr-2"
+                        >
+                          {showVideoSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Fallback Default Room Name (optional)
+                  </label>
+                  <Input
+                    type="text"
+                    value={videoConfig.classinDefaultRoomName || ""}
+                    onChange={(e) => setVideoConfig({ ...videoConfig, classinDefaultRoomName: e.target.value })}
+                    placeholder="e.g. sabina-main-room"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Used if the Partner API is unavailable. Leave blank to require API-based room creation.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ─── Google Meet Credentials ─── */}
+            {videoConfig.activeProvider === "google_meet" && (
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Key className="h-4 w-4 text-emerald-600" /> Google Meet / Calendar API Credentials
+                </h4>
+                <div className="rounded-2xl bg-emerald-50/50 border border-emerald-100 p-3 space-y-1">
+                  <p className="text-[11px] text-emerald-800">
+                    <strong>Where to get credentials:</strong> Go to{" "}
+                    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="underline">Google Cloud Console → APIs & Services → Credentials</a>.
+                    Create an OAuth 2.0 Client ID (Web Application) and enable the Google Calendar API.
+                    Authorized redirect URIs should include your app URL.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Google OAuth Client ID *
+                    </label>
+                    <Input
+                      type="text"
+                      value={videoConfig.googleClientId || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, googleClientId: e.target.value })}
+                      placeholder="123456789-xxxx.apps.googleusercontent.com"
+                      leftIcon={<Key className="h-4 w-4" />}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Google OAuth Client Secret *
+                    </label>
+                    <Input
+                      type={showVideoSecret ? "text" : "password"}
+                      value={videoConfig.googleClientSecret || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, googleClientSecret: e.target.value })}
+                      placeholder={videoConfig.googleClientSecretMasked || "GOCSPX-••••••••"}
+                      leftIcon={<Lock className="h-4 w-4" />}
+                      rightElement={
+                        <button
+                          type="button"
+                          onClick={() => setShowVideoSecret(!showVideoSecret)}
+                          className="text-slate-400 hover:text-slate-600 pr-2"
+                        >
+                          {showVideoSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Fallback Default Meet Link (optional)
+                  </label>
+                  <Input
+                    type="url"
+                    value={videoConfig.googleMeetDefaultLink || ""}
+                    onChange={(e) => setVideoConfig({ ...videoConfig, googleMeetDefaultLink: e.target.value })}
+                    placeholder="https://meet.google.com/abc-defg-hij"
+                    leftIcon={<ExternalLink className="h-4 w-4" />}
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    A recurring Google Meet room link used as fallback. The API will generate unique per-lesson links when credentials are configured.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ─── Zoom Credentials ─── */}
+            {videoConfig.activeProvider === "zoom" && (
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Key className="h-4 w-4 text-sky-600" /> Zoom Server-to-Server OAuth Credentials
+                </h4>
+                <div className="rounded-2xl bg-sky-50/50 border border-sky-100 p-3">
+                  <p className="text-[11px] text-sky-800">
+                    <strong>Where to get credentials:</strong> Go to{" "}
+                    <a href="https://marketplace.zoom.us/develop/create" target="_blank" rel="noreferrer" className="underline">Zoom Marketplace → Develop → Build App</a>.
+                    Select <strong>Server-to-Server OAuth</strong>, then find your Account ID, Client ID, and Client Secret under App Credentials.
+                  </p>
+                </div>
+
+                {/* SDK Mode toggle */}
+                <div className="flex items-center gap-3 p-3 rounded-2xl border border-slate-200 bg-slate-50/60">
+                  <div className="flex-1">
+                    <strong className="block text-xs font-bold text-slate-900">Integration Mode</strong>
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      <strong>Server-to-Server OAuth</strong> — creates Zoom meetings via REST API (recommended). Attendees join via a standard Zoom meeting URL.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded-full">OAuth</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Account ID *
+                    </label>
+                    <Input
+                      type="text"
+                      value={videoConfig.zoomAccountId || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, zoomAccountId: e.target.value })}
+                      placeholder="AbCdEfGhIjKlMn"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Client ID (API Key) *
+                    </label>
+                    <Input
+                      type="text"
+                      value={videoConfig.zoomApiKey || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, zoomApiKey: e.target.value })}
+                      placeholder="ZoomClientId123"
+                      leftIcon={<Key className="h-4 w-4" />}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Client Secret (API Secret) *
+                    </label>
+                    <Input
+                      type={showVideoSecret ? "text" : "password"}
+                      value={videoConfig.zoomApiSecret || ""}
+                      onChange={(e) => setVideoConfig({ ...videoConfig, zoomApiSecret: e.target.value })}
+                      placeholder={videoConfig.zoomApiSecretMasked || "••••••••••••••••"}
+                      leftIcon={<Lock className="h-4 w-4" />}
+                      rightElement={
+                        <button
+                          type="button"
+                          onClick={() => setShowVideoSecret(!showVideoSecret)}
+                          className="text-slate-400 hover:text-slate-600 pr-2"
+                        >
+                          {showVideoSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Fallback Default Zoom Meeting URL (optional)
+                  </label>
+                  <Input
+                    type="url"
+                    value={videoConfig.zoomDefaultMeetingUrl || ""}
+                    onChange={(e) => setVideoConfig({ ...videoConfig, zoomDefaultMeetingUrl: e.target.value })}
+                    placeholder="https://zoom.us/j/1234567890?pwd=..."
+                    leftIcon={<ExternalLink className="h-4 w-4" />}
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    A recurring/permanent Zoom room URL used as fallback when credentials are not set or the API is unavailable.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* How It Works Info Box */}
+          <div className="rounded-2xl border border-violet-200 bg-violet-50/40 p-4 flex gap-3">
+            <Info className="h-5 w-5 text-violet-600 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-violet-900">How automatic meeting generation works</p>
+              <p className="text-[11px] text-violet-700 leading-relaxed">
+                When a student or tutor opens a lesson classroom, Sabina automatically calls the selected provider's API using the credentials stored here to generate a unique meeting link for that session — no manual meeting creation needed.
+                For <strong>Livekit</strong>, a secure JWT token is generated. For <strong>Zoom</strong>, a meeting is created via the REST API. For <strong>ClassIn</strong>, a lesson room is provisioned via the Partner API. For <strong>Google Meet</strong>, a Calendar event with a Meet link is created.
+              </p>
+            </div>
+          </div>
+
+          {/* Submit CTA */}
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-xs text-slate-400">
+              Active provider takes effect immediately for all new sessions.
+            </span>
+            <Button
+              type="submit"
+              disabled={saving}
+              className="bg-violet-700 hover:bg-violet-800 text-white font-bold px-6 shadow-xs flex items-center gap-2"
+            >
+              <MonitorPlay className="h-4 w-4" />
+              <span>{saving ? "Saving..." : "Save Live Classroom Settings"}</span>
             </Button>
           </div>
         </form>

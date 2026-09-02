@@ -713,6 +713,18 @@ export const adminService = {
     });
   },
 
+  // ─── Video Provider & Live Classroom Configuration ─────────────────────────
+  async getVideoProviderConfig(): Promise<any> {
+    return apiFetch<any>('/settings/video-providers');
+  },
+
+  async updateVideoProviderConfig(payload: any): Promise<{ success: boolean; config?: any }> {
+    return apiFetch<{ success: boolean; config?: any }>('/settings/video-providers', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
   // ─── Blog Articles & Editorial CMS ────────────────────────────────────────
   async getAdminBlogs(options: {
     search?: string;
