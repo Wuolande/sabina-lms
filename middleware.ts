@@ -32,9 +32,11 @@ export async function middleware(request: NextRequest) {
   // issues with cross-browser cookies, so just do it here.
   const {
     data: { user },
+    error: authError
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+  console.log(`[Middleware] Path: ${pathname} | User ID: ${user?.id} | Auth Error: ${authError?.message}`);
 
   // 1. Public Routes bypass check completely
   if (

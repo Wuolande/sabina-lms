@@ -133,7 +133,7 @@ export async function getAdminContext(request: NextRequest): Promise<UserContext
 
     const { data: profile, error: profileError } = await adminSupabase
       .from('users')
-      .select('id, email, display_name, roles:user_roles(role_id)')
+      .select('id, email, display_name, roles:user_roles!user_roles_user_id_fkey(role_id)')
       .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
       .single();
 
@@ -188,7 +188,7 @@ export async function getTutorContext(request: NextRequest): Promise<{ tutorProf
 
     const { data: profile } = await adminSupabase
       .from('users')
-      .select('id, display_name, tutor:tutor_profiles(id)')
+      .select('id, display_name, tutor:tutor_profiles!tutor_profiles_user_id_fkey(id)')
       .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
       .single();
 
