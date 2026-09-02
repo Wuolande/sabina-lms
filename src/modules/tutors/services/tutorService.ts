@@ -15,7 +15,7 @@
  */
 
 import { tutorRepository } from '../repositories/tutorRepository';
-import { Tutor360Aggregate, UpdateTutorPayload } from '../domain/types';
+import { Tutor360Aggregate } from '../domain/types';
 import { NotFoundError, ValidationError } from '@/src/shared/errors';
 import { auditRepository } from '@/src/shared/audit/auditRepository';
 import { UserContext } from '@/src/shared/permissions/rbac';
