@@ -8,6 +8,8 @@ import { Booking360Aggregate, CreateBookingPayload } from '../domain/types';
 import { NotFoundError, ValidationError } from '@/src/shared/errors';
 import { auditRepository } from '@/src/shared/audit/auditRepository';
 import { UserContext } from '@/src/shared/permissions/rbac';
+import { getPlatformPolicies } from '@/src/shared/config/platformPolicies';
+import { adminSupabase } from '@/src/shared/database/supabase';
 
 export class BookingService {
   async listBookings(options: {
@@ -35,6 +37,32 @@ export class BookingService {
     }
     if (!payload.startTime) {
       throw new ValidationError('A valid start time is required.');
+    }
+
+    const policies = await getPlatformPolicies();
+    
+    // Validate price based on tutor's hourly rate and possible trial discount
+    const tutorProfile = await adminSupabase
+      .from('tutor_profiles')
+      .select('hourly_rate')
+      .eq('id', payload.tutorId)
+      .single();
+      
+    if (tutorProfile.data) {
+      const hourlyRate = Number(tutorProfile.data.hourly_rate);
+      let expectedPrice = (hourlyRate * payload.durationMinutes) / 60;
+      
+      // If client marked this as a trial, apply platform trial discount
+      // E.g. we might infer it's a trial based on a specific flag or price.
+      // For now, if the requested price is lower, we check if it matches the trial discount.
+      const requestedPrice = Number(payload.price);
+      const trialDiscountedPrice = expectedPrice * (1 - policies.trialLessonDiscountPercent / 100);
+      
+      const margin = 0.5; // Allow small rounding error (cents)
+      if (Math.abs(requestedPrice - expectedPrice) > margin && Math.abs(requestedPrice - trialDiscountedPrice) > margin) {
+         // The requested price is neither the full price nor the exact trial price
+         console.warn(`[BookingService] Client requested price ${requestedPrice} but expected ${expectedPrice} or trial ${trialDiscountedPrice}. Accepting as custom price but logging.`);
+      }
     }
 
     const result = await bookingRepository.createBookingAtomic(payload);

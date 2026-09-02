@@ -15,10 +15,11 @@
  */
 
 import { tutorRepository } from '../repositories/tutorRepository';
-import { Tutor360Aggregate } from '../domain/types';
+import { Tutor360Aggregate, UpdateTutorPayload } from '../domain/types';
 import { NotFoundError, ValidationError } from '@/src/shared/errors';
 import { auditRepository } from '@/src/shared/audit/auditRepository';
 import { UserContext } from '@/src/shared/permissions/rbac';
+import { getPlatformPolicies } from '@/src/shared/config/platformPolicies';
 
 export class TutorService {
   /**
@@ -223,8 +224,11 @@ export class TutorService {
    * Atomically update public profile and user information.
    */
   async updatePublicProfile(tutorProfileId: string, payload: any) {
-    if (payload.hourlyRate !== undefined && (payload.hourlyRate < 1 || payload.hourlyRate > 10000)) {
-      throw new ValidationError('Hourly rate must be between $1 and $10,000.');
+    if (payload.hourlyRate !== undefined) {
+      const policies = await getPlatformPolicies();
+      if (payload.hourlyRate < policies.tutorMinHourlyRate || payload.hourlyRate > policies.tutorMaxHourlyRate) {
+        throw new ValidationError(`Hourly rate must be between $${policies.tutorMinHourlyRate} and $${policies.tutorMaxHourlyRate}.`);
+      }
     }
     return tutorRepository.updatePublicProfileAtomic(tutorProfileId, payload);
   }
@@ -244,8 +248,11 @@ export class TutorService {
    * Update tutor settings, rates, discounts, and payouts.
    */
   async updateSettings(tutorProfileId: string, payload: any) {
-    if (payload.hourlyRate !== undefined && (payload.hourlyRate < 1 || payload.hourlyRate > 10000)) {
-      throw new ValidationError('Hourly rate must be between $1 and $10,000.');
+    if (payload.hourlyRate !== undefined) {
+      const policies = await getPlatformPolicies();
+      if (payload.hourlyRate < policies.tutorMinHourlyRate || payload.hourlyRate > policies.tutorMaxHourlyRate) {
+        throw new ValidationError(`Hourly rate must be between $${policies.tutorMinHourlyRate} and $${policies.tutorMaxHourlyRate}.`);
+      }
     }
     return tutorRepository.updateSettingsAtomic(tutorProfileId, payload);
   }

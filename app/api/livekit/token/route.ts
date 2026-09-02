@@ -20,6 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AccessToken } from 'livekit-server-sdk';
 import { adminSupabase } from '@/src/shared/database/supabase';
+import { getPlatformPolicies } from '@/src/shared/config/platformPolicies';
 
 // ─── Resolve Livekit credentials ──────────────────────────────────────────────
 
@@ -63,9 +64,9 @@ async function getLivekitCredentials(): Promise<{ apiKey: string; apiSecret: str
 async function verifyRoomParticipant(
   roomId: string,
   userId: string
-): Promise<{ allowed: boolean; identity: string; displayName: string }> {
+): Promise<{ allowed: boolean; identity: string; displayName: string; isStudent?: boolean; scheduledStart?: string | null }> {
   if (!userId) {
-    return { allowed: false, identity: '', displayName: '' };
+    return { allowed: false, identity: '', displayName: '', isStudent: false, scheduledStart: null };
   }
 
   // Look up the lesson by video_room_id; check student or tutor match
@@ -75,6 +76,7 @@ async function verifyRoomParticipant(
       id,
       student_id,
       video_room_id,
+      scheduled_start,
       bookings!inner (
         tutor_id,
         tutors!inner (
@@ -92,6 +94,8 @@ async function verifyRoomParticipant(
       allowed: isDev,
       identity: userId,
       displayName: 'Participant',
+      isStudent: false,
+      scheduledStart: null,
     };
   }
 
@@ -103,6 +107,8 @@ async function verifyRoomParticipant(
     allowed: isStudent || isTutor,
     identity: userId,
     displayName: isStudent ? 'Student' : isTutor ? 'Tutor' : 'Participant',
+    isStudent,
+    scheduledStart: lesson.scheduled_start,
   };
 }
 
@@ -123,13 +129,28 @@ export async function GET(req: NextRequest) {
     const userId = req.headers.get('x-auth-user-id') || identityParam || `anon-${Date.now()}`;
 
     // Verify participant
-    const { allowed, identity, displayName } = await verifyRoomParticipant(room, userId);
+    const { allowed, identity, displayName, isStudent, scheduledStart } = await verifyRoomParticipant(room, userId);
 
     if (!allowed) {
       return NextResponse.json(
         { error: 'You are not a participant in this classroom session.' },
         { status: 403 }
       );
+    }
+
+    if (isStudent && scheduledStart) {
+      const policies = await getPlatformPolicies();
+      const earlyJoinMinutes = policies.classroomEarlyJoinMinutes || 15;
+      const scheduledTime = new Date(scheduledStart).getTime();
+      const now = Date.now();
+      
+      const thresholdTime = scheduledTime - (earlyJoinMinutes * 60 * 1000);
+      if (now < thresholdTime) {
+        return NextResponse.json(
+          { error: `The classroom will open ${earlyJoinMinutes} minutes before the scheduled start time.` },
+          { status: 403 }
+        );
+      }
     }
 
     // Resolve credentials

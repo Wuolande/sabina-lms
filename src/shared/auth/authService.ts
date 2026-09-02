@@ -2,23 +2,25 @@
  * Authentication & Session Management Module
  * -----------------------------------------------------------------------
  * Supabase Auth wrapper providing:
- *  - Email/password sign up, sign in, sign out
- *  - Password reset request & update
- *  - Session token verification (JWT)
+ *  - Session token verification (JWT) via @supabase/ssr
  *  - Role-based UserContext extraction for API routes
- *  - Development-mode fallback bypass
  * -----------------------------------------------------------------------
  */
 
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest } from 'next/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { UserContext } from '../permissions/rbac';
-import { UserRole } from '../permissions/roles';
 import { UnauthorizedError } from '../errors';
+import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || supabaseAnonKey;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+const adminSupabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 
 export interface SignUpPayload {
   email: string;
@@ -37,16 +39,6 @@ export interface AuthResult {
   userId?: string;
   error?: string;
 }
-
-// ─── Development Demo Fallback User ──────────────────────────────────────────
-const DEV_ADMIN_CONTEXT: UserContext = {
-  id: '01e7aeaa-1da1-4a61-bb8d-886b39844867',
-  email: 'admin@sabinaedge.com',
-  displayName: 'System Administrator',
-  roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
-};
-
-// ─── Client Authentication Functions ─────────────────────────────────────────
 
 export async function signUp(payload: SignUpPayload): Promise<AuthResult> {
   const client = createClient(supabaseUrl, supabaseAnonKey);
@@ -107,39 +99,39 @@ export async function updatePassword(newPassword: string): Promise<AuthResult> {
   return { success: true };
 }
 
-// ─── Server-side Session Context Extraction ──────────────────────────────────
-
-function extractToken(request: NextRequest): string | null {
-  const authHeader = request.headers.get('Authorization');
-  const cookieToken =
-    request.cookies.get('sb-access-token')?.value ||
-    request.cookies.get(`sb-${supabaseUrl.split('.')[0].split('//')[1]}-auth-token`)?.value;
-
-  return authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : cookieToken || null;
+async function getServerSupabase() {
+  const cookieStore = await cookies();
+  return createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // Ignored if called from a Server Component
+        }
+      },
+    },
+  });
 }
 
 /**
  * Extracts the admin UserContext from an incoming Next.js API route request.
  */
 export async function getAdminContext(request: NextRequest): Promise<UserContext> {
-  const token = extractToken(request);
-
-  if (!token) {
-    throw new UnauthorizedError();
-  }
-
   try {
-    const adminClient = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
-    const { data: { user }, error: authError } = await adminClient.auth.getUser(token);
+    const supabase = await getServerSupabase();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       throw new UnauthorizedError();
     }
 
-    const { data: profile, error: profileError } = await adminClient
+    const { data: profile, error: profileError } = await adminSupabase
       .from('users')
       .select('id, email, display_name, roles:user_roles(role_id)')
       .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
@@ -166,62 +158,59 @@ export async function getAdminContext(request: NextRequest): Promise<UserContext
  * Extracts the current student's User ID from session.
  */
 export async function getStudentContext(request: NextRequest): Promise<{ userId: string; email: string; displayName: string }> {
-  const token = extractToken(request);
-  if (!token) throw new UnauthorizedError();
+  try {
+    const supabase = await getServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new UnauthorizedError();
 
-  const adminClient = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+    const { data: profile } = await adminSupabase
+      .from('users')
+      .select('id, email, display_name')
+      .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
+      .single();
 
-  const { data: { user } } = await adminClient.auth.getUser(token);
-  if (!user) throw new UnauthorizedError();
+    if (!profile) throw new UnauthorizedError();
 
-  const { data: profile } = await adminClient
-    .from('users')
-    .select('id, email, display_name')
-    .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
-    .single();
-
-  if (!profile) throw new UnauthorizedError();
-
-  return { userId: profile.id, email: profile.email, displayName: profile.display_name };
+    return { userId: profile.id, email: profile.email, displayName: profile.display_name };
+  } catch {
+    throw new UnauthorizedError();
+  }
 }
 
 /**
- * Extracts the current tutor's Profile ID from session or resolves to first registered tutor.
+ * Extracts the current tutor's Profile ID from session.
  */
 export async function getTutorContext(request: NextRequest): Promise<{ tutorProfileId: string; userId: string; displayName: string }> {
-  const token = extractToken(request);
-  if (!token) throw new UnauthorizedError();
+  try {
+    const supabase = await getServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new UnauthorizedError();
 
-  const adminClient = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+    const { data: profile } = await adminSupabase
+      .from('users')
+      .select('id, display_name, tutor:tutor_profiles(id)')
+      .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
+      .single();
 
-  const { data: { user } } = await adminClient.auth.getUser(token);
-  if (!user) throw new UnauthorizedError();
+    if (!profile || !(profile as any).tutor?.[0]?.id) {
+      throw new UnauthorizedError();
+    }
 
-  const { data: profile } = await adminClient
-    .from('users')
-    .select('id, display_name, tutor:tutor_profiles(id)')
-    .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
-    .single();
-
-  if (!profile || !(profile as any).tutor?.[0]?.id) {
+    return {
+      tutorProfileId: (profile as any).tutor[0].id,
+      userId: profile.id,
+      displayName: profile.display_name,
+    };
+  } catch {
     throw new UnauthorizedError();
   }
-
-  return {
-    tutorProfileId: (profile as any).tutor[0].id,
-    userId: profile.id,
-    displayName: profile.display_name,
-  };
 }
 
 export async function isAuthenticated(request: NextRequest): Promise<boolean> {
   try {
-    await getAdminContext(request);
-    return true;
+    const supabase = await getServerSupabase();
+    const { data: { user } } = await supabase.auth.getUser();
+    return !!user;
   } catch {
     return false;
   }
