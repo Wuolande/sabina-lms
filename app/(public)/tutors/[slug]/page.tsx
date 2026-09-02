@@ -917,15 +917,15 @@ export default function TutorProfilePage() {
                   </div>
 
                   <p className="text-xs text-slate-700 leading-relaxed">
-                    &ldquo;{rev.reviewText}&rdquo;
+                    &ldquo;{rev.comment || rev.reviewText}&rdquo;
                   </p>
 
-                  {rev.tutorResponse && (
+                  {(rev.tutorReply || rev.tutorResponse) && (
                     <div className="mt-2 ml-4 p-3 rounded-xl bg-slate-50 border-l-2 border-brand-700 text-xs space-y-1">
                       <strong className="text-[11px] font-bold text-slate-800">
                         {tutorDisplayName} (Tutor Response):
                       </strong>
-                      <p className="text-slate-600">{rev.tutorResponse}</p>
+                      <p className="text-slate-600">{rev.tutorReply || rev.tutorResponse}</p>
                     </div>
                   )}
                 </div>
