@@ -301,7 +301,7 @@ export function PreClassWaitingRoom({
                     : "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-bold"
                 }
               >
-                {isTrial ? "🎁 Free Trial Lesson (25 min)" : `Standard Class (${durationMin} min)`}
+                {isTrial ? "✨ Intro Trial Lesson (25 min)" : `Standard Class (${durationMin} min)`}
               </Badge>
               <span className="text-xs text-slate-400">Ref: {lesson.bookingRef}</span>
             </div>

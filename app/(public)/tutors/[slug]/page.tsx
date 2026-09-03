@@ -92,6 +92,19 @@ export default function TutorProfilePage() {
   const [selectedScheduleTime, setSelectedScheduleTime] = React.useState<string>("14:00");
   const [expandedFaq, setExpandedFaq] = React.useState<number | null>(0);
   const [copiedLink, setCopiedLink] = React.useState(false);
+  const [trialDiscountPercent, setTrialDiscountPercent] = React.useState<number>(30);
+
+  // Sync trial policy discount from platform settings
+  React.useEffect(() => {
+    fetch("/api/policies")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.trialLessonDiscountPercent === "number") {
+          setTrialDiscountPercent(data.trialLessonDiscountPercent);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSelectSlot = React.useCallback((date: string, time: string) => {
     setSelectedScheduleDate(date);
@@ -1000,17 +1013,40 @@ export default function TutorProfilePage() {
               </Badge>
             </div>
 
-            {/* Trial Offer Card */}
-            <div className="rounded-2xl bg-brand-50/80 p-4 border border-brand-100 space-y-1.5">
-              <span className="text-xs font-extrabold text-brand-800 flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-brand-700 fill-brand-600" />
-                50% Off Intro Trial Lesson
-              </span>
-              <p className="text-xs text-brand-950/80 leading-relaxed">
-                Book a 25-minute test lesson for only{" "}
-                <strong>{formatCurrency(Math.round(tutorHourlyRate / 2), tutorCurrency)}</strong>. If you are not completely satisfied, we issue a 100% full refund.
-              </p>
-            </div>
+            {/* Trial Offer Card — Synced with Admin Policy */}
+            {(() => {
+              const base25 = Math.round(tutorHourlyRate / 2);
+              const trialPrice = Math.max(0, Math.round(base25 * (1 - trialDiscountPercent / 100)));
+
+              return (
+                <div className="rounded-2xl bg-brand-50/80 p-4 border border-brand-100 space-y-1.5">
+                  <span className="text-xs font-extrabold text-brand-800 flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-brand-700 fill-brand-600" />
+                    {trialDiscountPercent === 100
+                      ? "100% Free Intro Trial Lesson"
+                      : trialDiscountPercent > 0
+                      ? `${trialDiscountPercent}% Off Intro Trial Lesson`
+                      : "25-Minute Intro Lesson"}
+                  </span>
+                  <p className="text-xs text-brand-950/80 leading-relaxed">
+                    Book a 25-minute test lesson for{" "}
+                    {trialDiscountPercent === 100 ? (
+                      <strong className="text-emerald-700 font-bold">Free ($0)</strong>
+                    ) : (
+                      <>
+                        only <strong>{formatCurrency(trialPrice, tutorCurrency)}</strong>
+                        {trialDiscountPercent > 0 && (
+                          <span className="text-slate-400 line-through text-[11px] ml-1.5 font-normal">
+                            {formatCurrency(base25, tutorCurrency)}
+                          </span>
+                        )}
+                      </>
+                    )}
+                    . If you are not completely satisfied, we issue a 100% full refund.
+                  </p>
+                </div>
+              );
+            })()}
 
             {/* CTAs */}
             <div className="space-y-3">

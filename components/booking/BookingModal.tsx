@@ -312,8 +312,17 @@ export function BookingModal({
                 <p className="text-xs text-slate-500 mt-1 line-clamp-2">
                   Targeted question solving & concept check.
                 </p>
-                <div className="mt-3 pt-2 border-t border-slate-100 font-extrabold text-slate-950 text-sm">
-                  {formatCurrency(trialPrice, tutor.currency)}
+                <div className="mt-3 pt-2 border-t border-slate-100 font-extrabold text-slate-950 text-sm flex items-center gap-1.5">
+                  {trialDiscountPercent > 0 && trialDiscountPercent < 100 && (
+                    <span className="text-slate-400 line-through text-xs font-normal">
+                      {formatCurrency(basePrice25, currency)}
+                    </span>
+                  )}
+                  <span>
+                    {trialDiscountPercent === 100
+                      ? "Free ($0)"
+                      : formatCurrency(trialPrice, currency)}
+                  </span>
                 </div>
               </button>
 
