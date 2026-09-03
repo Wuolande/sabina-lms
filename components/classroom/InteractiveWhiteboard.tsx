@@ -659,258 +659,245 @@ export function InteractiveWhiteboard({
         </div>
       )}
 
-      {/* ─── CLASSIN-GRADE FLOATING BOTTOM TOOLBAR ─── */}
+      {/* ─── CLASSIN-GRADE FLOATING BOTTOM TOOLBAR (2-TIER COMPACT DESIGN) ─── */}
       {!canDraw ? (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 bg-slate-900/95 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-slate-300 text-xs font-bold select-none">
           <Lock className="h-4 w-4 text-amber-400 shrink-0" />
           <span>Whiteboard in View Mode • Awaiting Tutor Pen Authorization</span>
         </div>
       ) : (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-white">
-        
-        {/* Pen */}
-        <button
-          type="button"
-          onClick={() => setCurrentTool("pen")}
-          title="Pen Tool (Draw freehand)"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "pen"
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
-
-        {/* Highlighter */}
-        <button
-          type="button"
-          onClick={() => setCurrentTool("highlighter")}
-          title="Highlighter Tool (Translucent)"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "highlighter"
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Highlighter className="h-4 w-4" />
-        </button>
-
-        {/* Eraser */}
-        <button
-          type="button"
-          onClick={() => setCurrentTool("eraser")}
-          title="Eraser Tool"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "eraser"
-              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Eraser className="h-4 w-4" />
-        </button>
-
-        {/* Shapes Group */}
-        <div className="h-5 w-px bg-slate-700 mx-1" />
-
-        <button
-          type="button"
-          onClick={() => setCurrentTool("line")}
-          title="Straight Line"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "line"
-              ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Slash className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCurrentTool("arrow")}
-          title="Arrow Pointer"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "arrow"
-              ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <ArrowUpRight className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCurrentTool("rect")}
-          title="Rectangle Shape"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "rect"
-              ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Square className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCurrentTool("circle")}
-          title="Circle / Ellipse"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "circle"
-              ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Circle className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCurrentTool("triangle")}
-          title="Triangle Shape"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "triangle"
-              ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Triangle className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCurrentTool("graph")}
-          title="Math Coordinate Axes (X-Y Plane)"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "graph"
-              ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Compass className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCurrentTool("text")}
-          title="Text Tool"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "text"
-              ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Type className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setCurrentTool("laser")}
-          title="Laser Pointer (Live glowing trail)"
-          className={`p-2 rounded-xl transition ${
-            currentTool === "laser"
-              ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
-          }`}
-        >
-          <Sparkles className="h-4 w-4" />
-        </button>
-
-        {/* Color Palette */}
-        <div className="h-5 w-px bg-slate-700 mx-1" />
-
-        <div className="flex items-center gap-1">
-          {COLOR_PALETTE.map((c) => (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5 bg-slate-900/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-white select-none">
+          
+          {/* TIER 1: Tools, Shapes, Backgrounds & Canvas Actions */}
+          <div className="flex items-center gap-1 flex-wrap justify-center">
+            {/* Pen */}
             <button
-              key={c}
               type="button"
-              onClick={() => setSelectedColor(c)}
-              style={{ backgroundColor: c }}
-              className={`h-5 w-5 rounded-full border transition ${
-                selectedColor === c ? "border-white scale-125 ring-2 ring-indigo-500 shadow-sm" : "border-slate-600 hover:scale-110"
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Stroke Widths */}
-        <div className="h-5 w-px bg-slate-700 mx-1" />
-
-        <div className="flex items-center gap-1">
-          {STROKE_WIDTHS.map((w) => (
-            <button
-              key={w}
-              type="button"
-              onClick={() => setStrokeWidth(w)}
-              className={`p-1.5 rounded-lg transition text-[10px] font-bold ${
-                strokeWidth === w
-                  ? "bg-slate-800 text-white ring-1 ring-slate-500"
-                  : "text-slate-400 hover:text-white"
+              onClick={() => setCurrentTool("pen")}
+              title="Pen Tool (Draw freehand)"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "pen"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <div
-                style={{ height: w, width: 14 }}
-                className="bg-current rounded-full mx-auto"
-              />
+              <Pencil className="h-4 w-4" />
             </button>
-          ))}
+
+            {/* Highlighter */}
+            <button
+              type="button"
+              onClick={() => setCurrentTool("highlighter")}
+              title="Highlighter Tool"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "highlighter"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Highlighter className="h-4 w-4" />
+            </button>
+
+            {/* Eraser */}
+            <button
+              type="button"
+              onClick={() => setCurrentTool("eraser")}
+              title="Eraser Tool"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "eraser"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Eraser className="h-4 w-4" />
+            </button>
+
+            <div className="h-4 w-px bg-slate-700 mx-0.5" />
+
+            {/* Shapes */}
+            <button
+              type="button"
+              onClick={() => setCurrentTool("line")}
+              title="Straight Line"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "line" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Slash className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentTool("arrow")}
+              title="Arrow Pointer"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "arrow" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <ArrowUpRight className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentTool("rect")}
+              title="Rectangle Shape"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "rect" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Square className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentTool("circle")}
+              title="Circle / Ellipse"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "circle" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Circle className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentTool("triangle")}
+              title="Triangle Shape"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "triangle" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Triangle className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentTool("graph")}
+              title="Math Coordinate Axes (X-Y Plane)"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "graph" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Compass className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentTool("text")}
+              title="Text Tool"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "text" ? "bg-indigo-600 text-white" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Type className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCurrentTool("laser")}
+              title="Laser Pointer (Live glowing trail)"
+              className={`p-1.5 rounded-xl transition ${
+                currentTool === "laser" ? "bg-rose-600 text-white shadow-md shadow-rose-600/30" : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+            </button>
+
+            <div className="h-4 w-px bg-slate-700 mx-0.5" />
+
+            {/* Background Texture Selector */}
+            <select
+              value={backgroundType}
+              onChange={(e) => setBackgroundType(e.target.value as BackgroundType)}
+              className="rounded-xl border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] font-bold text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="math_grid">📐 Math Grid</option>
+              <option value="blank">📄 Blank White</option>
+              <option value="dot_grid">⚬ Dot Grid</option>
+              <option value="lined">📝 Lined Paper</option>
+              <option value="chalkboard">⬛ Chalkboard</option>
+            </select>
+
+            <div className="h-4 w-px bg-slate-700 mx-0.5" />
+
+            {/* Undo, Redo, Clear, Export */}
+            <button
+              type="button"
+              onClick={handleUndo}
+              title="Undo (Ctrl+Z)"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleRedo}
+              title="Redo (Ctrl+Y)"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClearBoard}
+              title="Clear Entire Page"
+              className="p-1.5 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-900/30 transition"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleExportImage}
+              title="Export Canvas as PNG"
+              className="p-1.5 rounded-xl text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30 transition"
+            >
+              <Download className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* TIER 2: Colors & Line Thickness */}
+          <div className="flex items-center gap-2 pt-1 border-t border-slate-800/80 w-full justify-center">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Color</span>
+            <div className="flex items-center gap-1.5">
+              {COLOR_PALETTE.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setSelectedColor(c)}
+                  style={{ backgroundColor: c }}
+                  className={`h-4.5 w-4.5 rounded-full border transition ${
+                    selectedColor === c
+                      ? "border-white scale-125 ring-2 ring-indigo-500 shadow-sm"
+                      : "border-slate-600 hover:scale-110"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <div className="h-3 w-px bg-slate-700 mx-1" />
+
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Size</span>
+            <div className="flex items-center gap-1">
+              {STROKE_WIDTHS.map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  onClick={() => setStrokeWidth(w)}
+                  className={`px-2 py-1 rounded-lg transition text-[10px] font-bold ${
+                    strokeWidth === w
+                      ? "bg-slate-800 text-white ring-1 ring-slate-500"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  <div style={{ height: w, width: 14 }} className="bg-current rounded-full mx-auto" />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-
-        {/* Background Selector */}
-        <div className="h-5 w-px bg-slate-700 mx-1" />
-
-        <select
-          value={backgroundType}
-          onChange={(e) => setBackgroundType(e.target.value as BackgroundType)}
-          className="rounded-xl border border-slate-700 bg-slate-800 px-2.5 py-1 text-[11px] font-bold text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        >
-          <option value="math_grid">📐 Math Grid</option>
-          <option value="blank">📄 Blank White</option>
-          <option value="dot_grid">⚬ Dot Grid</option>
-          <option value="lined">📝 Lined Paper</option>
-          <option value="chalkboard">⬛ Chalkboard</option>
-        </select>
-
-        {/* Actions (Undo/Redo/Clear/Export) */}
-        <div className="h-5 w-px bg-slate-700 mx-1" />
-
-        <button
-          type="button"
-          onClick={handleUndo}
-          title="Undo (Ctrl+Z)"
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
-        >
-          <Undo2 className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={handleRedo}
-          title="Redo (Ctrl+Y)"
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
-        >
-          <Redo2 className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={handleClearBoard}
-          title="Clear Entire Page"
-          className="p-2 rounded-xl text-rose-400 hover:text-rose-300 hover:bg-rose-900/30 transition"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
-          onClick={handleExportImage}
-          title="Export Canvas as PNG"
-          className="p-2 rounded-xl text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30 transition"
-        >
-          <Download className="h-4 w-4" />
-        </button>
-      </div>
       )}
 
       {/* ─── MULTI-PAGE CONTROLLER (Top-Right) ─── */}

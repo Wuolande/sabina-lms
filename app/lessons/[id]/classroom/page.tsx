@@ -47,7 +47,6 @@ import { ClassinToolsWidget } from "@/components/classroom/ClassinToolsWidget";
 import { ClassroomSidebar } from "@/components/classroom/ClassroomSidebar";
 import { CelebrationOverlay } from "@/components/classroom/CelebrationOverlay";
 import { DeviceSettingsModal } from "@/components/classroom/DeviceSettingsModal";
-import { ClassroomBottomDock } from "@/components/classroom/ClassroomBottomDock";
 import { PreClassWaitingRoom } from "@/components/classroom/PreClassWaitingRoom";
 
 // ─── Provider display metadata for non-livekit fallbacks ──────────────────────
@@ -139,6 +138,10 @@ function ClassinClassroomStage({
 
   // Local media stream fallback (ensures user always sees their camera)
   const [localMediaStream, setLocalMediaStream] = React.useState<MediaStream | null>(null);
+  const screenStreamRef = React.useRef<MediaStream | null>(null);
+
+  // Floating moderation toast banner (prevents chat log pollution)
+  const [moderationToast, setModerationToast] = React.useState<string | null>(null);
 
   // Stage Layout mode
   const [layoutMode, setLayoutMode] = React.useState<StageLayoutMode>("classin_stage");
@@ -200,6 +203,12 @@ function ClassinClassroomStage({
         t.stop();
       });
       setLocalMediaStream(null);
+    }
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach((t) => {
+        t.stop();
+      });
+      screenStreamRef.current = null;
     }
     if (localParticipant) {
       localParticipant.videoTrackPublications.forEach((pub) => {
@@ -264,35 +273,21 @@ function ClassinClassroomStage({
           setSyncedTimer({ isRunning: data.isRunning, seconds: data.seconds });
         } else if (data.type === "WHITEBOARD_AUTH") {
           setIsWhiteboardAuthorized(data.isAuthorized);
-          setChatMessages((prev) => [
-            ...prev,
-            {
-              id: `sys-${Date.now()}`,
-              sender: "System",
-              senderRole: "SYSTEM",
-              text: data.isAuthorized
-                ? "✏️ Tutor authorized your drawing permissions on the whiteboard."
-                : "🔒 Whiteboard switched to view-only mode by the tutor.",
-              time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            },
-          ]);
+          setModerationToast(
+            data.isAuthorized
+              ? "✏️ Tutor has authorized your drawing permissions on the whiteboard."
+              : "🔒 Whiteboard switched to view-only mode by the tutor."
+          );
+          setTimeout(() => setModerationToast(null), 4000);
         } else if (data.type === "REMOTE_MUTE") {
           if (!isTutor) {
             setIsMicEnabled(false);
-            localParticipant?.setMicrophoneEnabled(false).catch(() => {});
             if (localMediaStream) {
               localMediaStream.getAudioTracks().forEach((t) => (t.enabled = false));
             }
-            setChatMessages((prev) => [
-              ...prev,
-              {
-                id: `sys-${Date.now()}`,
-                sender: "System",
-                senderRole: "SYSTEM",
-                text: "🔇 Your microphone was muted by the tutor.",
-                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-              },
-            ]);
+            localParticipant?.setMicrophoneEnabled(false).catch(() => {});
+            setModerationToast("🔇 Your microphone was muted by the tutor.");
+            setTimeout(() => setModerationToast(null), 4000);
           }
         } else if (data.type === "CHAT") {
           setChatMessages((prev) => [
@@ -369,59 +364,89 @@ function ClassinClassroomStage({
     broadcastData({ type: "CHAT", sender: currentUserName, senderRole: currentUserRole, text });
   };
 
-  // Media Toggles
-  const handleToggleMic = async () => {
+  // Media Toggles (Instant zero-lag local update with background WebRTC sync)
+  const handleToggleMic = () => {
     const next = !isMicEnabled;
     setIsMicEnabled(next);
-    if (localParticipant) {
-      await localParticipant.setMicrophoneEnabled(next).catch(() => {});
-    }
     if (localMediaStream) {
       localMediaStream.getAudioTracks().forEach((t) => (t.enabled = next));
     }
+    if (localParticipant) {
+      localParticipant.setMicrophoneEnabled(next).catch(() => {});
+    }
   };
 
-  const handleToggleCamera = async () => {
+  const handleToggleCamera = () => {
     const next = !isCameraEnabled;
     setIsCameraEnabled(next);
-    if (localParticipant) {
-      await localParticipant.setCameraEnabled(next).catch(() => {});
-    }
     if (localMediaStream) {
       localMediaStream.getVideoTracks().forEach((t) => (t.enabled = next));
+    }
+    if (localParticipant) {
+      localParticipant.setCameraEnabled(next).catch(() => {});
     }
   };
 
   const handleToggleScreenShare = async () => {
-    if (!localParticipant) return;
-    try {
-      const next = !isScreenSharing;
-      await localParticipant.setScreenShareEnabled(next);
-      setIsScreenSharing(next);
-    } catch (err) {
-      console.warn("Screen share error:", err);
+    if (isScreenSharing) {
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((t) => t.stop());
+        screenStreamRef.current = null;
+      }
+      if (localParticipant) {
+        localParticipant.setScreenShareEnabled(false).catch(() => {});
+      }
+      setIsScreenSharing(false);
+      setLayoutMode("classin_stage");
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        screenStreamRef.current = stream;
+        setIsScreenSharing(true);
+        setLayoutMode("screenshare");
+
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          videoTrack.onended = () => {
+            if (screenStreamRef.current) {
+              screenStreamRef.current.getTracks().forEach((t) => t.stop());
+              screenStreamRef.current = null;
+            }
+            setIsScreenSharing(false);
+            setLayoutMode("classin_stage");
+            if (localParticipant) {
+              localParticipant.setScreenShareEnabled(false).catch(() => {});
+            }
+          };
+        }
+
+        if (localParticipant) {
+          localParticipant.setScreenShareEnabled(true).catch(() => {});
+        }
+      } catch (err) {
+        console.warn("Screen share cancelled or error:", err);
+        setIsScreenSharing(false);
+      }
     }
   };
 
   // Tutor Moderation
   const handleRemoteMuteStudent = () => {
     broadcastData({ type: "REMOTE_MUTE" });
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: `sys-${Date.now()}`,
-        sender: "System",
-        senderRole: "SYSTEM",
-        text: "🔇 Remote mute command dispatched to student.",
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      },
-    ]);
+    setModerationToast("🔇 Sent mute command to student.");
+    setTimeout(() => setModerationToast(null), 3000);
   };
 
   const handleToggleWhiteboardAuth = () => {
     const next = !isWhiteboardAuthorized;
     setIsWhiteboardAuthorized(next);
     broadcastData({ type: "WHITEBOARD_AUTH", isAuthorized: next });
+    setModerationToast(
+      next
+        ? "✏️ Authorized student to draw on whiteboard."
+        : "🔒 Locked student whiteboard in view-only mode."
+    );
+    setTimeout(() => setModerationToast(null), 3000);
   };
 
   // Tracks query
@@ -435,6 +460,7 @@ function ClassinClassroomStage({
   // Identify Local & Remote video tracks
   const localCameraTrack = tracks.find((t) => t.participant.isLocal && t.source === Track.Source.Camera);
   const remoteCameraTrack = tracks.find((t) => !t.participant.isLocal && t.source === Track.Source.Camera);
+  const remoteScreenTrack = tracks.find((t) => !t.participant.isLocal && t.source === Track.Source.ScreenShare);
 
   // Check if remote peer is actually connected
   const remoteParticipant = participants.find((p) => !p.isLocal);
@@ -458,7 +484,7 @@ function ClassinClassroomStage({
 
   return (
     <div className="flex-1 flex flex-col bg-slate-950 overflow-hidden relative select-none">
-      {/* ─── CLASSROOM HEADER BAR ─── */}
+      {/* ─── CLASSROOM HEADER BAR WITH INTEGRATED MEDIA CONTROLS ─── */}
       <ClassroomHeader
         lessonTitle={lesson?.subject?.name || "1-on-1 Interactive Tutoring"}
         tutorName={tutorName}
@@ -471,7 +497,20 @@ function ClassinClassroomStage({
         latencyMs={24}
         durationMinutes={durationMin}
         isTrial={isTrial}
+        isMicEnabled={isMicEnabled}
+        isCameraEnabled={isCameraEnabled}
+        isScreenSharing={isScreenSharing}
+        onToggleMic={handleToggleMic}
+        onToggleCamera={handleToggleCamera}
+        onToggleScreenShare={handleToggleScreenShare}
       />
+
+      {/* ─── FLOATING MODERATION TOAST BANNER (Zero Chat Pollution) ─── */}
+      {moderationToast && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-slate-900/95 border border-slate-700 text-white px-4 py-2 rounded-2xl shadow-2xl font-bold text-xs animate-in fade-in slide-in-from-top-2">
+          <span>{moderationToast}</span>
+        </div>
+      )}
 
       {/* ─── MAIN STAGE VIEWPORT + SIDEBAR ─── */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -487,7 +526,7 @@ function ClassinClassroomStage({
         />
 
         {/* ─── STAGE CONTAINER ─── */}
-        <div className="flex-1 flex flex-col bg-slate-950 p-3 sm:p-4 pb-20 overflow-hidden relative">
+        <div className="flex-1 flex flex-col bg-slate-950 p-3 sm:p-4 overflow-hidden relative">
           
           {/* LAYOUT 1: CLASSIN STAGE (Top Video Strip + Big Whiteboard) */}
           {layoutMode === "classin_stage" && (
@@ -640,6 +679,71 @@ function ClassinClassroomStage({
               />
             </div>
           )}
+
+          {/* LAYOUT 4: SCREEN SHARE PRESENTATION */}
+          {(layoutMode === "screenshare" || (remoteScreenTrack && layoutMode !== "grid")) && (
+            <div className="flex-1 flex flex-col gap-3 overflow-hidden">
+              {/* Top Mini Video Strip */}
+              <div className="grid grid-cols-2 gap-3 h-32 shrink-0">
+                <ParticipantVideoCard
+                  displayName={isTutor ? `${tutorName} (You)` : tutorName}
+                  avatarUrl={lesson?.tutor?.avatarUrl}
+                  role="TUTOR"
+                  isLocal={isTutor}
+                  isConnected={isTutor || isRemoteConnected}
+                  isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
+                  isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
+                  onToggleMic={isTutor ? handleToggleMic : undefined}
+                  onToggleCamera={isTutor ? handleToggleCamera : undefined}
+                  videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                />
+                <ParticipantVideoCard
+                  displayName={!isTutor ? `${studentName} (You)` : studentName}
+                  avatarUrl={lesson?.student?.avatarUrl}
+                  role="STUDENT"
+                  isLocal={!isTutor}
+                  isConnected={!isTutor || isRemoteConnected}
+                  trophiesCount={studentTrophies}
+                  isHandRaised={isHandRaised}
+                  isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
+                  isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
+                  onToggleMic={!isTutor ? handleToggleMic : undefined}
+                  onToggleCamera={!isTutor ? handleToggleCamera : undefined}
+                  canModerate={isTutor}
+                  isWhiteboardAuthorized={isWhiteboardAuthorized}
+                  onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
+                  onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
+                  videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                />
+              </div>
+
+              {/* Main Presentation Screen */}
+              <div className="flex-1 rounded-3xl overflow-hidden border border-slate-800 bg-slate-950 flex flex-col relative shadow-2xl">
+                <div className="absolute top-3 left-3 z-20 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-xl border border-slate-700 text-xs font-bold text-sky-400">
+                  <Monitor className="h-4 w-4" />
+                  <span>{isScreenSharing ? "You are presenting your screen" : "Participant is sharing their screen"}</span>
+                </div>
+
+                {remoteScreenTrack ? (
+                  <VideoTrack trackRef={remoteScreenTrack} className="w-full h-full object-contain bg-black" />
+                ) : screenStreamRef.current ? (
+                  <video
+                    ref={(el) => {
+                      if (el && screenStreamRef.current) el.srcObject = screenStreamRef.current;
+                    }}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-contain bg-black"
+                  />
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-2">
+                    <Monitor className="h-10 w-10 text-slate-600 animate-pulse" />
+                    <p className="text-xs">Preparing screen presentation stream...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ─── CLASSROOM SIDEBAR (Chat, Notes, Worksheets) ─── */}
@@ -654,24 +758,6 @@ function ClassinClassroomStage({
           materials={lesson?.materials || []}
         />
       </div>
-
-      {/* ─── CLASSROOM FLOATING BOTTOM DOCK ─── */}
-      <ClassroomBottomDock
-        isTutor={isTutor}
-        isMicEnabled={isMicEnabled}
-        isCameraEnabled={isCameraEnabled}
-        isScreenSharing={isScreenSharing}
-        isHandRaised={isHandRaised}
-        isWhiteboardAuthorized={isWhiteboardAuthorized}
-        onToggleMic={handleToggleMic}
-        onToggleCamera={handleToggleCamera}
-        onToggleScreenShare={handleToggleScreenShare}
-        onRaiseHand={handleRaiseHand}
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onEndLesson={onEndLesson}
-        onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
-        onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
-      />
 
       {/* ─── CELEBRATION OVERLAY ─── */}
       <CelebrationOverlay

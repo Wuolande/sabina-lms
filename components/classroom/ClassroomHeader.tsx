@@ -9,9 +9,15 @@ import {
   Columns,
   Grid as GridIcon,
   Monitor,
+  MonitorUp,
+  MonitorOff,
   Wifi,
   Radio,
   ShieldCheck,
+  Mic,
+  MicOff,
+  Video as VideoIcon,
+  VideoOff,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -30,6 +36,13 @@ interface ClassroomHeaderProps {
   latencyMs?: number;
   durationMinutes?: number;
   isTrial?: boolean;
+  // Media controls
+  isMicEnabled?: boolean;
+  isCameraEnabled?: boolean;
+  isScreenSharing?: boolean;
+  onToggleMic?: () => void;
+  onToggleCamera?: () => void;
+  onToggleScreenShare?: () => void;
 }
 
 export function ClassroomHeader({
@@ -44,6 +57,12 @@ export function ClassroomHeader({
   latencyMs = 28,
   durationMinutes = 50,
   isTrial = false,
+  isMicEnabled = true,
+  isCameraEnabled = true,
+  isScreenSharing = false,
+  onToggleMic,
+  onToggleCamera,
+  onToggleScreenShare,
 }: ClassroomHeaderProps) {
   const formatTimer = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -154,8 +173,61 @@ export function ClassroomHeader({
         </div>
       </div>
 
-      {/* ─── RIGHT: Signal Quality, Device Settings & End Call ─── */}
-      <div className="flex items-center gap-2">
+      {/* ─── RIGHT: Media Controls, Settings & End Call ─── */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Mic Toggle Button */}
+        {onToggleMic && (
+          <button
+            type="button"
+            onClick={onToggleMic}
+            title={isMicEnabled ? "Mute Microphone" : "Unmute Microphone"}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+              isMicEnabled
+                ? "bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700"
+                : "bg-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/30"
+            }`}
+          >
+            {isMicEnabled ? <Mic className="h-3.5 w-3.5 text-emerald-400" /> : <MicOff className="h-3.5 w-3.5" />}
+            <span className="hidden xl:inline text-[11px]">{isMicEnabled ? "Mute" : "Unmute"}</span>
+          </button>
+        )}
+
+        {/* Video Toggle Button */}
+        {onToggleCamera && (
+          <button
+            type="button"
+            onClick={onToggleCamera}
+            title={isCameraEnabled ? "Stop Camera" : "Start Camera"}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+              isCameraEnabled
+                ? "bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700"
+                : "bg-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/30"
+            }`}
+          >
+            {isCameraEnabled ? <VideoIcon className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5" />}
+            <span className="hidden xl:inline text-[11px]">{isCameraEnabled ? "Stop Cam" : "Start Cam"}</span>
+          </button>
+        )}
+
+        {/* Screen Share Button */}
+        {onToggleScreenShare && (
+          <button
+            type="button"
+            onClick={onToggleScreenShare}
+            title={isScreenSharing ? "Stop Sharing Screen" : "Share Your Screen"}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+              isScreenSharing
+                ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
+                : "bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-700"
+            }`}
+          >
+            {isScreenSharing ? <MonitorOff className="h-3.5 w-3.5" /> : <MonitorUp className="h-3.5 w-3.5" />}
+            <span className="hidden xl:inline text-[11px]">{isScreenSharing ? "Stop Share" : "Share"}</span>
+          </button>
+        )}
+
+        <div className="h-4 w-px bg-slate-800 mx-0.5" />
+
         {/* Network Quality Badge */}
         <div
           className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full"
