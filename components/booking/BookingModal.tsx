@@ -48,6 +48,7 @@ export function BookingModal({
   const [cardNumber, setCardNumber] = React.useState("•••• •••• •••• 4242");
   const [isLoading, setIsLoading] = React.useState(false);
   const [confirmedBookingId, setConfirmedBookingId] = React.useState<string>("");
+  const [confirmedLessonId, setConfirmedLessonId] = React.useState<string>("");
 
   const tutorName = (tutor as any)?.user?.displayName || (tutor as any)?.displayName || "Instructor";
   const tutorAvatar = (tutor as any)?.user?.avatarUrl || (tutor as any)?.avatarUrl;
@@ -130,9 +131,12 @@ export function BookingModal({
         studentNotes: lessonGoals || selectedTopicTag,
       });
 
-      setConfirmedBookingId(booking.bookingId || (booking as any).id);
+      const bId = booking.bookingId || (booking as any).id;
+      const lId = booking.lessonId || booking.bookingId || (booking as any).id;
+      setConfirmedBookingId(bId);
+      setConfirmedLessonId(lId);
       setStep("confirmed");
-      onSuccess?.(booking.bookingId || (booking as any).id);
+      onSuccess?.(bId);
     } catch (err) {
       console.error("Booking error", err);
     } finally {
@@ -671,7 +675,7 @@ export function BookingModal({
           {/* Action CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
-              href={`/lessons/room-sabina-lesson-101/classroom`}
+              href={`/lessons/${confirmedLessonId || confirmedBookingId || "room-sabina-lesson-101"}/classroom`}
               className="w-full sm:w-auto"
             >
               <Button
