@@ -36,6 +36,7 @@ interface ClassroomHeaderProps {
   latencyMs?: number;
   durationMinutes?: number;
   isTrial?: boolean;
+  endButtonLabel?: string;
   // Media controls
   isMicEnabled?: boolean;
   isCameraEnabled?: boolean;
@@ -57,6 +58,7 @@ export function ClassroomHeader({
   latencyMs = 28,
   durationMinutes = 50,
   isTrial = false,
+  endButtonLabel = "End Class",
   isMicEnabled = true,
   isCameraEnabled = true,
   isScreenSharing = false,
@@ -67,57 +69,46 @@ export function ClassroomHeader({
   const formatTimer = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
-    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const isEndingSoon = secondsRemaining <= 300 && secondsRemaining > 0; // < 5 mins
+  const isEndingSoon = secondsRemaining < 300 && secondsRemaining > 0;
 
   return (
-    <header className="flex h-14 w-full items-center justify-between border-b border-slate-800 bg-slate-900/95 px-3 sm:px-5 shrink-0 select-none text-white">
-      {/* ─── LEFT: Status, Lesson Info ─── */}
-      <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
-        <Badge
-          variant="subtle"
-          size="sm"
-          className="bg-rose-500/20 text-rose-300 border-rose-500/30 flex items-center gap-1.5 animate-pulse"
-        >
-          <span className="h-2 w-2 rounded-full bg-rose-500" />
-          <span className="font-black text-[10px] tracking-wider uppercase">LIVE CLASS</span>
-        </Badge>
-
-        <div className="h-4 w-px bg-slate-800 hidden sm:block" />
-
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5">
-            <h2 className="text-xs sm:text-sm font-black text-white leading-tight truncate max-w-[130px] sm:max-w-xs font-heading">
+    <header className="flex h-14 w-full items-center justify-between border-b border-slate-800 bg-slate-900/90 px-3 sm:px-4 backdrop-blur-md shrink-0 select-none z-30 text-white">
+      {/* ─── LEFT: Lesson Title & Tutor/Student Info ─── */}
+      <div className="flex items-center gap-3">
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <span className="font-heading font-black text-sm text-white tracking-tight truncate max-w-[200px] sm:max-w-xs">
               {lessonTitle}
-            </h2>
+            </span>
             <Badge
               variant="subtle"
-              size="xs"
+              size="sm"
               className={
                 isTrial
-                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30 font-bold whitespace-nowrap text-[9px]"
-                  : "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-bold whitespace-nowrap text-[9px]"
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] font-bold"
+                  : "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 text-[10px] font-bold"
               }
             >
-              {isTrial ? "🎁 Trial (25m)" : `${durationMinutes}m`}
+              {isTrial ? `🎁 Trial (${durationMinutes}m)` : `${durationMinutes}m`}
             </Badge>
           </div>
-          <span className="text-[10px] text-slate-400 font-medium block truncate">
+          <span className="text-[11px] text-slate-400 font-medium">
             {tutorName} {studentName ? `• ${studentName}` : ""}
           </span>
         </div>
       </div>
 
-      {/* ─── CENTER: Layout Switcher & Lesson Timer ─── */}
-      <div className="flex items-center gap-3">
-        {/* Stage Layout Switcher */}
-        <div className="hidden md:flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800 text-slate-400">
+      {/* ─── CENTER: Layout Switcher & Class Countdown ─── */}
+      <div className="hidden md:flex items-center gap-3">
+        {/* Layout Mode Switcher */}
+        <div className="flex items-center bg-slate-950/80 rounded-xl p-0.5 border border-slate-800 text-slate-400">
           <button
             type="button"
             onClick={() => onChangeLayout("classin_stage")}
-            title="ClassIn Stage (Top Video + Large Whiteboard)"
+            title="ClassIn Stage (Top Videos + Wide Board)"
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
               layoutMode === "classin_stage"
                 ? "bg-indigo-600 text-white shadow-xs"
@@ -131,7 +122,7 @@ export function ClassroomHeader({
           <button
             type="button"
             onClick={() => onChangeLayout("split")}
-            title="Side-by-Side Dual Stage (50/50 Split)"
+            title="Dual Stage (Split View)"
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
               layoutMode === "split"
                 ? "bg-indigo-600 text-white shadow-xs"
@@ -155,6 +146,22 @@ export function ClassroomHeader({
             <GridIcon className="h-3.5 w-3.5" />
             <span className="text-[11px]">Video Grid</span>
           </button>
+
+          {isScreenSharing && (
+            <button
+              type="button"
+              onClick={() => onChangeLayout("screenshare")}
+              title="Screen Share Presentation"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                layoutMode === "screenshare"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : "hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Monitor className="h-3.5 w-3.5 text-sky-400" />
+              <span className="text-[11px]">Screen Share</span>
+            </button>
+          )}
         </div>
 
         {/* Live Lesson Countdown Timer */}
@@ -228,16 +235,6 @@ export function ClassroomHeader({
 
         <div className="h-4 w-px bg-slate-800 mx-0.5" />
 
-        {/* Network Quality Badge */}
-        <div
-          className="hidden sm:flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full"
-          title={`Connection status: Ultra-low latency (${latencyMs}ms)`}
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-          <Wifi className="h-3 w-3" />
-          <span>{latencyMs}ms</span>
-        </div>
-
         {/* Device Settings Button */}
         <button
           type="button"
@@ -248,15 +245,19 @@ export function ClassroomHeader({
           <Settings className="h-4 w-4" />
         </button>
 
-        {/* End Class Button */}
+        {/* End Class / Leave Room Button */}
         <Button
           variant="default"
           size="sm"
           onClick={onEndLesson}
-          className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-md shadow-rose-600/20"
+          className={`${
+            endButtonLabel.includes("Leave")
+              ? "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-sm"
+              : "bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20"
+          } font-extrabold text-xs flex items-center gap-1.5`}
         >
           <PhoneOff className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">End Class</span>
+          <span className="hidden sm:inline">{endButtonLabel}</span>
         </Button>
       </div>
     </header>

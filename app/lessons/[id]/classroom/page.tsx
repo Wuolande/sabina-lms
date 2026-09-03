@@ -92,15 +92,22 @@ function LocalVideoFeed({ stream }: { stream: MediaStream | null }) {
   const vidRef = React.useRef<HTMLVideoElement | null>(null);
 
   React.useEffect(() => {
-    if (vidRef.current && stream) {
+    if (vidRef.current && stream && vidRef.current.srcObject !== stream) {
       vidRef.current.srcObject = stream;
+      vidRef.current.play().catch(() => {});
     }
   }, [stream]);
 
   if (!stream) return null;
   return (
     <video
-      ref={vidRef}
+      ref={(el) => {
+        vidRef.current = el;
+        if (el && stream && el.srcObject !== stream) {
+          el.srcObject = stream;
+          el.play().catch(() => {});
+        }
+      }}
       autoPlay
       playsInline
       muted
@@ -120,6 +127,8 @@ function ClassinClassroomStage({
   currentUserRole,
   onEndLesson,
   secondsRemaining,
+  onStudentConnected,
+  endButtonLabel = "End Class",
 }: {
   lesson: Lesson360Aggregate;
   isTutor: boolean;
@@ -127,10 +136,19 @@ function ClassinClassroomStage({
   currentUserRole: "TUTOR" | "STUDENT";
   onEndLesson: () => void;
   secondsRemaining: number;
+  onStudentConnected?: () => void;
+  endButtonLabel?: string;
 }) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
+
+  // Notify parent when remote peer joins room
+  React.useEffect(() => {
+    if (participants.some((p) => !p.isLocal)) {
+      onStudentConnected?.();
+    }
+  }, [participants, onStudentConnected]);
 
   // Media toggle states
   const [isMicEnabled, setIsMicEnabled] = React.useState(true);
@@ -139,7 +157,6 @@ function ClassinClassroomStage({
 
   // Local media stream fallback (ensures user always sees their camera)
   const [localMediaStream, setLocalMediaStream] = React.useState<MediaStream | null>(null);
-  const screenStreamRef = React.useRef<MediaStream | null>(null);
 
   // Floating moderation toast banner (prevents chat log pollution)
   const [moderationToast, setModerationToast] = React.useState<string | null>(null);
@@ -204,12 +221,6 @@ function ClassinClassroomStage({
         t.stop();
       });
       setLocalMediaStream(null);
-    }
-    if (screenStreamRef.current) {
-      screenStreamRef.current.getTracks().forEach((t) => {
-        t.stop();
-      });
-      screenStreamRef.current = null;
     }
     if (localParticipant) {
       localParticipant.videoTrackPublications.forEach((pub) => {
@@ -389,47 +400,40 @@ function ClassinClassroomStage({
   };
 
   const handleToggleScreenShare = async () => {
-    if (isScreenSharing) {
-      if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach((t) => t.stop());
-        screenStreamRef.current = null;
-      }
-      if (localParticipant) {
-        localParticipant.setScreenShareEnabled(false).catch(() => {});
-      }
-      setIsScreenSharing(false);
-      setLayoutMode("classin_stage");
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-        screenStreamRef.current = stream;
-        setIsScreenSharing(true);
+    if (!localParticipant) return;
+    try {
+      const next = !isScreenSharing;
+      await localParticipant.setScreenShareEnabled(next);
+      setIsScreenSharing(next);
+      if (next) {
         setLayoutMode("screenshare");
-
-        const videoTrack = stream.getVideoTracks()[0];
-        if (videoTrack) {
-          videoTrack.onended = () => {
-            if (screenStreamRef.current) {
-              screenStreamRef.current.getTracks().forEach((t) => t.stop());
-              screenStreamRef.current = null;
-            }
-            setIsScreenSharing(false);
-            setLayoutMode("classin_stage");
-            if (localParticipant) {
-              localParticipant.setScreenShareEnabled(false).catch(() => {});
-            }
-          };
-        }
-
-        if (localParticipant) {
-          localParticipant.setScreenShareEnabled(true).catch(() => {});
-        }
-      } catch (err) {
-        console.warn("Screen share cancelled or error:", err);
-        setIsScreenSharing(false);
+      } else if (layoutMode === "screenshare") {
+        setLayoutMode("classin_stage");
       }
+    } catch (err) {
+      console.warn("Screen share cancelled or error:", err);
+      setIsScreenSharing(false);
     }
   };
+
+  // Automatically reset layout when user stops sharing via browser bar
+  React.useEffect(() => {
+    if (!localParticipant) return;
+
+    const handleLocalTrackUnpublished = (pub: any) => {
+      if (pub.source === Track.Source.ScreenShare) {
+        setIsScreenSharing(false);
+        if (layoutMode === "screenshare") {
+          setLayoutMode("classin_stage");
+        }
+      }
+    };
+
+    localParticipant.on("localTrackUnpublished", handleLocalTrackUnpublished);
+    return () => {
+      localParticipant.off("localTrackUnpublished", handleLocalTrackUnpublished);
+    };
+  }, [localParticipant, layoutMode]);
 
   // Tutor Moderation
   const handleRemoteMuteStudent = () => {
@@ -495,6 +499,7 @@ function ClassinClassroomStage({
         onChangeLayout={setLayoutMode}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onEndLesson={onEndLesson}
+        endButtonLabel={endButtonLabel}
         latencyMs={24}
         durationMinutes={durationMin}
         isTrial={isTrial}
@@ -725,17 +730,8 @@ function ClassinClassroomStage({
                   <span>{isScreenSharing ? "You are presenting your screen" : "Participant is sharing their screen"}</span>
                 </div>
 
-                {remoteScreenTrack ? (
-                  <VideoTrack trackRef={remoteScreenTrack} className="w-full h-full object-contain bg-black" />
-                ) : screenStreamRef.current ? (
-                  <video
-                    ref={(el) => {
-                      if (el && screenStreamRef.current) el.srcObject = screenStreamRef.current;
-                    }}
-                    autoPlay
-                    playsInline
-                    className="w-full h-full object-contain bg-black"
-                  />
+                {screenShareTrack ? (
+                  <VideoTrack trackRef={screenShareTrack} className="w-full h-full object-contain bg-black" />
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-2">
                     <Monitor className="h-10 w-10 text-slate-600 animate-pulse" />
@@ -935,12 +931,11 @@ export default function LiveClassroomPage() {
     }
   };
 
-  // ─── Hardware Release on End Lesson ───
-  const handleEndLesson = async () => {
-    if (!lesson) return;
-    setIsEnding(true);
+  // Track whether student ever connected in session for quality of service guard
+  const [hasStudentAttended, setHasStudentAttended] = React.useState(false);
 
-    // Stop all media streams on page to turn off camera LED immediately
+  // ─── Hardware Release on Leaving or Ending ───
+  const releaseHardwareTracks = () => {
     try {
       const videoEls = document.querySelectorAll("video, audio");
       videoEls.forEach((el: any) => {
@@ -954,10 +949,32 @@ export default function LiveClassroomPage() {
     } catch (e) {
       console.warn("Hardware track release error:", e);
     }
+  };
 
-    await lessonService.completeLesson(lesson.id, {
-      studentFeedback: feedbackNotes || "Completed 1-on-1 teaching session.",
-    });
+  // Safe Exit without altering lesson completion status
+  const handleLeaveClassroom = () => {
+    releaseHardwareTracks();
+    if (currentUserRole === "TUTOR") {
+      window.location.href = `/tutor/lessons/${lesson?.id || ""}`;
+    } else {
+      window.location.href = `/student/lessons/${lesson?.id || ""}`;
+    }
+  };
+
+  // Conclude & Complete Lesson (Marks completed and credits metrics)
+  const handleCompleteLesson = async () => {
+    if (!lesson) return;
+    setIsEnding(true);
+    releaseHardwareTracks();
+
+    try {
+      await lessonService.completeLesson(lesson.id, {
+        studentFeedback: feedbackNotes || "Completed 1-on-1 teaching session.",
+      });
+    } catch (e) {
+      console.warn("Failed to complete lesson:", e);
+    }
+
     setIsEnding(false);
     setIsEndModalOpen(false);
 
@@ -1008,6 +1025,11 @@ export default function LiveClassroomPage() {
     );
   }
 
+  // Quality of service indicators
+  const isBeforeClass = scheduledStartMs > 0 && Date.now() < scheduledStartMs;
+  const isStudentPresentOrAttended = hasStudentAttended;
+  const endButtonLabel = isBeforeClass || !isStudentPresentOrAttended ? "Leave Room" : "End Class";
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-white overflow-hidden select-none">
       {/* ─── LIVEKIT PROVIDER: ClassIn-Grade Interactive Stage ─── */}
@@ -1028,6 +1050,8 @@ export default function LiveClassroomPage() {
               currentUserRole={currentUserRole}
               onEndLesson={() => setIsEndModalOpen(true)}
               secondsRemaining={secondsRemaining}
+              onStudentConnected={() => setHasStudentAttended(true)}
+              endButtonLabel={endButtonLabel}
             />
           </LiveKitRoom>
         ) : (
@@ -1121,50 +1145,124 @@ export default function LiveClassroomPage() {
         </div>
       )}
 
-      {/* ─── END LESSON CONFIRMATION MODAL ─── */}
+      {/* ─── CLASSROOM EXIT & QUALITY SERVICE GUARD MODAL ─── */}
       <Modal
         isOpen={isEndModalOpen}
         onClose={() => setIsEndModalOpen(false)}
-        title="Conclude Classroom Session"
+        title={
+          isBeforeClass
+            ? "Leave Classroom Preview"
+            : !isStudentPresentOrAttended
+            ? "Student Not in Classroom"
+            : "Conclude Classroom Session"
+        }
         maxWidth="md"
       >
         <div className="space-y-4">
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            Are you sure you want to end this live session? Video and audio feeds will disconnect immediately, and your camera will turn off.
-          </p>
+          {/* Scenario 1: Early Preview before Scheduled Class */}
+          {isBeforeClass ? (
+            <div className="space-y-3">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs">
+                <AlertCircle className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold">
+                    This lesson is scheduled for{" "}
+                    {lesson?.scheduledStart
+                      ? new Date(lesson.scheduledStart).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      : "a later time"}
+                    .
+                  </p>
+                  <p className="text-slate-400 leading-relaxed">
+                    You are previewing the classroom before the session has started. Leaving will safely turn off your camera and return to the dashboard. The lesson remains scheduled.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <Button variant="outline" size="sm" onClick={() => setIsEndModalOpen(false)} className="text-xs">
+                  Stay in Classroom
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleLeaveClassroom}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs"
+                >
+                  Leave Classroom
+                </Button>
+              </div>
+            </div>
+          ) : !isStudentPresentOrAttended ? (
+            /* Scenario 2: Class time is active, but student has NOT joined */
+            <div className="space-y-3">
+              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold">Student has not joined this session yet.</p>
+                  <p className="text-slate-400 leading-relaxed">
+                    To protect service quality and fair billing, lessons cannot be marked as completed when the student is absent. You can leave now without affecting the schedule.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <Button variant="outline" size="sm" onClick={() => setIsEndModalOpen(false)} className="text-xs">
+                  Keep Waiting
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleLeaveClassroom}
+                  className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700"
+                >
+                  Leave Room (Keep Scheduled)
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Scenario 3: Standard Conclude Lesson (Student Attended) */
+            <div className="space-y-4">
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Are you ready to finalize this 1-on-1 teaching session? This will complete the lesson, record student notes, and update lesson records.
+              </p>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
-              Session Summary & Takeaway Notes (Optional)
-            </label>
-            <textarea
-              rows={3}
-              value={feedbackNotes}
-              onChange={(e) => setFeedbackNotes(e.target.value)}
-              placeholder="Key concepts covered, student strengths, or homework guidance..."
-              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-200">
+                  Session Summary & Takeaway Notes (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={feedbackNotes}
+                  onChange={(e) => setFeedbackNotes(e.target.value)}
+                  placeholder="Key concepts covered, student strengths, or homework guidance..."
+                  className="w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-xs text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEndModalOpen(false)}
-              className="text-xs"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleEndLesson}
-              disabled={isEnding}
-              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs"
-            >
-              {isEnding ? "Concluding..." : "Yes, End Class"}
-            </Button>
-          </div>
+              <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLeaveClassroom}
+                  className="text-xs text-slate-400 hover:text-white"
+                >
+                  Leave Temporarily
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsEndModalOpen(false)} className="text-xs">
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleCompleteLesson}
+                    disabled={isEnding}
+                    className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs"
+                  >
+                    {isEnding ? "Concluding..." : "Yes, Complete Lesson"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
     </div>

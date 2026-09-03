@@ -37,6 +37,8 @@ export function DeviceSettingsModal({
   const [micVolume, setMicVolume] = React.useState<number>(0);
   const [noiseSuppression, setNoiseSuppression] = React.useState<boolean>(true);
 
+  const [previewStream, setPreviewStream] = React.useState<MediaStream | null>(null);
+
   const videoPreviewRef = React.useRef<HTMLVideoElement | null>(null);
   const mediaStreamRef = React.useRef<MediaStream | null>(null);
 
@@ -60,6 +62,7 @@ export function DeviceSettingsModal({
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       }
+      setPreviewStream(null);
       return;
     }
 
@@ -75,8 +78,10 @@ export function DeviceSettingsModal({
       })
       .then((stream) => {
         mediaStreamRef.current = stream;
+        setPreviewStream(stream);
         if (videoPreviewRef.current) {
           videoPreviewRef.current.srcObject = stream;
+          videoPreviewRef.current.play().catch(() => {});
         }
 
         // Setup audio VU meter
@@ -163,7 +168,13 @@ export function DeviceSettingsModal({
           </label>
           <div className="relative h-44 w-full rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center">
             <video
-              ref={videoPreviewRef}
+              ref={(el) => {
+                videoPreviewRef.current = el;
+                if (el && previewStream && el.srcObject !== previewStream) {
+                  el.srcObject = previewStream;
+                  el.play().catch(() => {});
+                }
+              }}
               autoPlay
               playsInline
               muted

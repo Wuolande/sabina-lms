@@ -41,6 +41,8 @@ export function PreClassWaitingRoom({
   const [micLevel, setMicLevel] = React.useState(0);
   const [hasMediaAccess, setHasMediaAccess] = React.useState(false);
 
+  const [mediaStream, setMediaStream] = React.useState<MediaStream | null>(null);
+
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
   const streamRef = React.useRef<MediaStream | null>(null);
 
@@ -65,51 +67,75 @@ export function PreClassWaitingRoom({
     let audioCtx: AudioContext | null = null;
     let analyser: AnalyserNode | null = null;
     let animFrame: number;
+    let activeStream: MediaStream | null = null;
 
-    navigator.mediaDevices
-      ?.getUserMedia({ video: true, audio: true })
-      .then((stream) => {
+    const initMedia = async () => {
+      try {
+        let stream: MediaStream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        } catch {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        }
+
+        activeStream = stream;
         streamRef.current = stream;
+        setMediaStream(stream);
         setHasMediaAccess(true);
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
         }
 
         try {
-          audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-          analyser = audioCtx.createAnalyser();
-          analyser.fftSize = 256;
-          const source = audioCtx.createMediaStreamSource(stream);
-          source.connect(analyser);
+          const audioTracks = stream.getAudioTracks();
+          if (audioTracks.length > 0) {
+            audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            const source = audioCtx.createMediaStreamSource(stream);
+            source.connect(analyser);
 
-          const dataArray = new Uint8Array(analyser.frequencyBinCount);
-          const updateVolume = () => {
-            if (!analyser) return;
-            analyser.getByteFrequencyData(dataArray);
-            let sum = 0;
-            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-            const avg = sum / dataArray.length;
-            setMicLevel(Math.min(100, Math.round((avg / 128) * 100)));
-            animFrame = requestAnimationFrame(updateVolume);
-          };
-          updateVolume();
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const updateVolume = () => {
+              if (!analyser) return;
+              analyser.getByteFrequencyData(dataArray);
+              let sum = 0;
+              for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+              const avg = sum / dataArray.length;
+              setMicLevel(Math.min(100, Math.round((avg / 128) * 100)));
+              animFrame = requestAnimationFrame(updateVolume);
+            };
+            updateVolume();
+          }
         } catch (e) {
           console.warn("Audio meter init error:", e);
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.warn("Media access denied in waiting room:", err);
         setHasMediaAccess(false);
-      });
+      }
+    };
+
+    initMedia();
 
     return () => {
       cancelAnimationFrame(animFrame);
       if (audioCtx) audioCtx.close();
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
+      if (activeStream) {
+        activeStream.getTracks().forEach((t) => t.stop());
       }
     };
   }, []);
+
+  // Sync video element whenever mediaStream or cameraTesting state changes
+  React.useEffect(() => {
+    if (videoRef.current && mediaStream && videoRef.current.srcObject !== mediaStream) {
+      videoRef.current.srcObject = mediaStream;
+      videoRef.current.play().catch(() => {});
+    }
+  }, [mediaStream, cameraTesting, hasMediaAccess]);
 
   const toggleMic = () => {
     if (streamRef.current) {
@@ -191,7 +217,13 @@ export function PreClassWaitingRoom({
             <div className="relative h-64 w-full rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden flex items-center justify-center">
               {cameraTesting && hasMediaAccess ? (
                 <video
-                  ref={videoRef}
+                  ref={(el) => {
+                    videoRef.current = el;
+                    if (el && mediaStream && el.srcObject !== mediaStream) {
+                      el.srcObject = mediaStream;
+                      el.play().catch(() => {});
+                    }
+                  }}
                   autoPlay
                   playsInline
                   muted
@@ -204,7 +236,7 @@ export function PreClassWaitingRoom({
                     fallbackName={isTutor ? tutorName : studentName}
                     size="lg"
                   />
-                  <p className="text-xs font-medium">Camera is disabled</p>
+                  <p className="text-xs font-medium">{cameraTesting ? "Connecting camera..." : "Camera is disabled"}</p>
                 </div>
               )}
 
