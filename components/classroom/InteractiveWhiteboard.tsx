@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Plus,
   Compass,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -51,6 +52,7 @@ export interface StrokeElement {
 
 interface InteractiveWhiteboardProps {
   isTutor: boolean;
+  isAuthorized?: boolean;
   onBroadcastStroke?: (stroke: StrokeElement) => void;
   externalStrokes?: StrokeElement[];
   className?: string;
@@ -71,10 +73,12 @@ const STROKE_WIDTHS = [2, 4, 8, 14];
 
 export function InteractiveWhiteboard({
   isTutor,
+  isAuthorized = false,
   onBroadcastStroke,
   externalStrokes = [],
   className = "",
 }: InteractiveWhiteboardProps) {
+  const canDraw = isTutor || isAuthorized;
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const bgCanvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -372,6 +376,7 @@ export function InteractiveWhiteboard({
   };
 
   const handlePointerDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canDraw) return;
     const pt = getCanvasCoords(e);
 
     if (currentTool === "text") {
@@ -655,7 +660,13 @@ export function InteractiveWhiteboard({
       )}
 
       {/* ─── CLASSIN-GRADE FLOATING BOTTOM TOOLBAR ─── */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-white">
+      {!canDraw ? (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 bg-slate-900/95 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-slate-300 text-xs font-bold select-none">
+          <Lock className="h-4 w-4 text-amber-400 shrink-0" />
+          <span>Whiteboard in View Mode • Awaiting Tutor Pen Authorization</span>
+        </div>
+      ) : (
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-slate-900/95 backdrop-blur-md px-3 py-2 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-white">
         
         {/* Pen */}
         <button
@@ -900,6 +911,7 @@ export function InteractiveWhiteboard({
           <Download className="h-4 w-4" />
         </button>
       </div>
+      )}
 
       {/* ─── MULTI-PAGE CONTROLLER (Top-Right) ─── */}
       <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-slate-700/80 shadow-lg text-white">

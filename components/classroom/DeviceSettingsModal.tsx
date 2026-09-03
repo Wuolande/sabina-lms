@@ -113,9 +113,22 @@ export function DeviceSettingsModal({
     };
   }, [isOpen, activeCamera, activeMic, noiseSuppression]);
 
+  const stopTracks = () => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+    }
+  };
+
   const handleSave = () => {
+    stopTracks();
     if (onSelectCamera && activeCamera) onSelectCamera(activeCamera);
     if (onSelectMic && activeMic) onSelectMic(activeMic);
+    onClose();
+  };
+
+  const handleClose = () => {
+    stopTracks();
     onClose();
   };
 
@@ -136,7 +149,7 @@ export function DeviceSettingsModal({
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
           >
             <X className="h-4 w-4" />
@@ -238,7 +251,7 @@ export function DeviceSettingsModal({
           <Button
             variant="outline"
             size="sm"
-            onClick={onClose}
+            onClick={handleClose}
             className="border-slate-700 text-slate-300 hover:bg-slate-800 text-xs"
           >
             Cancel

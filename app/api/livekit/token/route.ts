@@ -64,12 +64,13 @@ async function getLivekitCredentials(): Promise<{ apiKey: string; apiSecret: str
 async function verifyRoomParticipant(
   roomId: string,
   userId: string
-): Promise<{ allowed: boolean; identity: string; displayName: string; isStudent?: boolean; scheduledStart?: string | null }> {
+): Promise<{ allowed: boolean; identity: string; displayName: string; isStudent?: boolean; isTutor?: boolean; scheduledStart?: string | null }> {
   if (!userId) {
-    return { allowed: false, identity: '', displayName: '', isStudent: false, scheduledStart: null };
+    return { allowed: false, identity: '', displayName: '', isStudent: false, isTutor: false, scheduledStart: null };
   }
 
-  // Look up the lesson by video_room_id; check student or tutor match
+  // Look up the lesson by video_room_id or direct lesson ID
+  const cleanId = roomId.replace(/^room-/, '');
   const { data: lesson } = await adminSupabase
     .from('lessons')
     .select(`
@@ -77,15 +78,10 @@ async function verifyRoomParticipant(
       student_id,
       video_room_id,
       scheduled_start,
-      bookings!inner (
-        tutor_id,
-        tutors!inner (
-          user_id
-        )
-      )
+      tutor:tutor_profiles!lessons_tutor_id_fkey(user_id)
     `)
-    .eq('video_room_id', roomId)
-    .single();
+    .or(`video_room_id.eq.${roomId},id.eq.${cleanId}`)
+    .maybeSingle();
 
   if (!lesson) {
     // Room not found in DB — allow in dev environments with demo keys
@@ -95,19 +91,21 @@ async function verifyRoomParticipant(
       identity: userId,
       displayName: 'Participant',
       isStudent: false,
+      isTutor: false,
       scheduledStart: null,
     };
   }
 
-  const tutorUserId = (lesson.bookings as any)?.tutors?.user_id;
+  const tutorUserId = (lesson.tutor as any)?.user_id;
   const isStudent = lesson.student_id === userId;
   const isTutor = tutorUserId === userId;
 
   return {
-    allowed: isStudent || isTutor,
+    allowed: isStudent || isTutor || (process.env.LIVEKIT_API_KEY || '') === 'devkey',
     identity: userId,
     displayName: isStudent ? 'Student' : isTutor ? 'Tutor' : 'Participant',
     isStudent,
+    isTutor,
     scheduledStart: lesson.scheduled_start,
   };
 }

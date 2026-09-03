@@ -28,6 +28,8 @@ interface ClassroomHeaderProps {
   onOpenSettings: () => void;
   onEndLesson: () => void;
   latencyMs?: number;
+  durationMinutes?: number;
+  isTrial?: boolean;
 }
 
 export function ClassroomHeader({
@@ -40,6 +42,8 @@ export function ClassroomHeader({
   onOpenSettings,
   onEndLesson,
   latencyMs = 28,
+  durationMinutes = 50,
+  isTrial = false,
 }: ClassroomHeaderProps) {
   const formatTimer = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);
@@ -65,9 +69,22 @@ export function ClassroomHeader({
         <div className="h-4 w-px bg-slate-800 hidden sm:block" />
 
         <div className="min-w-0">
-          <h2 className="text-xs sm:text-sm font-black text-white leading-tight truncate max-w-[140px] sm:max-w-xs font-heading">
-            {lessonTitle}
-          </h2>
+          <div className="flex items-center gap-1.5">
+            <h2 className="text-xs sm:text-sm font-black text-white leading-tight truncate max-w-[130px] sm:max-w-xs font-heading">
+              {lessonTitle}
+            </h2>
+            <Badge
+              variant="subtle"
+              size="xs"
+              className={
+                isTrial
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30 font-bold whitespace-nowrap text-[9px]"
+                  : "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-bold whitespace-nowrap text-[9px]"
+              }
+            >
+              {isTrial ? "🎁 Trial (25m)" : `${durationMinutes}m`}
+            </Badge>
+          </div>
           <span className="text-[10px] text-slate-400 font-medium block truncate">
             {tutorName} {studentName ? `• ${studentName}` : ""}
           </span>

@@ -12,7 +12,6 @@ import {
   useParticipants,
   useLocalParticipant,
   useRoomContext,
-  useIsSpeaking,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import {
@@ -48,6 +47,8 @@ import { ClassinToolsWidget } from "@/components/classroom/ClassinToolsWidget";
 import { ClassroomSidebar } from "@/components/classroom/ClassroomSidebar";
 import { CelebrationOverlay } from "@/components/classroom/CelebrationOverlay";
 import { DeviceSettingsModal } from "@/components/classroom/DeviceSettingsModal";
+import { ClassroomBottomDock } from "@/components/classroom/ClassroomBottomDock";
+import { PreClassWaitingRoom } from "@/components/classroom/PreClassWaitingRoom";
 
 // ─── Provider display metadata for non-livekit fallbacks ──────────────────────
 const PROVIDER_META: Record<
@@ -85,6 +86,30 @@ const PROVIDER_META: Record<
 };
 
 /**
+ * Local webcam video player component for fallback stream
+ */
+function LocalVideoFeed({ stream }: { stream: MediaStream | null }) {
+  const vidRef = React.useRef<HTMLVideoElement | null>(null);
+
+  React.useEffect(() => {
+    if (vidRef.current && stream) {
+      vidRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  if (!stream) return null;
+  return (
+    <video
+      ref={vidRef}
+      autoPlay
+      playsInline
+      muted
+      className="w-full h-full object-cover mirror"
+    />
+  );
+}
+
+/**
  * Inner Classroom Stage Component mounted inside LiveKitRoom
  * Handles real-time video tracks, stage layout transitions, and data channel sync.
  */
@@ -107,11 +132,20 @@ function ClassinClassroomStage({
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
 
+  // Media toggle states
+  const [isMicEnabled, setIsMicEnabled] = React.useState(true);
+  const [isCameraEnabled, setIsCameraEnabled] = React.useState(true);
+  const [isScreenSharing, setIsScreenSharing] = React.useState(false);
+
+  // Local media stream fallback (ensures user always sees their camera)
+  const [localMediaStream, setLocalMediaStream] = React.useState<MediaStream | null>(null);
+
   // Stage Layout mode
   const [layoutMode, setLayoutMode] = React.useState<StageLayoutMode>("classin_stage");
 
-  // Whiteboard sync state
+  // Whiteboard sync state & ClassIn pen authorization
   const [externalStrokes, setExternalStrokes] = React.useState<StrokeElement[]>([]);
+  const [isWhiteboardAuthorized, setIsWhiteboardAuthorized] = React.useState(isTutor);
 
   // Gamification & ClassIn tools state
   const [studentTrophies, setStudentTrophies] = React.useState(0);
@@ -139,7 +173,61 @@ function ClassinClassroomStage({
   // Device settings modal
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
-  // Subscribe to LiveKit Data Channel Messages for ClassIn interactions
+  // ─── Local Webcam & Mic Hardware Stream ───
+  React.useEffect(() => {
+    let activeStream: MediaStream | null = null;
+    navigator.mediaDevices
+      ?.getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        activeStream = stream;
+        setLocalMediaStream(stream);
+      })
+      .catch((err) => {
+        console.warn("[Classroom] Local media fallback access:", err);
+      });
+
+    return () => {
+      if (activeStream) {
+        activeStream.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, []);
+
+  // ─── Critical Camera & Microphone Hardware Release Cleanup on Unmount ───
+  const cleanupAllMedia = React.useCallback(() => {
+    if (localMediaStream) {
+      localMediaStream.getTracks().forEach((t) => {
+        t.stop();
+      });
+      setLocalMediaStream(null);
+    }
+    if (localParticipant) {
+      localParticipant.videoTrackPublications.forEach((pub) => {
+        pub.track?.stop();
+      });
+      localParticipant.audioTrackPublications.forEach((pub) => {
+        pub.track?.stop();
+      });
+    }
+    if (room) {
+      try {
+        room.disconnect();
+      } catch {}
+    }
+  }, [localMediaStream, localParticipant, room]);
+
+  React.useEffect(() => {
+    const handleBeforeUnload = () => {
+      cleanupAllMedia();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      cleanupAllMedia();
+    };
+  }, [cleanupAllMedia]);
+
+  // ─── Subscribe to LiveKit Data Channel Messages ───
   React.useEffect(() => {
     if (!room) return;
 
@@ -157,7 +245,7 @@ function ClassinClassroomStage({
         } else if (data.type === "HAND_RAISE") {
           setIsHandRaised(data.isRaised);
           if (data.isRaised && isTutor) {
-            // Tutor notification sound
+            // Tutor chime
             try {
               const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
               const osc = audioCtx.createOscillator();
@@ -174,6 +262,38 @@ function ClassinClassroomStage({
           }
         } else if (data.type === "TIMER_SYNC") {
           setSyncedTimer({ isRunning: data.isRunning, seconds: data.seconds });
+        } else if (data.type === "WHITEBOARD_AUTH") {
+          setIsWhiteboardAuthorized(data.isAuthorized);
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              id: `sys-${Date.now()}`,
+              sender: "System",
+              senderRole: "SYSTEM",
+              text: data.isAuthorized
+                ? "✏️ Tutor authorized your drawing permissions on the whiteboard."
+                : "🔒 Whiteboard switched to view-only mode by the tutor.",
+              time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            },
+          ]);
+        } else if (data.type === "REMOTE_MUTE") {
+          if (!isTutor) {
+            setIsMicEnabled(false);
+            localParticipant?.setMicrophoneEnabled(false).catch(() => {});
+            if (localMediaStream) {
+              localMediaStream.getAudioTracks().forEach((t) => (t.enabled = false));
+            }
+            setChatMessages((prev) => [
+              ...prev,
+              {
+                id: `sys-${Date.now()}`,
+                sender: "System",
+                senderRole: "SYSTEM",
+                text: "🔇 Your microphone was muted by the tutor.",
+                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              },
+            ]);
+          }
         } else if (data.type === "CHAT") {
           setChatMessages((prev) => [
             ...prev,
@@ -195,7 +315,7 @@ function ClassinClassroomStage({
     return () => {
       room.off("dataReceived", handleDataReceived);
     };
-  }, [room, isTutor]);
+  }, [room, isTutor, localParticipant, localMediaStream]);
 
   // Broadcast Helper over Data Channel
   const broadcastData = (data: any) => {
@@ -249,15 +369,92 @@ function ClassinClassroomStage({
     broadcastData({ type: "CHAT", sender: currentUserName, senderRole: currentUserRole, text });
   };
 
+  // Media Toggles
+  const handleToggleMic = async () => {
+    const next = !isMicEnabled;
+    setIsMicEnabled(next);
+    if (localParticipant) {
+      await localParticipant.setMicrophoneEnabled(next).catch(() => {});
+    }
+    if (localMediaStream) {
+      localMediaStream.getAudioTracks().forEach((t) => (t.enabled = next));
+    }
+  };
+
+  const handleToggleCamera = async () => {
+    const next = !isCameraEnabled;
+    setIsCameraEnabled(next);
+    if (localParticipant) {
+      await localParticipant.setCameraEnabled(next).catch(() => {});
+    }
+    if (localMediaStream) {
+      localMediaStream.getVideoTracks().forEach((t) => (t.enabled = next));
+    }
+  };
+
+  const handleToggleScreenShare = async () => {
+    if (!localParticipant) return;
+    try {
+      const next = !isScreenSharing;
+      await localParticipant.setScreenShareEnabled(next);
+      setIsScreenSharing(next);
+    } catch (err) {
+      console.warn("Screen share error:", err);
+    }
+  };
+
+  // Tutor Moderation
+  const handleRemoteMuteStudent = () => {
+    broadcastData({ type: "REMOTE_MUTE" });
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: `sys-${Date.now()}`,
+        sender: "System",
+        senderRole: "SYSTEM",
+        text: "🔇 Remote mute command dispatched to student.",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+  };
+
+  const handleToggleWhiteboardAuth = () => {
+    const next = !isWhiteboardAuthorized;
+    setIsWhiteboardAuthorized(next);
+    broadcastData({ type: "WHITEBOARD_AUTH", isAuthorized: next });
+  };
+
   // Tracks query
   const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare]);
 
-  const tutorName = lesson?.tutor?.displayName || "Educator";
-  const studentName = lesson?.student?.displayName || "Student";
+  const tutorName = lesson?.tutor?.displayName || "Dr. Elena Rostova";
+  const studentName = lesson?.student?.displayName || "Alex Rivera";
+  const durationMin = lesson?.durationMinutes || 50;
+  const isTrial = durationMin <= 30;
 
   // Identify Local & Remote video tracks
   const localCameraTrack = tracks.find((t) => t.participant.isLocal && t.source === Track.Source.Camera);
   const remoteCameraTrack = tracks.find((t) => !t.participant.isLocal && t.source === Track.Source.Camera);
+
+  // Check if remote peer is actually connected
+  const remoteParticipant = participants.find((p) => !p.isLocal);
+  const isRemoteConnected = !!remoteParticipant;
+
+  // Render Local Video element (prefers LiveKit track, falls back to local media stream)
+  const renderLocalVideo = () => {
+    if (localCameraTrack && localCameraTrack.publication?.isSubscribed !== false) {
+      return <VideoTrack trackRef={localCameraTrack} className="w-full h-full object-cover mirror" />;
+    }
+    return <LocalVideoFeed stream={localMediaStream} />;
+  };
+
+  // Render Remote Video element
+  const renderRemoteVideo = () => {
+    if (remoteCameraTrack) {
+      return <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-cover" />;
+    }
+    return null;
+  };
 
   return (
     <div className="flex-1 flex flex-col bg-slate-950 overflow-hidden relative select-none">
@@ -272,6 +469,8 @@ function ClassinClassroomStage({
         onOpenSettings={() => setIsSettingsOpen(true)}
         onEndLesson={onEndLesson}
         latencyMs={24}
+        durationMinutes={durationMin}
+        isTrial={isTrial}
       />
 
       {/* ─── MAIN STAGE VIEWPORT + SIDEBAR ─── */}
@@ -288,7 +487,7 @@ function ClassinClassroomStage({
         />
 
         {/* ─── STAGE CONTAINER ─── */}
-        <div className="flex-1 flex flex-col bg-slate-950 p-3 sm:p-4 overflow-hidden relative">
+        <div className="flex-1 flex flex-col bg-slate-950 p-3 sm:p-4 pb-20 overflow-hidden relative">
           
           {/* LAYOUT 1: CLASSIN STAGE (Top Video Strip + Big Whiteboard) */}
           {layoutMode === "classin_stage" && (
@@ -301,16 +500,13 @@ function ClassinClassroomStage({
                   avatarUrl={lesson?.tutor?.avatarUrl}
                   role="TUTOR"
                   isLocal={isTutor}
+                  isConnected={isTutor || isRemoteConnected}
                   isSpeaking={false}
-                  isMuted={isTutor ? !localParticipant?.isMicrophoneEnabled : false}
-                  isVideoOff={isTutor ? !localParticipant?.isCameraEnabled : false}
-                  videoElement={
-                    isTutor && localCameraTrack ? (
-                      <VideoTrack trackRef={localCameraTrack} className="w-full h-full object-cover" />
-                    ) : !isTutor && remoteCameraTrack ? (
-                      <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-cover" />
-                    ) : null
-                  }
+                  isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
+                  isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
+                  onToggleMic={isTutor ? handleToggleMic : undefined}
+                  onToggleCamera={isTutor ? handleToggleCamera : undefined}
+                  videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
                 />
 
                 {/* Student Tile */}
@@ -319,19 +515,20 @@ function ClassinClassroomStage({
                   avatarUrl={lesson?.student?.avatarUrl}
                   role="STUDENT"
                   isLocal={!isTutor}
+                  isConnected={!isTutor || isRemoteConnected}
                   isSpeaking={false}
-                  isMuted={!isTutor ? !localParticipant?.isMicrophoneEnabled : false}
-                  isVideoOff={!isTutor ? !localParticipant?.isCameraEnabled : false}
+                  isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
+                  isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
                   trophiesCount={studentTrophies}
                   isHandRaised={isHandRaised}
+                  onToggleMic={!isTutor ? handleToggleMic : undefined}
+                  onToggleCamera={!isTutor ? handleToggleCamera : undefined}
+                  canModerate={isTutor}
+                  isWhiteboardAuthorized={isWhiteboardAuthorized}
+                  onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
+                  onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
                   onAwardTrophy={isTutor ? () => handleAwardTrophy("Great job!") : undefined}
-                  videoElement={
-                    !isTutor && localCameraTrack ? (
-                      <VideoTrack trackRef={localCameraTrack} className="w-full h-full object-cover" />
-                    ) : isTutor && remoteCameraTrack ? (
-                      <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-cover" />
-                    ) : null
-                  }
+                  videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
                 />
               </div>
 
@@ -339,6 +536,7 @@ function ClassinClassroomStage({
               <div className="flex-1 rounded-3xl overflow-hidden border border-slate-800 shadow-2xl relative bg-white">
                 <InteractiveWhiteboard
                   isTutor={isTutor}
+                  isAuthorized={isWhiteboardAuthorized}
                   onBroadcastStroke={handleBroadcastStroke}
                   externalStrokes={externalStrokes}
                   className="w-full h-full"
@@ -354,37 +552,39 @@ function ClassinClassroomStage({
               <div className="flex flex-col gap-3 h-full">
                 <div className="flex-1 rounded-3xl overflow-hidden border border-slate-800">
                   <ParticipantVideoCard
-                    displayName={tutorName}
+                    displayName={isTutor ? `${tutorName} (You)` : tutorName}
                     avatarUrl={lesson?.tutor?.avatarUrl}
                     role="TUTOR"
                     isLocal={isTutor}
+                    isConnected={isTutor || isRemoteConnected}
+                    isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
+                    isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
+                    onToggleMic={isTutor ? handleToggleMic : undefined}
+                    onToggleCamera={isTutor ? handleToggleCamera : undefined}
                     className="w-full h-full"
-                    videoElement={
-                      isTutor && localCameraTrack ? (
-                        <VideoTrack trackRef={localCameraTrack} className="w-full h-full object-cover" />
-                      ) : !isTutor && remoteCameraTrack ? (
-                        <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-cover" />
-                      ) : null
-                    }
+                    videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
                   />
                 </div>
                 <div className="flex-1 rounded-3xl overflow-hidden border border-slate-800">
                   <ParticipantVideoCard
-                    displayName={studentName}
+                    displayName={!isTutor ? `${studentName} (You)` : studentName}
                     avatarUrl={lesson?.student?.avatarUrl}
                     role="STUDENT"
                     isLocal={!isTutor}
+                    isConnected={!isTutor || isRemoteConnected}
                     trophiesCount={studentTrophies}
                     isHandRaised={isHandRaised}
+                    isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
+                    isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
+                    onToggleMic={!isTutor ? handleToggleMic : undefined}
+                    onToggleCamera={!isTutor ? handleToggleCamera : undefined}
+                    canModerate={isTutor}
+                    isWhiteboardAuthorized={isWhiteboardAuthorized}
+                    onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
+                    onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
                     className="w-full h-full"
                     onAwardTrophy={isTutor ? () => handleAwardTrophy("Excellent answer!") : undefined}
-                    videoElement={
-                      !isTutor && localCameraTrack ? (
-                        <VideoTrack trackRef={localCameraTrack} className="w-full h-full object-cover" />
-                      ) : isTutor && remoteCameraTrack ? (
-                        <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-cover" />
-                      ) : null
-                    }
+                    videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
                   />
                 </div>
               </div>
@@ -393,6 +593,7 @@ function ClassinClassroomStage({
               <div className="flex-1 rounded-3xl overflow-hidden border border-slate-800 bg-white shadow-2xl">
                 <InteractiveWhiteboard
                   isTutor={isTutor}
+                  isAuthorized={isWhiteboardAuthorized}
                   onBroadcastStroke={handleBroadcastStroke}
                   externalStrokes={externalStrokes}
                   className="w-full h-full"
@@ -405,35 +606,37 @@ function ClassinClassroomStage({
           {layoutMode === "grid" && (
             <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-2 overflow-hidden">
               <ParticipantVideoCard
-                displayName={tutorName}
+                displayName={isTutor ? `${tutorName} (You)` : tutorName}
                 avatarUrl={lesson?.tutor?.avatarUrl}
                 role="TUTOR"
                 isLocal={isTutor}
+                isConnected={isTutor || isRemoteConnected}
+                isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
+                isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
+                onToggleMic={isTutor ? handleToggleMic : undefined}
+                onToggleCamera={isTutor ? handleToggleCamera : undefined}
                 className="w-full h-full rounded-3xl"
-                videoElement={
-                  isTutor && localCameraTrack ? (
-                    <VideoTrack trackRef={localCameraTrack} className="w-full h-full object-cover" />
-                  ) : !isTutor && remoteCameraTrack ? (
-                    <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-cover" />
-                  ) : null
-                }
+                videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
               />
               <ParticipantVideoCard
-                displayName={studentName}
+                displayName={!isTutor ? `${studentName} (You)` : studentName}
                 avatarUrl={lesson?.student?.avatarUrl}
                 role="STUDENT"
                 isLocal={!isTutor}
+                isConnected={!isTutor || isRemoteConnected}
                 trophiesCount={studentTrophies}
                 isHandRaised={isHandRaised}
+                isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
+                isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
+                onToggleMic={!isTutor ? handleToggleMic : undefined}
+                onToggleCamera={!isTutor ? handleToggleCamera : undefined}
+                canModerate={isTutor}
+                isWhiteboardAuthorized={isWhiteboardAuthorized}
+                onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
+                onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
                 className="w-full h-full rounded-3xl"
                 onAwardTrophy={isTutor ? () => handleAwardTrophy("Great insight!") : undefined}
-                videoElement={
-                  !isTutor && localCameraTrack ? (
-                    <VideoTrack trackRef={localCameraTrack} className="w-full h-full object-cover" />
-                  ) : isTutor && remoteCameraTrack ? (
-                    <VideoTrack trackRef={remoteCameraTrack} className="w-full h-full object-cover" />
-                  ) : null
-                }
+                videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
               />
             </div>
           )}
@@ -451,6 +654,24 @@ function ClassinClassroomStage({
           materials={lesson?.materials || []}
         />
       </div>
+
+      {/* ─── CLASSROOM FLOATING BOTTOM DOCK ─── */}
+      <ClassroomBottomDock
+        isTutor={isTutor}
+        isMicEnabled={isMicEnabled}
+        isCameraEnabled={isCameraEnabled}
+        isScreenSharing={isScreenSharing}
+        isHandRaised={isHandRaised}
+        isWhiteboardAuthorized={isWhiteboardAuthorized}
+        onToggleMic={handleToggleMic}
+        onToggleCamera={handleToggleCamera}
+        onToggleScreenShare={handleToggleScreenShare}
+        onRaiseHand={handleRaiseHand}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onEndLesson={onEndLesson}
+        onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
+        onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
+      />
 
       {/* ─── CELEBRATION OVERLAY ─── */}
       <CelebrationOverlay
@@ -501,7 +722,10 @@ export default function LiveClassroomPage() {
   const [feedbackNotes, setFeedbackNotes] = React.useState("");
   const [isEnding, setIsEnding] = React.useState(false);
 
-  // Lesson Countdown Timer (50 mins default)
+  // Waiting Room state
+  const [bypassedWaitingRoom, setBypassedWaitingRoom] = React.useState(false);
+
+  // Lesson Countdown Timer
   const [secondsRemaining, setSecondsRemaining] = React.useState(50 * 60);
 
   // ─── Initialise Lesson Details and LiveKit Session ───
@@ -551,6 +775,16 @@ export default function LiveClassroomPage() {
         setActiveProvider(provider);
 
         if (les) {
+          // Dynamic timer based on actual lesson duration and scheduled end time
+          const duration = les.durationMinutes || 50;
+          if (les.scheduledEnd) {
+            const endMs = new Date(les.scheduledEnd).getTime();
+            const diffSec = Math.floor((endMs - Date.now()) / 1000);
+            setSecondsRemaining(diffSec > 0 ? diffSec : duration * 60);
+          } else {
+            setSecondsRemaining(duration * 60);
+          }
+
           const roomName = les.videoRoomId || `room-${les.id}`;
           const username = les.student?.displayName || les.tutor?.displayName || "Participant";
           const topic = `${les.subject?.name || "Live Class"} with ${les.tutor?.displayName || "Educator"}`;
@@ -578,7 +812,7 @@ export default function LiveClassroomPage() {
 
     init();
 
-    // Lesson Timer
+    // Lesson Countdown Interval
     const interval = setInterval(() => {
       setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -614,27 +848,54 @@ export default function LiveClassroomPage() {
     }
   };
 
+  // ─── Hardware Release on End Lesson ───
   const handleEndLesson = async () => {
     if (!lesson) return;
     setIsEnding(true);
+
+    // Stop all media streams on page to turn off camera LED immediately
+    try {
+      const videoEls = document.querySelectorAll("video, audio");
+      videoEls.forEach((el: any) => {
+        if (el.srcObject) {
+          el.srcObject.getTracks().forEach((track: MediaStreamTrack) => {
+            track.stop();
+          });
+          el.srcObject = null;
+        }
+      });
+    } catch (e) {
+      console.warn("Hardware track release error:", e);
+    }
+
     await lessonService.completeLesson(lesson.id, {
       studentFeedback: feedbackNotes || "Completed 1-on-1 teaching session.",
     });
     setIsEnding(false);
     setIsEndModalOpen(false);
 
+    // Clean redirection
     if (currentUserRole === "TUTOR") {
-      router.push(`/tutor/lessons/${lesson.id}`);
+      window.location.href = `/tutor/lessons/${lesson.id}`;
     } else {
-      router.push(`/student/lessons/${lesson.id}`);
+      window.location.href = `/student/lessons/${lesson.id}`;
     }
   };
 
   const providerMeta = PROVIDER_META[activeProvider];
   const isTutor = currentUserRole === "TUTOR";
   const currentUserName = isTutor
-    ? lesson?.tutor?.displayName || "Educator"
-    : lesson?.student?.displayName || "Student";
+    ? lesson?.tutor?.displayName || "Dr. Elena Rostova"
+    : lesson?.student?.displayName || "Alex Rivera";
+
+  // Check early arrival for student waiting room
+  const scheduledStartMs = lesson?.scheduledStart ? new Date(lesson.scheduledStart).getTime() : 0;
+  const earlyMinutes = 15;
+  const isEarlyArrival =
+    !isTutor &&
+    scheduledStartMs > 0 &&
+    Date.now() < scheduledStartMs - earlyMinutes * 60 * 1000 &&
+    !bypassedWaitingRoom;
 
   if (loading) {
     return (
@@ -645,6 +906,18 @@ export default function LiveClassroomPage() {
           <p className="text-xs text-slate-400">Loading collaborative canvas and teaching tools</p>
         </div>
       </div>
+    );
+  }
+
+  // Pre-Class Waiting Room Screen if arriving > 15m early
+  if (isEarlyArrival && lesson) {
+    return (
+      <PreClassWaitingRoom
+        lesson={lesson}
+        earlyJoinMinutes={earlyMinutes}
+        onEnterClassroom={() => setBypassedWaitingRoom(true)}
+        isTutor={isTutor}
+      />
     );
   }
 
@@ -749,53 +1022,60 @@ export default function LiveClassroomPage() {
                         : activeProvider === "classin"
                         ? "bg-blue-600 hover:bg-blue-700"
                         : "bg-emerald-600 hover:bg-emerald-700"
-                    } text-white`}
+                    }`}
                   >
                     <ExternalLink className="h-4 w-4" />
-                    Join on {providerMeta.label}
+                    <span>Launch Meeting ({providerMeta.label})</span>
                   </Button>
                 </a>
-                <p className="text-[10px] text-slate-500">
-                  Opens in a new tab. Return here when your session ends to complete the lesson.
-                </p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* ─── END LESSON MODAL ─── */}
+      {/* ─── END LESSON CONFIRMATION MODAL ─── */}
       <Modal
         isOpen={isEndModalOpen}
         onClose={() => setIsEndModalOpen(false)}
-        title="End Live Teaching Session"
-        description="Are you sure you want to conclude this live classroom? Completed lesson progress will be recorded."
+        title="Conclude Classroom Session"
+        maxWidth="md"
       >
-        <div className="space-y-4 pt-2 text-slate-900">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Final Session Summary / Feedback
+        <div className="space-y-4">
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Are you sure you want to end this live session? Video and audio feeds will disconnect immediately, and your camera will turn off.
+          </p>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              Session Summary & Takeaway Notes (Optional)
             </label>
             <textarea
               rows={3}
               value={feedbackNotes}
               onChange={(e) => setFeedbackNotes(e.target.value)}
-              placeholder="e.g. Completed speaking practice and reviewed vocabulary..."
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+              placeholder="Key concepts covered, student strengths, or homework guidance..."
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <Button variant="outline" onClick={() => setIsEndModalOpen(false)}>
-              Keep Calling
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEndModalOpen(false)}
+              className="text-xs"
+            >
+              Cancel
             </Button>
             <Button
               variant="default"
-              disabled={isEnding}
+              size="sm"
               onClick={handleEndLesson}
-              className="font-bold bg-rose-600 hover:bg-rose-700 text-white"
+              disabled={isEnding}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs"
             >
-              {isEnding ? "Ending..." : "End & Complete Session"}
+              {isEnding ? "Concluding..." : "Yes, End Class"}
             </Button>
           </div>
         </div>
