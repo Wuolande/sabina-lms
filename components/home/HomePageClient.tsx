@@ -158,7 +158,7 @@ export function HomePageClient({
     stat1: { value: 250, suffix: "+", decimals: 0, label: "Verified Instructors" },
     stat2: { value: 15000, suffix: "+", decimals: 0, label: "Enrolled Students" },
     stat3: { value: 98.9, suffix: "%", decimals: 1, label: "Lesson Success Rate" },
-    stat4: { value: 4.98, suffix: " ★", decimals: 2, label: "Average Student Rating" },
+    stat4: { value: 4.98, suffix: "", decimals: 2, label: "Average Student Rating" },
   };
 
   const catSection = cms?.categoriesSection || {
@@ -405,9 +405,9 @@ export function HomePageClient({
 
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-1">
-                    <div className="flex text-amber-400">
-                      {"★★★★★".split("").map((star, i) => (
-                        <span key={i} className="text-base leading-none">★</span>
+                    <div className="flex text-amber-400 gap-0.5">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                       ))}
                     </div>
                     <span className="text-sm font-black text-slate-900 ml-1">{hero.socialProofRating}</span>
@@ -550,8 +550,9 @@ export function HomePageClient({
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 font-heading">
-              <CountUp to={stats.stat4?.value ?? 4.98} decimals={stats.stat4?.decimals ?? 2} suffix={stats.stat4?.suffix || " ★"} duration={1800} />
+            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 font-heading inline-flex items-center justify-center gap-1.5">
+              <CountUp to={stats.stat4?.value ?? 4.98} decimals={stats.stat4?.decimals ?? 2} duration={1800} />
+              <Star className="h-6 w-6 sm:h-7 sm:w-7 text-amber-400 fill-amber-400 inline-block mb-1 shrink-0" />
             </h3>
             <p className="text-xs sm:text-sm font-semibold text-slate-500">
               {stats.stat4?.label || "Average Student Rating"}

@@ -22,10 +22,14 @@ export async function getHomepageServerData(): Promise<HomepageServerData> {
       .single()
       .then(({ data }) => {
         if (!data) return null;
+        const stats = data.stats_section || {};
+        if (stats.stat4) {
+          stats.stat4.suffix = (stats.stat4.suffix || "").replace(/[^\x20-\x7E]/g, "").trim();
+        }
         return {
           id: data.id,
           heroSection: data.hero_section,
-          statsSection: data.stats_section,
+          statsSection: stats,
           categoriesSection: data.categories_section,
           featuredTutorsSection: data.featured_tutors_section,
           classroomTourSection: data.classroom_tour_section,

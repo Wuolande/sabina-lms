@@ -42,7 +42,7 @@ const DEFAULT_HOMEPAGE_CMS = {
     stat1: { value: 250, suffix: "+", decimals: 0, label: "Verified Instructors" },
     stat2: { value: 15000, suffix: "+", decimals: 0, label: "Enrolled Students" },
     stat3: { value: 98.9, suffix: "%", decimals: 1, label: "Lesson Success Rate" },
-    stat4: { value: 4.98, suffix: " ★", decimals: 2, label: "Average Student Rating" }
+    stat4: { value: 4.98, suffix: "", decimals: 2, label: "Average Student Rating" }
   },
   categoriesSection: {
     pretitle: "POPULAR CATEGORIES",

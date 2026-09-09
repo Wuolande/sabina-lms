@@ -108,7 +108,7 @@ function AdminCMSDashboardContent() {
   const [stat3Label, setStat3Label] = React.useState("Lesson Success Rate");
 
   const [stat4Value, setStat4Value] = React.useState(4.98);
-  const [stat4Suffix, setStat4Suffix] = React.useState(" ★");
+  const [stat4Suffix, setStat4Suffix] = React.useState("");
   const [stat4Label, setStat4Label] = React.useState("Average Student Rating");
 
   // ── 3. Categories Section State ──
@@ -205,7 +205,8 @@ function AdminCMSDashboardContent() {
         setStat3Label(s.stat3?.label || "Lesson Success Rate");
 
         setStat4Value(s.stat4?.value ?? 4.98);
-        setStat4Suffix(s.stat4?.suffix || " ★");
+        const cleanStat4Suffix = (s.stat4?.suffix || "").replace(/[^\x20-\x7E]/g, "").trim();
+        setStat4Suffix(cleanStat4Suffix);
         setStat4Label(s.stat4?.label || "Average Student Rating");
 
         // Categories & Tutors
