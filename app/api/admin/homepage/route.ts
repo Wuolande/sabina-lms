@@ -8,8 +8,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { adminSupabase } from '@/src/shared/database/supabase';
 import { getAdminContext } from '@/src/shared/auth/authService';
+import { DEFAULT_HERO_IMAGE } from '@/src/modules/homepage/getHomepageData';
 
 const DEFAULT_HOMEPAGE_CMS = {
   heroSection: {
@@ -31,7 +33,7 @@ const DEFAULT_HOMEPAGE_CMS = {
     ],
     socialProofCount: "+2,000 students worldwide",
     socialProofRating: "5.0",
-    heroStudentImage: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=700",
+    heroStudentImage: DEFAULT_HERO_IMAGE,
     floatingCard1: { value: 20, suffix: "+", label: "Creative Subjects" },
     floatingCard2: { value: 10, suffix: "k+", label: "Students" },
     floatingCard3: { value: 480, suffix: "+", label: "Hours Course Time" }
@@ -212,6 +214,9 @@ export async function PUT(req: NextRequest) {
           faq_section: body.faqSection,
         });
     }
+ 
+    // Revalidate public homepage cache so changes reflect instantly
+    revalidatePath('/');
 
     return NextResponse.json({
       success: true,

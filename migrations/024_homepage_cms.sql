@@ -50,7 +50,7 @@ INSERT INTO public.platform_homepage_content (
         ),
         'socialProofCount', '+2,000 students worldwide',
         'socialProofRating', '5.0',
-        'heroStudentImage', 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=700',
+        'heroStudentImage', 'https://res.cloudinary.com/vtjhrq1w/image/upload/v1787809733/sabina/avatars/mf1o6onssnolztsrgdmt.png',
         'floatingCard1', jsonb_build_object('value', 20, 'suffix', '+', 'label', 'Creative Subjects'),
         'floatingCard2', jsonb_build_object('value', 10, 'suffix', 'k+', 'label', 'Students'),
         'floatingCard3', jsonb_build_object('value', 480, 'suffix', '+', 'label', 'Hours Course Time')

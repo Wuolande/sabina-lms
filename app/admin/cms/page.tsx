@@ -47,6 +47,7 @@ import { useModal } from "@/components/ui/modal-context";
 import { adminService } from "@/services/adminService";
 import { RichTextEditor } from "@/components/cms/RichTextEditor";
 import { formatDate } from "@/lib/utils";
+import { DEFAULT_HERO_IMAGE } from "@/src/modules/homepage/getHomepageData";
 
 function AdminCMSDashboardContent() {
   const router = useRouter();
@@ -181,7 +182,7 @@ function AdminCMSDashboardContent() {
         ]);
         setSocialProofCount(h.socialProofCount || "+2,000 students worldwide");
         setSocialProofRating(h.socialProofRating || "5.0");
-        setHeroStudentImage(h.heroStudentImage || "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=700");
+        setHeroStudentImage(h.heroStudentImage || DEFAULT_HERO_IMAGE);
         setCard1Value(h.floatingCard1?.value ?? 20);
         setCard1Label(h.floatingCard1?.label || "Creative Subjects");
         setCard2Value(h.floatingCard2?.value ?? 10);
