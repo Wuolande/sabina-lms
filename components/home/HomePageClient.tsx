@@ -1127,6 +1127,7 @@ export function HomePageClient({
           onClose={() => setIsDiscoveryOpen(false)}
           onSelectTutorToBook={handleBook}
           initialTutors={featuredTutors}
+          initialSubjects={popularSubjects}
         />
       </ErrorBoundary>
     </div>
