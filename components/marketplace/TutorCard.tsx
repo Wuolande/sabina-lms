@@ -16,6 +16,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { studentService } from "@/services/studentService";
+import { BookingModal } from "@/components/booking/BookingModal";
 
 interface TutorCardProps {
   tutor: TutorProfile;
@@ -29,10 +30,19 @@ export function TutorCard({
   showFavoriteButton = true,
 }: TutorCardProps) {
   const [isFavorite, setIsFavorite] = React.useState(false);
+  const [internalBookingOpen, setInternalBookingOpen] = React.useState(false);
 
   React.useEffect(() => {
     studentService.isTutorFavorite(tutor.id).then(setIsFavorite);
   }, [tutor.id]);
+
+  const handleBookClick = () => {
+    if (onBook) {
+      onBook(tutor);
+    } else {
+      setInternalBookingOpen(true);
+    }
+  };
 
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -208,13 +218,21 @@ export function TutorCard({
 
         <button
           type="button"
-          onClick={() => onBook?.(tutor)}
+          onClick={handleBookClick}
           className="flex-1 h-10 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 shadow-subtle transition-all active:scale-[0.98]"
         >
           <Calendar className="h-3.5 w-3.5 text-slate-300" />
           <span>Book Lesson</span>
         </button>
       </div>
+
+      {!onBook && (
+        <BookingModal
+          tutor={tutor}
+          isOpen={internalBookingOpen}
+          onClose={() => setInternalBookingOpen(false)}
+        />
+      )}
     </div>
   );
 }

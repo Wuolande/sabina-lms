@@ -18,6 +18,8 @@ import {
   Calendar,
   ShieldCheck,
   Video,
+  UserCheck,
+  AlertCircle,
 } from "lucide-react";
 
 interface BookingModalProps {
@@ -43,12 +45,41 @@ export function BookingModal({
   const [selectedDate, setSelectedDate] = React.useState<string>("");
   const [selectedTime, setSelectedTime] = React.useState<string>("");
   const [lessonGoals, setLessonGoals] = React.useState("");
-  const [selectedTopicTag, setSelectedTopicTag] = React.useState<string>("Exam Prep");
+  const [selectedTopicTag, setSelectedTopicTag] = React.useState("Exam Prep");
   const [paymentMethod, setPaymentMethod] = React.useState<"card" | "apple" | "google">("card");
   const [cardNumber, setCardNumber] = React.useState("•••• •••• •••• 4242");
   const [isLoading, setIsLoading] = React.useState(false);
   const [confirmedBookingId, setConfirmedBookingId] = React.useState<string>("");
   const [confirmedLessonId, setConfirmedLessonId] = React.useState<string>("");
+
+  // Student Authentication State & Guest Registration
+  const [currentUser, setCurrentUser] = React.useState<any | null>(null);
+  const [authChecking, setAuthChecking] = React.useState(true);
+  const [authTab, setAuthTab] = React.useState<"register" | "login">("register");
+  const [guestFirstName, setGuestFirstName] = React.useState("");
+  const [guestLastName, setGuestLastName] = React.useState("");
+  const [guestEmail, setGuestEmail] = React.useState("");
+  const [guestPassword, setGuestPassword] = React.useState("");
+  const [authError, setAuthError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    setAuthChecking(true);
+    fetch("/api/auth/session?role=STUDENT")
+      .then((res) => {
+        if (res.ok) return res.json();
+        return { authenticated: false };
+      })
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+        } else {
+          setCurrentUser(null);
+        }
+      })
+      .catch(() => setCurrentUser(null))
+      .finally(() => setAuthChecking(false));
+  }, [isOpen]);
 
   const tutorName = (tutor as any)?.user?.displayName || (tutor as any)?.displayName || "Instructor";
   const tutorAvatar = (tutor as any)?.user?.avatarUrl || (tutor as any)?.avatarUrl;
@@ -118,7 +149,74 @@ export function BookingModal({
 
   const handleConfirmPayment = async () => {
     setIsLoading(true);
+    setAuthError(null);
     try {
+      // 1. If not authenticated, create student account or login first
+      if (!currentUser?.id) {
+        if (!guestEmail.trim() || !guestPassword.trim()) {
+          setAuthError("Please enter your email and password to secure your booking.");
+          setIsLoading(false);
+          return;
+        }
+
+        if (guestPassword.length < 6) {
+          setAuthError("Password must be at least 6 characters long.");
+          setIsLoading(false);
+          return;
+        }
+
+        if (authTab === "register") {
+          if (!guestFirstName.trim()) {
+            setAuthError("Please enter your first name.");
+            setIsLoading(false);
+            return;
+          }
+
+          const regRes = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: guestEmail.trim(),
+              password: guestPassword,
+              firstName: guestFirstName.trim(),
+              lastName: guestLastName.trim() || "Student",
+              role: "STUDENT",
+            }),
+          });
+
+          const regData = await regRes.json();
+          if (!regRes.ok) {
+            setAuthError(regData.error || "Registration failed. Please check your details or sign in.");
+            setIsLoading(false);
+            return;
+          }
+          if (regData.user) {
+            setCurrentUser(regData.user);
+          }
+        } else {
+          // Login
+          const loginRes = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: guestEmail.trim(),
+              password: guestPassword,
+            }),
+          });
+
+          const loginData = await loginRes.json();
+          if (!loginRes.ok) {
+            setAuthError(loginData.error || "Invalid email or password.");
+            setIsLoading(false);
+            return;
+          }
+          if (loginData.user) {
+            setCurrentUser(loginData.user);
+          }
+        }
+      }
+
+      // 2. Create the booking atomically
       const booking = await bookingService.createBooking({
         tutorId: tutor.id,
         subjectId: selectedSubjectId || tutorSubjects[0]?.subjectId,
@@ -137,8 +235,9 @@ export function BookingModal({
       setConfirmedLessonId(lId);
       setStep("confirmed");
       onSuccess?.(bId);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Booking error", err);
+      setAuthError(err.message || "Failed to complete booking. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -531,6 +630,152 @@ export function BookingModal({
               <span>{formatCurrency(calculatedPrice, currency)}</span>
             </div>
           </div>
+
+          {/* Student Account Status / Frictionless Guest Registration */}
+          {currentUser ? (
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/80 text-emerald-950 text-xs">
+              <div className="flex items-center gap-2 min-w-0">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span className="truncate">
+                  Booking as <strong>{currentUser.displayName || currentUser.email}</strong>
+                </span>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full shrink-0">
+                Signed In
+              </span>
+            </div>
+          ) : (
+            <div className="space-y-3 p-4 rounded-2xl bg-slate-50/90 border border-slate-200/90">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <UserCheck className="h-4 w-4 text-brand-700" />
+                  Student Account
+                </label>
+                <div className="flex bg-slate-200/70 rounded-lg p-0.5 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthTab("register");
+                      setAuthError(null);
+                    }}
+                    className={`px-2.5 py-1 rounded-md transition-all ${
+                      authTab === "register"
+                        ? "bg-white text-slate-950 shadow-xs font-bold"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Create Account
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthTab("login");
+                      setAuthError(null);
+                    }}
+                    className={`px-2.5 py-1 rounded-md transition-all ${
+                      authTab === "login"
+                        ? "bg-white text-slate-950 shadow-xs font-bold"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    Sign In
+                  </button>
+                </div>
+              </div>
+
+              {authError && (
+                <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                  <span>{authError}</span>
+                </div>
+              )}
+
+              {authTab === "register" ? (
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        First Name <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Alex"
+                        value={guestFirstName}
+                        onChange={(e) => setGuestFirstName(e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Smith"
+                        value={guestLastName}
+                        onChange={(e) => setGuestLastName(e.target.value)}
+                        className="w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 bg-white"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Email Address <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Create Password <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="At least 6 characters"
+                      value={guestPassword}
+                      onChange={(e) => setGuestPassword(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 bg-white"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    Your student account is created instantly to securely store your lessons, LiveKit classroom link, and calendar sync.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Email Address <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="you@example.com"
+                      value={guestEmail}
+                      onChange={(e) => setGuestEmail(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                      Password <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="Your password"
+                      value={guestPassword}
+                      onChange={(e) => setGuestPassword(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 bg-white"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Payment Method Selector */}
           <div>

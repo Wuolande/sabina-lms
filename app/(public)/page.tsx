@@ -37,6 +37,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Rating } from "@/components/ui/Rating";
 import { TutorCard } from "@/components/marketplace/TutorCard";
 import { BookingModal } from "@/components/booking/BookingModal";
+import { TutorDiscoveryModal } from "@/components/discovery/TutorDiscoveryModal";
 import { CountUp } from "@/components/ui/CountUp";
 import { TutorCardSkeleton, SubjectCardSkeleton } from "@/components/ui/Skeleton";
 import { tutorService } from "@/services/tutorService";
@@ -50,6 +51,7 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
   const [bookingTutor, setBookingTutor] = React.useState<TutorProfile | null>(null);
   const [isBookingOpen, setIsBookingOpen] = React.useState(false);
+  const [isDiscoveryOpen, setIsDiscoveryOpen] = React.useState(false);
   const [activeTourTab, setActiveTourTab] = React.useState<"video" | "whiteboard" | "notes" | "goals">("video");
   const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(0);
 
@@ -294,23 +296,49 @@ export default function HomePage() {
                 {hero.subheading}
               </p>
 
-              {/* Fast Search Command Bar */}
-              <form onSubmit={handleQuickSearch} className="relative max-w-md">
-                <input
-                  type="text"
-                  placeholder={hero.searchPlaceholder}
-                  value={quickQuery}
-                  onChange={(e) => setQuickQuery(e.target.value)}
-                  className="w-full h-14 rounded-2xl border border-slate-200 bg-white pl-4 pr-32 text-xs sm:text-sm font-medium text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-950"
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-2 h-10 px-5 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-extrabold text-xs flex items-center gap-1.5 transition-all shadow-subtle active:scale-95 cursor-pointer"
-                >
-                  <Search className="h-3.5 w-3.5" />
-                  <span>Search</span>
-                </button>
-              </form>
+              {/* Primary Hero Actions: Preply-style "Find Your Tutor" Matchmaker CTA & Quick Search */}
+              <div className="space-y-3 max-w-lg">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsDiscoveryOpen(true)}
+                    className="h-14 px-6 sm:px-7 rounded-2xl bg-[#14209C] hover:bg-[#0f1877] text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-[0_4px_16px_rgba(20,32,156,0.25)] hover:shadow-[0_8px_24px_rgba(20,32,156,0.35)] hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer group shrink-0"
+                  >
+                    <Sparkles className="h-4 w-4 text-amber-300 fill-amber-300 group-hover:rotate-12 transition-transform" />
+                    <span>Find Your Tutor</span>
+                    <ArrowRight className="h-4 w-4 text-white/80 group-hover:translate-x-1 transition-transform" />
+                  </button>
+
+                  <div className="flex-1">
+                    <form onSubmit={handleQuickSearch} className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search subject or tutor..."
+                        value={quickQuery}
+                        onChange={(e) => setQuickQuery(e.target.value)}
+                        className="w-full h-14 rounded-2xl border border-slate-200 bg-white pl-4 pr-11 text-xs sm:text-sm font-medium text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                      />
+                      <button
+                        type="submit"
+                        className="absolute right-2 top-2.5 h-9 w-9 rounded-xl bg-slate-950 hover:bg-slate-800 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                        title="Search tutors"
+                        aria-label="Search tutors"
+                      >
+                        <Search className="h-4 w-4" />
+                      </button>
+                    </form>
+                  </div>
+                </div>
+
+                {/* Matchmaker Trust Micro-Badge */}
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span>Matchmaker takes 2 minutes • 100% Satisfaction Guarantee</span>
+                </div>
+              </div>
 
               {/* Popular Tags */}
               <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
@@ -1085,6 +1113,13 @@ export default function HomePage() {
         tutor={bookingTutor}
         isOpen={isBookingOpen}
         onClose={() => setIsBookingOpen(false)}
+      />
+
+      {/* Preply-Style Tutor Discovery Matchmaker Modal */}
+      <TutorDiscoveryModal
+        isOpen={isDiscoveryOpen}
+        onClose={() => setIsDiscoveryOpen(false)}
+        onSelectTutorToBook={handleBook}
       />
     </div>
   );

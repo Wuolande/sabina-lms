@@ -8,12 +8,14 @@ import {
   ChevronDown,
   X,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { TutorCard } from "@/components/marketplace/TutorCard";
 import { TutorCardSkeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/ui/Pagination";
 import { BookingModal } from "@/components/booking/BookingModal";
+import { TutorDiscoveryModal } from "@/components/discovery/TutorDiscoveryModal";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { tutorService } from "@/services/tutorService";
 import { TutorProfile, Subject, Language, TutorSearchParams } from "@/types";
@@ -86,6 +88,7 @@ function FindTutorsContent() {
   const [page, setPage] = React.useState(1);
   const [bookingTutor, setBookingTutor] = React.useState<TutorProfile | null>(null);
   const [isBookingOpen, setIsBookingOpen] = React.useState(false);
+  const [isDiscoveryOpen, setIsDiscoveryOpen] = React.useState(false);
 
   const [countriesList, setCountriesList] = React.useState<any[]>([]);
 
@@ -184,14 +187,39 @@ function FindTutorsContent() {
         <span className="text-slate-900 font-bold">Find tutor</span>
       </nav>
 
-      {/* ── 2. Headline & Subtitle ── */}
-      <div className="max-w-4xl space-y-2.5">
-        <h1 className="text-2xl sm:text-4xl font-black text-slate-950 tracking-tight font-heading">
-          Discover a skilled online tutor for your studies
-        </h1>
-        <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-          Master your studies with personalized online tutoring from expert educators. Our skilled tutors are here to help you build strong foundations and achieve your academic goals.
-        </p>
+      {/* ── 2. Headline & Subtitle with Discovery Matchmaker Card ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="max-w-2xl space-y-2">
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-950 tracking-tight font-heading">
+            Discover a skilled online tutor for your studies
+          </h1>
+          <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
+            Master your studies with personalized online tutoring from expert educators. Our skilled tutors are here to help you build strong foundations and achieve your academic goals.
+          </p>
+        </div>
+
+        {/* Discovery Matchmaker Trigger Card */}
+        <div className="shrink-0 p-4 rounded-2xl bg-gradient-to-br from-brand-50 via-white to-amber-50/40 border border-brand-100/90 shadow-xs flex items-center justify-between sm:justify-start gap-4">
+          <div className="space-y-0.5">
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#14209C] bg-brand-100/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+              <Sparkles className="h-3 w-3 fill-[#14209C]" />
+              Need Guidance?
+            </span>
+            <p className="text-xs font-bold text-slate-900">
+              Try our 2-Minute Matchmaker
+            </p>
+            <p className="text-[11px] text-slate-500">
+              Get personalized tutor recommendations
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsDiscoveryOpen(true)}
+            className="h-9 px-4 rounded-xl bg-[#14209C] hover:bg-[#0f1877] text-white font-bold text-xs shadow-xs transition-all shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5"
+          >
+            <span>Start</span>
+          </button>
+        </div>
       </div>
 
       {/* ── 3. Reference Filter Suite (Attached Session Tabs + Cream Filter Container) ── */}
@@ -577,6 +605,13 @@ function FindTutorsContent() {
         tutor={bookingTutor}
         isOpen={isBookingOpen}
         onClose={() => setIsBookingOpen(false)}
+      />
+
+      {/* Tutor Discovery Matchmaker Modal */}
+      <TutorDiscoveryModal
+        isOpen={isDiscoveryOpen}
+        onClose={() => setIsDiscoveryOpen(false)}
+        onSelectTutorToBook={handleBook}
       />
     </div>
   );
