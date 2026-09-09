@@ -58,6 +58,21 @@ export const tutorService = {
   },
 
   /**
+   * Fetch all approved tutors for discovery and matchmaker.
+   */
+  async getAllTutors(): Promise<TutorProfile[]> {
+    try {
+      const res = await fetch('/api/tutors?limit=50');
+      if (!res.ok) return [];
+      const json = await res.json();
+      return json.tutors || [];
+    } catch (err) {
+      console.error('[tutorService.getAllTutors]', err);
+      return [];
+    }
+  },
+
+  /**
    * Fetch public tutor profile by slug.
    */
   async getTutorBySlug(slug: string): Promise<TutorProfile | null> {

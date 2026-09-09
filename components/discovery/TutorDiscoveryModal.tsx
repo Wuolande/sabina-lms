@@ -34,6 +34,7 @@ interface TutorDiscoveryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectTutorToBook?: (tutor: TutorProfile) => void;
+  initialTutors?: TutorProfile[];
 }
 
 const popularSubjects = [
@@ -106,6 +107,7 @@ export function TutorDiscoveryModal({
   isOpen,
   onClose,
   onSelectTutorToBook,
+  initialTutors,
 }: TutorDiscoveryModalProps) {
   const router = useRouter();
 
@@ -129,8 +131,8 @@ export function TutorDiscoveryModal({
   const [authError, setAuthError] = React.useState<string | null>(null);
   const [isAuthLoading, setIsAuthLoading] = React.useState(false);
 
-  // Tutors & Matching State
-  const [allTutors, setAllTutors] = React.useState<TutorProfile[]>([]);
+  // Tutors & Matching State (initialized with initialTutors to prevent empty state / errors)
+  const [allTutors, setAllTutors] = React.useState<TutorProfile[]>(initialTutors || []);
   const [matchedTutors, setMatchedTutors] = React.useState<any[]>([]);
   const [isMatchingLoading, setIsMatchingLoading] = React.useState(false);
 
@@ -146,11 +148,11 @@ export function TutorDiscoveryModal({
     setAuthError(null);
     setAuthChecking(true);
 
-    // 1. Check Session
+    // 1. Check Session safely
     fetch("/api/auth/session?role=STUDENT")
       .then((res) => (res.ok ? res.json() : { authenticated: false }))
       .then((data) => {
-        if (data.authenticated && data.user) {
+        if (data && data.authenticated && data.user) {
           setCurrentUser(data.user);
         } else {
           setCurrentUser(null);
@@ -159,20 +161,36 @@ export function TutorDiscoveryModal({
       .catch(() => setCurrentUser(null))
       .finally(() => setAuthChecking(false));
 
-    // 2. Fetch Tutors for Matching
-    tutorService
-      .getAllTutors()
-      .then((res) => {
-        if (res && res.length > 0) {
-          setAllTutors(res);
-        } else {
-          // Fallback to featured
-          tutorService.getFeaturedTutors().then(setAllTutors);
+    // 2. Fetch Tutors for Matching with full defensive fallbacks
+    const loadTutors = async () => {
+      try {
+        if (typeof tutorService?.getAllTutors === "function") {
+          const res = await tutorService.getAllTutors();
+          if (Array.isArray(res) && res.length > 0) {
+            setAllTutors(res);
+            return;
+          }
         }
-      })
-      .catch(() => {
-        tutorService.getFeaturedTutors().then(setAllTutors);
-      });
+        if (typeof tutorService?.getTutors === "function") {
+          const res = await tutorService.getTutors({ limit: 50 });
+          if (res && Array.isArray(res.tutors) && res.tutors.length > 0) {
+            setAllTutors(res.tutors);
+            return;
+          }
+        }
+        if (typeof tutorService?.getFeaturedTutors === "function") {
+          const featured = await tutorService.getFeaturedTutors();
+          if (Array.isArray(featured) && featured.length > 0) {
+            setAllTutors(featured);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("[TutorDiscoveryModal] Error loading tutors:", err);
+      }
+    };
+
+    loadTutors();
   }, [isOpen]);
 
   // Lock body scroll while modal is open
@@ -204,48 +222,53 @@ export function TutorDiscoveryModal({
 
     const activeSubjectName = customSubjectQuery.trim()
       ? customSubjectQuery.trim().toLowerCase()
-      : selectedSubject.toLowerCase();
+      : (selectedSubject || "").toLowerCase();
 
-    const scored = allTutors.map((tutor) => {
-      let score = 70; // baseline for verified tutor
+    const tutorList = Array.isArray(allTutors) && allTutors.length > 0 ? allTutors : (initialTutors || []);
 
-      // Check subject match
-      const tutorSubjects = (tutor.subjects || []).map((s: any) =>
-        (s.subject?.name || s.name || "").toLowerCase()
-      );
-      const hasDirectSubject = tutorSubjects.some((s) => s.includes(activeSubjectName) || activeSubjectName.includes(s));
-      if (hasDirectSubject) score += 18;
+    const scored = tutorList
+      .filter((tutor) => tutor && typeof tutor === "object")
+      .map((tutor) => {
+        let score = 70; // baseline for verified tutor
 
-      // Rating quality
-      if ((tutor.averageRating || 5.0) >= 4.9) score += 6;
-      else if ((tutor.averageRating || 5.0) >= 4.7) score += 4;
+        // Check subject match
+        const tutorSubjects = (Array.isArray(tutor.subjects) ? tutor.subjects : []).map((s: any) =>
+          (s?.subject?.name || s?.name || "").toLowerCase()
+        );
+        const hasDirectSubject = tutorSubjects.some((s) => s.includes(activeSubjectName) || activeSubjectName.includes(s));
+        if (hasDirectSubject) score += 18;
 
-      // Super tutor or featured
-      if (tutor.isSuperTutor) score += 3;
-      if (tutor.isFeatured) score += 2;
+        // Rating quality
+        const rating = Number(tutor.averageRating) || 5.0;
+        if (rating >= 4.9) score += 6;
+        else if (rating >= 4.7) score += 4;
 
-      // Budget match
-      const rate = tutor.hourlyRate || 40;
-      if (selectedBudget === "budget" && rate <= 35) score += 5;
-      if (selectedBudget === "standard" && rate >= 25 && rate <= 60) score += 5;
-      if (selectedBudget === "expert" && rate >= 50) score += 5;
+        // Super tutor or featured
+        if (tutor.isSuperTutor) score += 3;
+        if (tutor.isFeatured) score += 2;
 
-      const finalPercent = Math.min(99, Math.max(82, score));
+        // Budget match
+        const rate = Number(tutor.hourlyRate) || 40;
+        if (selectedBudget === "budget" && rate <= 35) score += 5;
+        if (selectedBudget === "standard" && rate >= 25 && rate <= 60) score += 5;
+        if (selectedBudget === "expert" && rate >= 50) score += 5;
 
-      return {
-        tutor,
-        matchScore: finalPercent,
-        highlight: hasDirectSubject
-          ? `Specializes in ${tutorSubjects[0] || "your goals"}`
-          : "Top-rated educator matching your learning level",
-      };
-    });
+        const finalPercent = Math.min(99, Math.max(82, score));
+
+        return {
+          tutor,
+          matchScore: finalPercent,
+          highlight: hasDirectSubject
+            ? `Specializes in ${tutorSubjects[0] || "your goals"}`
+            : "Top-rated educator matching your learning level",
+        };
+      });
 
     // Sort by matchScore desc
     scored.sort((a, b) => b.matchScore - a.matchScore);
     setMatchedTutors(scored.slice(0, 4));
     setIsMatchingLoading(false);
-  }, [allTutors, customSubjectQuery, selectedSubject, selectedBudget]);
+  }, [allTutors, initialTutors, customSubjectQuery, selectedSubject, selectedBudget]);
 
   // Handle advancing through steps
   const handleNext = () => {
@@ -923,15 +946,10 @@ export function TutorDiscoveryModal({
                         <div className="flex items-center gap-2 pt-1">
                           <Link
                             href={`/tutors/${tutor.slug || tutor.id}`}
-                            className="flex-1"
+                            className="flex-1 h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs shadow-xs transition-all inline-flex items-center justify-center text-center"
                             onClick={onClose}
                           >
-                            <button
-                              type="button"
-                              className="w-full h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs shadow-xs transition-all"
-                            >
-                              View Profile
-                            </button>
+                            View Profile
                           </Link>
 
                           <button

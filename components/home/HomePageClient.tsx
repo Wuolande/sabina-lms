@@ -44,6 +44,7 @@ import { tutorService } from "@/services/tutorService";
 import { TutorProfile, Subject } from "@/types";
 import { HomeBlogSection } from "@/components/home/HomeBlogSection";
 import { DEFAULT_HERO_IMAGE } from "@/src/modules/homepage/getHomepageData";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 interface HomePageClientProps {
   initialCms: any | null;
@@ -1111,18 +1112,23 @@ export function HomePageClient({
       </section>
 
       {/* Booking Modal */}
-      <BookingModal
-        tutor={bookingTutor}
-        isOpen={isBookingOpen}
-        onClose={() => setIsBookingOpen(false)}
-      />
+      <ErrorBoundary fallbackTitle="Booking Unavailable" fallbackMessage="Could not open booking at this moment. Please try again.">
+        <BookingModal
+          tutor={bookingTutor}
+          isOpen={isBookingOpen}
+          onClose={() => setIsBookingOpen(false)}
+        />
+      </ErrorBoundary>
 
       {/* Preply-Style Tutor Discovery Matchmaker Modal */}
-      <TutorDiscoveryModal
-        isOpen={isDiscoveryOpen}
-        onClose={() => setIsDiscoveryOpen(false)}
-        onSelectTutorToBook={handleBook}
-      />
+      <ErrorBoundary fallbackTitle="Tutor Matchmaker Unavailable" fallbackMessage="Could not open matchmaker at this moment. Please explore our tutors directory.">
+        <TutorDiscoveryModal
+          isOpen={isDiscoveryOpen}
+          onClose={() => setIsDiscoveryOpen(false)}
+          onSelectTutorToBook={handleBook}
+          initialTutors={featuredTutors}
+        />
+      </ErrorBoundary>
     </div>
   );
 }
