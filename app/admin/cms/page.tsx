@@ -38,6 +38,9 @@ import {
   Monitor,
   PenTool,
   Palette,
+  UploadCloud,
+  X,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -45,6 +48,8 @@ import { Input } from "@/components/ui/Input";
 import { Tabs } from "@/components/ui/Tabs";
 import { FileUploadWithLink } from "@/components/ui/FileUploadWithLink";
 import { useModal } from "@/components/ui/modal-context";
+import { useLogo } from "@/components/ui/LogoContext";
+import { Logo } from "@/components/ui/Logo";
 import { adminService } from "@/services/adminService";
 import { RichTextEditor } from "@/components/cms/RichTextEditor";
 import { formatDate } from "@/lib/utils";
@@ -154,10 +159,13 @@ function AdminCMSDashboardContent() {
   const [faqs, setFaqs] = React.useState<{ q: string; a: string }[]>([]);
 
   // ── 9. Theme & Branding State ──
+  const { setLogoUrl: setGlobalLogoUrl } = useLogo();
   const [primaryColor, setPrimaryColor] = React.useState("#14209C");
   const [secondaryColor, setSecondaryColor] = React.useState("#F9C31C");
+  const [logoUrl, setLogoUrl] = React.useState("");
+  const [logoUploading, setLogoUploading] = React.useState(false);
   const [themeSaving, setThemeSaving] = React.useState(false);
-  const [themePreview, setThemePreview] = React.useState<{ primary: string; secondary: string } | null>(null);
+  const [themePreview, setThemePreview] = React.useState<{ primary: string; secondary: string; logoUrl?: string } | null>(null);
 
   // ── Load All CMS Data ──
   const loadData = React.useCallback(async () => {
@@ -278,41 +286,97 @@ function AdminCMSDashboardContent() {
     loadData();
   }, [loadData]);
 
-  // ── Load Theme ──
+  // ── Load Theme & Logo ──
   React.useEffect(() => {
     fetch('/api/admin/theme')
       .then((r) => r.json())
       .then((data) => {
         if (data.primaryColor) setPrimaryColor(data.primaryColor);
         if (data.secondaryColor) setSecondaryColor(data.secondaryColor);
+        if (data.logoUrl !== undefined) {
+          setLogoUrl(data.logoUrl || "");
+          setGlobalLogoUrl(data.logoUrl || "");
+        }
       })
       .catch(() => {}); // silently fall back to defaults
-  }, []);
+  }, [setGlobalLogoUrl]);
 
-  // ── Save Theme ──
-  const handleSaveTheme = async () => {
+  // ── Save Theme & Logo ──
+  const handleSaveTheme = async (overrideLogoUrl?: string) => {
     setThemeSaving(true);
+    const targetLogo = overrideLogoUrl !== undefined ? overrideLogoUrl : logoUrl;
     try {
       const res = await fetch('/api/admin/theme', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ primaryColor, secondaryColor }),
+        body: JSON.stringify({ primaryColor, secondaryColor, logoUrl: targetLogo }),
       });
-      if (!res.ok) throw new Error('Failed to save theme');
+      if (!res.ok) throw new Error('Failed to save theme and branding');
       // Apply the new CSS vars immediately in the admin panel without a page reload
       document.documentElement.style.setProperty('--color-primary', primaryColor);
       document.documentElement.style.setProperty('--color-secondary', secondaryColor);
-      setThemePreview({ primary: primaryColor, secondary: secondaryColor });
+      setGlobalLogoUrl(targetLogo);
+      setThemePreview({ primary: primaryColor, secondary: secondaryColor, logoUrl: targetLogo });
       toast({
-        title: 'Theme Applied',
-        message: 'Brand colors saved and propagated to all panels.',
+        title: 'Branding & Theme Applied',
+        message: 'Brand colors and platform logo saved and propagated to all panels.',
         variant: 'success',
       });
     } catch {
-      toast({ title: 'Error', message: 'Failed to save theme colors.', variant: 'danger' });
+      toast({ title: 'Error', message: 'Failed to save theme colors or logo.', variant: 'danger' });
     } finally {
       setThemeSaving(false);
     }
+  };
+
+  // ── Upload Logo Handler ──
+  const handleLogoUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: 'File Too Large',
+        message: 'Logo file size exceeds recommended limit of 2MB.',
+        variant: 'danger',
+      });
+      return;
+    }
+
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload/logo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload logo file.');
+      }
+
+      const uploadedUrl = data.url || data.logoUrl;
+      setLogoUrl(uploadedUrl);
+      setGlobalLogoUrl(uploadedUrl);
+      // Auto-persist uploaded logo to platform theme
+      await handleSaveTheme(uploadedUrl);
+    } catch (err: any) {
+      toast({
+        title: 'Logo Upload Error',
+        message: err.message || 'Failed to scan and upload logo image.',
+        variant: 'danger',
+      });
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  // ── Remove Logo (Reset to Default) ──
+  const handleRemoveLogo = async () => {
+    setLogoUrl('');
+    setGlobalLogoUrl('');
+    await handleSaveTheme('');
   };
 
   // ── Open Page Editor ──
@@ -554,12 +618,12 @@ function AdminCMSDashboardContent() {
             <Button
               variant="default"
               size="sm"
-              onClick={handleSaveTheme}
+              onClick={() => handleSaveTheme()}
               disabled={themeSaving}
               className="font-bold bg-brand text-white text-xs shadow-sm"
               leftIcon={<Palette className="h-4 w-4" />}
             >
-              {themeSaving ? "Applying..." : "Apply Theme Colors"}
+              {themeSaving ? "Saving..." : "Save & Apply Brand Settings"}
             </Button>
           )}
         </div>
@@ -1706,10 +1770,123 @@ function AdminCMSDashboardContent() {
               <Palette className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h2 className="text-base font-black font-heading">Brand Theme Colors</h2>
+              <h2 className="text-base font-black font-heading">Theme & Brand Identity</h2>
               <p className="text-xs text-slate-300 mt-0.5">
-                Set the primary and secondary colors for all panels — public homepage, admin, tutor &amp; student dashboards.
+                Configure your official platform logo and brand color scheme across the public website, Student Portal, Tutor Console, Admin Panel, and Transactional Emails.
               </p>
+            </div>
+          </div>
+
+          {/* ─── 1. Platform Logo Section ─── */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-brand/10 text-brand flex items-center justify-center border border-brand/20">
+                  <ImageIcon className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-slate-900 font-heading">
+                      Platform Logo
+                    </h3>
+                    {logoUrl ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <Check className="h-3 w-3" /> Custom Logo Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                        Default Vector Wordmark
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Displayed in the top navigation, all portal sidebars, and email notifications.
+                  </p>
+                </div>
+              </div>
+
+              {logoUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRemoveLogo}
+                  disabled={themeSaving}
+                  className="text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
+                >
+                  Reset to Default Wordmark
+                </Button>
+              )}
+            </div>
+
+            {/* Recommended Size & Specs Banner */}
+            <div className="rounded-xl border border-amber-200/90 bg-amber-50/70 p-4 text-xs space-y-2">
+              <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+                <span>Recommended Logo Specifications:</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11px] text-amber-800 font-medium">
+                <div className="p-2 bg-white/70 rounded-lg border border-amber-200/50">
+                  <span className="font-bold text-amber-950 block">Recommended Dimensions:</span>
+                  <span>400 × 120 px (Landscape) or 512 × 512 px (Square)</span>
+                </div>
+                <div className="p-2 bg-white/70 rounded-lg border border-amber-200/50">
+                  <span className="font-bold text-amber-950 block">File Format:</span>
+                  <span>PNG with transparent background, SVG, or WebP</span>
+                </div>
+                <div className="p-2 bg-white/70 rounded-lg border border-amber-200/50">
+                  <span className="font-bold text-amber-950 block">File Size:</span>
+                  <span>Max 2 MB (Optimized for ultra-fast load)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Upload Area & Direct Link */}
+            <div className="space-y-3">
+              <FileUploadWithLink
+                label="Upload or Link Platform Logo"
+                description="Upload an image from your device or paste a hosted CDN / Cloudinary URL"
+                value={logoUrl}
+                onChange={(newUrl) => {
+                  setLogoUrl(newUrl);
+                  setGlobalLogoUrl(newUrl);
+                }}
+                type="image"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                maxSizeBytes={2 * 1024 * 1024}
+                placeholder="https://res.cloudinary.com/.../logo.png"
+              />
+            </div>
+
+            {/* Live Dual Theme Preview (Light & Dark) */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                Live Surface Preview (Real-Time Adaptability)
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 1. Light Navbar / Student Sidebar Preview */}
+                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase text-slate-500">Light Surface (Navbar &amp; Student Portal)</span>
+                    <span className="text-[9px] font-mono text-slate-400">bg-white</span>
+                  </div>
+                  <div className="h-14 flex items-center px-4 rounded-lg bg-slate-50/70 border border-slate-100">
+                    <Logo size="default" href={undefined} />
+                  </div>
+                </div>
+
+                {/* 2. Dark Sidebar / Admin Console Preview */}
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 space-y-2 text-white">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Dark Surface (Admin &amp; Tutor Sidebars)</span>
+                    <span className="text-[9px] font-mono text-slate-500">bg-slate-950</span>
+                  </div>
+                  <div className="h-14 flex items-center px-4 rounded-lg bg-slate-900 border border-slate-800">
+                    <Logo size="default" variant="dark" href={undefined} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

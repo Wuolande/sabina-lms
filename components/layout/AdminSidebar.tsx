@@ -9,6 +9,7 @@ import {
   Settings, ShieldAlert, FileText, LogOut, X, Shield, LayoutTemplate, BookOpen, Mail, Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/ui/Logo";
 import { adminService } from "@/services/adminService";
 
 const staticLinks = [
@@ -72,17 +73,12 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       >
         {/* Header */}
         <div className="flex h-16 shrink-0 items-center justify-between px-5 border-b border-slate-800">
-          <Link href="/admin" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-500 shadow-xs">
-              <Shield className="h-4 w-4 text-slate-950" />
-            </div>
-            <div>
-              <p className="text-sm font-black text-white leading-none font-heading">
-                Admin <span className="text-amber-400">Console</span>
-              </p>
-              <p className="text-[10px] text-slate-500 font-medium mt-0.5">Sabina Edge</p>
-            </div>
-          </Link>
+          <div className="flex items-center gap-2 min-w-0">
+            <Logo size="sm" variant="dark" href="/admin" />
+            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+              Admin
+            </span>
+          </div>
 
           {onClose && (
             <button

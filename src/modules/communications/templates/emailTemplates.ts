@@ -248,3 +248,69 @@ Best regards,
 Sabina LMS Operations`,
   },
 ];
+
+/**
+ * Wraps raw email content in a high-deliverability, responsive HTML email shell
+ * that features the admin's uploaded platform logo and primary brand theme color.
+ */
+export function renderBrandedEmailHtml(options: {
+  title?: string;
+  bodyHtml: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+  year?: number;
+}): string {
+  const primary = options.primaryColor || '#14209C';
+  const logo = options.logoUrl?.trim();
+  const currentYear = options.year || new Date().getFullYear();
+
+  const logoMarkup = logo
+    ? `<img src="${logo}" alt="Sabina LMS" height="38" style="max-height:38px;max-width:220px;width:auto;height:auto;object-fit:contain;display:inline-block;vertical-align:middle;border:0;" />`
+    : `<table cellpadding="0" cellspacing="0" border="0" style="display:inline-table;vertical-align:middle;">
+        <tr>
+          <td style="background-color:#ffffff;padding:6px 14px;border-radius:10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:900;font-size:18px;color:${primary};letter-spacing:-0.5px;">
+            SABINA <span style="color:#F9C31C;">EDGE</span>
+          </td>
+        </tr>
+      </table>`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${options.title || 'Sabina LMS Notification'}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05),0 2px 4px -2px rgba(0,0,0,0.05);border:1px solid #e2e8f0;">
+          <!-- Header Bar with Dynamic Logo and Brand Primary Color -->
+          <tr>
+            <td style="background-color:${primary};padding:24px 32px;text-align:center;">
+              ${logoMarkup}
+            </td>
+          </tr>
+          <!-- Main Content Body -->
+          <tr>
+            <td style="padding:36px 32px;color:#1e293b;font-size:15px;line-height:1.65;">
+              ${options.bodyHtml}
+            </td>
+          </tr>
+          <!-- Branded Footer -->
+          <tr>
+            <td style="background-color:#f1f5f9;padding:24px 32px;border-top:1px solid #e2e8f0;text-align:center;font-size:12px;color:#64748b;line-height:1.5;">
+              <p style="margin:0 0 8px 0;font-weight:700;color:#334155;">Sabina LMS — Global 1-on-1 Online Tutoring</p>
+              <p style="margin:0 0 4px 0;">Live Video Classrooms • Certified Tutors • 100% Satisfaction Guarantee</p>
+              <p style="margin:8px 0 0 0;font-size:11px;color:#94a3b8;">© ${currentYear} Sabina LMS. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}

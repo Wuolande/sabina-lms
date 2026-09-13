@@ -22,6 +22,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
+import { Logo } from "@/components/ui/Logo";
 import { Badge } from "@/components/ui/Badge";
 import { notificationService } from "@/services/notificationService";
 import { messagingService } from "@/services/messagingService";
@@ -141,13 +142,9 @@ export function TutorHeader({ onToggleSidebar }: TutorHeaderProps) {
           <Menu className="h-5 w-5" />
         </button>
 
-        <Link href="/tutor" className="group flex items-center gap-0 lg:hidden">
-          <span className="text-lg font-black tracking-tight text-white font-heading">Sabina</span>
-          <span className="mx-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-            <Play className="h-2.5 w-2.5 fill-white ml-px" />
-          </span>
-          <span className="text-lg font-black tracking-tight text-[#14209C] font-heading">Edge</span>
-        </Link>
+        <div className="lg:hidden flex items-center">
+          <Logo size="sm" variant="dark" href="/tutor" />
+        </div>
 
         <div className="hidden lg:block">
           <p className="text-xs font-extrabold uppercase tracking-widest text-slate-500">Tutor Console</p>

@@ -23,10 +23,11 @@ export const metadata: Metadata = {
 };
 
 import { ModalProvider } from "@/components/ui/modal-context";
+import { LogoProvider } from "@/components/ui/LogoContext";
 
-const THEME_DEFAULTS = { primaryColor: '#14209C', secondaryColor: '#F9C31C' };
+const THEME_DEFAULTS = { primaryColor: '#14209C', secondaryColor: '#F9C31C', logoUrl: '' };
 
-async function getPlatformTheme(): Promise<{ primaryColor: string; secondaryColor: string }> {
+async function getPlatformTheme(): Promise<{ primaryColor: string; secondaryColor: string; logoUrl: string }> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const res = await fetch(`${baseUrl}/api/theme`, {
@@ -37,6 +38,7 @@ async function getPlatformTheme(): Promise<{ primaryColor: string; secondaryColo
     return {
       primaryColor:   /^#[0-9A-Fa-f]{6}$/.test(data.primaryColor)   ? data.primaryColor   : THEME_DEFAULTS.primaryColor,
       secondaryColor: /^#[0-9A-Fa-f]{6}$/.test(data.secondaryColor) ? data.secondaryColor : THEME_DEFAULTS.secondaryColor,
+      logoUrl:        typeof data.logoUrl === 'string' ? data.logoUrl.trim() : '',
     };
   } catch {
     return THEME_DEFAULTS;
@@ -57,11 +59,16 @@ export default async function RootLayout({
       <head>
         {/* Inject dynamic brand CSS variables — server-rendered, zero FOUC */}
         <style dangerouslySetInnerHTML={{ __html: cssVars }} />
+        {theme.logoUrl && (
+          <link rel="icon" href={theme.logoUrl} />
+        )}
       </head>
       <body suppressHydrationWarning className="flex min-h-full flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-100 selection:text-brand-900">
-        <ModalProvider>
-          {children}
-        </ModalProvider>
+        <LogoProvider initialLogoUrl={theme.logoUrl}>
+          <ModalProvider>
+            {children}
+          </ModalProvider>
+        </LogoProvider>
       </body>
     </html>
   );

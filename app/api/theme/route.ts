@@ -2,8 +2,8 @@
  * API Route: GET /api/theme
  * -----------------------------------------------------------------------
  * Public endpoint — returns platform primary & secondary brand colors
- * stored in the platform_theme table. Used by the root layout to inject
- * CSS custom properties server-side (zero FOUC).
+ * and logo URL stored in the platform_theme table. Used by the root
+ * layout to inject CSS custom properties and logo context server-side.
  * -----------------------------------------------------------------------
  */
 
@@ -15,6 +15,7 @@ export const revalidate = 60; // ISR — revalidate every 60s
 const DEFAULTS = {
   primaryColor: '#14209C',
   secondaryColor: '#F9C31C',
+  logoUrl: '',
 };
 
 function isValidHex(value: unknown): value is string {
@@ -25,7 +26,7 @@ export async function GET() {
   try {
     const { data, error } = await adminSupabase
       .from('platform_theme')
-      .select('primary_color, secondary_color')
+      .select('primary_color, secondary_color, logo_url')
       .eq('id', 'default')
       .single();
 
@@ -36,6 +37,7 @@ export async function GET() {
     return NextResponse.json({
       primaryColor:   isValidHex(data.primary_color)   ? data.primary_color   : DEFAULTS.primaryColor,
       secondaryColor: isValidHex(data.secondary_color) ? data.secondary_color : DEFAULTS.secondaryColor,
+      logoUrl:        typeof data.logo_url === 'string' ? data.logo_url.trim() : DEFAULTS.logoUrl,
     });
   } catch {
     return NextResponse.json(DEFAULTS);

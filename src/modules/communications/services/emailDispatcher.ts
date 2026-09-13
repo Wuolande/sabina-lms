@@ -13,6 +13,7 @@ import {
   EmailProviderType,
   TestEmailResult,
 } from '../types/emailProviderTypes';
+import { renderBrandedEmailHtml } from '../templates/emailTemplates';
 
 let cachedEmailConfig: { data: EmailProviderConfig; expiresAt: number } | null = null;
 
@@ -179,29 +180,44 @@ export async function sendLiveTestEmail(recipientEmail: string, providerOverride
   logs.push(`[${new Date().toLocaleTimeString()}] Active Provider: ${provider.toUpperCase()}`);
   logs.push(`[${new Date().toLocaleTimeString()}] Sender Identity: ${config.fromName} <${config.fromEmail}>`);
 
-  const testHtml = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; padding: 32px;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <span style="font-size: 24px; font-weight: 900; color: #14209C;">SABINA LMS</span>
-      </div>
-      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 24px;">
-        <h2 style="color: #166534; margin: 0 0 4px 0; font-size: 18px; font-weight: 800;">✓ Email Provider Test Successful</h2>
-        <p style="color: #15803d; margin: 0; font-size: 13px;">Your email configuration is connected and actively sending messages.</p>
-      </div>
-      <p style="color: #475569; font-size: 14px; line-height: 1.6;">
-        This test message verifies that your email provider credentials (<strong>${provider.toUpperCase()}</strong>) and sender identity headers are functioning correctly on Sabina LMS.
-      </p>
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; color: #64748b; margin-top: 20px;">
-        <strong>Diagnostic Metadata:</strong><br/>
-        • Provider: ${provider}<br/>
-        • Timestamp: ${timestamp}<br/>
-        • From: ${config.fromName} &lt;${config.fromEmail}&gt;<br/>
-        • Deliverability Check: Passed (200 OK)
-      </div>
+  let primaryColor = '#14209C';
+  let logoUrl = '';
+  try {
+    const { data: themeData } = await adminSupabase
+      .from('platform_theme')
+      .select('primary_color, logo_url')
+      .eq('id', 'default')
+      .single();
+    if (themeData?.primary_color) primaryColor = themeData.primary_color;
+    if (themeData?.logo_url) logoUrl = themeData.logo_url;
+  } catch {}
+
+  const testBody = `
+    <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 24px;">
+      <h2 style="color: #166534; margin: 0 0 4px 0; font-size: 18px; font-weight: 800;">✓ Email Delivery Test Successful</h2>
+      <p style="color: #15803d; margin: 0; font-size: 13px;">Your email provider is connected and actively sending branded notifications.</p>
+    </div>
+    <p style="color: #475569; font-size: 14px; line-height: 1.6;">
+      This test message verifies that your email provider credentials (<strong>${provider.toUpperCase()}</strong>) and sender identity headers are functioning correctly on Sabina LMS.
+    </p>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; font-size: 12px; color: #64748b; margin-top: 20px;">
+      <strong style="color: #334155;">Diagnostic Metadata:</strong><br/>
+      • Provider: ${provider}<br/>
+      • Timestamp: ${timestamp}<br/>
+      • From: ${config.fromName} &lt;${config.fromEmail}&gt;<br/>
+      • Platform Logo: ${logoUrl ? 'Active Cloud Asset' : 'Default Brand Wordmark'}<br/>
+      • Deliverability Check: Passed (200 OK)
     </div>
   `;
 
-  logs.push(`[${new Date().toLocaleTimeString()}] Assembling RFC-compliant test payload...`);
+  const testHtml = renderBrandedEmailHtml({
+    title: `[Test] Sabina LMS Email Delivery Confirmation (${provider.toUpperCase()})`,
+    bodyHtml: testBody,
+    logoUrl,
+    primaryColor,
+  });
+
+  logs.push(`[${new Date().toLocaleTimeString()}] Assembling RFC-compliant test payload with branded logo header...`);
 
   const res = await dispatchEmail({
     to: recipientEmail,

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
+import { Logo } from "@/components/ui/Logo";
 
 interface AdminHeaderProps {
   onToggleSidebar?: () => void;
@@ -26,7 +27,11 @@ export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
           <Menu className="h-5 w-5" />
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="lg:hidden flex items-center">
+          <Logo size="sm" href="/admin" />
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2">
           <Badge variant="warning" size="sm" className="bg-amber-100 text-amber-900 font-bold border-amber-300">
             <Lock className="mr-1 h-3 w-3" />
             Super Administrator Mode
