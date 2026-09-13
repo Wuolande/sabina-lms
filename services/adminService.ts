@@ -725,6 +725,25 @@ export const adminService = {
     });
   },
 
+  // ─── Payment Gateways & Integrations ──────────────────────────────────────
+  async getPaymentProviderConfig(): Promise<any> {
+    return apiFetch<any>('/settings/payment-providers');
+  },
+
+  async updatePaymentProviderConfig(payload: any): Promise<{ success: boolean; config?: any }> {
+    return apiFetch<{ success: boolean; config?: any }>('/settings/payment-providers', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async testPaymentGateway(payload: { gateway: string; mode?: string }): Promise<any> {
+    return apiFetch<any>('/settings/payment-providers/test', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
   // ─── Blog Articles & Editorial CMS ────────────────────────────────────────
   async getAdminBlogs(options: {
     search?: string;

@@ -45,6 +45,8 @@ import {
   Video,
   ExternalLink,
   MonitorPlay,
+  CreditCard,
+  FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -64,10 +66,26 @@ import {
   DEFAULT_VIDEO_PROVIDER_CONFIG,
   VideoProviderType,
 } from "@/src/modules/video/types/videoProviderTypes";
+import {
+  PaymentProviderConfig,
+  DEFAULT_PAYMENT_PROVIDER_CONFIG,
+  PaymentGatewayType,
+} from "@/src/modules/payments/types/paymentProviderTypes";
+import {
+  StripeLogo,
+  PayPalLogo,
+  RazorpayLogo,
+  PaystackLogo,
+  PaymentSecurityBadges,
+  VisaBadge,
+  MastercardBadge,
+  ApplePayBadge,
+  GooglePayBadge,
+} from "@/components/payments/PaymentLogos";
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = React.useState<
-    "policies" | "security" | "email" | "video" | "subjects" | "languages" | "countries" | "timezones" | "currencies"
+    "policies" | "security" | "email" | "video" | "payments" | "subjects" | "languages" | "countries" | "timezones" | "currencies"
   >("policies");
 
   const [loading, setLoading] = React.useState(true);
@@ -118,6 +136,12 @@ export default function AdminSettingsPage() {
   const [videoConfig, setVideoConfig] = React.useState<VideoProviderConfig>(DEFAULT_VIDEO_PROVIDER_CONFIG);
   const [showVideoSecret, setShowVideoSecret] = React.useState(false);
 
+  // Payment Gateways & Integrations state
+  const [paymentConfig, setPaymentConfig] = React.useState<PaymentProviderConfig>(DEFAULT_PAYMENT_PROVIDER_CONFIG);
+  const [showPaymentSecrets, setShowPaymentSecrets] = React.useState<Record<string, boolean>>({});
+  const [testGatewayLoading, setTestGatewayLoading] = React.useState<string | null>(null);
+  const [testGatewayResults, setTestGatewayResults] = React.useState<Record<string, any>>({});
+
   // Search & Filter states
   const [subjectSearch, setSubjectSearch] = React.useState("");
   const [subjectCatFilter, setSubjectCatFilter] = React.useState("ALL");
@@ -152,17 +176,19 @@ export default function AdminSettingsPage() {
   const loadTaxonomy = React.useCallback(async () => {
     setLoading(true);
     try {
-      const [taxData, secData, emailData, videoData] = await Promise.all([
+      const [taxData, secData, emailData, videoData, paymentData] = await Promise.all([
         adminService.getTaxonomy360(),
         adminService.getSecuritySettings(),
         adminService.getEmailProviderConfig(),
         adminService.getVideoProviderConfig(),
+        adminService.getPaymentProviderConfig(),
       ]);
 
       if (taxData) setTaxonomy(taxData);
       if (secData) setSecuritySettings(secData);
       if (emailData) setEmailConfig(emailData);
       if (videoData) setVideoConfig(videoData);
+      if (paymentData) setPaymentConfig(paymentData);
     } catch (err) {
       console.error("[loadTaxonomy Error]", err);
     } finally {
@@ -250,6 +276,43 @@ export default function AdminSettingsPage() {
       loadTaxonomy();
     } else {
       triggerToast("Failed to save live classroom configuration");
+    }
+  };
+
+  // Payment Gateways Save
+  const handleSavePaymentConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    const res = await adminService.updatePaymentProviderConfig(paymentConfig);
+    setSaving(false);
+    if (res?.success) {
+      triggerToast("Payment gateways and API credentials saved successfully");
+      loadTaxonomy();
+    } else {
+      triggerToast("Failed to save payment gateway settings");
+    }
+  };
+
+  // Live Gateway Diagnostic Test
+  const handleTestGateway = async (gateway: PaymentGatewayType) => {
+    setTestGatewayLoading(gateway);
+    try {
+      const mode = paymentConfig[gateway]?.mode || "sandbox";
+      const res = await adminService.testPaymentGateway({ gateway, mode });
+      setTestGatewayResults((prev) => ({ ...prev, [gateway]: res }));
+      if (res?.success) {
+        triggerToast(`${gateway.toUpperCase()} (${mode.toUpperCase()}) connection verified!`);
+      } else {
+        triggerToast(`${gateway.toUpperCase()} test failed: ${res?.message || res?.error || "Error"}`);
+      }
+    } catch (err: any) {
+      setTestGatewayResults((prev) => ({
+        ...prev,
+        [gateway]: { success: false, message: err.message || "Failed to execute test" },
+      }));
+      triggerToast(`${gateway.toUpperCase()} connection failed.`);
+    } finally {
+      setTestGatewayLoading(null);
     }
   };
 
@@ -617,6 +680,7 @@ export default function AdminSettingsPage() {
           { id: "security", label: "Security & reCAPTCHA", icon: ShieldCheck },
           { id: "email", label: "Email Providers & SMTP", icon: Mail },
           { id: "video", label: "Live Classroom", icon: Video },
+          { id: "payments", label: "Payment Gateways", icon: CreditCard },
           { id: "subjects", label: `Subjects (${taxonomy.subjects?.length || 0})`, icon: BookOpen },
           { id: "languages", label: `Languages (${taxonomy.languages?.length || 0})`, icon: Languages },
           { id: "countries", label: `Countries (${taxonomy.countries?.length || 0})`, icon: MapPin },
@@ -1974,6 +2038,892 @@ export default function AdminSettingsPage() {
             >
               <MonitorPlay className="h-4 w-4" />
               <span>{saving ? "Saving..." : "Save Live Classroom Settings"}</span>
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {/* ─── TAB: Payment Gateways & Integrations ─── */}
+      {activeTab === "payments" && (
+        <form onSubmit={handleSavePaymentConfig} className="space-y-8">
+          {/* Header Banner */}
+          <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 sm:p-8 text-white shadow-xl">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-500/20 text-indigo-400 border border-indigo-400/30">
+                    <CreditCard className="h-5 w-5" />
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black font-heading tracking-tight">
+                    Payment Gateways &amp; Merchant Processing
+                  </h2>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+                  Configure world-class payment integrations with independent <strong>Sandbox (Test)</strong> and <strong>Live (Production)</strong> modes. Test credentials with live handshakes to guarantee frictionless student checkouts.
+                </p>
+              </div>
+
+              {/* Global Currency & Default Gateway */}
+              <div className="flex flex-col sm:flex-row gap-3 bg-white/10 p-3 rounded-2xl border border-white/15 shrink-0">
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    Primary Gateway
+                  </label>
+                  <select
+                    value={paymentConfig.activeGateway}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({ ...prev, activeGateway: e.target.value as PaymentGatewayType }))
+                    }
+                    className="rounded-xl border border-white/20 bg-slate-900 text-white text-xs font-bold px-3 py-1.5 focus:outline-none"
+                  >
+                    <option value="stripe">Stripe (Cards &amp; Wallets)</option>
+                    <option value="paypal">PayPal &amp; Pay in 4</option>
+                    <option value="razorpay">Razorpay &amp; UPI</option>
+                    <option value="paystack">Paystack &amp; Mobile Money</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                    Default Currency
+                  </label>
+                  <select
+                    value={paymentConfig.defaultCurrency}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({ ...prev, defaultCurrency: e.target.value }))
+                    }
+                    className="rounded-xl border border-white/20 bg-slate-900 text-white text-xs font-bold px-3 py-1.5 focus:outline-none"
+                  >
+                    <option value="USD">USD ($ - US Dollar)</option>
+                    <option value="EUR">EUR (€ - Euro)</option>
+                    <option value="GBP">GBP (£ - British Pound)</option>
+                    <option value="CAD">CAD ($ - Canadian Dollar)</option>
+                    <option value="AUD">AUD ($ - Australian Dollar)</option>
+                    <option value="INR">INR (₹ - Indian Rupee)</option>
+                    <option value="NGN">NGN (₦ - Nigerian Naira)</option>
+                    <option value="KES">KES (KSh - Kenyan Shilling)</option>
+                    <option value="ZAR">ZAR (R - South African Rand)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════
+              GATEWAY 1: STRIPE
+          ══════════════════════════════════════════════════════════════ */}
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center">
+                  <StripeLogo className="h-6 w-auto" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900 font-heading">Stripe Payments</h3>
+                    <Badge variant={paymentConfig.stripe.enabled ? "success" : "neutral"} size="sm">
+                      {paymentConfig.stripe.enabled ? "Active Gateway" : "Disabled"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <VisaBadge />
+                    <MastercardBadge />
+                    <ApplePayBadge />
+                    <GooglePayBadge />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {/* Mode Selector Toggle */}
+                <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        stripe: { ...prev.stripe, mode: "sandbox" },
+                      }))
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                      paymentConfig.stripe.mode === "sandbox"
+                        ? "bg-amber-400 text-slate-950 shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <FlaskConical className="h-3.5 w-3.5" />
+                    <span>Sandbox</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        stripe: { ...prev.stripe, mode: "live" },
+                      }))
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                      paymentConfig.stripe.mode === "live"
+                        ? "bg-emerald-600 text-white shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Live</span>
+                  </button>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={paymentConfig.stripe.enabled}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        stripe: { ...prev.stripe, enabled: e.target.checked },
+                      }))
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
+              </div>
+            </div>
+
+            {/* Mode Notification Banner */}
+            <div
+              className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between gap-3 ${
+                paymentConfig.stripe.mode === "sandbox"
+                  ? "bg-amber-50 border-amber-200 text-amber-900"
+                  : "bg-emerald-50 border-emerald-200 text-emerald-900"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {paymentConfig.stripe.mode === "sandbox" ? (
+                  <FlaskConical className="h-4 w-4 text-amber-600 shrink-0" />
+                ) : (
+                  <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                )}
+                <span>
+                  Currently editing <strong>{paymentConfig.stripe.mode.toUpperCase()} MODE</strong> credentials.
+                  {paymentConfig.stripe.mode === "sandbox" && " Test card 4242 4242 4242 4242 can be used on checkout."}
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleTestGateway("stripe")}
+                disabled={Boolean(testGatewayLoading)}
+                className="text-xs font-bold bg-white shadow-2xs shrink-0"
+              >
+                {testGatewayLoading === "stripe" ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" />
+                ) : (
+                  <Zap className="h-3.5 w-3.5 text-indigo-600 mr-1" />
+                )}
+                Test Connection
+              </Button>
+            </div>
+
+            {/* Test result diagnostics banner if present */}
+            {testGatewayResults.stripe && (
+              <div
+                className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
+                  testGatewayResults.stripe.success
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                    : "bg-rose-50 border-rose-200 text-rose-800"
+                }`}
+              >
+                <div className="mt-0.5">
+                  {testGatewayResults.stripe.success ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <AlertCircle className="h-4 w-4 text-rose-600" />}
+                </div>
+                <div>
+                  <p className="font-bold">{testGatewayResults.stripe.message}</p>
+                  <p className="text-[11px] opacity-80 mt-0.5">
+                    Latency: {testGatewayResults.stripe.latencyMs}ms | Endpoint: {testGatewayResults.stripe.endpoint}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Credentials Fields */}
+            {paymentConfig.stripe.mode === "sandbox" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Sandbox Publishable Key
+                  </label>
+                  <Input
+                    placeholder="pk_test_..."
+                    value={paymentConfig.stripe.sandboxPublishableKey}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        stripe: { ...prev.stripe, sandboxPublishableKey: e.target.value },
+                      }))
+                    }
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Sandbox Secret Key
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPaymentSecrets((prev) => ({ ...prev, stripe_sandbox: !prev.stripe_sandbox }))
+                      }
+                      className="text-[10px] text-slate-500 hover:text-slate-800 font-semibold"
+                    >
+                      {showPaymentSecrets.stripe_sandbox ? "Hide" : "Reveal"}
+                    </button>
+                  </div>
+                  <Input
+                    type={showPaymentSecrets.stripe_sandbox ? "text" : "password"}
+                    placeholder="sk_test_..."
+                    value={paymentConfig.stripe.sandboxSecretKey}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        stripe: { ...prev.stripe, sandboxSecretKey: e.target.value },
+                      }))
+                    }
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Sandbox Webhook Signing Secret (Optional)
+                  </label>
+                  <Input
+                    placeholder="whsec_..."
+                    value={paymentConfig.stripe.sandboxWebhookSecret}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        stripe: { ...prev.stripe, sandboxWebhookSecret: e.target.value },
+                      }))
+                    }
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Webhook URL: https://yourdomain.com/api/payments/webhook/stripe</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Live Publishable Key
+                  </label>
+                  <Input
+                    placeholder="pk_live_..."
+                    value={paymentConfig.stripe.livePublishableKey}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        stripe: { ...prev.stripe, livePublishableKey: e.target.value },
+                      }))
+                    }
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Live Secret Key
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPaymentSecrets((prev) => ({ ...prev, stripe_live: !prev.stripe_live }))
+                      }
+                      className="text-[10px] text-slate-500 hover:text-slate-800 font-semibold"
+                    >
+                      {showPaymentSecrets.stripe_live ? "Hide" : "Reveal"}
+                    </button>
+                  </div>
+                  <Input
+                    type={showPaymentSecrets.stripe_live ? "text" : "password"}
+                    placeholder="sk_live_..."
+                    value={paymentConfig.stripe.liveSecretKey}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        stripe: { ...prev.stripe, liveSecretKey: e.target.value },
+                      }))
+                    }
+                    className="font-mono text-xs"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Live Webhook Signing Secret
+                  </label>
+                  <Input
+                    placeholder="whsec_..."
+                    value={paymentConfig.stripe.liveWebhookSecret}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        stripe: { ...prev.stripe, liveWebhookSecret: e.target.value },
+                      }))
+                    }
+                    className="font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">Webhook URL: https://yourdomain.com/api/payments/webhook/stripe</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════
+              GATEWAY 2: PAYPAL
+          ══════════════════════════════════════════════════════════════ */}
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-sky-50 border border-sky-100 rounded-2xl flex items-center justify-center">
+                  <PayPalLogo className="h-6 w-auto" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900 font-heading">PayPal &amp; Venmo</h3>
+                    <Badge variant={paymentConfig.paypal.enabled ? "success" : "neutral"} size="sm">
+                      {paymentConfig.paypal.enabled ? "Active Gateway" : "Disabled"}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">PayPal Wallet, Pay in 4, and Venmo across 200+ countries</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        paypal: { ...prev.paypal, mode: "sandbox" },
+                      }))
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                      paymentConfig.paypal.mode === "sandbox"
+                        ? "bg-amber-400 text-slate-950 shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <FlaskConical className="h-3.5 w-3.5" />
+                    <span>Sandbox</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        paypal: { ...prev.paypal, mode: "live" },
+                      }))
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                      paymentConfig.paypal.mode === "live"
+                        ? "bg-emerald-600 text-white shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Live</span>
+                  </button>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={paymentConfig.paypal.enabled}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        paypal: { ...prev.paypal, enabled: e.target.checked },
+                      }))
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <span className="text-slate-600">
+                Operating in <strong>{paymentConfig.paypal.mode.toUpperCase()}</strong> endpoint:{" "}
+                <span className="font-mono text-slate-500">
+                  {paymentConfig.paypal.mode === "sandbox" ? "api-m.sandbox.paypal.com" : "api-m.paypal.com"}
+                </span>
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleTestGateway("paypal")}
+                disabled={Boolean(testGatewayLoading)}
+                className="text-xs font-bold bg-white shadow-2xs"
+              >
+                {testGatewayLoading === "paypal" ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" />
+                ) : (
+                  <Zap className="h-3.5 w-3.5 text-sky-600 mr-1" />
+                )}
+                Test Connection
+              </Button>
+            </div>
+
+            {testGatewayResults.paypal && (
+              <div
+                className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
+                  testGatewayResults.paypal.success
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                    : "bg-rose-50 border-rose-200 text-rose-800"
+                }`}
+              >
+                <div className="mt-0.5">
+                  {testGatewayResults.paypal.success ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <AlertCircle className="h-4 w-4 text-rose-600" />}
+                </div>
+                <div>
+                  <p className="font-bold">{testGatewayResults.paypal.message}</p>
+                  <p className="text-[11px] opacity-80 mt-0.5">Endpoint: {testGatewayResults.paypal.endpoint}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  {paymentConfig.paypal.mode === "sandbox" ? "Sandbox Client ID" : "Live Client ID"}
+                </label>
+                <Input
+                  value={
+                    paymentConfig.paypal.mode === "sandbox"
+                      ? paymentConfig.paypal.sandboxClientId
+                      : paymentConfig.paypal.liveClientId
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPaymentConfig((prev) => ({
+                      ...prev,
+                      paypal: {
+                        ...prev.paypal,
+                        ...(prev.paypal.mode === "sandbox" ? { sandboxClientId: v } : { liveClientId: v }),
+                      },
+                    }));
+                  }}
+                  className="font-mono text-xs"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    {paymentConfig.paypal.mode === "sandbox" ? "Sandbox Client Secret" : "Live Client Secret"}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPaymentSecrets((prev) => ({ ...prev, paypal_secret: !prev.paypal_secret }))
+                    }
+                    className="text-[10px] text-slate-500 hover:text-slate-800 font-semibold"
+                  >
+                    {showPaymentSecrets.paypal_secret ? "Hide" : "Reveal"}
+                  </button>
+                </div>
+                <Input
+                  type={showPaymentSecrets.paypal_secret ? "text" : "password"}
+                  value={
+                    paymentConfig.paypal.mode === "sandbox"
+                      ? paymentConfig.paypal.sandboxClientSecret
+                      : paymentConfig.paypal.liveClientSecret
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPaymentConfig((prev) => ({
+                      ...prev,
+                      paypal: {
+                        ...prev.paypal,
+                        ...(prev.paypal.mode === "sandbox" ? { sandboxClientSecret: v } : { liveClientSecret: v }),
+                      },
+                    }));
+                  }}
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════
+              GATEWAY 3: RAZORPAY
+          ══════════════════════════════════════════════════════════════ */}
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center">
+                  <RazorpayLogo className="h-6 w-auto" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900 font-heading">Razorpay (UPI &amp; Cards)</h3>
+                    <Badge variant={paymentConfig.razorpay.enabled ? "success" : "neutral"} size="sm">
+                      {paymentConfig.razorpay.enabled ? "Active Gateway" : "Disabled"}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">UPI (PhonePe, Google Pay, Paytm), RuPay, Netbanking, Cards</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        razorpay: { ...prev.razorpay, mode: "sandbox" },
+                      }))
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                      paymentConfig.razorpay.mode === "sandbox"
+                        ? "bg-amber-400 text-slate-950 shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <FlaskConical className="h-3.5 w-3.5" />
+                    <span>Sandbox</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        razorpay: { ...prev.razorpay, mode: "live" },
+                      }))
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                      paymentConfig.razorpay.mode === "live"
+                        ? "bg-emerald-600 text-white shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Live</span>
+                  </button>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={paymentConfig.razorpay.enabled}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        razorpay: { ...prev.razorpay, enabled: e.target.checked },
+                      }))
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <span className="text-slate-600">
+                Ready for Indian subcontinent &amp; Asian currencies (INR, SGD, AED, USD)
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleTestGateway("razorpay")}
+                disabled={Boolean(testGatewayLoading)}
+                className="text-xs font-bold bg-white shadow-2xs"
+              >
+                {testGatewayLoading === "razorpay" ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" />
+                ) : (
+                  <Zap className="h-3.5 w-3.5 text-blue-600 mr-1" />
+                )}
+                Test Connection
+              </Button>
+            </div>
+
+            {testGatewayResults.razorpay && (
+              <div
+                className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
+                  testGatewayResults.razorpay.success
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                    : "bg-rose-50 border-rose-200 text-rose-800"
+                }`}
+              >
+                <div className="mt-0.5">
+                  {testGatewayResults.razorpay.success ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <AlertCircle className="h-4 w-4 text-rose-600" />}
+                </div>
+                <div>
+                  <p className="font-bold">{testGatewayResults.razorpay.message}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  {paymentConfig.razorpay.mode === "sandbox" ? "Key ID (rzp_test_...)" : "Key ID (rzp_live_...)"}
+                </label>
+                <Input
+                  value={
+                    paymentConfig.razorpay.mode === "sandbox"
+                      ? paymentConfig.razorpay.sandboxKeyId
+                      : paymentConfig.razorpay.liveKeyId
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPaymentConfig((prev) => ({
+                      ...prev,
+                      razorpay: {
+                        ...prev.razorpay,
+                        ...(prev.razorpay.mode === "sandbox" ? { sandboxKeyId: v } : { liveKeyId: v }),
+                      },
+                    }));
+                  }}
+                  className="font-mono text-xs"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Key Secret
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPaymentSecrets((prev) => ({ ...prev, rzp_secret: !prev.rzp_secret }))
+                    }
+                    className="text-[10px] text-slate-500 hover:text-slate-800 font-semibold"
+                  >
+                    {showPaymentSecrets.rzp_secret ? "Hide" : "Reveal"}
+                  </button>
+                </div>
+                <Input
+                  type={showPaymentSecrets.rzp_secret ? "text" : "password"}
+                  value={
+                    paymentConfig.razorpay.mode === "sandbox"
+                      ? paymentConfig.razorpay.sandboxKeySecret
+                      : paymentConfig.razorpay.liveKeySecret
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPaymentConfig((prev) => ({
+                      ...prev,
+                      razorpay: {
+                        ...prev.razorpay,
+                        ...(prev.razorpay.mode === "sandbox" ? { sandboxKeySecret: v } : { liveKeySecret: v }),
+                      },
+                    }));
+                  }}
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ══════════════════════════════════════════════════════════════
+              GATEWAY 4: PAYSTACK
+          ══════════════════════════════════════════════════════════════ */}
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-7 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-cyan-50 border border-cyan-100 rounded-2xl flex items-center justify-center">
+                  <PaystackLogo className="h-6 w-auto" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900 font-heading">Paystack (Africa &amp; Mobile Money)</h3>
+                    <Badge variant={paymentConfig.paystack.enabled ? "success" : "neutral"} size="sm">
+                      {paymentConfig.paystack.enabled ? "Active Gateway" : "Disabled"}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">Mobile Money (M-Pesa, MTN, Airtel), Bank Transfer, Cards (NGN, GHS, ZAR, KES)</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 text-xs font-bold">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        paystack: { ...prev.paystack, mode: "sandbox" },
+                      }))
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                      paymentConfig.paystack.mode === "sandbox"
+                        ? "bg-amber-400 text-slate-950 shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <FlaskConical className="h-3.5 w-3.5" />
+                    <span>Sandbox</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        paystack: { ...prev.paystack, mode: "live" },
+                      }))
+                    }
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
+                      paymentConfig.paystack.mode === "live"
+                        ? "bg-emerald-600 text-white shadow-xs font-black"
+                        : "text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Live</span>
+                  </button>
+                </div>
+
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={paymentConfig.paystack.enabled}
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({
+                        ...prev,
+                        paystack: { ...prev.paystack, enabled: e.target.checked },
+                      }))
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:width-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <span className="text-slate-600">
+                Direct integration with Paystack African merchant API
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleTestGateway("paystack")}
+                disabled={Boolean(testGatewayLoading)}
+                className="text-xs font-bold bg-white shadow-2xs"
+              >
+                {testGatewayLoading === "paystack" ? (
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin mr-1" />
+                ) : (
+                  <Zap className="h-3.5 w-3.5 text-cyan-600 mr-1" />
+                )}
+                Test Connection
+              </Button>
+            </div>
+
+            {testGatewayResults.paystack && (
+              <div
+                className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
+                  testGatewayResults.paystack.success
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                    : "bg-rose-50 border-rose-200 text-rose-800"
+                }`}
+              >
+                <div className="mt-0.5">
+                  {testGatewayResults.paystack.success ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <AlertCircle className="h-4 w-4 text-rose-600" />}
+                </div>
+                <div>
+                  <p className="font-bold">{testGatewayResults.paystack.message}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Public Key (pk_test_... or pk_live_...)
+                </label>
+                <Input
+                  value={
+                    paymentConfig.paystack.mode === "sandbox"
+                      ? paymentConfig.paystack.sandboxPublicKey
+                      : paymentConfig.paystack.livePublicKey
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPaymentConfig((prev) => ({
+                      ...prev,
+                      paystack: {
+                        ...prev.paystack,
+                        ...(prev.paystack.mode === "sandbox" ? { sandboxPublicKey: v } : { livePublicKey: v }),
+                      },
+                    }));
+                  }}
+                  className="font-mono text-xs"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Secret Key
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowPaymentSecrets((prev) => ({ ...prev, pstk_secret: !prev.pstk_secret }))
+                    }
+                    className="text-[10px] text-slate-500 hover:text-slate-800 font-semibold"
+                  >
+                    {showPaymentSecrets.pstk_secret ? "Hide" : "Reveal"}
+                  </button>
+                </div>
+                <Input
+                  type={showPaymentSecrets.pstk_secret ? "text" : "password"}
+                  value={
+                    paymentConfig.paystack.mode === "sandbox"
+                      ? paymentConfig.paystack.sandboxSecretKey
+                      : paymentConfig.paystack.liveSecretKey
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setPaymentConfig((prev) => ({
+                      ...prev,
+                      paystack: {
+                        ...prev.paystack,
+                        ...(prev.paystack.mode === "sandbox" ? { sandboxSecretKey: v } : { liveSecretKey: v }),
+                      },
+                    }));
+                  }}
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Security & Verification Banner */}
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <PaymentSecurityBadges />
+          </div>
+
+          {/* Save Action Bar */}
+          <div className="sticky bottom-4 z-20 flex items-center justify-between p-4 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-lg">
+            <p className="text-xs text-slate-500">
+              Settings apply immediately across student checkouts and webhook verification layers.
+            </p>
+            <Button
+              type="submit"
+              disabled={saving}
+              className="bg-slate-950 hover:bg-slate-800 text-white font-bold px-7 shadow-xs flex items-center gap-2"
+            >
+              <CreditCard className="h-4 w-4" />
+              <span>{saving ? "Saving Configuration..." : "Save Payment Gateway Configuration"}</span>
             </Button>
           </div>
         </form>

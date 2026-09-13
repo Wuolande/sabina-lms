@@ -142,6 +142,8 @@ function ClassinClassroomStage({
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
+  const screenShareTracks = useTracks([Track.Source.ScreenShare]);
+  const screenShareTrack = screenShareTracks.find((t) => t.source === Track.Source.ScreenShare);
 
   // Notify parent when remote peer joins room
   React.useEffect(() => {
@@ -848,7 +850,7 @@ export default function LiveClassroomPage() {
         bookingRef: "BK-LIVE",
         scheduledStart: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         scheduledEnd: new Date(Date.now() + 24 * 60 * 60 * 1000 + 50 * 60 * 1000).toISOString(),
-        status: "CONFIRMED" as LessonStatus,
+        status: "CONFIRMED" as Lesson360Aggregate["status"],
         videoRoomId: `room-${lessonId}`,
         student: { displayName: "Alex Rivera", avatarUrl: "" },
         tutor: { displayName: "Dr. Elena Rostova", avatarUrl: "" },

@@ -22,6 +22,9 @@ export async function GET(request: NextRequest) {
         status,
         payment_status,
         payment_method,
+        payment_gateway,
+        payment_mode,
+        payment_intent_id,
         subject_name,
         created_at,
         student:users!bookings_student_id_fkey(id, email, display_name, avatar_url),
@@ -81,6 +84,9 @@ export async function GET(request: NextRequest) {
         status: b.payment_status || (b.status === 'CANCELLED' ? 'REFUNDED' : 'PAID'),
         date: b.created_at,
         paymentMethod: b.payment_method || 'card',
+        paymentGateway: b.payment_gateway || b.payment_method || 'stripe',
+        paymentMode: b.payment_mode || 'sandbox',
+        paymentIntentId: b.payment_intent_id || '',
       };
     });
 

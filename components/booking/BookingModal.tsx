@@ -20,7 +20,22 @@ import {
   Video,
   UserCheck,
   AlertCircle,
+  FlaskConical,
+  ExternalLink,
 } from "lucide-react";
+import {
+  StripeLogo,
+  PayPalLogo,
+  RazorpayLogo,
+  PaystackLogo,
+  ApplePayBadge,
+  GooglePayBadge,
+  VisaBadge,
+  MastercardBadge,
+  PaymentSecurityBadges,
+  GatewayLogo,
+} from "@/components/payments/PaymentLogos";
+import { PublicGatewayInfo } from "@/src/modules/payments/types/paymentProviderTypes";
 
 interface BookingModalProps {
   tutor: TutorProfile | null;
@@ -46,8 +61,34 @@ export function BookingModal({
   const [selectedTime, setSelectedTime] = React.useState<string>("");
   const [lessonGoals, setLessonGoals] = React.useState("");
   const [selectedTopicTag, setSelectedTopicTag] = React.useState("Exam Prep");
-  const [paymentMethod, setPaymentMethod] = React.useState<"card" | "apple" | "google">("card");
-  const [cardNumber, setCardNumber] = React.useState("•••• •••• •••• 4242");
+  const [paymentMethod, setPaymentMethod] = React.useState<string>("stripe");
+  const [selectedGateway, setSelectedGateway] = React.useState<string>("stripe");
+  const [publicGateways, setPublicGateways] = React.useState<PublicGatewayInfo[]>([
+    {
+      gateway: "stripe",
+      name: "Credit / Debit Card (Stripe)",
+      enabled: true,
+      mode: "sandbox",
+      publicKey: "",
+      supportedCurrencies: ["USD", "EUR", "GBP"],
+      supportedMethods: ["Visa", "Mastercard", "Apple Pay", "Google Pay"],
+    },
+    {
+      gateway: "paypal",
+      name: "PayPal & Pay Later",
+      enabled: true,
+      mode: "sandbox",
+      publicKey: "",
+      supportedCurrencies: ["USD", "EUR", "GBP"],
+      supportedMethods: ["PayPal Wallet", "Pay in 4"],
+    },
+  ]);
+  const [cardNumber, setCardNumber] = React.useState("4242 •••• •••• 4242");
+  const [cardHolder, setCardHolder] = React.useState("");
+  const [cardExpiry, setCardExpiry] = React.useState("08/28");
+  const [cardCvc, setCardCvc] = React.useState("888");
+  const [upiId, setUpiId] = React.useState("");
+  const [phoneMoneyNumber, setPhoneMoneyNumber] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
   const [confirmedBookingId, setConfirmedBookingId] = React.useState<string>("");
   const [confirmedLessonId, setConfirmedLessonId] = React.useState<string>("");
@@ -79,6 +120,24 @@ export function BookingModal({
       })
       .catch(() => setCurrentUser(null))
       .finally(() => setAuthChecking(false));
+  }, [isOpen]);
+
+  // Load active payment providers and environment modes from admin configuration
+  React.useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/payments/config")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.gateways && data.gateways.length > 0) {
+          setPublicGateways(data.gateways);
+          if (data.activeGateway && data.gateways.some((g: any) => g.gateway === data.activeGateway)) {
+            setSelectedGateway(data.activeGateway);
+          } else {
+            setSelectedGateway(data.gateways[0].gateway);
+          }
+        }
+      })
+      .catch((err) => console.error("[BookingModal] Failed to load payment config", err));
   }, [isOpen]);
 
   const tutorName = (tutor as any)?.user?.displayName || (tutor as any)?.displayName || "Instructor";
@@ -225,12 +284,59 @@ export function BookingModal({
         durationMinutes: selectedDuration,
         price: calculatedPrice,
         currency: currency,
-        paymentMethod,
+        paymentMethod: selectedGateway,
         studentNotes: lessonGoals || selectedTopicTag,
       });
 
       const bId = booking.bookingId || (booking as any).id;
       const lId = booking.lessonId || booking.bookingId || (booking as any).id;
+      const bRef = booking.bookingRef || `BK-${bId.substring(0, 8)}`;
+
+      // 3. Initialize server Payment Intent / Transaction with chosen gateway
+      const intentRes = await fetch("/api/payments/create-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gateway: selectedGateway,
+          amount: calculatedPrice,
+          currency: currency,
+          bookingRef: bRef,
+          studentEmail: currentUser?.email || guestEmail.trim(),
+          studentName: currentUser?.displayName || `${guestFirstName} ${guestLastName}`.trim() || "Student",
+          description: `1-on-1 Lesson with ${tutorName} (${selectedDuration}m)`,
+          metadata: {
+            tutorId: tutor.id,
+            bookingRef: bRef,
+            bookingId: bId,
+          },
+        }),
+      });
+
+      const intentData = await intentRes.json();
+      if (!intentRes.ok) {
+        throw new Error(intentData.error || "Payment gateway failed to initialize.");
+      }
+
+      // 4. Verify and settle transaction atomically in platform ledger
+      const verifyRes = await fetch("/api/payments/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gateway: selectedGateway,
+          intentId: intentData.intentId || intentData.orderId || `sim_${Date.now()}`,
+          orderId: intentData.orderId,
+          paymentId: intentData.intentId,
+          reference: intentData.reference,
+          bookingId: bId,
+          bookingRef: bRef,
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyRes.ok) {
+        throw new Error(verifyData.error || "Payment verification failed.");
+      }
+
       setConfirmedBookingId(bId);
       setConfirmedLessonId(lId);
       setStep("confirmed");
@@ -777,72 +883,181 @@ export function BookingModal({
             </div>
           )}
 
-          {/* Payment Method Selector */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Select Payment Method
-            </label>
-            <div className="grid grid-cols-3 gap-2 mb-3">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("card")}
-                className={`p-2.5 rounded-xl border text-xs font-bold text-center transition-all ${
-                  paymentMethod === "card"
-                    ? "border-slate-950 bg-slate-950 text-white shadow-xs"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                Credit / Debit Card
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("apple")}
-                className={`p-2.5 rounded-xl border text-xs font-bold text-center transition-all ${
-                  paymentMethod === "apple"
-                    ? "border-slate-950 bg-slate-950 text-white shadow-xs"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                Apple Pay
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("google")}
-                className={`p-2.5 rounded-xl border text-xs font-bold text-center transition-all ${
-                  paymentMethod === "google"
-                    ? "border-slate-950 bg-slate-950 text-white shadow-xs"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                Google Pay
-              </button>
+          {/* Payment Method / Gateway Selector */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Select Payment Method
+              </label>
+              <span className="text-[11px] text-slate-400 font-medium">
+                Global Encrypted Settlement
+              </span>
             </div>
 
-            {paymentMethod === "card" && (
+            {/* Gateway Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {publicGateways.map((gw) => {
+                const isSelected = selectedGateway === gw.gateway;
+                const isLive = gw.mode === "live";
+
+                return (
+                  <button
+                    key={gw.gateway}
+                    type="button"
+                    onClick={() => setSelectedGateway(gw.gateway)}
+                    className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between gap-2.5 cursor-pointer ${
+                      isSelected
+                        ? "border-brand-700 bg-brand-50/40 shadow-xs ring-2 ring-brand-700/20"
+                        : "border-slate-200 bg-white hover:bg-slate-50/80 hover:border-slate-300"
+                    }`}
+                  >
+                    {/* Header: Gateway Brand Logo + Mode Badge */}
+                    <div className="flex items-center justify-between gap-2">
+                      <GatewayLogo gateway={gw.gateway} className="h-4 sm:h-5 max-w-[110px]" />
+                      {isLive ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                          LIVE
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                          <FlaskConical className="h-2.5 w-2.5 text-amber-700" />
+                          SANDBOX
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Method Badges or description */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {gw.gateway === "stripe" && (
+                        <>
+                          <VisaBadge />
+                          <MastercardBadge />
+                          <ApplePayBadge />
+                          <GooglePayBadge />
+                        </>
+                      )}
+                      {gw.gateway === "paypal" && (
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          PayPal Balance • Bank • Pay in 4
+                        </span>
+                      )}
+                      {gw.gateway === "razorpay" && (
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          UPI (GPay/PhonePe) • Netbanking • RuPay
+                        </span>
+                      )}
+                      {gw.gateway === "paystack" && (
+                        <span className="text-[10px] text-slate-500 font-medium">
+                          M-Pesa • MTN • Mobile Money • Cards
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sandbox / Live Mode Status Banner */}
+            {(() => {
+              const activeGw = publicGateways.find((g) => g.gateway === selectedGateway);
+              const isSandbox = activeGw?.mode !== "live";
+
+              if (isSandbox) {
+                return (
+                  <div className="p-3 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-950 text-xs flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FlaskConical className="h-4 w-4 text-amber-600 shrink-0" />
+                      <span className="truncate">
+                        <strong>Sandbox Mode Active:</strong> Safe test environment. No real funds debited.
+                      </span>
+                    </div>
+                    {selectedGateway === "stripe" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCardNumber("4242 4242 4242 4242");
+                          setCardHolder(currentUser?.displayName || "Sabina Student");
+                          setCardExpiry("12/28");
+                          setCardCvc("888");
+                        }}
+                        className="text-[11px] font-bold text-amber-900 underline hover:text-amber-950 shrink-0 cursor-pointer bg-amber-100/80 px-2 py-0.5 rounded-lg border border-amber-300/60"
+                      >
+                        Fill Test Card
+                      </button>
+                    )}
+                    {selectedGateway === "razorpay" && (
+                      <button
+                        type="button"
+                        onClick={() => setUpiId("success@razorpay")}
+                        className="text-[11px] font-bold text-amber-900 underline hover:text-amber-950 shrink-0 cursor-pointer bg-amber-100/80 px-2 py-0.5 rounded-lg border border-amber-300/60"
+                      >
+                        Fill Test UPI
+                      </button>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="p-3 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 text-emerald-950 text-xs flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>
+                    <strong>Live Production Settlement:</strong> Encrypted transaction directly settled via {activeGw?.name}.
+                  </span>
+                </div>
+              );
+            })()}
+
+            {/* Gateway Specific Input Forms */}
+            {selectedGateway === "stripe" && (
               <div className="space-y-3 p-4 rounded-2xl border border-slate-200 bg-white">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                    Card Number
+                    Cardholder Full Name
                   </label>
+                  <input
+                    type="text"
+                    placeholder={currentUser?.displayName || "Alex Smith"}
+                    value={cardHolder}
+                    onChange={(e) => setCardHolder(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-semibold text-slate-600">
+                      Card Number
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <VisaBadge />
+                      <MastercardBadge />
+                    </div>
+                  </div>
                   <div className="relative">
                     <input
                       type="text"
                       value={cardNumber}
                       onChange={(e) => setCardNumber(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950"
+                      placeholder="4242 •••• •••• 4242"
+                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 font-mono"
                     />
                     <CreditCard className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">
-                      Expiry Date
+                      Expiry Date (MM/YY)
                     </label>
                     <input
                       type="text"
-                      defaultValue="08/28"
-                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950"
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(e.target.value)}
+                      placeholder="MM/YY"
+                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 font-mono"
                     />
                   </div>
                   <div>
@@ -851,18 +1066,81 @@ export function BookingModal({
                     </label>
                     <input
                       type="text"
-                      defaultValue="888"
-                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950"
+                      value={cardCvc}
+                      onChange={(e) => setCardCvc(e.target.value)}
+                      placeholder="123"
+                      maxLength={4}
+                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950 font-mono"
                     />
                   </div>
                 </div>
               </div>
             )}
-          </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Lock className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-            <span>256-Bit SSL Encrypted & Protected by 100% Satisfaction Guarantee</span>
+            {selectedGateway === "paypal" && (
+              <div className="space-y-3 p-4 rounded-2xl border border-blue-200 bg-blue-50/40 text-center">
+                <div className="flex justify-center py-1">
+                  <PayPalLogo className="h-6" />
+                </div>
+                <p className="text-xs text-slate-700 max-w-sm mx-auto">
+                  Confirm to authorize payment securely with PayPal. Supports PayPal wallet balance, connected credit/debit cards, and <strong>Pay in 4</strong> installments.
+                </p>
+                <div className="text-[11px] text-slate-500">
+                  Instant escrow release after lesson completion. No financial information is stored on Sabina Edge.
+                </div>
+              </div>
+            )}
+
+            {selectedGateway === "razorpay" && (
+              <div className="space-y-3 p-4 rounded-2xl border border-slate-200 bg-white">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <span className="text-xs font-bold text-slate-800">Unified Payments Interface (UPI)</span>
+                  <RazorpayLogo className="h-4" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Virtual Payment Address (VPA / UPI ID)
+                  </label>
+                  <input
+                    type="text"
+                    value={upiId}
+                    onChange={(e) => setUpiId(e.target.value)}
+                    placeholder="e.g. yourname@okhdfcbank or success@razorpay"
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Supports Google Pay, PhonePe, Paytm, BHIM, and Netbanking across all Indian banks.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {selectedGateway === "paystack" && (
+              <div className="space-y-3 p-4 rounded-2xl border border-slate-200 bg-white">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <span className="text-xs font-bold text-slate-800">Mobile Money & African Cards</span>
+                  <PaystackLogo className="h-4" />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                    Mobile Money Phone Number / Reference
+                  </label>
+                  <input
+                    type="tel"
+                    value={phoneMoneyNumber}
+                    onChange={(e) => setPhoneMoneyNumber(e.target.value)}
+                    placeholder="e.g. +234... or +254 (M-Pesa / MTN / Airtel)"
+                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-950"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Direct integration for M-Pesa, MTN Mobile Money, Bank Transfer, and African Debit/Credit Cards.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Security Badges */}
+            <PaymentSecurityBadges className="mt-2 pt-2 border-t border-slate-100" />
           </div>
 
           {/* Navigation */}
@@ -885,7 +1163,7 @@ export function BookingModal({
               isLoading={isLoading}
               rightIcon={<ShieldCheck className="h-4 w-4" />}
             >
-              Confirm & Book Lesson ({formatCurrency(calculatedPrice, currency)})
+              Pay & Confirm with {selectedGateway.charAt(0).toUpperCase() + selectedGateway.slice(1)} ({formatCurrency(calculatedPrice, currency)})
             </Button>
           </div>
         </div>

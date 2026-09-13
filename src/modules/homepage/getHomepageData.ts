@@ -13,14 +13,16 @@ export interface HomepageServerData {
 export async function getHomepageServerData(): Promise<HomepageServerData> {
   try {
     // 1. Fetch active CMS content directly from Supabase
-    const cmsPromise = adminSupabase
-      .from("platform_homepage_content")
-      .select("*")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single()
-      .then(({ data }) => {
+    const cmsPromise = (async () => {
+      try {
+        const { data } = await adminSupabase
+          .from("platform_homepage_content")
+          .select("*")
+          .eq("is_active", true)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
         if (!data) return null;
         const stats = data.stats_section || {};
         if (stats.stat4) {
@@ -38,44 +40,48 @@ export async function getHomepageServerData(): Promise<HomepageServerData> {
           faqSection: data.faq_section,
           updatedAt: data.updated_at,
         };
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("[getHomepageServerData] CMS fetch error:", err);
         return null;
-      });
+      }
+    })();
 
     // 2. Fetch featured tutors
-    const tutorsPromise = adminSupabase
-      .rpc("get_marketplace_tutors", {
-        p_is_featured: true,
-        p_limit: 4,
-        p_offset: 0,
-        p_sort_by: "popularity",
-      })
-      .then(({ data }) => (data?.tutors as TutorProfile[]) || [])
-      .catch((err) => {
+    const tutorsPromise = (async () => {
+      try {
+        const { data } = await adminSupabase.rpc("get_marketplace_tutors", {
+          p_is_featured: true,
+          p_limit: 4,
+          p_offset: 0,
+          p_sort_by: "popularity",
+        });
+        return ((data as any)?.tutors as TutorProfile[]) || [];
+      } catch (err) {
         console.error("[getHomepageServerData] Tutors fetch error:", err);
         return [] as TutorProfile[];
-      });
+      }
+    })();
 
     // 3. Fetch popular subjects
-    const subjectsPromise = adminSupabase
-      .from("subjects")
-      .select(`
-        id,
-        name,
-        slug,
-        category,
-        description,
-        is_active,
-        is_featured,
-        tutors:tutor_subjects(count)
-      `)
-      .eq("is_active", true)
-      .order("is_featured", { ascending: false })
-      .order("name", { ascending: true })
-      .limit(12)
-      .then(({ data }) => {
+    const subjectsPromise = (async () => {
+      try {
+        const { data } = await adminSupabase
+          .from("subjects")
+          .select(`
+            id,
+            name,
+            slug,
+            category,
+            description,
+            is_active,
+            is_featured,
+            tutors:tutor_subjects(count)
+          `)
+          .eq("is_active", true)
+          .order("is_featured", { ascending: false })
+          .order("name", { ascending: true })
+          .limit(12);
+
         return (data || []).map((s: any) => ({
           id: s.id,
           name: s.name,
@@ -85,11 +91,11 @@ export async function getHomepageServerData(): Promise<HomepageServerData> {
           iconName: s.icon_name || s.iconName || "BookOpen",
           tutorCount: s.tutors?.[0]?.count || 0,
         })) as Subject[];
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("[getHomepageServerData] Subjects fetch error:", err);
         return [] as Subject[];
-      });
+      }
+    })();
 
     const [cms, featuredTutors, popularSubjects] = await Promise.all([
       cmsPromise,
