@@ -49,7 +49,7 @@ export default function NotFound() {
               variant="outline"
               size="lg"
               className="w-full sm:w-auto font-bold border-slate-300 text-slate-800 hover:bg-slate-100 rounded-2xl px-6 cursor-pointer"
-              leftIcon={<Search className="h-4 w-4 text-[#14209C]" />}
+              leftIcon={<Search className="h-4 w-4 text-brand" />}
               rightIcon={<ArrowRight className="h-4 w-4" />}
             >
               Find a Tutor
@@ -68,14 +68,14 @@ export default function NotFound() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Link
               href="/find-tutors?subjectGroup=languages"
-              className="p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-[#14209C] hover:shadow-md transition-all group"
+              className="p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-brand hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-[#14209C] group-hover:scale-110 transition-transform">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-brand group-hover:scale-110 transition-transform">
                   <BookOpen className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900 group-hover:text-[#14209C]">
+                  <h3 className="text-xs font-bold text-slate-900 group-hover:text-brand">
                     Languages
                   </h3>
                   <p className="text-[11px] text-slate-500">English, Spanish, French</p>
@@ -85,14 +85,14 @@ export default function NotFound() {
 
             <Link
               href="/find-tutors?subjectGroup=mathematics"
-              className="p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-[#14209C] hover:shadow-md transition-all group"
+              className="p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-brand hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700 group-hover:scale-110 transition-transform">
                   <GraduationCap className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-slate-900 group-hover:text-[#14209C]">
+                  <h3 className="text-xs font-bold text-slate-900 group-hover:text-brand">
                     STEM & Math
                   </h3>
                   <p className="text-[11px] text-slate-500">Calculus, Physics, Coding</p>
@@ -123,7 +123,7 @@ export default function NotFound() {
         <div className="text-xs text-slate-500 flex items-center justify-center gap-1">
           <HelpCircle className="h-3.5 w-3.5 text-slate-400" />
           <span>Need help finding a lesson or account support?</span>
-          <Link href="/contact" className="font-bold text-[#14209C] hover:underline ml-1">
+          <Link href="/contact" className="font-bold text-brand hover:underline ml-1">
             Contact Support
           </Link>
         </div>

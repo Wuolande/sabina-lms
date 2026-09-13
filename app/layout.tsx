@@ -24,13 +24,40 @@ export const metadata: Metadata = {
 
 import { ModalProvider } from "@/components/ui/modal-context";
 
-export default function RootLayout({
+const THEME_DEFAULTS = { primaryColor: '#14209C', secondaryColor: '#F9C31C' };
+
+async function getPlatformTheme(): Promise<{ primaryColor: string; secondaryColor: string }> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/theme`, {
+      next: { revalidate: 60, tags: ['platform-theme'] },
+    });
+    if (!res.ok) return THEME_DEFAULTS;
+    const data = await res.json();
+    return {
+      primaryColor:   /^#[0-9A-Fa-f]{6}$/.test(data.primaryColor)   ? data.primaryColor   : THEME_DEFAULTS.primaryColor,
+      secondaryColor: /^#[0-9A-Fa-f]{6}$/.test(data.secondaryColor) ? data.secondaryColor : THEME_DEFAULTS.secondaryColor,
+    };
+  } catch {
+    return THEME_DEFAULTS;
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const theme = await getPlatformTheme();
+
+  const cssVars = `:root{--color-primary:${theme.primaryColor};--color-secondary:${theme.secondaryColor};}`;
+
   return (
     <html lang="en" suppressHydrationWarning className={`h-full ${sans.variable} ${heading.variable}`}>
+      <head>
+        {/* Inject dynamic brand CSS variables — server-rendered, zero FOUC */}
+        <style dangerouslySetInnerHTML={{ __html: cssVars }} />
+      </head>
       <body suppressHydrationWarning className="flex min-h-full flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-100 selection:text-brand-900">
         <ModalProvider>
           {children}

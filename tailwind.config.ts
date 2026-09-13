@@ -29,28 +29,28 @@ const config: Config = {
           400: "#5075e3",
           500: "#2a4ed6",
           600: "#1b38be",
-          700: "#14209C", // Primary Brand
+          700: "#14209C", // Primary Brand (static shade)
           800: "#13217e",
           900: "#131f67",
           950: "#0b123e",
-          DEFAULT: "#14209C",
+          DEFAULT: "var(--color-primary)",
         },
         accent: {
           50:  "#fefde8",
           100: "#fefbc2",
           200: "#fef489",
           300: "#fee844",
-          400: "#F9C31C", // Accent
+          400: "#F9C31C", // Accent (static shade)
           500: "#e9a706",
           600: "#c77f02",
           700: "#9f5906",
           800: "#82460d",
           900: "#6e3a10",
-          DEFAULT: "#F9C31C",
+          DEFAULT: "var(--color-secondary)",
           foreground: "#111827",
         },
         primary: {
-          DEFAULT:    "#14209C",
+          DEFAULT:    "var(--color-primary)",
           foreground: "#ffffff",
           50:  "#eef1fc",
           100: "#d9e0f9",
@@ -60,7 +60,7 @@ const config: Config = {
           900: "#131f67",
         },
         secondary: {
-          DEFAULT:    "#F9C31C",
+          DEFAULT:    "var(--color-secondary)",
           foreground: "#0f172a",
         },
         destructive: {

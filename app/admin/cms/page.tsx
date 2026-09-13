@@ -37,6 +37,7 @@ import {
   ChevronDown,
   Monitor,
   PenTool,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -151,6 +152,12 @@ function AdminCMSDashboardContent() {
   const [faqPretitle, setFaqPretitle] = React.useState("COMMON QUESTIONS");
   const [faqTitle, setFaqTitle] = React.useState("Frequently Asked Questions");
   const [faqs, setFaqs] = React.useState<{ q: string; a: string }[]>([]);
+
+  // ── 9. Theme & Branding State ──
+  const [primaryColor, setPrimaryColor] = React.useState("#14209C");
+  const [secondaryColor, setSecondaryColor] = React.useState("#F9C31C");
+  const [themeSaving, setThemeSaving] = React.useState(false);
+  const [themePreview, setThemePreview] = React.useState<{ primary: string; secondary: string } | null>(null);
 
   // ── Load All CMS Data ──
   const loadData = React.useCallback(async () => {
@@ -270,6 +277,43 @@ function AdminCMSDashboardContent() {
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // ── Load Theme ──
+  React.useEffect(() => {
+    fetch('/api/admin/theme')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.primaryColor) setPrimaryColor(data.primaryColor);
+        if (data.secondaryColor) setSecondaryColor(data.secondaryColor);
+      })
+      .catch(() => {}); // silently fall back to defaults
+  }, []);
+
+  // ── Save Theme ──
+  const handleSaveTheme = async () => {
+    setThemeSaving(true);
+    try {
+      const res = await fetch('/api/admin/theme', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ primaryColor, secondaryColor }),
+      });
+      if (!res.ok) throw new Error('Failed to save theme');
+      // Apply the new CSS vars immediately in the admin panel without a page reload
+      document.documentElement.style.setProperty('--color-primary', primaryColor);
+      document.documentElement.style.setProperty('--color-secondary', secondaryColor);
+      setThemePreview({ primary: primaryColor, secondary: secondaryColor });
+      toast({
+        title: 'Theme Applied',
+        message: 'Brand colors saved and propagated to all panels.',
+        variant: 'success',
+      });
+    } catch {
+      toast({ title: 'Error', message: 'Failed to save theme colors.', variant: 'danger' });
+    } finally {
+      setThemeSaving(false);
+    }
+  };
 
   // ── Open Page Editor ──
   const handleOpenEditor = async (pageSlug: string) => {
@@ -463,7 +507,7 @@ function AdminCMSDashboardContent() {
             <Button
               variant="outline"
               size="sm"
-              className="text-xs font-bold bg-indigo-50 text-[#14209C] border-indigo-200 hover:bg-indigo-100 shadow-xs"
+              className="text-xs font-bold bg-indigo-50 text-brand border-indigo-200 hover:bg-indigo-100 shadow-xs"
               leftIcon={<FileText className="w-3.5 h-3.5" />}
             >
               Blog & Articles
@@ -505,6 +549,19 @@ function AdminCMSDashboardContent() {
               {saving ? "Saving Page..." : "Save & Publish Page"}
             </Button>
           )}
+
+          {activeTab === "theme" && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleSaveTheme}
+              disabled={themeSaving}
+              className="font-bold bg-brand text-white text-xs shadow-sm"
+              leftIcon={<Palette className="h-4 w-4" />}
+            >
+              {themeSaving ? "Applying..." : "Apply Theme Colors"}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -515,6 +572,7 @@ function AdminCMSDashboardContent() {
           { id: "legal", label: `Legal Pages (${legalPages.length})`, icon: <ShieldCheck className="w-4 h-4" /> },
           { id: "company", label: `Company & Support (${companyPages.length})`, icon: <Building className="w-4 h-4" /> },
           { id: "custom", label: `Custom Pages (${customPages.length})`, icon: <FileText className="w-4 h-4" /> },
+          { id: "theme", label: "Theme & Branding", icon: <Palette className="w-4 h-4" /> },
           ...(editingPage ? [{ id: "editor", label: `Editing: ${editingPage.title}`, icon: <Edit3 className="w-4 h-4" /> }] : []),
         ]}
         activeTab={activeTab}
@@ -1633,6 +1691,166 @@ function AdminCMSDashboardContent() {
                 </Button>
               </Link>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════
+          TAB 5: THEME & BRANDING
+      ═══════════════════════════════════════════════════════════ */}
+      {activeTab === "theme" && (
+        <div className="space-y-8 max-w-3xl">
+          {/* Header */}
+          <div className="flex items-center gap-3 p-5 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl text-white">
+            <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
+              <Palette className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-base font-black font-heading">Brand Theme Colors</h2>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Set the primary and secondary colors for all panels — public homepage, admin, tutor &amp; student dashboards.
+              </p>
+            </div>
+          </div>
+
+          {/* Color Pickers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Primary Color */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg border border-slate-200 shadow-xs" style={{ backgroundColor: primaryColor }} />
+                <div>
+                  <p className="text-sm font-black text-slate-900">Primary Color</p>
+                  <p className="text-[11px] text-slate-500">Buttons, headers, links, accents</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="h-12 w-16 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white"
+                  title="Pick primary color"
+                />
+                <Input
+                  value={primaryColor}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) setPrimaryColor(v);
+                  }}
+                  placeholder="#14209C"
+                  className="font-mono text-sm uppercase"
+                  maxLength={7}
+                />
+              </div>
+
+              {/* Live preview swatches */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Preview</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-xs"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    Primary Button
+                  </span>
+                  <span
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold border"
+                    style={{ color: primaryColor, borderColor: primaryColor }}
+                  >
+                    Outline Button
+                  </span>
+                  <span className="text-xs font-bold underline" style={{ color: primaryColor }}>
+                    Link text
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Secondary Color */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg border border-slate-200 shadow-xs" style={{ backgroundColor: secondaryColor }} />
+                <div>
+                  <p className="text-sm font-black text-slate-900">Secondary Color</p>
+                  <p className="text-[11px] text-slate-500">Highlights, badges, star ratings</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={secondaryColor}
+                  onChange={(e) => setSecondaryColor(e.target.value)}
+                  className="h-12 w-16 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white"
+                  title="Pick secondary color"
+                />
+                <Input
+                  value={secondaryColor}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) setSecondaryColor(v);
+                  }}
+                  placeholder="#F9C31C"
+                  className="font-mono text-sm uppercase"
+                  maxLength={7}
+                />
+              </div>
+
+              {/* Live preview swatches */}
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Preview</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-black text-slate-900 shadow-xs"
+                    style={{ backgroundColor: secondaryColor }}
+                  >
+                    Accent Badge
+                  </span>
+                  <span
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-bold border"
+                    style={{ color: secondaryColor, borderColor: secondaryColor }}
+                  >
+                    Highlight
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Combined Preview */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Platform Preview</p>
+            <div
+              className="rounded-xl p-4 text-white space-y-2"
+              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
+            >
+              <p className="text-sm font-black">Sabina Edge Learning Platform</p>
+              <p className="text-xs text-white/80">This gradient uses your primary → secondary color blend</p>
+              <div className="flex gap-2 mt-2">
+                <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-bold px-3 py-1 rounded-lg border border-white/30">
+                  Find a Tutor
+                </span>
+                <span className="bg-white text-xs font-bold px-3 py-1 rounded-lg" style={{ color: primaryColor }}>
+                  Sign Up Free
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Current applied info */}
+          {themePreview && (
+            <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <div className="h-4 w-4 rounded-full bg-emerald-500 flex-shrink-0" />
+              <p className="text-xs font-bold text-emerald-800">
+                Theme applied — Primary: <span className="font-mono">{themePreview.primary}</span> &nbsp;|&nbsp; Secondary: <span className="font-mono">{themePreview.secondary}</span>
+              </p>
+            </div>
+          )}
+
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 leading-relaxed">
+            <strong className="font-black">How it works:</strong> Colors are saved to the database and injected as CSS variables at the root layout level. All panels (public, admin, tutor &amp; student) will reflect the new colors within 60 seconds via ISR cache refresh. Changes apply instantly in this admin panel as a preview.
           </div>
         </div>
       )}
