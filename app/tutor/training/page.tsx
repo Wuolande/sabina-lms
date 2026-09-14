@@ -136,7 +136,7 @@ export default function TutorTrainingDashboard() {
             onClick={() => setActiveMainTab("live")}
             className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
               activeMainTab === "live"
-                ? "bg-slate-950 text-white shadow-sm"
+                ? "bg-brand text-white shadow-sm"
                 : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
             }`}
           >
@@ -152,7 +152,7 @@ export default function TutorTrainingDashboard() {
             onClick={() => setActiveMainTab("self_paced")}
             className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
               activeMainTab === "self_paced"
-                ? "bg-slate-950 text-white shadow-sm"
+                ? "bg-brand text-white shadow-sm"
                 : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
             }`}
           >
@@ -168,7 +168,7 @@ export default function TutorTrainingDashboard() {
             onClick={() => setActiveMainTab("certificates")}
             className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
               activeMainTab === "certificates"
-                ? "bg-slate-950 text-white shadow-sm"
+                ? "bg-brand text-white shadow-sm"
                 : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
             }`}
           >
@@ -220,7 +220,7 @@ export default function TutorTrainingDashboard() {
 
                   {/* Title & Description */}
                   <div className="space-y-2">
-                    <h3 className="text-lg font-black text-slate-900 group-hover:text-[#14209C] transition-colors leading-snug font-heading">
+                    <h3 className="text-lg font-black text-slate-900 group-hover:text-brand transition-colors leading-snug font-heading">
                       {session.title}
                     </h3>
                     <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
@@ -289,7 +289,7 @@ export default function TutorTrainingDashboard() {
                     <Button
                       variant="default"
                       size="sm"
-                      className="w-full bg-slate-950 hover:bg-slate-800 text-white font-extrabold rounded-xl shadow-xs cursor-pointer text-xs"
+                      className="w-full bg-brand hover:opacity-90 text-white font-extrabold rounded-xl shadow-xs cursor-pointer text-xs"
                       rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
                     >
                       Enter Live Room
@@ -333,7 +333,7 @@ export default function TutorTrainingDashboard() {
                   onClick={() => setSelectedFilter(f.id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                     selectedFilter === f.id
-                      ? "bg-slate-950 text-white shadow-xs"
+                      ? "bg-brand text-white shadow-xs"
                       : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -386,7 +386,7 @@ export default function TutorTrainingDashboard() {
 
                     {/* Body Content */}
                     <div className="p-5 sm:p-6 space-y-3">
-                      <h3 className="text-base font-extrabold text-slate-900 group-hover:text-[#14209C] transition-colors leading-snug font-heading">
+                      <h3 className="text-base font-extrabold text-slate-900 group-hover:text-brand transition-colors leading-snug font-heading">
                         {course.title}
                       </h3>
                       <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
@@ -412,7 +412,7 @@ export default function TutorTrainingDashboard() {
                       <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-300 ${
-                            isDone ? "bg-emerald-500" : inProgress ? "bg-slate-950" : "bg-slate-200"
+                            isDone ? "bg-emerald-500" : inProgress ? "bg-brand" : "bg-slate-200"
                           }`}
                           style={{ width: `${progress}%` }}
                         />
@@ -426,7 +426,7 @@ export default function TutorTrainingDashboard() {
                         className={`w-full font-bold rounded-xl cursor-pointer ${
                           isDone
                             ? "border-slate-200 text-slate-800 hover:bg-slate-50"
-                            : "bg-slate-950 hover:bg-slate-800 text-white"
+                            : "bg-brand hover:opacity-90 text-white"
                         }`}
                         rightIcon={<ArrowRight className="h-4 w-4" />}
                       >

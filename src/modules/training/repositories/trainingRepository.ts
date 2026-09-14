@@ -358,7 +358,8 @@ export class TrainingRepository {
 
   async getCertificateById(certificateIdOrCode: string): Promise<TutorCertificate | null> {
     try {
-      const { data, error } = await adminSupabase
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(certificateIdOrCode);
+      let query = adminSupabase
         .from('tutor_certificates')
         .select(`
           *,
@@ -366,9 +367,15 @@ export class TrainingRepository {
           tutor:tutor_profiles(
             user:users!tutor_profiles_user_id_fkey(display_name, avatar_url)
           )
-        `)
-        .or(`id.eq.${certificateIdOrCode},certificate_code.eq.${certificateIdOrCode}`)
-        .single();
+        `);
+
+      if (isUUID) {
+        query = query.or(`id.eq.${certificateIdOrCode},certificate_code.eq.${certificateIdOrCode}`);
+      } else {
+        query = query.eq('certificate_code', certificateIdOrCode);
+      }
+
+      const { data, error } = await query.maybeSingle();
 
       if (error || !data) {
         return null;
@@ -454,14 +461,21 @@ export class TrainingRepository {
 
   async getLiveSessionById(idOrSlug: string, tutorId?: string): Promise<LiveTrainingSession | null> {
     try {
-      const { data: session, error } = await adminSupabase
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+      let query = adminSupabase
         .from('training_live_sessions')
         .select(`
           *,
           registrations:training_live_registrations(*)
-        `)
-        .or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`)
-        .single();
+        `);
+
+      if (isUUID) {
+        query = query.or(`id.eq.${idOrSlug},slug.eq.${idOrSlug}`);
+      } else {
+        query = query.eq('slug', idOrSlug);
+      }
+
+      const { data: session, error } = await query.maybeSingle();
 
       if (error || !session) {
         return null;

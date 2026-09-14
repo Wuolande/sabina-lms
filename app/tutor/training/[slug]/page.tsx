@@ -227,7 +227,7 @@ export default function CourseLearningPage() {
                 <Button
                   variant="default"
                   size="default"
-                  className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs cursor-pointer"
+                  className="w-full sm:w-auto font-extrabold bg-brand hover:opacity-90 text-white rounded-xl shadow-xs cursor-pointer"
                   onClick={handleMarkComplete}
                   isLoading={isMarkingComplete}
                   rightIcon={<ArrowRight className="h-4 w-4" />}
@@ -269,7 +269,7 @@ export default function CourseLearningPage() {
                     onClick={() => setActiveModuleId(m.id)}
                     className={`w-full p-3.5 rounded-2xl border text-left flex items-start gap-3 transition-all cursor-pointer ${
                       isActive
-                        ? "border-slate-950 bg-slate-950 text-white shadow-xs"
+                        ? "border-brand bg-brand text-white shadow-xs"
                         : isDone
                         ? "border-slate-200 bg-emerald-50/40 text-slate-800 hover:bg-emerald-50"
                         : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
