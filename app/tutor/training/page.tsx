@@ -215,9 +215,29 @@ export default function TutorTrainingDashboard() {
             </div>
           )}
 
-          {/* Live Sessions Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {liveSessions.map((session) => (
+          {/* Live Sessions Cards Grid or Empty State */}
+          {liveSessions.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center space-y-3 shadow-xs">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-brand">
+                <Radio className="h-7 w-7" />
+              </div>
+              <h3 className="text-base font-extrabold text-slate-900 font-heading">
+                No Live Workshops Currently Scheduled
+              </h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                Platform master trainers announce live interactive workshops periodically. In the meantime, you can explore and complete self-paced certification courses.
+              </p>
+              <button
+                type="button"
+                onClick={() => setActiveMainTab("self_paced")}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-brand hover:opacity-90 text-white transition-all cursor-pointer shadow-xs"
+              >
+                Browse Self-Paced Courses
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {liveSessions.map((session) => (
               <div
                 key={session.id}
                 className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-6 group"
@@ -317,8 +337,9 @@ export default function TutorTrainingDashboard() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    )}
 
       {/* ═══════════════════════════════════════════════════════════════
           TAB 2: SELF-PACED CERTIFICATION TRACKS

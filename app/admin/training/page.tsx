@@ -222,63 +222,84 @@ export default function AdminTrainingDashboard() {
           </div>
 
           <div className="divide-y divide-slate-100">
-            {liveSessions.map((s) => (
-              <div
-                key={s.id}
-                className="p-5 hover:bg-slate-50/70 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4"
-              >
-                <div className="flex items-start gap-4 min-w-0">
-                  <div className="h-10 w-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200">
-                    <Video className="h-5 w-5" />
-                  </div>
-
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-sm font-extrabold text-slate-900 leading-snug">
-                        {s.title}
-                      </h4>
-                      <Badge variant="subtle" size="sm" className="bg-slate-100 text-slate-700">
-                        {s.category}
-                      </Badge>
-                      {s.isMandatory && (
-                        <span className="text-[10px] font-extrabold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
-                          Mandatory
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500 line-clamp-1">
-                      Lead Trainer: <strong>{s.trainerName}</strong> ({s.trainerRole})
-                    </p>
-                    <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
-                      <span>{formatDate(s.scheduledAt)}</span>
-                      <span>•</span>
-                      <span>{s.durationMinutes} mins</span>
-                      <span>•</span>
-                      <span className="font-bold text-brand flex items-center gap-1">
-                        <Users className="h-3 w-3" /> {s.currentAttendees} / {s.maxAttendees} Tutors Enrolled
-                      </span>
-                    </div>
-                  </div>
+            {liveSessions.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                  <Video className="h-6 w-6" />
                 </div>
-
-                <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs font-bold"
-                    onClick={() => setSelectedSessionForRoster(s)}
-                  >
-                    View Roster ({s.currentAttendees})
-                  </Button>
-
-                  <Link href={`/tutor/training/live/${s.id}`} target="_blank">
-                    <Button variant="default" size="sm" className="text-xs font-bold bg-brand hover:opacity-90 text-white" rightIcon={<Radio className="h-3.5 w-3.5 text-rose-400 animate-pulse" />}>
-                      Host Live Room
-                    </Button>
-                  </Link>
-                </div>
+                <h4 className="text-sm font-bold text-slate-700">No Live Masterclasses Scheduled</h4>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                  Click &ldquo;Schedule Live Masterclass&rdquo; above to create a new live workshop cohort for tutors.
+                </p>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="bg-brand hover:opacity-90 text-white text-xs font-bold rounded-xl cursor-pointer"
+                  leftIcon={<Plus className="h-3.5 w-3.5" />}
+                >
+                  Schedule Live Masterclass
+                </Button>
               </div>
-            ))}
+            ) : (
+              liveSessions.map((s) => (
+                <div
+                  key={s.id}
+                  className="p-5 hover:bg-slate-50/70 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+                >
+                  <div className="flex items-start gap-4 min-w-0">
+                    <div className="h-10 w-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-200">
+                      <Video className="h-5 w-5" />
+                    </div>
+
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-extrabold text-slate-900 leading-snug">
+                          {s.title}
+                        </h4>
+                        <Badge variant="subtle" size="sm" className="bg-slate-100 text-slate-700">
+                          {s.category}
+                        </Badge>
+                        {s.isMandatory && (
+                          <span className="text-[10px] font-extrabold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded-full">
+                            Mandatory
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500 line-clamp-1">
+                        Lead Trainer: <strong>{s.trainerName}</strong> ({s.trainerRole})
+                      </p>
+                      <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
+                        <span>{formatDate(s.scheduledAt)}</span>
+                        <span>•</span>
+                        <span>{s.durationMinutes} mins</span>
+                        <span>•</span>
+                        <span className="font-bold text-brand flex items-center gap-1">
+                          <Users className="h-3 w-3" /> {s.currentAttendees} / {s.maxAttendees} Tutors Enrolled
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 self-end lg:self-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs font-bold"
+                      onClick={() => setSelectedSessionForRoster(s)}
+                    >
+                      View Roster ({s.currentAttendees})
+                    </Button>
+
+                    <Link href={`/tutor/training/live/${s.id}`} target="_blank">
+                      <Button variant="default" size="sm" className="text-xs font-bold bg-brand hover:opacity-90 text-white" rightIcon={<Radio className="h-3.5 w-3.5 text-rose-400 animate-pulse" />}>
+                        Host Live Room
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
