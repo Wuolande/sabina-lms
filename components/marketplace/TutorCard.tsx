@@ -219,9 +219,9 @@ export function TutorCard({
         <button
           type="button"
           onClick={handleBookClick}
-          className="flex-1 h-10 px-4 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 shadow-subtle transition-all active:scale-[0.98]"
+          className="flex-1 h-10 px-4 rounded-xl bg-brand hover:brightness-90 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 shadow-subtle transition-all active:scale-[0.98]"
         >
-          <Calendar className="h-3.5 w-3.5 text-slate-300" />
+          <Calendar className="h-3.5 w-3.5 text-white/90" />
           <span>Book Lesson</span>
         </button>
       </div>

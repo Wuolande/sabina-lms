@@ -210,7 +210,7 @@ export function BookingCalendar({
               onClick={() => onSelectSlot(d.iso, selectedTime || "14:00")}
               className={`p-2.5 sm:p-3 rounded-2xl border text-center transition-all relative ${
                 isSelected
-                  ? "border-slate-950 bg-slate-950 text-white shadow-md font-bold scale-[1.02]"
+                  ? "border-brand bg-brand text-white shadow-md font-bold scale-[1.02]"
                   : d.isPast
                   ? "border-slate-100 bg-slate-50/50 text-slate-300 cursor-not-allowed"
                   : "border-slate-200/80 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50/60"

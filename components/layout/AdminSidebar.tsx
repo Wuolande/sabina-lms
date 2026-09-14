@@ -75,7 +75,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         <div className="flex h-16 shrink-0 items-center justify-between px-5 border-b border-slate-800">
           <div className="flex items-center gap-2 min-w-0">
             <Logo size="sm" variant="dark" href="/admin" />
-            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">
+            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/20 text-accent border border-accent/30 shrink-0">
               Admin
             </span>
           </div>
@@ -84,6 +84,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close sidebar"
               className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-800 hover:text-white lg:hidden transition-colors"
             >
               <X className="h-4 w-4" />
@@ -93,11 +94,11 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
         {/* Operator badge */}
         <div className="px-4 pt-4 pb-2">
-          <div className="flex items-center gap-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2.5">
-            <ShieldAlert className="h-4 w-4 text-amber-400 shrink-0" />
+          <div className="flex items-center gap-2.5 rounded-xl bg-accent/10 border border-accent/20 px-3 py-2.5">
+            <ShieldAlert className="h-4 w-4 text-accent shrink-0" />
             <div>
-              <p className="text-xs font-bold text-amber-300 leading-tight">Super Admin</p>
-              <p className="text-[10px] text-amber-600 font-medium leading-tight">Operator · Full Access</p>
+              <p className="text-xs font-bold text-accent leading-tight">Super Admin</p>
+              <p className="text-[10px] text-slate-400 font-medium leading-tight">Operator · Full Access</p>
             </div>
           </div>
         </div>
@@ -119,7 +120,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 className={cn(
                   "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-150",
                   active
-                    ? "bg-amber-500 text-slate-950 shadow-xs font-bold"
+                    ? "bg-accent text-slate-950 shadow-xs font-bold"
                     : "text-slate-400 hover:text-white hover:bg-slate-800/80"
                 )}
               >
@@ -132,7 +133,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                     className={cn(
                       "rounded-full px-2 py-0.5 text-[10px] font-black leading-none",
                       active
-                        ? "bg-slate-950 text-amber-400"
+                        ? "bg-slate-950 text-accent font-bold"
                         : "bg-red-500 text-white shadow-xs"
                     )}
                   >

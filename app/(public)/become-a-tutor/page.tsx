@@ -42,7 +42,7 @@ export default function BecomeATutorPage() {
 
         <div className="pt-4">
           <Link href="/register?role=TUTOR">
-            <Button variant="default" size="xl" className="font-extrabold bg-brand-700 hover:bg-brand-800 px-8 shadow-elevation">
+            <Button variant="default" size="xl" className="font-extrabold bg-brand hover:brightness-90 text-white px-8 shadow-elevation">
               Start Tutor Application (Free)
             </Button>
           </Link>
@@ -137,7 +137,7 @@ export default function BecomeATutorPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-card space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
               <DollarSign className="h-5 w-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900">Guaranteed & On-Time Payouts</h3>
@@ -147,7 +147,7 @@ export default function BecomeATutorPage() {
           </div>
 
           <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-card space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
               <Video className="h-5 w-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900">Built-in Teaching Tools</h3>
@@ -157,7 +157,7 @@ export default function BecomeATutorPage() {
           </div>
 
           <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-card space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
               <Globe className="h-5 w-5" />
             </div>
             <h3 className="text-base font-bold text-slate-900">Global Student Base</h3>

@@ -33,7 +33,7 @@ export default function HowItWorksPage() {
       {/* 4 Pillars */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="rounded-3xl border border-slate-200/90 bg-white p-8 shadow-card space-y-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 font-bold">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand font-bold">
             <Search className="h-6 w-6" />
           </div>
           <h3 className="text-xl font-bold text-slate-900">
@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
         </div>
 
         <div className="rounded-3xl border border-slate-200/90 bg-white p-8 shadow-card space-y-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 font-bold">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand font-bold">
             <Calendar className="h-6 w-6" />
           </div>
           <h3 className="text-xl font-bold text-slate-900">
@@ -57,7 +57,7 @@ export default function HowItWorksPage() {
         </div>
 
         <div className="rounded-3xl border border-slate-200/90 bg-white p-8 shadow-card space-y-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 font-bold">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand font-bold">
             <Video className="h-6 w-6" />
           </div>
           <h3 className="text-xl font-bold text-slate-900">
@@ -69,7 +69,7 @@ export default function HowItWorksPage() {
         </div>
 
         <div className="rounded-3xl border border-slate-200/90 bg-white p-8 shadow-card space-y-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 font-bold">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand font-bold">
             <TrendingUp className="h-6 w-6" />
           </div>
           <h3 className="text-xl font-bold text-slate-900">

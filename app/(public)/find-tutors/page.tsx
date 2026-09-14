@@ -530,7 +530,7 @@ function FindTutorsContent() {
             <button
               type="button"
               onClick={handleResetFilters}
-              className="text-xs font-bold text-brand-700 hover:text-brand-900 underline ml-2 flex items-center gap-1"
+              className="text-xs font-bold text-brand hover:brightness-90 underline ml-2 flex items-center gap-1"
             >
               <RotateCcw className="h-3 w-3" /> Reset all
             </button>

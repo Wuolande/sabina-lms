@@ -88,7 +88,7 @@ export function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
         {/* ── Context Badge ── */}
         <div className="px-4 pt-4 pb-2">
           <div className="flex items-center gap-2.5 rounded-xl bg-brand-50 border border-brand-100 px-3 py-2.5">
-            <div className="h-7 w-7 rounded-lg bg-brand-700 flex items-center justify-center shrink-0">
+            <div className="h-7 w-7 rounded-lg bg-brand flex items-center justify-center shrink-0">
               <LayoutDashboard className="h-3.5 w-3.5 text-white" />
             </div>
             <div>
@@ -111,7 +111,7 @@ export function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
                 className={cn(
                   "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-150",
                   active
-                    ? "bg-brand-700 text-white shadow-xs"
+                    ? "bg-brand text-white shadow-xs"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/80"
                 )}
               >

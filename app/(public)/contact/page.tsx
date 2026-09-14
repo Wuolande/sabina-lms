@@ -102,7 +102,7 @@ export default function ContactPage() {
                 <Textarea required rows={4} placeholder="Describe how we can assist you..." />
               </div>
 
-              <Button type="submit" variant="default" size="lg" className="w-full font-bold bg-brand-700 hover:bg-brand-800">
+              <Button type="submit" variant="default" size="lg" className="w-full font-bold bg-brand hover:brightness-90 text-white shadow-subtle">
                 Send Message
               </Button>
             </form>

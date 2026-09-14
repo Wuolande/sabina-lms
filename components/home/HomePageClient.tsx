@@ -339,7 +339,7 @@ export function HomePageClient({
                       />
                       <button
                         type="submit"
-                        className="absolute right-2 top-2.5 h-9 w-9 rounded-xl bg-slate-950 hover:bg-slate-800 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer"
+                        className="absolute right-2 top-2.5 h-9 w-9 rounded-xl bg-brand hover:brightness-90 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-subtle"
                         title="Search tutors"
                         aria-label="Search tutors"
                       >
@@ -591,7 +591,7 @@ export function HomePageClient({
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                 selectedCategory === cat.id
-                  ? "bg-slate-950 text-white shadow-subtle"
+                  ? "bg-brand text-white shadow-subtle font-extrabold"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
@@ -664,7 +664,7 @@ export function HomePageClient({
           </div>
 
           <Link href="/find-tutors">
-            <Button variant="default" size="sm" className="font-bold bg-slate-950 hover:bg-slate-800 text-white rounded-xl" rightIcon={<ArrowRight className="h-3.5 w-3.5" />}>
+            <Button variant="default" size="sm" className="font-bold bg-brand hover:brightness-90 text-white rounded-xl shadow-subtle" rightIcon={<ArrowRight className="h-3.5 w-3.5" />}>
               {tutSection.ctaText}
             </Button>
           </Link>

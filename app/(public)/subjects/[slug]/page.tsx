@@ -111,7 +111,7 @@ export default function SubjectDetailPage() {
           <h2 className="text-2xl font-bold text-slate-900">
             Featured {subject.name} Instructors
           </h2>
-          <Link href={`/find-tutors?subject=${subject.slug}`} className="text-xs font-bold text-brand-700 hover:underline">
+          <Link href={`/find-tutors?subject=${subject.slug}`} className="text-xs font-bold text-brand hover:underline">
             View all &rarr;
           </Link>
         </div>

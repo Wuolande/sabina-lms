@@ -401,7 +401,7 @@ export function BookingModal({
               <div key={s.key} className="space-y-1">
                 <div
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    idx <= currentStepIndex ? "bg-slate-950" : "bg-slate-200"
+                    idx <= currentStepIndex ? "bg-brand" : "bg-slate-200"
                   }`}
                 />
                 <span
@@ -468,7 +468,7 @@ export function BookingModal({
                     onClick={() => setSelectedSubjectId(s.subjectId)}
                     className={`p-3 rounded-2xl border text-left transition-all ${
                       isSelected
-                        ? "border-slate-950 bg-slate-950 text-white shadow-md font-bold"
+                        ? "border-brand bg-brand text-white shadow-md font-bold"
                         : "border-slate-200 hover:border-slate-300 bg-white text-slate-800 hover:bg-slate-50/70"
                     }`}
                   >
@@ -587,7 +587,7 @@ export function BookingModal({
             <Button
               variant="default"
               size="lg"
-              className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+              className="w-full sm:w-auto font-extrabold bg-brand hover:brightness-90 text-white rounded-xl shadow-xs"
               onClick={() => setStep("calendar")}
               rightIcon={<ArrowRight className="h-4 w-4" />}
             >
@@ -624,7 +624,7 @@ export function BookingModal({
             <Button
               variant="default"
               size="lg"
-              className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+              className="font-extrabold bg-brand hover:brightness-90 text-white rounded-xl shadow-xs"
               onClick={() => setStep("goals")}
               disabled={!selectedDate || !selectedTime}
               rightIcon={<ArrowRight className="h-4 w-4" />}
@@ -653,7 +653,7 @@ export function BookingModal({
                   onClick={() => setSelectedTopicTag(chip)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                     selectedTopicTag === chip
-                      ? "bg-slate-950 text-white shadow-xs"
+                      ? "bg-brand text-white shadow-xs font-extrabold"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                   }`}
                 >
@@ -673,7 +673,7 @@ export function BookingModal({
               value={lessonGoals}
               onChange={(e) => setLessonGoals(e.target.value)}
               placeholder="e.g. I need help with calculus integral calculus questions for an exam next Thursday. I will share a PDF worksheet."
-              className="w-full rounded-2xl border border-slate-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-950"
+              className="w-full rounded-2xl border border-slate-200 bg-white p-3.5 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand"
             />
             <p className="text-[11px] text-slate-400 mt-1">
               Your tutor will receive this note to prepare tailored materials for your session.
@@ -695,7 +695,7 @@ export function BookingModal({
             <Button
               variant="default"
               size="lg"
-              className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+              className="font-extrabold bg-brand hover:brightness-90 text-white rounded-xl shadow-xs"
               onClick={() => setStep("payment")}
               rightIcon={<ArrowRight className="h-4 w-4" />}
             >
@@ -1158,7 +1158,7 @@ export function BookingModal({
             <Button
               variant="default"
               size="lg"
-              className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+              className="font-extrabold bg-brand hover:brightness-90 text-white rounded-xl shadow-xs"
               onClick={handleConfirmPayment}
               isLoading={isLoading}
               rightIcon={<ShieldCheck className="h-4 w-4" />}
@@ -1213,7 +1213,7 @@ export function BookingModal({
               <Button
                 variant="default"
                 size="lg"
-                className="w-full font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+                className="w-full font-extrabold bg-brand hover:brightness-90 text-white rounded-xl shadow-xs"
                 leftIcon={<Video className="h-4 w-4" />}
               >
                 Go to Live Classroom

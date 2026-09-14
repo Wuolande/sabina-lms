@@ -412,7 +412,7 @@ export default function TutorProfilePage() {
                 <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
                   Repeat Students
                 </span>
-                <span className="text-sm font-extrabold text-brand-700">
+                <span className="text-sm font-extrabold text-brand">
                   {tutor.repeatStudentRate || 94}% Continue
                 </span>
               </div>
@@ -428,7 +428,7 @@ export default function TutorProfilePage() {
                 onClick={() => scrollToSection(tab.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer ${
                   activeTab === tab.id
-                    ? "bg-slate-950 text-white shadow-xs"
+                    ? "bg-brand text-white shadow-xs"
                     : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
                 }`}
               >
@@ -442,7 +442,7 @@ export default function TutorProfilePage() {
             <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                  <Play className="h-5 w-5 text-brand-700" />
+                  <Play className="h-5 w-5 text-brand" />
                   Video Introduction & Teaching Sample
                 </h3>
                 <span className="text-xs font-semibold text-slate-500">Live Sample</span>
@@ -523,7 +523,7 @@ export default function TutorProfilePage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                  <GraduationCap className="h-5 w-5 text-brand-700" />
+                  <GraduationCap className="h-5 w-5 text-brand" />
                   Academic Qualifications & Degrees
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -542,7 +542,7 @@ export default function TutorProfilePage() {
                     key={edu.id || idx}
                     className="flex items-start gap-4 p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all shadow-xs"
                   >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 shrink-0 border border-brand-100">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand shrink-0 border border-brand-100">
                       <GraduationCap className="h-6 w-6" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -554,7 +554,7 @@ export default function TutorProfilePage() {
                           {edu.startYear} – {edu.endYear || "Present"}
                         </span>
                       </div>
-                      <p className="text-xs font-semibold text-brand-800 mt-0.5">
+                      <p className="text-xs font-semibold text-brand mt-0.5">
                         {edu.institution} {edu.location ? `• ${edu.location}` : ""}
                       </p>
                       {edu.fieldOfStudy && (
@@ -642,7 +642,7 @@ export default function TutorProfilePage() {
             >
               <div>
                 <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                  <Briefcase className="h-5 w-5 text-brand-700" />
+                  <Briefcase className="h-5 w-5 text-brand" />
                   Teaching & Professional Work History
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -653,13 +653,13 @@ export default function TutorProfilePage() {
               <div className="space-y-6 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200">
                 {experiencesList.map((exp: any, idx: number) => (
                   <div key={exp.id || idx} className="relative flex items-start gap-4 pl-1">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-700 text-white shrink-0 ring-4 ring-white z-10">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shrink-0 ring-4 ring-white z-10">
                       <div className="h-2 w-2 rounded-full bg-white" />
                     </div>
                     <div className="flex-1 rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4 shadow-xs">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <h4 className="text-sm font-bold text-slate-900">{exp.role}</h4>
-                        <span className="text-xs font-bold text-brand-700 bg-brand-50 border border-brand-100 px-2.5 py-0.5 rounded-full">
+                        <span className="text-xs font-bold text-brand bg-brand-50 border border-brand-100 px-2.5 py-0.5 rounded-full">
                           {exp.startYear} – {exp.endYear || "Present"}
                         </span>
                       </div>
@@ -695,7 +695,7 @@ export default function TutorProfilePage() {
           >
             <div>
               <h3 className="text-lg font-extrabold text-slate-900 mb-3 flex items-center gap-2 font-heading">
-                <BookOpen className="h-5 w-5 text-brand-700" />
+                <BookOpen className="h-5 w-5 text-brand" />
                 Subjects Taught & Curriculum Coverage
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -710,7 +710,7 @@ export default function TutorProfilePage() {
                       <div className="flex items-center justify-between">
                         <strong className="text-sm font-bold text-slate-900">{name}</strong>
                         {sub.isPrimary && (
-                          <Badge variant="subtle" size="sm" className="bg-brand-50 text-brand-800">
+                          <Badge variant="subtle" size="sm" className="bg-brand-50 text-brand">
                             Primary Discipline
                           </Badge>
                         )}
@@ -734,7 +734,7 @@ export default function TutorProfilePage() {
             {/* Languages Spoken */}
             <div className="pt-4 border-t border-slate-100">
               <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-brand-700" /> Languages Spoken
+                <Globe className="h-4 w-4 text-brand" /> Languages Spoken
               </h3>
               <div className="flex flex-wrap gap-2">
                 {languagesList.map((l: any, idx: number) => {
@@ -747,7 +747,7 @@ export default function TutorProfilePage() {
                     >
                       <span>{langName}</span>
                       <span className="text-slate-300">•</span>
-                      <span className="text-brand-700 font-extrabold">{prof}</span>
+                      <span className="text-brand font-extrabold">{prof}</span>
                     </div>
                   );
                 })}
@@ -762,7 +762,7 @@ export default function TutorProfilePage() {
           >
             <div>
               <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                <Layers className="h-5 w-5 text-brand-700" />
+                <Layers className="h-5 w-5 text-brand" />
                 Live Classroom Experience & Learning Tools
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -790,7 +790,7 @@ export default function TutorProfilePage() {
                 <>
                   <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/40 space-y-1">
                     <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                      <PenTool className="h-4 w-4 text-brand-700" /> Interactive Digital Whiteboard
+                      <PenTool className="h-4 w-4 text-brand" /> Interactive Digital Whiteboard
                     </h4>
                     <p className="text-xs text-slate-600">
                       Collaborative canvas with instant LaTeX math formatting, graph plotting, and file uploads.
@@ -850,7 +850,7 @@ export default function TutorProfilePage() {
               <Button
                 variant="default"
                 size="default"
-                className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs"
+                className="w-full sm:w-auto font-extrabold bg-brand hover:brightness-90 text-white rounded-xl shadow-xs"
                 onClick={() => setIsBookingOpen(true)}
                 rightIcon={<ArrowRight className="h-4 w-4" />}
               >
@@ -934,7 +934,7 @@ export default function TutorProfilePage() {
                   </p>
 
                   {(rev.tutorReply || rev.tutorResponse) && (
-                    <div className="mt-2 ml-4 p-3 rounded-xl bg-slate-50 border-l-2 border-brand-700 text-xs space-y-1">
+                    <div className="mt-2 ml-4 p-3 rounded-xl bg-slate-50 border-l-2 border-brand text-xs space-y-1">
                       <strong className="text-[11px] font-bold text-slate-800">
                         {tutorDisplayName} (Tutor Response):
                       </strong>
@@ -953,7 +953,7 @@ export default function TutorProfilePage() {
           >
             <div>
               <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                <HelpCircle className="h-5 w-5 text-brand-700" />
+                <HelpCircle className="h-5 w-5 text-brand" />
                 Frequently Asked Questions
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -1021,7 +1021,7 @@ export default function TutorProfilePage() {
               return (
                 <div className="rounded-2xl bg-brand-50/80 p-4 border border-brand-100 space-y-1.5">
                   <span className="text-xs font-extrabold text-brand-800 flex items-center gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5 text-brand-700 fill-brand-600" />
+                    <Sparkles className="h-3.5 w-3.5 text-brand fill-brand" />
                     {trialDiscountPercent === 100
                       ? "100% Free Intro Trial Lesson"
                       : trialDiscountPercent > 0
@@ -1053,7 +1053,7 @@ export default function TutorProfilePage() {
               <Button
                 variant="default"
                 size="lg"
-                className="w-full font-extrabold bg-brand-700 hover:bg-brand-800 shadow-card py-3.5 rounded-2xl cursor-pointer"
+                className="w-full font-extrabold bg-brand hover:brightness-90 text-white shadow-card py-3.5 rounded-2xl cursor-pointer"
                 onClick={() => setIsBookingOpen(true)}
                 leftIcon={<Calendar className="h-4 w-4" />}
               >
@@ -1087,7 +1087,7 @@ export default function TutorProfilePage() {
                 <span>Secure SSL encrypted checkout</span>
               </div>
               <div className="flex items-center gap-2">
-                <Video className="h-4 w-4 text-brand-700 shrink-0" />
+                <Video className="h-4 w-4 text-brand shrink-0" />
                 <span>Built-in browser live classroom</span>
               </div>
             </div>

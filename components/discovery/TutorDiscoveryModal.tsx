@@ -686,7 +686,7 @@ export function TutorDiscoveryModal({
                       onClick={() => setSelectedCategoryTab(tab.id)}
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
                         isActive
-                          ? "bg-slate-950 text-white shadow-xs"
+                          ? "bg-brand text-white shadow-xs"
                           : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                       }`}
                     >
@@ -1146,7 +1146,7 @@ export function TutorDiscoveryModal({
                   <Button
                     variant="default"
                     size="sm"
-                    className="mt-4 rounded-xl bg-slate-950 text-white"
+                    className="mt-4 rounded-xl bg-brand hover:brightness-90 text-white"
                     onClick={handleViewAllMatching}
                   >
                     Browse All Tutors
@@ -1233,9 +1233,9 @@ export function TutorDiscoveryModal({
                           <button
                             type="button"
                             onClick={() => handleBookMatchedTutor(tutor)}
-                            className="flex-1 h-9 px-3 rounded-xl bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 shadow-subtle transition-all cursor-pointer"
+                            className="flex-1 h-9 px-3 rounded-xl bg-brand hover:brightness-90 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 shadow-subtle transition-all cursor-pointer"
                           >
-                            <Calendar className="h-3.5 w-3.5 text-slate-300" />
+                            <Calendar className="h-3.5 w-3.5 text-white/90" />
                             <span>Book Lesson</span>
                           </button>
                         </div>

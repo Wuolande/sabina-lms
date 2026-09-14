@@ -71,7 +71,7 @@ export default function SubjectsPage() {
             onClick={() => setFilter(cat)}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               filter === cat
-                ? "bg-slate-950 text-white shadow-card font-extrabold"
+                ? "bg-brand text-white shadow-card font-extrabold"
                 : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
             }`}
           >
@@ -124,7 +124,7 @@ export default function SubjectsPage() {
 
               <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
                 <Link href={`/find-tutors?subject=${sub.slug}`}>
-                  <Button variant="default" size="sm" className="font-bold text-xs bg-slate-950 hover:bg-slate-800 text-white rounded-xl">
+                  <Button variant="default" size="sm" className="font-bold text-xs bg-brand hover:brightness-90 text-white rounded-xl">
                     Find Tutors
                   </Button>
                 </Link>

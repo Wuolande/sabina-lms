@@ -9,7 +9,7 @@ const buttonVariants = cva(
     "relative inline-flex items-center justify-center gap-2",
     "font-semibold tracking-tight select-none",
     "rounded-xl transition-all duration-150",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-700",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand",
     "disabled:pointer-events-none disabled:opacity-50",
     "active:scale-[0.97]",
   ].join(" "),
@@ -24,12 +24,12 @@ const buttonVariants = cva(
           "hover:shadow-[0_4px_12px_rgb(0_0_0/0.25),inset_0_1px_0_rgb(255_255_255/0.06)]",
         ].join(" "),
 
-        // ── Brand / Royal Blue ──
+        // ── Brand CTA ──
         brand: [
-          "bg-brand-700 text-white",
-          "shadow-[0_1px_3px_rgb(20_32_156/0.3),inset_0_1px_0_rgb(255_255_255/0.08)]",
-          "hover:bg-brand-800",
-          "hover:shadow-[0_4px_16px_rgb(20_32_156/0.35),inset_0_1px_0_rgb(255_255_255/0.08)]",
+          "bg-brand text-white",
+          "shadow-[0_1px_3px_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.08)]",
+          "hover:brightness-90",
+          "hover:shadow-[0_4px_16px_rgb(0_0_0/0.25),inset_0_1px_0_rgb(255_255_255/0.08)]",
         ].join(" "),
 
         // ── Emerald / Success ──
@@ -43,9 +43,9 @@ const buttonVariants = cva(
         // ── Gold / Accent CTA ──
         secondary: [
           "bg-accent text-slate-950 font-bold",
-          "shadow-[0_1px_3px_rgb(249_195_28/0.3),inset_0_1px_0_rgb(255_255_255/0.3)]",
-          "hover:bg-accent-500",
-          "hover:shadow-[0_4px_16px_rgb(249_195_28/0.4),inset_0_1px_0_rgb(255_255_255/0.2)]",
+          "shadow-[0_1px_3px_rgb(0_0_0/0.15),inset_0_1px_0_rgb(255_255_255/0.25)]",
+          "hover:brightness-105",
+          "hover:shadow-[0_4px_16px_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.25)]",
         ].join(" "),
 
         // ── Outline ──
@@ -58,9 +58,9 @@ const buttonVariants = cva(
 
         // ── Outline Brand ──
         "outline-brand": [
-          "border border-brand-700 bg-white text-brand-700",
-          "shadow-[0_1px_2px_rgb(20_32_156/0.1)]",
-          "hover:bg-brand-50 hover:border-brand-800",
+          "border border-brand bg-white text-brand",
+          "shadow-[0_1px_2px_rgb(0_0_0/0.05)]",
+          "hover:bg-brand/5 hover:border-brand",
         ].join(" "),
 
         // ── Ghost ──
@@ -71,8 +71,8 @@ const buttonVariants = cva(
 
         // ── Subtle ──
         subtle: [
-          "bg-brand-50 text-brand-700",
-          "hover:bg-brand-100",
+          "bg-brand/10 text-brand",
+          "hover:bg-brand/15",
         ].join(" "),
 
         // ── Destructive ──

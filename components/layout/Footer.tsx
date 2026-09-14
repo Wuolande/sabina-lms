@@ -97,7 +97,7 @@ export function Footer() {
                 className="flex items-center gap-2 text-xs font-semibold text-slate-400"
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800">
-                  <Icon className="h-3.5 w-3.5 text-emerald-400" />
+                  <Icon className="h-3.5 w-3.5 text-accent" />
                 </div>
                 {label}
               </div>
@@ -126,11 +126,11 @@ export function Footer() {
                 <input
                   type="email"
                   placeholder="Your email address"
-                  className="flex-1 min-w-0 h-9 rounded-xl border border-slate-700 bg-slate-900 px-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="flex-1 min-w-0 h-9 rounded-xl border border-slate-700 bg-slate-900 px-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
                 />
                 <button
                   type="submit"
-                  className="h-9 px-4 shrink-0 rounded-xl bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-500 transition-colors"
+                  className="h-9 px-4 shrink-0 rounded-xl bg-brand text-xs font-bold text-white hover:brightness-90 transition-all shadow-subtle"
                 >
                   Subscribe
                 </button>
@@ -164,7 +164,7 @@ export function Footer() {
                     href={href}
                     className={`text-sm transition-colors ${
                       accent
-                        ? "text-emerald-400 hover:text-emerald-300 font-semibold"
+                        ? "text-accent hover:brightness-110 font-semibold"
                         : "text-slate-400 hover:text-white"
                     }`}
                   >
@@ -206,7 +206,7 @@ export function Footer() {
                     href={href}
                     className={`text-sm transition-colors ${
                       accent
-                        ? "text-amber-400 hover:text-amber-300 font-semibold"
+                        ? "text-accent hover:brightness-110 font-semibold"
                         : "text-slate-400 hover:text-white"
                     }`}
                   >

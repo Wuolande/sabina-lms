@@ -239,7 +239,7 @@ export function Navbar() {
           </Link>
           <Link
             href="/login"
-            className="h-10 px-5 inline-flex items-center rounded-xl bg-slate-950 text-xs font-bold text-white shadow-[0_1px_3px_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.06)] hover:bg-slate-800 transition-all active:scale-[0.98]"
+            className="h-10 px-5 inline-flex items-center rounded-xl bg-brand text-xs font-bold text-white shadow-subtle hover:brightness-90 transition-all active:scale-[0.98]"
           >
             Log in
           </Link>
@@ -249,7 +249,7 @@ export function Navbar() {
         <div className="flex lg:hidden items-center gap-2">
           <Link
             href="/login"
-            className="h-9 px-4 inline-flex items-center rounded-xl bg-slate-950 text-xs font-bold text-white"
+            className="h-9 px-4 inline-flex items-center rounded-xl bg-brand text-xs font-bold text-white hover:brightness-90 transition-all"
           >
             Log in
           </Link>
@@ -360,7 +360,7 @@ export function Navbar() {
             <Link
               href="/login"
               onClick={() => setMobileOpen(false)}
-              className="h-11 flex items-center justify-center rounded-xl bg-slate-950 text-sm font-bold text-white shadow-subtle"
+              className="h-11 flex items-center justify-center rounded-xl bg-brand text-sm font-bold text-white shadow-subtle hover:brightness-90 transition-all"
             >
               Log in
             </Link>
