@@ -54,7 +54,7 @@ export function BlogCard({ post, featured = false }: BlogCardProps) {
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-bold text-slate-900 group-hover:text-[#14209C] transition-colors line-clamp-2 leading-snug mb-2 font-heading">
+        <h3 className="text-lg font-bold text-slate-900 group-hover:text-brand transition-colors line-clamp-2 leading-snug mb-2 font-heading">
           <Link href={`/blog/${post.slug}`}>
             {post.title}
           </Link>
@@ -78,7 +78,7 @@ export function BlogCard({ post, featured = false }: BlogCardProps) {
                 />
               </div>
             ) : (
-              <div className="h-8 w-8 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#14209C] font-bold text-xs shrink-0">
+              <div className="h-8 w-8 rounded-full bg-brand-50 border border-brand-100 flex items-center justify-center text-brand font-bold text-xs shrink-0">
                 {post.author.charAt(0)}
               </div>
             )}
@@ -90,7 +90,7 @@ export function BlogCard({ post, featured = false }: BlogCardProps) {
 
           <Link
             href={`/blog/${post.slug}`}
-            className="text-xs font-bold text-[#14209C] group-hover:translate-x-1 transition-transform inline-flex items-center gap-1"
+            className="text-xs font-bold text-brand group-hover:translate-x-1 transition-transform inline-flex items-center gap-1"
           >
             <span>Read</span>
             <ArrowRight className="h-3.5 w-3.5" />

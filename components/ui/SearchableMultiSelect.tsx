@@ -121,7 +121,7 @@ export function SearchableMultiSelect({
         className={cn(
           "w-full min-h-[46px] p-2 rounded-2xl border text-left text-xs sm:text-sm font-medium transition-all bg-white shadow-xs cursor-pointer flex flex-wrap items-center gap-1.5",
           isOpen
-            ? "border-emerald-500 ring-2 ring-emerald-500/20"
+            ? "border-brand ring-2 ring-brand/20"
             : "border-slate-200 hover:border-slate-300",
           disabled && "opacity-50 cursor-not-allowed bg-slate-50",
           error && "border-rose-500 ring-2 ring-rose-500/20"
@@ -131,13 +131,13 @@ export function SearchableMultiSelect({
           selectedOptions.map((opt) => (
             <span
               key={opt.value}
-              className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-xl text-xs font-bold"
+              className="inline-flex items-center gap-1 bg-brand-50 text-brand-900 border border-brand-200 px-2.5 py-1 rounded-xl text-xs font-bold"
             >
               <span>{opt.label}</span>
               <button
                 type="button"
                 onClick={(e) => handleRemove(opt.value, e)}
-                className="text-emerald-600 hover:text-emerald-950 p-0.5 rounded-full"
+                className="text-brand hover:text-brand-950 p-0.5 rounded-full"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -169,7 +169,7 @@ export function SearchableMultiSelect({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full h-8 pl-8 pr-3 text-xs bg-white rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full h-8 pl-8 pr-3 text-xs bg-white rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
           </div>
@@ -187,12 +187,12 @@ export function SearchableMultiSelect({
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs sm:text-sm font-medium transition-colors cursor-pointer",
                       isSelected
-                        ? "bg-emerald-50 text-emerald-900 font-bold"
+                        ? "bg-brand-50 text-brand-900 font-bold"
                         : "text-slate-700 hover:bg-slate-100/80"
                     )}
                   >
                     <div className="truncate flex-1 mr-2">
-                      <p className={cn("truncate", isSelected && "text-emerald-900")}>{opt.label}</p>
+                      <p className={cn("truncate", isSelected && "text-brand-900")}>{opt.label}</p>
                       {opt.sublabel && (
                         <p className="text-[11px] text-slate-400 truncate">{opt.sublabel}</p>
                       )}
@@ -202,7 +202,7 @@ export function SearchableMultiSelect({
                       className={cn(
                         "h-4 w-4 rounded border flex items-center justify-center transition-colors",
                         isSelected
-                          ? "bg-emerald-600 border-emerald-600 text-white"
+                          ? "bg-brand border-brand text-white"
                           : "border-slate-300 bg-white"
                       )}
                     >

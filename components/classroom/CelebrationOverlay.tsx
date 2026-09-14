@@ -52,7 +52,9 @@ export function CelebrationOverlay({
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const colors = ["#F9C31C", "#14209C", "#10B981", "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6"];
+    const primary = typeof window !== "undefined" ? getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || "#14209C" : "#14209C";
+    const secondary = typeof window !== "undefined" ? getComputedStyle(document.documentElement).getPropertyValue('--color-secondary').trim() || "#F9C31C" : "#F9C31C";
+    const colors = [secondary, primary, "#10B981", "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6"];
     const particles: Array<{
       x: number;
       y: number;

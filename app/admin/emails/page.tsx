@@ -264,7 +264,7 @@ export default function AdminEmailsPage() {
                       onClick={() => setAudience(item.id)}
                       className={`p-3 rounded-2xl border text-left flex flex-col items-center justify-center gap-1.5 transition-all text-xs font-bold ${
                         isSelected
-                          ? "border-[#14209C] bg-[#14209C]/5 text-[#14209C] ring-2 ring-[#14209C]/20 shadow-xs"
+                          ? "border-brand bg-brand/5 text-brand ring-2 ring-brand/20 shadow-xs"
                           : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                       }`}
                     >
@@ -301,7 +301,7 @@ export default function AdminEmailsPage() {
               <select
                 value={selectedTemplate}
                 onChange={(e) => handleTemplateChange(e.target.value as EmailTemplateType)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs text-slate-900 font-semibold focus:outline-none focus:ring-2 focus:ring-brand"
               >
                 {templates.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -352,7 +352,7 @@ export default function AdminEmailsPage() {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Type email body here..."
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-xs font-mono text-slate-900 leading-relaxed focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-xs font-mono text-slate-900 leading-relaxed focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
 
@@ -363,7 +363,7 @@ export default function AdminEmailsPage() {
                 variant="default"
                 size="lg"
                 isLoading={sending}
-                className="w-full font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center justify-center gap-2 shadow-xs"
+                className="w-full font-bold bg-brand hover:brightness-90 text-white flex items-center justify-center gap-2 shadow-xs"
               >
                 <Send className="h-4 w-4" />
                 <span>Dispatch Email to {audience.replace(/_/g, " ")}</span>
@@ -377,7 +377,7 @@ export default function AdminEmailsPage() {
           <div className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-card space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <span className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
-                <Eye className="h-4 w-4 text-[#14209C]" />
+                <Eye className="h-4 w-4 text-brand" />
                 Live Client Preview
               </span>
               <Badge variant="outline" size="sm" className="font-mono text-[10px]">
@@ -433,7 +433,7 @@ export default function AdminEmailsPage() {
               placeholder="Search dispatched emails..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
             />
             <Search className="h-3.5 w-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>

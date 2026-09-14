@@ -305,7 +305,7 @@ export default function AdminBlogManagementPage() {
           <Button
             onClick={handleOpenCreateModal}
             size="sm"
-            className="bg-[#14209C] hover:bg-[#0e176b] text-white font-bold gap-2 text-xs rounded-xl shadow-xs"
+            className="bg-brand hover:brightness-90 text-white font-bold gap-2 text-xs rounded-xl shadow-xs"
           >
             <Plus className="h-4 w-4" />
             <span>New Article</span>
@@ -336,8 +336,8 @@ export default function AdminBlogManagementPage() {
           <p className="text-2xl font-black text-amber-700 mt-1">{draftCount}</p>
         </div>
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">Active Topics</p>
-          <p className="text-2xl font-black text-[#14209C] mt-1">{BLOG_CATEGORIES.length - 1}</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-brand">Active Topics</p>
+          <p className="text-2xl font-black text-brand mt-1">{BLOG_CATEGORIES.length - 1}</p>
         </div>
       </div>
 
@@ -357,7 +357,7 @@ export default function AdminBlogManagementPage() {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand"
           >
             <option value="All">All Categories</option>
             {BLOG_CATEGORIES.filter((c) => c !== "All").map((cat) => (
@@ -385,7 +385,7 @@ export default function AdminBlogManagementPage() {
           </div>
 
           <Button variant="outline" size="sm" onClick={loadBlogs} disabled={loading} className="border-slate-200">
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-[#14209C]" : "text-slate-500"}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin text-brand" : "text-slate-500"}`} />
           </Button>
         </div>
       </div>
@@ -409,7 +409,7 @@ export default function AdminBlogManagementPage() {
               {loading ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-xs text-slate-400">
-                    <RefreshCw className="h-6 w-6 animate-spin text-[#14209C] mx-auto mb-2" />
+                    <RefreshCw className="h-6 w-6 animate-spin text-brand mx-auto mb-2" />
                     <span>Loading articles from database...</span>
                   </td>
                 </tr>
@@ -518,7 +518,7 @@ export default function AdminBlogManagementPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenEditModal(post)}
-                            className="h-8 w-8 p-0 text-slate-600 hover:text-[#14209C] border-slate-200"
+                            className="h-8 w-8 p-0 text-slate-600 hover:text-brand border-slate-200"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </Button>
@@ -611,7 +611,7 @@ export default function AdminBlogManagementPage() {
                     onClick={() => setActiveEditorTab(tab.id as any)}
                     className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all cursor-pointer ${
                       isActive
-                        ? "border-[#14209C] text-[#14209C] bg-indigo-50/50 rounded-t-xl"
+                        ? "border-brand text-brand bg-brand-50/50 rounded-t-xl"
                         : "border-transparent text-slate-500 hover:text-slate-900"
                     }`}
                   >
@@ -624,13 +624,11 @@ export default function AdminBlogManagementPage() {
 
             <form onSubmit={handleSavePost} className="space-y-6">
               
-              {/* ─── TAB 1: ARTICLE CONTENT ─── */}
+              {/* ─── TAB 1: CONTENT & BODY ─── */}
               {activeEditorTab === "content" && (
-                <div className="space-y-5 animate-fade-in">
-                  
-                  {/* Title & Slug */}
-                  <div className="space-y-3">
-                    <div>
+                <div className="space-y-4 animate-fade-in">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="sm:col-span-2">
                       <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                         Article Title *
                       </label>
@@ -639,46 +637,47 @@ export default function AdminBlogManagementPage() {
                         required
                         value={formData.title}
                         onChange={(e) => handleTitleChange(e.target.value)}
-                        placeholder="e.g. 7 Evidence-Based Techniques to Master Any Language in 2026"
-                        className="text-sm font-semibold"
+                        placeholder="e.g. Master IELTS Speaking: 7 Core Strategies"
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                          URL Slug (Perm-Link) *
-                        </label>
-                        <Input
-                          type="text"
-                          required
-                          value={formData.slug}
-                          onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                          placeholder="e.g. master-any-language-fast"
-                          className="font-mono text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                          Category Discipline *
-                        </label>
-                        <select
-                          value={formData.category}
-                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                          className="w-full h-10 px-3 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-white"
-                        >
-                          {BLOG_CATEGORIES.filter((c) => c !== "All").map((cat) => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        Category *
+                      </label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full h-10 px-3 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
+                      >
+                        {BLOG_CATEGORIES.filter((c) => c !== "All").map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
-                  {/* Excerpt */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      URL Slug (Auto-generated from title) *
+                    </label>
+                    <div className="flex items-center">
+                      <span className="h-10 px-3 flex items-center rounded-l-xl border border-r-0 border-slate-200 bg-slate-50 text-slate-400 text-xs font-mono">
+                        /blog/
+                      </span>
+                      <Input
+                        type="text"
+                        required
+                        value={formData.slug}
+                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                        placeholder="master-ielts-speaking-strategies"
+                        className="rounded-l-none font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -692,7 +691,7 @@ export default function AdminBlogManagementPage() {
                       value={formData.excerpt}
                       onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
                       placeholder="A concise 2-sentence summary displayed in search results and social cards..."
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#14209C] leading-relaxed"
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand leading-relaxed"
                     />
                   </div>
 
@@ -702,7 +701,7 @@ export default function AdminBlogManagementPage() {
                       <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Detailed Article Body (Rich-Text Editor) *
                       </label>
-                      <span className="text-[10px] text-indigo-600 font-semibold">Supports Headings, Lists, Tables & Code</span>
+                      <span className="text-[10px] text-brand font-semibold">Supports Headings, Lists, Tables & Code</span>
                     </div>
                     <RichTextEditor
                       value={formData.content}
@@ -728,7 +727,7 @@ export default function AdminBlogManagementPage() {
                       {formData.tags?.map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 text-[#14209C] text-xs font-bold"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-50 text-brand text-xs font-bold"
                         >
                           <span>#{tag}</span>
                           <button
@@ -851,7 +850,7 @@ export default function AdminBlogManagementPage() {
                         value={formData.authorBio}
                         onChange={(e) => setFormData({ ...formData, authorBio: e.target.value })}
                         placeholder="Short 1-2 sentence background for the article footer author box..."
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand"
                       />
                     </div>
                   </div>
@@ -867,7 +866,7 @@ export default function AdminBlogManagementPage() {
                   <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-3">
                     <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                       <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-[#14209C]" />
+                        <Globe className="h-4 w-4 text-brand" />
                         <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                           Google Search Result Preview
                         </h4>
@@ -899,7 +898,7 @@ export default function AdminBlogManagementPage() {
                     {/* Google Simulator Card */}
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1 font-sans">
                       <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                        <div className="h-4 w-4 rounded-full bg-[#14209C] text-white flex items-center justify-center text-[9px] font-black">
+                        <div className="h-4 w-4 rounded-full bg-brand text-white flex items-center justify-center text-[9px] font-black">
                           S
                         </div>
                         <span className="text-[11px] text-slate-700">sabina.education</span>
@@ -951,7 +950,7 @@ export default function AdminBlogManagementPage() {
                         value={formData.seoDescription}
                         onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
                         placeholder="Summary of the article designed to achieve a high CTR on Google search results..."
-                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#14209C] leading-relaxed"
+                        className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand leading-relaxed"
                       />
                     </div>
 
@@ -1066,7 +1065,7 @@ export default function AdminBlogManagementPage() {
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="bg-[#14209C] hover:bg-[#0e176b] text-white font-bold rounded-xl text-xs px-6 shadow-xs"
+                  className="bg-brand hover:brightness-90 text-white font-bold rounded-xl text-xs px-6 shadow-xs"
                 >
                   {saving ? "Saving Article..." : editingId ? "Update Article" : "Create & Publish"}
                 </Button>

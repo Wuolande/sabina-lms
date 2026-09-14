@@ -40,7 +40,7 @@ export default function SubjectsPage() {
       
       {/* ── Header ── */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
-        <Badge variant="subtle" size="sm" className="bg-emerald-50 text-emerald-800 font-bold border border-emerald-200">
+        <Badge variant="subtle" size="sm" className="bg-brand-50 text-brand font-bold border border-brand-100">
           Complete Subject Directory ({subjects.length} Disciplines)
         </Badge>
         <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
@@ -57,7 +57,7 @@ export default function SubjectsPage() {
             placeholder="Search subjects (e.g., Python, IELTS, Calculus)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 pl-11 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 pl-11 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand shadow-sm"
           />
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 mt-1 h-4 w-4 text-slate-400" />
         </div>
@@ -96,7 +96,7 @@ export default function SubjectsPage() {
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 font-bold shadow-xs">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand font-bold shadow-xs">
                     <BookOpen className="h-6 w-6" />
                   </div>
                   <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export default function SubjectsPage() {
                 <h3 className="text-lg font-bold text-slate-900 mt-4">
                   {sub.name}
                 </h3>
-                <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block mt-0.5">
+                <span className="text-[11px] font-bold text-brand uppercase tracking-wider block mt-0.5">
                   {sub.category}
                 </span>
                 <p className="text-xs sm:text-[13px] text-slate-500 mt-2 leading-relaxed">
@@ -128,7 +128,7 @@ export default function SubjectsPage() {
                     Find Tutors
                   </Button>
                 </Link>
-                <Link href={`/find-tutors?subject=${sub.slug}`} className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1">
+                <Link href={`/find-tutors?subject=${sub.slug}`} className="text-xs font-semibold text-brand hover:underline flex items-center gap-1">
                   <span>Browse Educators</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>

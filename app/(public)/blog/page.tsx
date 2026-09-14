@@ -84,13 +84,13 @@ export default function BlogListingPage() {
         
         {/* ─── Hero Header & Search ─── */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-[#14209C] text-xs font-bold shadow-2xs">
-            <BookOpen className="h-4 w-4 text-[#14209C]" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-bold shadow-2xs">
+            <BookOpen className="h-4 w-4 text-brand" />
             <span>SABINA LEARNING HUB & EDITORIAL</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight font-heading leading-tight">
-            Knowledge, Strategies & <span className="text-[#14209C]">Learning Insights</span>
+            Knowledge, Strategies & <span className="text-brand">Learning Insights</span>
           </h1>
           <p className="text-sm sm:text-base text-slate-600">
             Expert articles on language acquisition, test preparation, STEM mastery, and personalized tutoring methodologies.
@@ -110,7 +110,7 @@ export default function BlogListingPage() {
               <Button
                 type="submit"
                 size="sm"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-[#14209C] hover:bg-[#0e176b] text-white font-bold rounded-xl text-xs px-4"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-brand hover:opacity-90 text-white font-bold rounded-xl text-xs px-4"
               >
                 Search
               </Button>
@@ -129,7 +129,7 @@ export default function BlogListingPage() {
                 onClick={() => handleCategorySelect(cat)}
                 className={`px-4 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-[#14209C] text-white shadow-md shadow-indigo-900/10 scale-105"
+                    ? "bg-brand text-white shadow-md scale-105"
                     : "bg-white border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900"
                 }`}
               >
@@ -157,7 +157,7 @@ export default function BlogListingPage() {
         ) : posts.length === 0 ? (
           /* Empty Search State */
           <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 max-w-md mx-auto space-y-4">
-            <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-[#14209C] flex items-center justify-center mx-auto">
+            <div className="h-12 w-12 rounded-2xl bg-brand-50 text-brand flex items-center justify-center mx-auto">
               <BookOpen className="h-6 w-6" />
             </div>
             <h3 className="text-lg font-bold text-slate-900">No articles found</h3>
@@ -238,7 +238,7 @@ export default function BlogListingPage() {
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
           
           <div className="max-w-2xl relative z-10 space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-emerald-400 text-xs font-bold">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-accent text-xs font-bold">
               <Mail className="h-3.5 w-3.5" />
               <span>WEEKLY STUDY DIGEST</span>
             </div>
@@ -250,7 +250,7 @@ export default function BlogListingPage() {
             </p>
 
             {newsletterSubscribed ? (
-              <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+              <div className="flex items-center gap-2.5 p-4 rounded-2xl bg-accent/20 border border-accent/30 text-accent text-xs font-bold">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 <span>You&apos;re on the list! Watch your inbox for our next issue.</span>
               </div>
@@ -266,7 +266,7 @@ export default function BlogListingPage() {
                 />
                 <Button
                   type="submit"
-                  className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black rounded-2xl h-12 px-6 shrink-0 shadow-lg shadow-emerald-500/20"
+                  className="bg-accent hover:opacity-90 text-slate-950 font-black rounded-2xl h-12 px-6 shrink-0 shadow-lg"
                 >
                   Subscribe Free
                 </Button>

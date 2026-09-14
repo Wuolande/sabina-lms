@@ -95,7 +95,7 @@ export default function TutorDashboardPage() {
                   Verified Tutor
                 </Badge>
                 {stats.isSuperTutor && (
-                  <Badge variant="neutral" size="sm" className="gap-1 bg-indigo-50 text-[#14209C] border-indigo-200">
+                  <Badge variant="neutral" size="sm" className="gap-1 bg-brand-50 text-brand border-brand-200">
                     <Sparkles className="h-3.5 w-3.5" />
                     Top 1% Super Tutor
                   </Badge>
@@ -132,7 +132,7 @@ export default function TutorDashboardPage() {
             </Link>
 
             <Link href="/tutor/calendar">
-              <Button variant="default" size="sm" className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white text-xs flex items-center gap-1.5">
+              <Button variant="default" size="sm" className="font-bold bg-brand hover:brightness-90 text-white text-xs flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5" />
                 <span>Open Calendar</span>
               </Button>
@@ -227,13 +227,13 @@ export default function TutorDashboardPage() {
         <StatCard
           title="Total Lessons Taught"
           value={stats.completedLessons ?? 0}
-          icon={<BookOpen className="h-5 w-5 text-[#14209C]" />}
+          icon={<BookOpen className="h-5 w-5 text-brand" />}
           description="Lifetime sessions completed"
         />
         <StatCard
           title="Active Students"
           value={stats.activeStudents ?? 0}
-          icon={<Users className="h-5 w-5 text-indigo-600" />}
+          icon={<Users className="h-5 w-5 text-brand" />}
           description="Enrolled learners"
         />
         <StatCard
@@ -253,7 +253,7 @@ export default function TutorDashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-[#14209C]" />
+                  <Calendar className="h-4 w-4 text-brand" />
                   <span>Upcoming Teaching Queue ({upcomingLessons.length})</span>
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
@@ -261,7 +261,7 @@ export default function TutorDashboardPage() {
                 </p>
               </div>
 
-              <Link href="/tutor/lessons" className="text-xs font-bold text-[#14209C] hover:underline flex items-center gap-1">
+              <Link href="/tutor/lessons" className="text-xs font-bold text-brand hover:underline flex items-center gap-1">
                 <span>View Full Lesson Hub</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -288,7 +288,7 @@ export default function TutorDashboardPage() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="text-sm font-bold text-slate-900">{lesson.studentName}</h4>
                           <span className="text-slate-300">•</span>
-                          <span className="text-xs font-semibold text-[#14209C]">{lesson.subjectName}</span>
+                          <span className="text-xs font-semibold text-brand">{lesson.subjectName}</span>
                           <Badge variant="neutral" size="xs" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                             Confirmed
                           </Badge>
@@ -311,7 +311,7 @@ export default function TutorDashboardPage() {
                         <Button
                           variant="default"
                           size="sm"
-                          className="font-bold text-xs bg-[#14209C] hover:bg-[#0d1870] text-white flex items-center gap-1.5"
+                          className="font-bold text-xs bg-brand hover:brightness-90 text-white flex items-center gap-1.5"
                         >
                           <Video className="w-3.5 h-3.5" />
                           <span>Join Live</span>
@@ -343,7 +343,7 @@ export default function TutorDashboardPage() {
                 </p>
               </div>
 
-              <Link href="/tutor/reviews" className="text-xs font-bold text-[#14209C] hover:underline flex items-center gap-1">
+              <Link href="/tutor/reviews" className="text-xs font-bold text-brand hover:underline flex items-center gap-1">
                 <span>Reviews Hub</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -381,8 +381,8 @@ export default function TutorDashboardPage() {
                     </p>
 
                     {rev.tutorReply && (
-                      <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100 text-xs space-y-1">
-                        <span className="text-[10px] font-bold text-[#14209C] uppercase tracking-wider block">
+                      <div className="p-3 rounded-xl bg-brand-50/70 border border-brand-100 text-xs space-y-1">
+                        <span className="text-[10px] font-bold text-brand uppercase tracking-wider block">
                           Your Public Reply:
                         </span>
                         <p className="text-slate-700 text-xs">{rev.tutorReply}</p>
@@ -400,7 +400,7 @@ export default function TutorDashboardPage() {
           {/* Quick Module Launchpad */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#14209C]" />
+              <Layers className="w-4 h-4 text-brand" />
               <span>Instructor Suite</span>
             </h4>
 
@@ -410,7 +410,7 @@ export default function TutorDashboardPage() {
                 className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 border border-slate-100/80 text-slate-800 transition"
               >
                 <div className="flex items-center gap-2.5">
-                  <Calendar className="w-4 h-4 text-[#14209C]" />
+                  <Calendar className="w-4 h-4 text-brand" />
                   <span>Timetable & Calendar</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -432,7 +432,7 @@ export default function TutorDashboardPage() {
                 className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 border border-slate-100/80 text-slate-800 transition"
               >
                 <div className="flex items-center gap-2.5">
-                  <BookOpen className="w-4 h-4 text-indigo-600" />
+                  <BookOpen className="w-4 h-4 text-brand" />
                   <span>Lessons & Homework</span>
                 </div>
                 <ChevronRight className="w-3.5 h-3.5 text-slate-400" />

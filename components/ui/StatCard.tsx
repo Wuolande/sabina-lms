@@ -31,13 +31,13 @@ export function StatCard({
       label:   "text-slate-500",
       value:   "text-slate-950 font-heading",
       desc:    "text-slate-400",
-      iconBg:  "bg-brand-50 text-brand-700",
+      iconBg:  "bg-brand-50 text-brand",
     },
     brand: {
-      card:    "border border-brand-800 bg-gradient-to-br from-brand-700 to-brand-900 text-white shadow-glow-brand",
-      label:   "text-brand-200",
+      card:    "border border-brand/20 bg-gradient-to-br from-brand via-brand/90 to-brand-950 text-white shadow-glow-brand",
+      label:   "text-brand-100",
       value:   "text-white font-heading",
-      desc:    "text-brand-300",
+      desc:    "text-brand-200",
       iconBg:  "bg-white/15 text-white",
     },
     accent: {

@@ -131,7 +131,7 @@ export default function StudentDashboardPage() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              Live schedule in <strong className="text-slate-800">{student?.timezone || "UTC"}</strong> • Target: <strong className="text-[#14209C]">{student?.targetExam || "Active Learning"}</strong>
+              Live schedule in <strong className="text-slate-800">{student?.timezone || "UTC"}</strong> • Target: <strong className="text-brand">{student?.targetExam || "Active Learning"}</strong>
             </p>
           </div>
         </div>
@@ -141,7 +141,7 @@ export default function StudentDashboardPage() {
             <Button
               variant="default"
               size="default"
-              className="font-extrabold bg-[#14209C] hover:bg-[#0d1870] text-white rounded-xl shadow-sm px-5 text-xs"
+              className="font-extrabold bg-brand hover:brightness-90 text-white rounded-xl shadow-sm px-5 text-xs"
               leftIcon={<Search className="h-4 w-4" />}
             >
               Book New Lesson
@@ -152,7 +152,7 @@ export default function StudentDashboardPage() {
               variant="outline"
               size="default"
               className="font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs"
-              leftIcon={<TrendingUp className="h-4 w-4 text-emerald-600" />}
+              leftIcon={<TrendingUp className="h-4 w-4 text-brand" />}
             >
               Progress Hub
             </Button>
@@ -162,7 +162,7 @@ export default function StudentDashboardPage() {
 
       {/* ── 2. NEXT LESSON HERO SPOTLIGHT CARD ── */}
       {nextLesson ? (
-        <div className="rounded-3xl border border-[#0B1E8A]/20 bg-gradient-to-br from-[#0B1E8A] via-[#0E24A0] to-[#081566] p-6 sm:p-8 text-white shadow-elevation relative overflow-hidden">
+        <div className="rounded-3xl border border-brand/20 bg-gradient-to-br from-brand via-brand/90 to-brand-950 p-6 sm:p-8 text-white shadow-elevation relative overflow-hidden">
           {/* Subtle background glow effect */}
           <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-accent-400/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -173,7 +173,7 @@ export default function StudentDashboardPage() {
                 <span className="text-[11px] font-black uppercase tracking-wider bg-white/15 text-white backdrop-blur-xs px-3 py-1 rounded-full border border-white/20">
                   Next Live Classroom
                 </span>
-                <span className="text-xs font-bold text-[#F9C31C]">
+                <span className="text-xs font-bold text-accent">
                   Starts at {formatTime(nextLesson.scheduledStart)}
                 </span>
                 {nextLesson.homeworkAssigned && (
@@ -194,12 +194,12 @@ export default function StudentDashboardPage() {
 
               <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-1">
                 <div className="flex items-center gap-1.5 font-semibold">
-                  <Calendar className="h-4 w-4 text-[#F9C31C]" />
+                  <Calendar className="h-4 w-4 text-accent" />
                   <span>{formatDate(nextLesson.scheduledStart)}</span>
                 </div>
                 <span>•</span>
                 <div className="flex items-center gap-1.5 font-semibold">
-                  <Clock className="h-4 w-4 text-[#F9C31C]" />
+                  <Clock className="h-4 w-4 text-accent" />
                   <span>
                     {formatTime(nextLesson.scheduledStart)} – {formatTime(nextLesson.scheduledEnd)} ({nextLesson.durationMinutes} mins)
                   </span>
@@ -217,7 +217,7 @@ export default function StudentDashboardPage() {
                 <Button
                   variant="default"
                   size="lg"
-                  className="w-full font-black bg-[#F9C31C] hover:bg-[#e0ad10] text-slate-950 px-8 py-3.5 rounded-2xl shadow-card"
+                  className="w-full font-black bg-accent hover:brightness-95 text-slate-950 px-8 py-3.5 rounded-2xl shadow-card"
                   leftIcon={<Video className="h-5 w-5 fill-slate-950 text-slate-950" />}
                 >
                   Join Video Classroom
@@ -254,7 +254,7 @@ export default function StudentDashboardPage() {
             </p>
           </div>
           <Link href="/find-tutors">
-            <Button variant="default" className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white">
+            <Button variant="default" className="font-bold bg-brand hover:brightness-90 text-white">
               Schedule a Lesson
             </Button>
           </Link>
@@ -269,7 +269,7 @@ export default function StudentDashboardPage() {
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Learning Time
             </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-[#14209C]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-50 text-brand">
               <Clock className="h-4 w-4" />
             </div>
           </div>
@@ -329,7 +329,7 @@ export default function StudentDashboardPage() {
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
               Weekly Study Pace
             </span>
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-[#14209C]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-50 text-brand">
               <Target className="h-4 w-4" />
             </div>
           </div>
@@ -337,7 +337,7 @@ export default function StudentDashboardPage() {
             <div className="text-2xl sm:text-3xl font-black text-slate-900 font-heading">
               {stats?.weeklyPaceHours ?? 0} <span className="text-sm font-semibold text-slate-500">/ {stats?.weeklyStudyHoursTarget ?? 0} hrs</span>
             </div>
-            <p className="text-[11px] font-semibold text-[#14209C] mt-1">
+            <p className="text-[11px] font-semibold text-brand mt-1">
               {weeklyPacePercent}% of weekly goal achieved
             </p>
           </div>
@@ -349,7 +349,7 @@ export default function StudentDashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-              <Calendar className="h-4 w-4 text-emerald-600" />
+              <Calendar className="h-4 w-4 text-brand" />
               Weekly Timetable & Schedule Strip
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -359,7 +359,7 @@ export default function StudentDashboardPage() {
 
           <Link
             href="/student/calendar"
-            className="text-xs font-bold text-[#14209C] hover:underline flex items-center gap-1 self-start sm:self-auto"
+            className="text-xs font-bold text-brand hover:underline flex items-center gap-1 self-start sm:self-auto"
           >
             Full Timetable Studio <ArrowRight className="h-3 w-3" />
           </Link>
@@ -375,13 +375,13 @@ export default function StudentDashboardPage() {
                 onClick={() => setSelectedDayIndex(idx)}
                 className={`flex flex-col items-center justify-center p-2.5 sm:p-3.5 rounded-2xl border transition-all text-center cursor-pointer ${
                   isSelected
-                    ? "border-[#14209C] bg-[#14209C] text-white shadow-xs"
+                    ? "border-brand bg-brand text-white shadow-xs"
                     : day.isToday
-                    ? "border-indigo-200 bg-indigo-50/50 text-slate-900 font-bold"
+                    ? "border-brand-200 bg-brand-50/50 text-slate-900 font-bold"
                     : "border-slate-100 bg-slate-50/60 hover:bg-slate-100 text-slate-700"
                 }`}
               >
-                <span className={`text-[10px] uppercase font-bold ${isSelected ? "text-indigo-100" : "text-slate-400"}`}>
+                <span className={`text-[10px] uppercase font-bold ${isSelected ? "text-brand-100" : "text-slate-400"}`}>
                   {day.dayName}
                 </span>
                 <span className={`text-base sm:text-lg font-black my-0.5 ${isSelected ? "text-white" : "text-slate-900"}`}>
@@ -390,7 +390,7 @@ export default function StudentDashboardPage() {
                 {day.hasLesson && (
                   <span
                     className={`h-1.5 w-1.5 rounded-full mt-1 ${
-                      isSelected ? "bg-[#F9C31C]" : "bg-emerald-500"
+                      isSelected ? "bg-accent" : "bg-emerald-500"
                     }`}
                   />
                 )}
@@ -411,14 +411,14 @@ export default function StudentDashboardPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                  <BookOpen className="h-4 w-4 text-[#14209C]" />
+                  <BookOpen className="h-4 w-4 text-brand" />
                   Upcoming Confirmed Lessons
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Direct access to your scheduled 1-on-1 classes
                 </p>
               </div>
-              <Link href="/student/lessons" className="text-xs font-bold text-[#14209C] hover:underline">
+              <Link href="/student/lessons" className="text-xs font-bold text-brand hover:underline">
                 View all ({upcomingLessons.length}) →
               </Link>
             </div>
@@ -473,7 +473,7 @@ export default function StudentDashboardPage() {
                         <Button
                           variant="default"
                           size="sm"
-                          className="font-bold text-xs bg-[#14209C] hover:bg-[#0d1870] text-white rounded-xl shadow-xs"
+                          className="font-bold text-xs bg-brand hover:brightness-90 text-white rounded-xl shadow-xs"
                           leftIcon={<Video className="h-3.5 w-3.5" />}
                         >
                           Enter Room
@@ -500,14 +500,14 @@ export default function StudentDashboardPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                  <TrendingUp className="h-4 w-4 text-emerald-600" />
+                  <TrendingUp className="h-4 w-4 text-brand" />
                   Active Learning Goals & Milestones ({learningGoals.length})
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Mastery progression towards your target exams
                 </p>
               </div>
-              <Link href="/student/progress" className="text-xs font-bold text-[#14209C] hover:underline">
+              <Link href="/student/progress" className="text-xs font-bold text-brand hover:underline">
                 Manage all goals →
               </Link>
             </div>
@@ -528,13 +528,13 @@ export default function StudentDashboardPage() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-black text-[#14209C] text-sm">
+                      <span className="font-black text-brand text-sm">
                         {goal.progressPercent}%
                       </span>
                       {goal.progressPercent < 100 && (
                         <button
                           onClick={() => handleQuickProgressBump(goal.id, goal.progressPercent)}
-                          className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-[#14209C] transition cursor-pointer"
+                          className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-brand-50 hover:text-brand transition cursor-pointer"
                           title="Add 10% progress"
                         >
                           +10%
@@ -553,7 +553,7 @@ export default function StudentDashboardPage() {
                   <div className="h-2 w-full rounded-full bg-slate-200/80 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
-                        goal.progressPercent >= 100 ? "bg-emerald-600" : "bg-[#14209C]"
+                        goal.progressPercent >= 100 ? "bg-emerald-600" : "bg-brand"
                       }`}
                       style={{ width: `${goal.progressPercent}%` }}
                     />
@@ -575,7 +575,7 @@ export default function StudentDashboardPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                  <FileText className="h-4 w-4 text-[#14209C]" />
+                  <FileText className="h-4 w-4 text-brand" />
                   Recent Lesson Materials & Worksheets
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -594,7 +594,7 @@ export default function StudentDashboardPage() {
                     className="flex items-center justify-between p-3.5 rounded-2xl border border-slate-200/80 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all shadow-xs"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-[#14209C] shrink-0 border border-indigo-100">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand shrink-0 border border-brand-100">
                         <FileText className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
@@ -614,7 +614,7 @@ export default function StudentDashboardPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs shrink-0"
                     >
-                      <Download className="h-3.5 w-3.5 text-[#14209C]" />
+                      <Download className="h-3.5 w-3.5 text-brand" />
                       Download
                     </a>
                   </div>
@@ -635,7 +635,7 @@ export default function StudentDashboardPage() {
                 <Heart className="h-4 w-4 text-rose-500 fill-rose-500" />
                 My Instructors ({enrolledTutors.length})
               </h3>
-              <Link href="/find-tutors" className="text-xs font-bold text-[#14209C] hover:underline">
+              <Link href="/find-tutors" className="text-xs font-bold text-brand hover:underline">
                 Explore tutors →
               </Link>
             </div>
@@ -681,10 +681,10 @@ export default function StudentDashboardPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2 font-heading">
-                <MessageSquare className="h-4 w-4 text-[#14209C]" />
+                <MessageSquare className="h-4 w-4 text-brand" />
                 Recent Messages
               </h3>
-              <Link href="/student/messages" className="text-xs font-bold text-[#14209C] hover:underline">
+              <Link href="/student/messages" className="text-xs font-bold text-brand hover:underline">
                 Open inbox →
               </Link>
             </div>
@@ -710,7 +710,7 @@ export default function StudentDashboardPage() {
                           {otherUser?.displayName}
                         </span>
                         {conv.unreadCount > 0 && (
-                          <span className="h-2 w-2 rounded-full bg-[#14209C] shrink-0" />
+                          <span className="h-2 w-2 rounded-full bg-brand shrink-0" />
                         )}
                       </div>
                       <p className="text-[11px] text-slate-500 truncate mt-0.5">
@@ -724,20 +724,20 @@ export default function StudentDashboardPage() {
           </div>
 
           {/* Quick Hub Shortcut Banner */}
-          <div className="rounded-3xl p-6 bg-gradient-to-br from-indigo-950 via-slate-900 to-[#14209C] text-white shadow-card space-y-3">
-            <div className="flex items-center gap-2 text-indigo-300 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-4 h-4 text-[#F9C31C]" />
+          <div className="rounded-3xl p-6 bg-gradient-to-br from-brand-950 via-slate-900 to-brand text-white shadow-card space-y-3">
+            <div className="flex items-center gap-2 text-brand-300 text-xs font-bold uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-accent" />
               <span>Learning Roadmap</span>
             </div>
             <h4 className="text-sm font-black font-heading leading-snug">
               Prepare for your IELTS 7.5+ and ML milestones
             </h4>
-            <p className="text-xs text-indigo-200 leading-relaxed">
+            <p className="text-xs text-brand-200 leading-relaxed">
               Review homework worksheets, track study targets, and synchronize your calendar feed.
             </p>
             <div className="pt-2 flex items-center gap-2">
               <Link href="/student/progress">
-                <Button size="sm" variant="default" className="font-bold bg-[#F9C31C] text-slate-950 hover:bg-[#e0ad10] text-xs">
+                <Button size="sm" variant="default" className="font-bold bg-accent text-slate-950 hover:brightness-95 text-xs">
                   View Roadmap
                 </Button>
               </Link>

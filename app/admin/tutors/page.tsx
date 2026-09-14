@@ -171,7 +171,7 @@ export default function AdminTutorsPage() {
             onClick={() => setIsFeaturedFilter((v) => (v === undefined ? true : undefined))}
             className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
               isFeaturedFilter
-                ? "bg-[#14209C] text-white border-[#14209C]"
+                ? "bg-brand text-white border-brand"
                 : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
             }`}
             title="Filter featured tutors"
@@ -186,7 +186,7 @@ export default function AdminTutorsPage() {
               placeholder="Search tutors, subjects..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           </div>

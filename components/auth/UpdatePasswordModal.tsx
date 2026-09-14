@@ -170,7 +170,7 @@ export function UpdatePasswordModal({ isOpen, onClose }: UpdatePasswordModalProp
             variant="default"
             type="submit"
             disabled={loading || newPassword.length < 8 || newPassword !== confirmPassword}
-            className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white flex items-center gap-1.5"
+            className="font-bold bg-brand hover:brightness-90 text-white flex items-center gap-1.5"
           >
             <KeyRound className="w-3.5 h-3.5" />
             <span>{loading ? "Updating..." : "Update Password"}</span>

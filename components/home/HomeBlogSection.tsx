@@ -32,18 +32,18 @@ export function HomeBlogSection() {
   return (
     <section className="py-20 sm:py-28 bg-slate-50/70 border-t border-slate-200/60 relative overflow-hidden">
       {/* Subtle background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-indigo-100/40 blur-[120px] rounded-full pointer-events-none -z-10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-brand-100/40 blur-[120px] rounded-full pointer-events-none -z-10" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-[#14209C] text-xs font-bold mb-4 shadow-2xs">
-              <BookOpen className="h-3.5 w-3.5 text-[#14209C]" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-bold mb-4 shadow-2xs">
+              <BookOpen className="h-3.5 w-3.5 text-brand" />
               <span>SABINA LEARNING HUB</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight font-heading leading-tight">
-              Insights, Study Guides & <span className="text-[#14209C]">Language Tips</span>
+              Insights, Study Guides & <span className="text-brand">Language Tips</span>
             </h2>
             <p className="text-sm sm:text-base text-slate-600 mt-2 font-normal">
               Actionable advice on exam preparation, polyglot habits, and modern learning science from our top tutors.

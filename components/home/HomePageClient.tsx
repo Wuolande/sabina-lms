@@ -286,7 +286,7 @@ export function HomePageClient({
       ───────────────────────────────────────────────────────────── */}
       <section className="relative pt-6 sm:pt-14 pb-16 lg:pb-24 overflow-hidden">
         {/* Ambient atmospheric gradients */}
-        <div className="absolute top-0 right-1/4 -mt-24 w-96 h-96 rounded-full bg-emerald-100/50 blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-1/4 -mt-24 w-96 h-96 rounded-full bg-brand-100/50 blur-3xl pointer-events-none" />
         <div className="absolute top-1/3 left-0 -ml-20 w-80 h-80 rounded-full bg-brand-100/40 blur-3xl pointer-events-none" />
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -297,7 +297,7 @@ export function HomePageClient({
               
               {/* Pre-title Tag */}
               <div>
-                <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-[#059669]">
+                <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand">
                   {hero.pretitle}
                 </span>
               </div>
@@ -306,7 +306,7 @@ export function HomePageClient({
               <div className="min-h-[130px] sm:min-h-[160px] lg:min-h-[175px] flex items-start">
                 <h1 className="text-4xl sm:text-5xl lg:text-[54px] xl:text-[58px] font-extrabold tracking-[-0.03em] text-slate-950 leading-[1.12]">
                   {displayText}
-                  <span className="inline-block w-[3.5px] h-[0.85em] bg-[#059669] ml-1.5 rounded-full animate-cursor align-middle" />
+                  <span className="inline-block w-[3.5px] h-[0.85em] bg-brand ml-1.5 rounded-full animate-cursor align-middle" />
                 </h1>
               </div>
 
@@ -321,9 +321,9 @@ export function HomePageClient({
                   <button
                     type="button"
                     onClick={() => setIsDiscoveryOpen(true)}
-                    className="h-14 px-6 sm:px-7 rounded-2xl bg-[#14209C] hover:bg-[#0f1877] text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-[0_4px_16px_rgba(20,32,156,0.25)] hover:shadow-[0_8px_24px_rgba(20,32,156,0.35)] hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer group shrink-0"
+                    className="h-14 px-6 sm:px-7 rounded-2xl bg-brand hover:opacity-90 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer group shrink-0"
                   >
-                    <Sparkles className="h-4 w-4 text-amber-300 fill-amber-300 group-hover:rotate-12 transition-transform" />
+                    <Sparkles className="h-4 w-4 text-accent fill-accent group-hover:rotate-12 transition-transform" />
                     <span>Find Your Tutor</span>
                     <ArrowRight className="h-4 w-4 text-white/80 group-hover:translate-x-1 transition-transform" />
                   </button>
@@ -335,7 +335,7 @@ export function HomePageClient({
                         placeholder="Search subject or tutor..."
                         value={quickQuery}
                         onChange={(e) => setQuickQuery(e.target.value)}
-                        className="w-full h-14 rounded-2xl border border-slate-200 bg-white pl-4 pr-11 text-xs sm:text-sm font-medium text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                        className="w-full h-14 rounded-2xl border border-slate-200 bg-white pl-4 pr-11 text-xs sm:text-sm font-medium text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand"
                       />
                       <button
                         type="submit"
@@ -366,7 +366,7 @@ export function HomePageClient({
                   <Link
                     key={idx}
                     href={`/find-tutors?subject=${tag.slug}`}
-                    className="hover:text-emerald-700 bg-slate-100/80 px-2.5 py-1 rounded-lg transition-colors"
+                    className="hover:text-brand bg-slate-100/80 px-2.5 py-1 rounded-lg transition-colors"
                   >
                     {tag.label}
                   </Link>
@@ -424,19 +424,19 @@ export function HomePageClient({
               <div className="relative w-full max-w-[480px] aspect-square flex items-center justify-center">
                 
                 {/* Subtle Ambient Radial Glow */}
-                <div className="absolute inset-0 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none scale-105" />
+                <div className="absolute inset-0 rounded-full bg-brand/10 blur-2xl pointer-events-none scale-105" />
 
-                {/* Thin Blue Outer Contour Ring */}
-                <div className="absolute inset-0 rounded-full border-2 border-brand-700/70 -rotate-12 scale-105 pointer-events-none transition-transform duration-700 hover:rotate-0" />
+                {/* Thin Outer Contour Ring */}
+                <div className="absolute inset-0 rounded-full border-2 border-brand/70 -rotate-12 scale-105 pointer-events-none transition-transform duration-700 hover:rotate-0" />
 
-                {/* Solid Emerald/Teal Circular Backdrop */}
-                <div className="absolute inset-3 rounded-full bg-gradient-to-br from-[#0e5c47] via-[#094837] to-[#053326] shadow-2xl overflow-hidden" />
+                {/* Dynamic Brand Circular Backdrop */}
+                <div className="absolute inset-3 rounded-full bg-gradient-to-br from-brand via-brand/90 to-brand-950 shadow-2xl overflow-hidden" />
 
-                {/* Vibrant Yellow Circle Accent (#F9C31C) */}
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 h-10 w-10 rounded-full bg-[#F9C31C] shadow-md z-20 animate-float" />
+                {/* Dynamic Accent Circle Accent */}
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 h-10 w-10 rounded-full bg-accent shadow-md z-20 animate-float" />
 
-                {/* Vibrant Royal Blue Dot Accent (#14209C) */}
-                <div className="absolute left-2 bottom-12 h-14 w-14 rounded-full bg-[#14209C] shadow-md z-20 animate-float-alt" />
+                {/* Dynamic Brand Dot Accent */}
+                <div className="absolute left-2 bottom-12 h-14 w-14 rounded-full bg-brand shadow-md z-20 animate-float-alt" />
 
                 {/* Main Hero Student Photo (Instant Uploaded Cloudinary Photo with High Priority) */}
                 <div className="relative z-10 h-full w-full flex items-end justify-center overflow-hidden rounded-full pt-4">
@@ -452,7 +452,7 @@ export function HomePageClient({
 
                 {/* Floating Card 1 */}
                 <div className="absolute -left-4 sm:-left-8 top-16 z-30 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/90 p-3.5 shadow-elevation flex items-center gap-3 animate-float hover:scale-110 transition-all duration-300 group cursor-default">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand shadow-sm group-hover:bg-brand group-hover:text-white transition-colors duration-300">
                     <BookOpen className="h-5 w-5" />
                   </div>
                   <div>
@@ -477,7 +477,7 @@ export function HomePageClient({
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
                       <path
-                        className="text-emerald-500 group-hover:text-emerald-600 transition-colors"
+                        className="text-brand group-hover:text-brand-600 transition-colors"
                         strokeDasharray="78, 100"
                         strokeWidth="3.5"
                         strokeLinecap="round"
@@ -497,7 +497,7 @@ export function HomePageClient({
 
                 {/* Floating Card 3 */}
                 <div className="absolute -right-4 sm:-right-8 bottom-4 z-30 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/90 p-3.5 shadow-elevation flex items-center gap-3 animate-float-alt hover:scale-110 transition-all duration-300 group cursor-default">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand shadow-sm group-hover:bg-brand group-hover:text-white transition-colors duration-300">
                     <Clock className="h-5 w-5" />
                   </div>
                   <div>
@@ -567,7 +567,7 @@ export function HomePageClient({
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-6">
           <div>
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-[#059669] block">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
               {catSection.pretitle}
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-950 tracking-[-0.02em] leading-tight mt-1.5">
@@ -613,11 +613,11 @@ export function HomePageClient({
               <Link
                 key={sub.id}
                 href={`/find-tutors?subject=${sub.slug}`}
-                className="group rounded-3xl border border-slate-200/80 bg-white p-6 shadow-card hover:shadow-elevation hover:border-emerald-300 transition-all duration-200 flex flex-col justify-between"
+                className="group rounded-3xl border border-slate-200/80 bg-white p-6 shadow-card hover:shadow-elevation hover:border-brand/40 transition-all duration-200 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-subtle">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand group-hover:bg-brand group-hover:text-white transition-all shadow-subtle">
                       <BookOpen className="h-6 w-6" />
                     </div>
                     <Badge variant="subtle" size="sm" className="font-bold text-[11px] bg-slate-100 text-slate-700">
@@ -625,7 +625,7 @@ export function HomePageClient({
                     </Badge>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-700 transition-colors mt-4">
+                  <h3 className="text-base font-bold text-slate-900 group-hover:text-brand transition-colors mt-4">
                     {sub.name}
                   </h3>
                   <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mt-0.5">
@@ -637,7 +637,7 @@ export function HomePageClient({
                   </p>
                 </div>
 
-                <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-emerald-600">
+                <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-brand">
                   <span>From $25/hr</span>
                   <span className="flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     Explore <ArrowRight className="h-3.5 w-3.5" />
@@ -655,7 +655,7 @@ export function HomePageClient({
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8">
           <div>
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-[#059669] block">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
               {tutSection.pretitle}
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-950 tracking-[-0.02em] leading-tight mt-1.5">
@@ -689,12 +689,12 @@ export function HomePageClient({
           5. THE LIVE VIDEO CLASSROOM (Dynamic CMS Product Tour)
       ───────────────────────────────────────────────────────────── */}
       <section className="bg-[#050B18] py-16 sm:py-24 text-white relative overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 space-y-10">
           <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3.5 py-1 rounded-full">
-              <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-accent/15 text-accent border border-accent/30 px-3.5 py-1 rounded-full">
+              <Sparkles className="h-3.5 w-3.5 text-accent" />
               {classroom.badge}
             </span>
             <h2 className="text-3xl sm:text-5xl font-black text-white font-heading tracking-tight">
@@ -722,7 +722,7 @@ export function HomePageClient({
                   onClick={() => setActiveTourTab(tab.id as any)}
                   className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
                     isActive
-                      ? "bg-emerald-500 text-slate-950 shadow-glow font-extrabold"
+                      ? "bg-accent text-slate-950 shadow-glow font-extrabold"
                       : "bg-slate-900/90 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"
                   }`}
                 >
@@ -743,7 +743,7 @@ export function HomePageClient({
               </div>
 
               <div className="hidden sm:flex items-center gap-2 bg-slate-950/80 px-4 py-1 rounded-xl border border-slate-800 text-[11px] text-slate-400 font-mono">
-                <span className="text-emerald-400 font-bold">🔒</span>
+                <span className="text-accent font-bold">🔒</span>
                 <span>sabinaedge.com/classroom/les-884920</span>
               </div>
 
@@ -752,7 +752,7 @@ export function HomePageClient({
                   <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
                   REC 24:18
                 </span>
-                <span className="hidden md:inline-flex text-[11px] text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2.5 py-0.5 rounded-full font-mono">
+                <span className="hidden md:inline-flex text-[11px] text-accent bg-accent/10 border border-accent/30 px-2.5 py-0.5 rounded-full font-mono">
                   ● 1080p 60fps • 24ms
                 </span>
               </div>
@@ -772,7 +772,7 @@ export function HomePageClient({
                         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
                         Dr. Elena Rostova (Tutor)
                       </span>
-                      <span className="bg-emerald-500 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded-md">
+                      <span className="bg-accent text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded-md">
                         Speaking
                       </span>
                     </div>
@@ -802,7 +802,7 @@ export function HomePageClient({
                         <span className="bg-slate-950/80 px-2 py-0.5 rounded-md text-[10px] font-bold text-white">
                           Alex Rivera (You)
                         </span>
-                        <Mic className="h-3.5 w-3.5 text-emerald-400" />
+                        <Mic className="h-3.5 w-3.5 text-accent" />
                       </div>
                     </div>
 
@@ -812,11 +812,11 @@ export function HomePageClient({
                       </span>
                       <div className="space-y-2">
                         <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 text-[11px]">
-                          <strong className="text-emerald-400 block font-semibold">Dr. Elena Rostova:</strong>
+                          <strong className="text-accent block font-semibold">Dr. Elena Rostova:</strong>
                           <span>Check the PDF in tab 3 for practice set 4.</span>
                         </div>
                         <div className="bg-brand-950/40 p-2 rounded-xl border border-brand-800/50 text-[11px]">
-                          <strong className="text-[#F9C31C] block font-semibold">You:</strong>
+                          <strong className="text-accent block font-semibold">You:</strong>
                           <span>Got it! Working on equation 2 now.</span>
                         </div>
                       </div>
@@ -829,7 +829,7 @@ export function HomePageClient({
                 <div className="animate-fade-in flex-1 space-y-4">
                   <div className="flex items-center justify-between bg-slate-900 p-2 rounded-2xl border border-slate-800 text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="bg-emerald-500 text-slate-950 px-3 py-1 rounded-xl font-bold flex items-center gap-1">
+                      <span className="bg-accent text-slate-950 px-3 py-1 rounded-xl font-bold flex items-center gap-1">
                         <PenTool className="h-3.5 w-3.5" /> Pen (Active)
                       </span>
                       <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer">
@@ -853,20 +853,20 @@ export function HomePageClient({
 
                   <div className="rounded-2xl bg-slate-950 border border-slate-800 p-6 font-mono relative min-h-[260px] flex flex-col justify-center space-y-4">
                     <div className="space-y-2">
-                      <div className="text-emerald-400 text-sm font-bold">
+                      <div className="text-accent text-sm font-bold">
                         // Theorem: Fundamental Theorem of Calculus
                       </div>
                       <div className="text-xl sm:text-2xl font-black text-white font-serif bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 inline-block">
                         ∫ [0 to π] x · sin(x) dx = π
                       </div>
                       <p className="text-xs text-slate-400">
-                        Annotation by <span className="text-[#F9C31C] font-bold">Dr. Elena Rostova</span>: &quot;Integrate by parts: let u = x and dv = sin(x)dx &rarr; du = dx, v = -cos(x)&quot;
+                        Annotation by <span className="text-accent font-bold">Dr. Elena Rostova</span>: &quot;Integrate by parts: let u = x and dv = sin(x)dx &rarr; du = dx, v = -cos(x)&quot;
                       </p>
                     </div>
 
                     <div className="flex items-center gap-3 pt-2 text-xs text-slate-400 border-t border-slate-800/80">
-                      <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                        <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      <span className="flex items-center gap-1.5 text-accent font-bold">
+                        <span className="h-2 w-2 rounded-full bg-accent" />
                         2 Users drawing simultaneously
                       </span>
                       <span>•</span>
@@ -880,7 +880,7 @@ export function HomePageClient({
                 <div className="animate-fade-in flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="rounded-2xl bg-slate-900 p-5 border border-slate-800 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-accent flex items-center gap-1.5">
                         <FileText className="h-4 w-4" /> AP_Calculus_Practice_Set_04.pdf
                       </span>
                       <span className="text-[10px] text-slate-400">2.4 MB • Verified</span>
@@ -888,11 +888,11 @@ export function HomePageClient({
                     <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
                       <div className="flex items-center justify-between text-slate-300">
                         <span>Q1. Directional Derivatives</span>
-                        <span className="text-emerald-400 font-bold">✓ Completed</span>
+                        <span className="text-accent font-bold">✓ Completed</span>
                       </div>
                       <div className="flex items-center justify-between text-slate-300">
                         <span>Q2. Gradient Vector Orthogonality</span>
-                        <span className="text-emerald-400 font-bold">✓ Completed</span>
+                        <span className="text-accent font-bold">✓ Completed</span>
                       </div>
                       <div className="flex items-center justify-between text-slate-300">
                         <span>Q3. Tangent Plane Equations</span>
@@ -908,7 +908,7 @@ export function HomePageClient({
                         “Alex showed outstanding comprehension of multi-variable gradients today. Focus on 3D surface visualizations before our next session on Thursday.”
                       </p>
                     </div>
-                    <Button variant="default" size="sm" className="w-full font-bold bg-emerald-500 hover:bg-emerald-600 text-slate-950 rounded-xl">
+                    <Button variant="default" size="sm" className="w-full font-bold bg-accent hover:opacity-90 text-slate-950 rounded-xl">
                       Download Lesson Summary Notes
                     </Button>
                   </div>
@@ -927,17 +927,17 @@ export function HomePageClient({
                   <div className="rounded-2xl bg-slate-900 p-5 border border-slate-800 space-y-3 flex flex-col justify-center">
                     <div className="flex justify-between text-xs font-bold">
                       <span className="text-white">IELTS 7.5+ Target</span>
-                      <span className="text-emerald-400">75%</span>
+                      <span className="text-accent">75%</span>
                     </div>
                     <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: "75%" }} />
+                      <div className="h-full bg-accent rounded-full" style={{ width: "75%" }} />
                     </div>
                     <span className="text-[11px] text-slate-400 block text-center">On track for exam in Nov 2026</span>
                   </div>
 
                   <div className="rounded-2xl bg-slate-900 p-5 border border-slate-800 space-y-2 text-center flex flex-col justify-center">
                     <strong className="text-2xl font-black text-white font-heading">48.5 hrs</strong>
-                    <span className="text-xs text-emerald-400 font-bold">Total Learning Time</span>
+                    <span className="text-xs text-accent font-bold">Total Learning Time</span>
                     <p className="text-[11px] text-slate-400">+12% faster mastery</p>
                   </div>
                 </div>
@@ -947,10 +947,10 @@ export function HomePageClient({
               <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="h-9 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer">
-                    <Mic className="h-3.5 w-3.5 text-emerald-400" /> Mute
+                    <Mic className="h-3.5 w-3.5 text-accent" /> Mute
                   </span>
                   <span className="h-9 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer">
-                    <Video className="h-3.5 w-3.5 text-emerald-400" /> Camera On
+                    <Video className="h-3.5 w-3.5 text-accent" /> Camera On
                   </span>
                   <span className="h-9 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white hidden sm:flex items-center gap-1.5 cursor-pointer">
                     <Monitor className="h-3.5 w-3.5 text-slate-300" /> Share Screen
@@ -959,7 +959,7 @@ export function HomePageClient({
 
                 <div className="flex items-center gap-2">
                   <Link href="/find-tutors">
-                    <Button variant="default" size="sm" className="font-extrabold bg-[#F9C31C] hover:bg-[#e0ad10] text-slate-950 rounded-xl px-5 cursor-pointer">
+                    <Button variant="default" size="sm" className="font-extrabold bg-accent hover:opacity-90 text-slate-950 rounded-xl px-5 cursor-pointer">
                       Try a Live Lesson Now
                     </Button>
                   </Link>
@@ -975,7 +975,7 @@ export function HomePageClient({
       ───────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-2">
-          <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-[#059669] block">
+          <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
             {howItWorks.pretitle}
           </span>
           <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-950 tracking-[-0.02em] leading-tight">
@@ -993,7 +993,7 @@ export function HomePageClient({
                 className="relative rounded-3xl border border-slate-200/90 bg-white p-8 shadow-card flex flex-col justify-between space-y-6 hover:shadow-elevation transition-all"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 shadow-subtle font-extrabold text-lg">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand shadow-subtle font-extrabold text-lg">
                     <Icon className="h-7 w-7" />
                   </div>
                   <span className="text-3xl font-black text-slate-200 font-heading">
@@ -1020,11 +1020,11 @@ export function HomePageClient({
       ───────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#081533] p-8 sm:p-14 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 border border-slate-800/90 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="space-y-4 max-w-2xl text-left relative z-10">
-            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-3.5 py-1 rounded-full">
-              <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-accent/15 text-accent border border-accent/30 px-3.5 py-1 rounded-full">
+              <Sparkles className="h-3.5 w-3.5 text-accent" />
               {becomeTutor.badge}
             </span>
             <h2 className="text-2xl sm:text-4xl font-black text-white font-heading tracking-tight leading-tight">
@@ -1036,7 +1036,7 @@ export function HomePageClient({
 
             <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-300 pt-2">
               {(becomeTutor.bulletPoints || []).map((bullet: string, idx: number) => (
-                <span key={idx} className="flex items-center gap-1.5 text-emerald-400">
+                <span key={idx} className="flex items-center gap-1.5 text-accent">
                   <Check className="h-4 w-4 stroke-[3]" /> {bullet}
                 </span>
               ))}
@@ -1048,7 +1048,7 @@ export function HomePageClient({
               <Button
                 variant="default"
                 size="lg"
-                className="w-full sm:w-auto font-extrabold bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-8 py-3.5 shadow-glow rounded-xl text-sm cursor-pointer"
+                className="w-full sm:w-auto font-extrabold bg-accent hover:opacity-90 text-slate-950 px-8 py-3.5 shadow-glow rounded-xl text-sm cursor-pointer"
                 rightIcon={<ArrowRight className="h-4 w-4" />}
               >
                 {becomeTutor.ctaButtonText || "Apply as a Tutor"}
@@ -1076,7 +1076,7 @@ export function HomePageClient({
       ───────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-2 mb-10">
-          <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-[#059669] block">
+          <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
             {faqSection.pretitle}
           </span>
           <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-950 tracking-[-0.02em] leading-tight">
@@ -1092,12 +1092,12 @@ export function HomePageClient({
                 <button
                   type="button"
                   onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  className="w-full flex items-center justify-between text-left py-2 font-bold text-sm sm:text-base text-slate-900 hover:text-emerald-700 transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-between text-left py-2 font-bold text-sm sm:text-base text-slate-900 hover:text-brand transition-colors cursor-pointer"
                 >
                   <span>{faq.q}</span>
                   <ChevronDown
                     className={`h-4 w-4 text-slate-400 transition-transform ${
-                      isOpen ? "rotate-180 text-emerald-600" : ""
+                      isOpen ? "rotate-180 text-brand" : ""
                     }`}
                   />
                 </button>

@@ -599,8 +599,8 @@ export function TutorDiscoveryModal({
         <div className="px-5 sm:px-8 pt-4 sm:pt-6 pb-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#14209C] bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-100/80">
-                <Sparkles className="h-3.5 w-3.5 fill-[#14209C]" />
+              <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-brand bg-brand-50 px-2.5 py-0.5 rounded-full border border-brand-100/80">
+                <Sparkles className="h-3.5 w-3.5 fill-brand" />
                 Tutor Matchmaker
               </span>
               <span className="text-xs text-slate-400 font-semibold">
@@ -631,7 +631,7 @@ export function TutorDiscoveryModal({
         {/* ── Step Progress Indicator Bar ── */}
         <div className="w-full bg-slate-100 h-1 shrink-0">
           <div
-            className="bg-[#14209C] h-1 transition-all duration-300"
+            className="bg-brand h-1 transition-all duration-300"
             style={{ width: `${(currentStepDisplay / totalSteps) * 100}%` }}
           />
         </div>
@@ -648,7 +648,7 @@ export function TutorDiscoveryModal({
                 <p className="text-xs sm:text-sm text-slate-600">
                   Select a discipline or search across our full catalog of certified tutors.
                 </p>
-                <span className="text-xs font-bold text-[#14209C] bg-brand-50 px-2.5 py-1 rounded-lg shrink-0 self-start sm:self-auto">
+                <span className="text-xs font-bold text-brand bg-brand-50 px-2.5 py-1 rounded-lg shrink-0 self-start sm:self-auto">
                   Selected: {selectedSubjectName}
                 </span>
               </div>
@@ -661,7 +661,7 @@ export function TutorDiscoveryModal({
                   placeholder="Search any subject, language or exam (e.g. Calculus, IELTS, Python, French)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-12 pl-11 pr-10 rounded-2xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#14209C] placeholder:text-slate-400 font-medium"
+                  className="w-full h-12 pl-11 pr-10 rounded-2xl border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand placeholder:text-slate-400 font-medium"
                 />
                 {searchQuery && (
                   <button
@@ -710,13 +710,13 @@ export function TutorDiscoveryModal({
                     }
                     className={`col-span-full p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
                       selectedSubjectName.toLowerCase() === searchQuery.trim().toLowerCase()
-                        ? "border-[#14209C] bg-brand-50/80 ring-2 ring-[#14209C] shadow-sm"
+                        ? "border-brand bg-brand-50/80 ring-2 ring-brand shadow-sm"
                         : "border-dashed border-brand-300 bg-brand-50/40 hover:bg-brand-50/80"
                     }`}
                   >
                     <div className="flex items-center gap-3.5 min-w-0">
                       <div className="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center shrink-0">
-                        <Sparkles className="w-5 h-5 text-[#14209C]" />
+                        <Sparkles className="w-5 h-5 text-brand" />
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-slate-900 truncate">
@@ -728,9 +728,9 @@ export function TutorDiscoveryModal({
                       </div>
                     </div>
                     {selectedSubjectName.toLowerCase() === searchQuery.trim().toLowerCase() ? (
-                      <CheckCircle2 className="w-5 h-5 text-[#14209C] shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-brand shrink-0" />
                     ) : (
-                      <span className="text-xs font-bold text-[#14209C] shrink-0">Select &rarr;</span>
+                      <span className="text-xs font-bold text-brand shrink-0">Select &rarr;</span>
                     )}
                   </button>
                 )}
@@ -748,7 +748,7 @@ export function TutorDiscoveryModal({
                       onClick={() => handleSelectSubject(sub.slug || sub.id, sub.name)}
                       className={`p-3.5 sm:p-4 rounded-2xl border text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
                         isSelected
-                          ? "border-[#14209C] bg-white ring-2 ring-[#14209C] shadow-sm scale-[1.01]"
+                          ? "border-brand bg-white ring-2 ring-brand shadow-sm scale-[1.01]"
                           : "border-slate-200/90 hover:border-slate-300 bg-white hover:shadow-xs"
                       }`}
                     >
@@ -763,7 +763,7 @@ export function TutorDiscoveryModal({
                               {sub.category}
                             </span>
                             <span className="text-slate-300">·</span>
-                            <span className="text-[11px] text-emerald-700 font-semibold">
+                            <span className="text-[11px] text-brand font-semibold">
                               {sub.tutorCount || 15}+ tutors
                             </span>
                           </div>
@@ -771,7 +771,7 @@ export function TutorDiscoveryModal({
                       </div>
 
                       {isSelected && (
-                        <CheckCircle2 className="h-5 w-5 text-[#14209C] shrink-0 ml-2" />
+                        <CheckCircle2 className="h-5 w-5 text-brand shrink-0 ml-2" />
                       )}
                     </button>
                   );
@@ -816,14 +816,14 @@ export function TutorDiscoveryModal({
                       onClick={() => setSelectedGoal(g.id)}
                       className={`w-full p-4 rounded-2xl border text-left flex items-start gap-4 transition-all cursor-pointer ${
                         isSelected
-                          ? "border-[#14209C] bg-white ring-2 ring-[#14209C] shadow-sm scale-[1.005]"
+                          ? "border-brand bg-white ring-2 ring-brand shadow-sm scale-[1.005]"
                           : "border-slate-200 hover:border-slate-300 bg-white"
                       }`}
                     >
                       <div
                         className={`p-2.5 rounded-xl shrink-0 ${
                           isSelected
-                            ? "bg-[#14209C] text-white"
+                            ? "bg-brand text-white"
                             : "bg-slate-100 text-slate-600"
                         }`}
                       >
@@ -838,7 +838,7 @@ export function TutorDiscoveryModal({
                         </p>
                       </div>
                       {isSelected && (
-                        <CheckCircle2 className="h-5 w-5 text-[#14209C] shrink-0 self-center" />
+                        <CheckCircle2 className="h-5 w-5 text-brand shrink-0 self-center" />
                       )}
                     </button>
                   );
@@ -866,7 +866,7 @@ export function TutorDiscoveryModal({
                       onClick={() => setSelectedLevel(lvl.id)}
                       className={`w-full p-4 sm:p-5 rounded-2xl border text-left flex items-center justify-between gap-4 transition-all cursor-pointer ${
                         isSelected
-                          ? "border-[#14209C] bg-white ring-2 ring-[#14209C] shadow-sm scale-[1.005]"
+                          ? "border-brand bg-white ring-2 ring-brand shadow-sm scale-[1.005]"
                           : "border-slate-200 hover:border-slate-300 bg-white"
                       }`}
                     >
@@ -875,7 +875,7 @@ export function TutorDiscoveryModal({
                         <p className="text-xs text-slate-500 mt-1">{lvl.sub}</p>
                       </div>
                       {isSelected && (
-                        <CheckCircle2 className="h-5 w-5 text-[#14209C] shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 text-brand shrink-0" />
                       )}
                     </button>
                   );
@@ -903,7 +903,7 @@ export function TutorDiscoveryModal({
                       onClick={() => setSelectedSchedule(sched.id)}
                       className={`p-4 sm:p-5 rounded-2xl border text-left transition-all cursor-pointer ${
                         isSelected
-                          ? "border-[#14209C] bg-white ring-2 ring-[#14209C] shadow-sm"
+                          ? "border-brand bg-white ring-2 ring-brand shadow-sm"
                           : "border-slate-200 hover:border-slate-300 bg-white"
                       }`}
                     >
@@ -913,7 +913,7 @@ export function TutorDiscoveryModal({
                           {sched.label}
                         </span>
                         {isSelected && (
-                          <CheckCircle2 className="h-4 w-4 text-[#14209C]" />
+                          <CheckCircle2 className="h-4 w-4 text-brand" />
                         )}
                       </div>
                       <p className="text-xs text-slate-500 mt-1.5">{sched.time}</p>
@@ -943,7 +943,7 @@ export function TutorDiscoveryModal({
                       onClick={() => setSelectedBudget(b.id)}
                       className={`w-full p-4 sm:p-5 rounded-2xl border text-left flex items-center justify-between gap-4 transition-all cursor-pointer ${
                         isSelected
-                          ? "border-[#14209C] bg-white ring-2 ring-[#14209C] shadow-sm scale-[1.005]"
+                          ? "border-brand bg-white ring-2 ring-brand shadow-sm scale-[1.005]"
                           : "border-slate-200 hover:border-slate-300 bg-white"
                       }`}
                     >
@@ -952,7 +952,7 @@ export function TutorDiscoveryModal({
                         <p className="text-xs text-slate-500 mt-1">{b.sub}</p>
                       </div>
                       {isSelected && (
-                        <CheckCircle2 className="h-5 w-5 text-[#14209C] shrink-0" />
+                        <CheckCircle2 className="h-5 w-5 text-brand shrink-0" />
                       )}
                     </button>
                   );
@@ -967,7 +967,7 @@ export function TutorDiscoveryModal({
           {step === 6 && (
             <form onSubmit={handleAccountSubmit} className="space-y-4 animate-fade-in max-w-lg mx-auto">
               <div className="p-4 rounded-2xl bg-brand-50 border border-brand-100/80 flex items-start gap-3.5">
-                <Sparkles className="h-5 w-5 text-[#14209C] shrink-0 mt-0.5" />
+                <Sparkles className="h-5 w-5 text-brand shrink-0 mt-0.5" />
                 <div className="text-xs text-brand-950">
                   <p className="font-bold">Save your matches &amp; 30% trial discount</p>
                   <p className="text-slate-600 mt-1 leading-relaxed">
@@ -1028,7 +1028,7 @@ export function TutorDiscoveryModal({
                         placeholder="e.g. Alex"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                        className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
                       />
                     </div>
                     <div>
@@ -1040,7 +1040,7 @@ export function TutorDiscoveryModal({
                         placeholder="e.g. Rivera"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                        className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
                       />
                     </div>
                   </div>
@@ -1055,7 +1055,7 @@ export function TutorDiscoveryModal({
                       placeholder="alex@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
                     />
                   </div>
 
@@ -1069,7 +1069,7 @@ export function TutorDiscoveryModal({
                       placeholder="At least 6 characters"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
                     />
                   </div>
                 </div>
@@ -1085,7 +1085,7 @@ export function TutorDiscoveryModal({
                       placeholder="alex@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
                     />
                   </div>
                   <div>
@@ -1098,7 +1098,7 @@ export function TutorDiscoveryModal({
                       placeholder="Your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                      className="w-full h-11 px-3.5 rounded-xl border border-slate-300 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
                     />
                   </div>
                 </div>
@@ -1108,7 +1108,7 @@ export function TutorDiscoveryModal({
                 type="submit"
                 variant="default"
                 size="lg"
-                className="w-full font-bold bg-[#14209C] hover:bg-[#0f1877] text-white rounded-xl shadow-xs h-12 cursor-pointer"
+                className="w-full font-bold bg-brand hover:opacity-90 text-white rounded-xl shadow-xs h-12 cursor-pointer"
                 isLoading={isAuthLoading}
               >
                 {authTab === "register" ? "Create Account & View Matches" : "Sign In & View Matches"}
@@ -1130,7 +1130,7 @@ export function TutorDiscoveryModal({
                     Showing educators matching your level, schedule, and budget
                   </p>
                 </div>
-                <span className="text-xs text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                <span className="text-xs text-brand font-bold flex items-center gap-1 bg-brand-50 px-2.5 py-1 rounded-lg">
                   <CheckCircle2 className="h-3.5 w-3.5" /> 100% Satisfaction Guarantee
                 </span>
               </div>
@@ -1179,12 +1179,12 @@ export function TutorDiscoveryModal({
                               />
                               <div className="min-w-0 space-y-0.5">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="font-bold text-slate-900 text-sm truncate">
-                                    {name}
-                                  </span>
-                                  {tutor.verificationStatus === "APPROVED" && (
-                                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                                  )}
+                                   <span className="font-bold text-slate-900 text-sm truncate">
+                                     {name}
+                                   </span>
+                                   {tutor.verificationStatus === "APPROVED" && (
+                                     <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                   )}
                                 </div>
                                 <p className="text-xs text-slate-500 truncate">
                                   {primarySub} · {tutor.headline || "Certified Instructor"}
@@ -1201,7 +1201,7 @@ export function TutorDiscoveryModal({
 
                             {/* Match Score & Pricing */}
                             <div className="text-right shrink-0">
-                              <span className="inline-block text-[11px] font-extrabold text-emerald-800 bg-emerald-100 border border-emerald-200 px-2.5 py-0.5 rounded-full mb-1">
+                              <span className="inline-block text-[11px] font-extrabold text-brand bg-brand-50 border border-brand-100 px-2.5 py-0.5 rounded-full mb-1">
                                 {matchScore}% Match
                               </span>
                               <div className="text-sm font-black text-slate-950 font-heading">
@@ -1214,7 +1214,7 @@ export function TutorDiscoveryModal({
                           {/* Match Reason Tag */}
                           <div className="flex items-center justify-between text-xs bg-slate-50 px-3 py-2 rounded-xl text-slate-600">
                             <span className="truncate">{highlight}</span>
-                            <span className="font-bold text-emerald-700 shrink-0 ml-2">
+                            <span className="font-bold text-brand shrink-0 ml-2">
                               Trial: {formatCurrency(trialRate, tutor.currency || "USD")}
                             </span>
                           </div>
@@ -1270,7 +1270,7 @@ export function TutorDiscoveryModal({
               type="button"
               variant="default"
               size="sm"
-              className="rounded-xl bg-[#14209C] hover:bg-[#0f1877] text-white text-xs font-bold shadow-xs px-5 h-10 cursor-pointer"
+              className="rounded-xl bg-brand hover:opacity-90 text-white text-xs font-bold shadow-xs px-5 h-10 cursor-pointer"
               onClick={handleNext}
               rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
             >

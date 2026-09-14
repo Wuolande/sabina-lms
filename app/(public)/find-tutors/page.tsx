@@ -201,8 +201,8 @@ function FindTutorsContent() {
         {/* Discovery Matchmaker Trigger Card */}
         <div className="shrink-0 p-4 rounded-2xl bg-gradient-to-br from-brand-50 via-white to-amber-50/40 border border-brand-100/90 shadow-xs flex items-center justify-between sm:justify-start gap-4">
           <div className="space-y-0.5">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#14209C] bg-brand-100/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-              <Sparkles className="h-3 w-3 fill-[#14209C]" />
+            <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand bg-brand-100/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+              <Sparkles className="h-3 w-3 fill-brand" />
               Need Guidance?
             </span>
             <p className="text-xs font-bold text-slate-900">
@@ -215,7 +215,7 @@ function FindTutorsContent() {
           <button
             type="button"
             onClick={() => setIsDiscoveryOpen(true)}
-            className="h-9 px-4 rounded-xl bg-[#14209C] hover:bg-[#0f1877] text-white font-bold text-xs shadow-xs transition-all shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5"
+            className="h-9 px-4 rounded-xl bg-brand hover:opacity-90 text-white font-bold text-xs shadow-xs transition-all shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5"
           >
             <span>Start</span>
           </button>
@@ -373,7 +373,7 @@ function FindTutorsContent() {
                 setKeyword(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 pr-8 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 shadow-xs transition-colors"
+              className="w-full rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 pr-8 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 shadow-xs transition-colors"
             />
             {keyword ? (
               <button

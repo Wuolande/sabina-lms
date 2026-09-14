@@ -171,7 +171,7 @@ export function BookingCalendar({
             <button
               type="button"
               onClick={() => setWeekOffset(0)}
-              className="text-xs font-semibold text-emerald-700 hover:underline ml-1"
+              className="text-xs font-semibold text-brand hover:underline ml-1"
             >
               Today
             </button>
@@ -217,7 +217,7 @@ export function BookingCalendar({
               }`}
             >
               {d.isToday && !isSelected && (
-                <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-brand" />
               )}
               <span className={`text-[11px] block uppercase font-semibold ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
                 {d.dayName}
@@ -225,7 +225,7 @@ export function BookingCalendar({
               <span className="text-base sm:text-lg font-black block my-0.5 font-heading">
                 {d.dayNumber}
               </span>
-              <span className={`text-[10px] block font-medium ${isSelected ? "text-emerald-400" : "text-slate-400"}`}>
+              <span className={`text-[10px] block font-medium ${isSelected ? "text-accent font-bold" : "text-slate-400"}`}>
                 {d.isPast ? "Past" : "Open"}
               </span>
             </button>
@@ -302,7 +302,7 @@ export function BookingCalendar({
                 onClick={() => onSelectSlot(selectedDate, slot.time)}
                 className={`py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-semibold transition-all relative flex flex-col items-center justify-center gap-0.5 ${
                   isSelected
-                    ? "border-emerald-600 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-600 font-bold shadow-xs"
+                    ? "border-brand bg-brand-50/60 text-brand ring-2 ring-brand font-bold shadow-xs"
                     : "border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50/70"
                 }`}
               >
@@ -312,10 +312,10 @@ export function BookingCalendar({
                   </span>
                 )}
                 <div className="flex items-center gap-1.5">
-                  <Clock className={`h-3.5 w-3.5 ${isSelected ? "text-emerald-700" : "text-slate-400"}`} />
+                  <Clock className={`h-3.5 w-3.5 ${isSelected ? "text-brand" : "text-slate-400"}`} />
                   <span>{slot.time}</span>
                 </div>
-                <span className={`text-[10px] ${isSelected ? "text-emerald-700 font-semibold" : "text-slate-400"}`}>
+                <span className={`text-[10px] ${isSelected ? "text-brand font-semibold" : "text-slate-400"}`}>
                   until {formatEndTime(slot.time, durationMinutes)}
                 </span>
               </button>
@@ -328,7 +328,7 @@ export function BookingCalendar({
       {selectedDate && selectedTime && (
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 shrink-0">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand shrink-0">
               <Check className="h-4 w-4" />
             </div>
             <div className="truncate">
@@ -340,7 +340,7 @@ export function BookingCalendar({
               </p>
             </div>
           </div>
-          <span className="font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md shrink-0">
+          <span className="font-bold text-brand bg-brand-50 border border-brand-100 px-2 py-1 rounded-md shrink-0">
             Slot Available
           </span>
         </div>

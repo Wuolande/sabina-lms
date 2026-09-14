@@ -90,7 +90,7 @@ export function TutorCard({
               <div className="flex items-center gap-2 flex-wrap">
                 <Link
                   href={`/tutors/${tutorSlugOrId}`}
-                  className="font-bold text-slate-900 text-base sm:text-lg hover:text-emerald-700 transition-colors leading-tight"
+                  className="font-bold text-slate-900 text-base sm:text-lg hover:text-brand transition-colors leading-tight"
                 >
                   {tutorDisplayName}
                 </Link>
@@ -100,10 +100,10 @@ export function TutorCard({
                   </span>
                 )}
                 <span title="Sabina Academy Certified Educator">
-                  <GraduationCap className="h-4 w-4 text-[#14209C] shrink-0" />
+                  <GraduationCap className="h-4 w-4 text-brand shrink-0" />
                 </span>
                 {tutor.isFeatured && (
-                  <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100/80 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold bg-brand-50 text-brand border border-brand-100/80 px-2 py-0.5 rounded-full">
                     Featured
                   </span>
                 )}
@@ -186,7 +186,7 @@ export function TutorCard({
             );
           })}
           {nativeLanguageName && (
-            <span className="inline-flex items-center text-[11px] font-semibold bg-emerald-50 border border-emerald-100 text-emerald-700 px-2.5 py-1 rounded-lg">
+            <span className="inline-flex items-center text-[11px] font-semibold bg-brand-50 border border-brand-100 text-brand px-2.5 py-1 rounded-lg">
               {nativeLanguageName}
             </span>
           )}

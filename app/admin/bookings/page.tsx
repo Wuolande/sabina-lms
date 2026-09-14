@@ -112,7 +112,7 @@ export default function AdminBookingsPage() {
             placeholder="Search booking ref, student, tutor..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
           />
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
         </div>
@@ -156,7 +156,7 @@ export default function AdminBookingsPage() {
                   >
                     <TableCell>
                       <div>
-                        <span className="font-mono text-xs font-bold text-[#14209C] block">
+                        <span className="font-mono text-xs font-bold text-brand block">
                           {b.bookingRef}
                         </span>
                         <span className="text-[11px] text-slate-500 font-medium">

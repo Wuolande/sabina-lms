@@ -217,7 +217,7 @@ export function ModalProvider({ children }: ModalProviderProps) {
       case 'warning':
         return <AlertTriangle className="w-7 h-7 text-amber-500 dark:text-amber-400 shrink-0" />;
       case 'primary':
-        return <HelpCircle className="w-7 h-7 text-[#14209C] dark:text-indigo-400 shrink-0" />;
+        return <HelpCircle className="w-7 h-7 text-brand shrink-0" />;
       case 'info':
       default:
         return <Info className="w-7 h-7 text-sky-600 dark:text-sky-400 shrink-0" />;
@@ -234,7 +234,7 @@ export function ModalProvider({ children }: ModalProviderProps) {
         return 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-sm';
       case 'primary':
       default:
-        return 'bg-[#14209C] hover:bg-[#0f1877] active:bg-[#0b125a] text-white shadow-sm shadow-indigo-100 dark:shadow-none';
+        return 'bg-brand hover:opacity-90 active:opacity-80 text-white shadow-sm dark:shadow-none';
     }
   };
 
@@ -433,7 +433,7 @@ export function ModalProvider({ children }: ModalProviderProps) {
                           }))
                         }
                         placeholder={promptState.options.placeholder || 'Enter notes...'}
-                        className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#14209C] focus:border-transparent focus:outline-none transition resize-y"
+                        className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-brand focus:border-transparent focus:outline-none transition resize-y"
                         autoFocus
                       />
                     ) : (
@@ -448,7 +448,7 @@ export function ModalProvider({ children }: ModalProviderProps) {
                           }))
                         }
                         placeholder={promptState.options.placeholder || 'Enter input...'}
-                        className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-[#14209C] focus:border-transparent focus:outline-none transition min-h-[44px]"
+                        className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-brand focus:border-transparent focus:outline-none transition min-h-[44px]"
                         autoFocus
                       />
                     )}

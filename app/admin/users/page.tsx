@@ -169,7 +169,7 @@ export default function AdminUsersPage() {
             variant="default"
             size="sm"
             onClick={() => setIsAddUserOpen(true)}
-            className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white text-xs shadow-sm flex items-center gap-1.5"
+            className="font-bold bg-brand hover:brightness-90 text-white text-xs shadow-sm flex items-center gap-1.5"
           >
             <UserPlus className="w-4 h-4" />
             <span>Add New User</span>
@@ -215,7 +215,7 @@ export default function AdminUsersPage() {
               placeholder="Search by name, email..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 pl-9 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
           </div>
@@ -438,7 +438,7 @@ export default function AdminUsersPage() {
               variant="default"
               type="submit"
               disabled={creatingUser}
-              className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white"
+              className="font-bold bg-brand hover:brightness-90 text-white"
             >
               {creatingUser ? "Creating..." : "Create User"}
             </Button>

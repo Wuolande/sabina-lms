@@ -119,7 +119,7 @@ export function SearchableSelect({
         className={cn(
           "w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl border text-left text-xs sm:text-sm font-medium transition-all bg-white shadow-xs cursor-pointer",
           isOpen
-            ? "border-emerald-500 ring-2 ring-emerald-500/20"
+            ? "border-brand ring-2 ring-brand/20"
             : "border-slate-200 hover:border-slate-300",
           disabled && "opacity-50 cursor-not-allowed bg-slate-50",
           error && "border-rose-500 ring-2 ring-rose-500/20"
@@ -169,7 +169,7 @@ export function SearchableSelect({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full h-8 pl-8 pr-3 text-xs bg-white rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full h-8 pl-8 pr-3 text-xs bg-white rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
           </div>
@@ -187,21 +187,21 @@ export function SearchableSelect({
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs sm:text-sm font-medium transition-colors cursor-pointer",
                       isSelected
-                        ? "bg-emerald-50 text-emerald-900 font-bold"
+                        ? "bg-brand-50 text-brand-900 font-bold"
                         : "text-slate-700 hover:bg-slate-100/80"
                     )}
                   >
                     <div className="flex items-center gap-2 truncate flex-1 mr-2">
                       {opt.icon && <span className="shrink-0">{opt.icon}</span>}
                       <div className="truncate">
-                        <p className={cn("truncate", isSelected && "text-emerald-900")}>{opt.label}</p>
+                        <p className={cn("truncate", isSelected && "text-brand-900")}>{opt.label}</p>
                         {opt.sublabel && (
                           <p className="text-[11px] text-slate-400 truncate">{opt.sublabel}</p>
                         )}
                       </div>
                     </div>
 
-                    {isSelected && <Check className="h-4 w-4 text-emerald-600 shrink-0" />}
+                    {isSelected && <Check className="h-4 w-4 text-brand shrink-0" />}
                   </button>
                 );
               })

@@ -1294,7 +1294,7 @@ function AdminCMSDashboardContent() {
                       variant="default"
                       size="sm"
                       onClick={() => handleOpenEditor(page.slug)}
-                      className="text-xs font-bold bg-[#14209C] hover:bg-[#0e176b] text-white"
+                      className="text-xs font-bold bg-brand hover:brightness-90 text-white"
                       leftIcon={<Edit3 className="w-3.5 h-3.5" />}
                     >
                       Edit Content
@@ -1350,7 +1350,7 @@ function AdminCMSDashboardContent() {
                       variant="default"
                       size="sm"
                       onClick={() => handleOpenEditor(page.slug)}
-                      className="text-xs font-bold bg-[#14209C] hover:bg-[#0e176b] text-white"
+                      className="text-xs font-bold bg-brand hover:brightness-90 text-white"
                       leftIcon={<Edit3 className="w-3.5 h-3.5" />}
                     >
                       Edit Content
@@ -1440,7 +1440,7 @@ function AdminCMSDashboardContent() {
                         variant="default"
                         size="sm"
                         onClick={() => handleOpenEditor(page.slug)}
-                        className="text-xs font-bold bg-[#14209C] hover:bg-[#0e176b] text-white"
+                        className="text-xs font-bold bg-brand hover:brightness-90 text-white"
                         leftIcon={<Edit3 className="w-3.5 h-3.5" />}
                       >
                         Edit

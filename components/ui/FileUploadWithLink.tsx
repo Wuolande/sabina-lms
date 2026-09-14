@@ -172,7 +172,7 @@ export function FileUploadWithLink({
             onClick={() => setActiveMode("upload")}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
               activeMode === "upload"
-                ? "bg-white text-[#14209C] shadow-xs"
+                ? "bg-white text-brand shadow-xs"
                 : "text-slate-500 hover:text-slate-900"
             }`}
           >
@@ -184,7 +184,7 @@ export function FileUploadWithLink({
             onClick={() => setActiveMode("link")}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
               activeMode === "link"
-                ? "bg-white text-[#14209C] shadow-xs"
+                ? "bg-white text-brand shadow-xs"
                 : "text-slate-500 hover:text-slate-900"
             }`}
           >
@@ -217,13 +217,13 @@ export function FileUploadWithLink({
           onClick={() => !uploading && fileInputRef.current?.click()}
           className={`relative border-2 border-dashed rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
             dragActive
-              ? "border-[#14209C] bg-indigo-50/50"
+              ? "border-brand bg-brand-50/50"
               : "border-slate-200 hover:border-slate-300 bg-slate-50/60"
           }`}
         >
           {uploading ? (
             <div className="flex flex-col items-center gap-2 py-3">
-              <Loader2 className="w-6 h-6 text-[#14209C] animate-spin" />
+              <Loader2 className="w-6 h-6 text-brand animate-spin" />
               <div className="text-center">
                 <span className="font-bold text-xs text-slate-800 block">
                   Scanning & Uploading to Cloudinary...
@@ -235,7 +235,7 @@ export function FileUploadWithLink({
             </div>
           ) : (
             <div className="flex flex-col items-center gap-1.5">
-              <div className="h-10 w-10 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-center text-[#14209C]">
+              <div className="h-10 w-10 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center justify-center text-brand">
                 {type === "video" ? (
                   <Video className="w-5 h-5" />
                 ) : type === "document" ? (
@@ -303,7 +303,7 @@ export function FileUploadWithLink({
                 <img src={value} alt="Preview" className="h-full w-full object-cover" />
               </div>
             ) : type === "video" ? (
-              <div className="h-12 w-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-[#14209C] shrink-0">
+              <div className="h-12 w-12 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center text-brand shrink-0">
                 <Play className="w-5 h-5" />
               </div>
             ) : (
@@ -325,7 +325,7 @@ export function FileUploadWithLink({
                 href={value}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] text-[#14209C] hover:underline truncate block max-w-xs mt-0.5"
+                className="text-[11px] text-brand hover:underline truncate block max-w-xs mt-0.5"
               >
                 {value}
               </a>

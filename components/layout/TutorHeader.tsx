@@ -109,11 +109,11 @@ export function TutorHeader({ onToggleSidebar }: TutorHeaderProps) {
     switch (type) {
       case "LESSON_REMINDER":
       case "LESSON_BOOKED":
-        return <Video className="h-4 w-4 text-[#14209C]" />;
+        return <Video className="h-4 w-4 text-brand" />;
       case "PAYMENT_SUCCESS":
         return <CreditCard className="h-4 w-4 text-emerald-600" />;
       case "NEW_MESSAGE":
-        return <MessageSquare className="h-4 w-4 text-[#14209C]" />;
+        return <MessageSquare className="h-4 w-4 text-brand" />;
       case "NEW_REVIEW":
       case "REVIEW_RECEIVED":
         return <Star className="h-4 w-4 text-amber-500" />;
@@ -185,7 +185,7 @@ export function TutorHeader({ onToggleSidebar }: TutorHeaderProps) {
         >
           <MessageSquare className="h-4 w-4" />
           {unreadMessages > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-[#14209C] text-[9px] font-black text-white shadow-xs">
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-brand text-[9px] font-black text-white shadow-xs">
               {unreadMessages > 9 ? "9+" : unreadMessages}
             </span>
           )}
@@ -216,7 +216,7 @@ export function TutorHeader({ onToggleSidebar }: TutorHeaderProps) {
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-black uppercase tracking-wider text-white">Notifications</span>
                   {unreadNotifs > 0 && (
-                    <span className="px-1.5 py-0.2 rounded-full bg-[#14209C] text-[10px] font-bold text-white">
+                    <span className="px-1.5 py-0.2 rounded-full bg-brand text-[10px] font-bold text-white">
                       {unreadNotifs} new
                     </span>
                   )}
@@ -263,7 +263,7 @@ export function TutorHeader({ onToggleSidebar }: TutorHeaderProps) {
                               {notif.title}
                             </span>
                             {!notif.readAt && (
-                              <span className="h-1.5 w-1.5 rounded-full bg-[#14209C] shrink-0" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-brand shrink-0" />
                             )}
                           </div>
                           <p className="text-[11px] text-slate-300 line-clamp-2 leading-snug">

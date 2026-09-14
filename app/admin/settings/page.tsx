@@ -858,7 +858,7 @@ export default function AdminSettingsPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div className="flex items-start gap-3">
-                <div className="p-3 rounded-2xl bg-indigo-50 text-[#14209C] border border-indigo-100 shrink-0">
+                <div className="p-3 rounded-2xl bg-brand-50 text-brand border border-brand-100 shrink-0">
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <div>
@@ -925,11 +925,11 @@ export default function AdminSettingsPage() {
                       }
                       className={`p-3.5 rounded-2xl border text-left transition-all ${
                         securitySettings.recaptchaVersion === v.id
-                          ? "border-[#14209C] bg-indigo-50/50 ring-2 ring-[#14209C]/20 shadow-xs"
+                          ? "border-brand bg-brand-50/50 ring-2 ring-brand/20 shadow-xs"
                           : "border-slate-200 hover:bg-slate-50/70 bg-white"
                       }`}
                     >
-                      <strong className={`block text-xs font-bold ${securitySettings.recaptchaVersion === v.id ? "text-[#14209C]" : "text-slate-900"}`}>
+                      <strong className={`block text-xs font-bold ${securitySettings.recaptchaVersion === v.id ? "text-brand" : "text-slate-900"}`}>
                         {v.label}
                       </strong>
                       <span className="text-[10px] text-slate-500 block mt-1 leading-relaxed">{v.desc}</span>
@@ -1000,7 +1000,7 @@ export default function AdminSettingsPage() {
                       <span className="text-xs font-bold text-slate-900">Minimum Bot Score Threshold</span>
                       <p className="text-[11px] text-slate-500">Scores below this threshold are blocked as automated traffic.</p>
                     </div>
-                    <span className="text-sm font-black text-[#14209C] bg-white border border-slate-200 px-3 py-1 rounded-xl">
+                    <span className="text-sm font-black text-brand bg-white border border-slate-200 px-3 py-1 rounded-xl">
                       {securitySettings.recaptchaMinScore.toFixed(2)}
                     </span>
                   </div>
@@ -1016,7 +1016,7 @@ export default function AdminSettingsPage() {
                         recaptchaMinScore: Number(e.target.value),
                       })
                     }
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#14209C]"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand"
                   />
                   <div className="flex justify-between text-[10px] text-slate-400 font-semibold">
                     <span>0.10 (Permissive)</span>
@@ -1245,7 +1245,7 @@ export default function AdminSettingsPage() {
                       ipBlacklist: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
                     })
                   }
-                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand"
                 />
               </div>
 
@@ -1263,7 +1263,7 @@ export default function AdminSettingsPage() {
                       ipWhitelist: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
                     })
                   }
-                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                  className="w-full px-3 py-2 text-xs font-mono rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand"
                 />
               </div>
             </div>
@@ -1275,7 +1275,7 @@ export default function AdminSettingsPage() {
             <Button
               type="submit"
               disabled={saving}
-              className="bg-[#14209C] hover:bg-[#0e176b] text-white font-bold px-6 shadow-xs flex items-center gap-2"
+              className="bg-brand hover:brightness-90 text-white font-bold px-6 shadow-xs flex items-center gap-2"
             >
               <ShieldCheck className="h-4 w-4" />
               <span>{saving ? "Saving Security..." : "Save Security & reCAPTCHA Settings"}</span>
@@ -1291,7 +1291,7 @@ export default function AdminSettingsPage() {
           {/* Provider Selection Ribbon */}
           <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
             <div className="flex items-start gap-3 pb-4 border-b border-slate-100">
-              <div className="p-3 rounded-2xl bg-indigo-50 text-[#14209C] border border-indigo-100 shrink-0">
+              <div className="p-3 rounded-2xl bg-brand-50 text-brand border border-brand-100 shrink-0">
                 <Mail className="h-6 w-6" />
               </div>
               <div>
@@ -1331,16 +1331,16 @@ export default function AdminSettingsPage() {
                       }
                       className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                         isSelected
-                          ? "border-[#14209C] bg-indigo-50/50 ring-2 ring-[#14209C]/20 shadow-xs scale-[1.01]"
+                          ? "border-brand bg-brand-50/50 ring-2 ring-brand/20 shadow-xs scale-[1.01]"
                           : "border-slate-200 bg-white hover:bg-slate-50/70"
                       }`}
                     >
                       <div>
                         <div className="flex items-center justify-between">
-                          <strong className={`text-xs font-bold ${isSelected ? "text-[#14209C]" : "text-slate-900"}`}>
+                          <strong className={`text-xs font-bold ${isSelected ? "text-brand" : "text-slate-900"}`}>
                             {p.label}
                           </strong>
-                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${isSelected ? "bg-[#14209C] text-white" : "bg-slate-100 text-slate-600"}`}>
+                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${isSelected ? "bg-brand text-white" : "bg-slate-100 text-slate-600"}`}>
                             {p.badge}
                           </span>
                         </div>
@@ -1612,7 +1612,7 @@ export default function AdminSettingsPage() {
             <Button
               type="submit"
               disabled={saving}
-              className="bg-[#14209C] hover:bg-[#0e176b] text-white font-bold px-6 shadow-xs flex items-center gap-2"
+              className="bg-brand hover:brightness-90 text-white font-bold px-6 shadow-xs flex items-center gap-2"
             >
               <Mail className="h-4 w-4" />
               <span>{saving ? "Saving Configuration..." : "Save Email Provider Configuration"}</span>

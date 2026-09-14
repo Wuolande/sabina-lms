@@ -251,7 +251,7 @@ export default function AdminTrainingDashboard() {
                       <span>•</span>
                       <span>{s.durationMinutes} mins</span>
                       <span>•</span>
-                      <span className="font-bold text-[#14209C] flex items-center gap-1">
+                      <span className="font-bold text-brand flex items-center gap-1">
                         <Users className="h-3 w-3" /> {s.currentAttendees} / {s.maxAttendees} Tutors Enrolled
                       </span>
                     </div>
@@ -386,7 +386,7 @@ export default function AdminTrainingDashboard() {
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-brand"
                   >
                     <option value="Classroom Tools">Classroom Tools</option>
                     <option value="Pedagogy">Pedagogy</option>
@@ -426,7 +426,7 @@ export default function AdminTrainingDashboard() {
                   id="mandatoryCheck"
                   checked={newIsMandatory}
                   onChange={(e) => setNewIsMandatory(e.target.checked)}
-                  className="rounded border-slate-300 text-[#14209C]"
+                  className="rounded border-slate-300 text-brand focus:ring-brand"
                 />
                 <label htmlFor="mandatoryCheck" className="text-xs font-bold text-slate-800">
                   Mark as Mandatory Compliance Training for all Tutors
