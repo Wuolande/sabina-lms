@@ -171,46 +171,67 @@ export class TrainingRepository {
   }
 
   async completeModule(tutorId: string, moduleId: string, courseId: string): Promise<number> {
-    try {
-      await adminSupabase.from('tutor_module_progress').upsert({
-        tutor_id: tutorId,
-        module_id: moduleId,
-        is_completed: true,
-        completed_at: new Date().toISOString(),
-      }, { onConflict: 'tutor_id,module_id' });
+    const { error: upsertErr } = await adminSupabase.from('tutor_module_progress').upsert({
+      tutor_id: tutorId,
+      module_id: moduleId,
+      is_completed: true,
+      completed_at: new Date().toISOString(),
+    }, { onConflict: 'tutor_id,module_id' });
 
-      // Calculate new progress percentage
-      const [modulesRes, completedRes] = await Promise.all([
-        adminSupabase.from('training_modules').select('id').eq('course_id', courseId),
-        adminSupabase.from('tutor_module_progress').select('module_id').eq('tutor_id', tutorId).eq('is_completed', true),
-      ]);
-
-      const total = modulesRes.data?.length || 1;
-      const done = completedRes.data?.length || 1;
-      const progress = Math.min(100, Math.round((done / total) * 100));
-
-      await adminSupabase.from('tutor_course_enrollments').upsert({
-        tutor_id: tutorId,
-        course_id: courseId,
-        status: progress >= 100 ? 'completed' : 'in_progress',
-        progress_percentage: progress,
-        last_accessed_at: new Date().toISOString(),
-      }, { onConflict: 'tutor_id,course_id' });
-
-      return progress;
-    } catch {
-      return 100;
+    if (upsertErr) {
+      console.error('Error updating module progress:', upsertErr);
+      throw new Error(upsertErr.message);
     }
+
+    // Get all module IDs for this specific course
+    const { data: courseModules } = await adminSupabase
+      .from('training_modules')
+      .select('id')
+      .eq('course_id', courseId);
+
+    const moduleIds = (courseModules || []).map((m: any) => m.id);
+    const total = moduleIds.length || 1;
+
+    // Count how many modules for this course have been completed by this tutor
+    let completedCount = 0;
+    if (moduleIds.length > 0) {
+      const { data: compMods } = await adminSupabase
+        .from('tutor_module_progress')
+        .select('module_id')
+        .eq('tutor_id', tutorId)
+        .eq('is_completed', true)
+        .in('module_id', moduleIds);
+
+      completedCount = compMods?.length || 0;
+    }
+
+    const progress = Math.min(100, Math.round((completedCount / total) * 100));
+
+    await adminSupabase.from('tutor_course_enrollments').upsert({
+      tutor_id: tutorId,
+      course_id: courseId,
+      status: progress >= 100 ? 'completed' : 'in_progress',
+      progress_percentage: progress,
+      last_accessed_at: new Date().toISOString(),
+      completed_at: progress >= 100 ? new Date().toISOString() : null,
+    }, { onConflict: 'tutor_id,course_id' });
+
+    return progress;
   }
 
   async submitQuiz(tutorId: string, quizId: string, courseId: string, answers: Record<string, number>): Promise<QuizSubmissionResult> {
-    const { data: quiz } = await adminSupabase
+    const { data: quiz, error: quizErr } = await adminSupabase
       .from('training_quizzes')
-      .select('*, questions:training_questions(*)')
+      .select('*, course:training_courses(title, badge_title, badge_icon, passing_score_percentage), questions:training_questions(*)')
       .eq('id', quizId)
       .single();
 
-    const questions = quiz?.questions || [];
+    if (quizErr || !quiz) {
+      console.error('Error fetching quiz:', quizErr);
+      throw new Error('Quiz not found');
+    }
+
+    const questions = quiz.questions || [];
     let correctCount = 0;
     const explanationList = questions.map((q: any) => {
       const selected = answers[q.id] ?? -1;
@@ -227,40 +248,59 @@ export class TrainingRepository {
 
     const totalQuestions = questions.length || 1;
     const scorePercentage = Math.round((correctCount / totalQuestions) * 100);
-    const passingScore = quiz?.passing_score || 80;
+    const passingScore = quiz.passing_score || quiz.course?.passing_score_percentage || 80;
     const passed = scorePercentage >= passingScore;
 
+    // Record quiz attempt in tutor_quiz_attempts
+    try {
+      await adminSupabase.from('tutor_quiz_attempts').insert({
+        tutor_id: tutorId,
+        quiz_id: quizId,
+        score_percentage: scorePercentage,
+        passed,
+        submitted_answers: answers,
+        time_spent_seconds: 0,
+      });
+    } catch (attemptErr) {
+      console.error('Error saving quiz attempt:', attemptErr);
+    }
+
     let certificateCode: string | undefined = undefined;
-    let badgeTitle: string | undefined = undefined;
+    const badgeTitle: string = quiz.course?.badge_title || quiz.title || 'Sabina Certified Educator';
+    const badgeIcon: string = quiz.course?.badge_icon || 'Award';
 
     if (passed) {
-      certificateCode = `SAB-CERT-${Math.floor(10000 + Math.random() * 90000)}`;
-      badgeTitle = 'Sabina Certified Educator';
+      // Check if tutor already has a certificate for this course
+      const { data: existingCert } = await adminSupabase
+        .from('tutor_certificates')
+        .select('certificate_code')
+        .eq('tutor_id', tutorId)
+        .eq('course_id', courseId)
+        .single();
 
-      try {
-        await Promise.all([
-          adminSupabase.from('tutor_certificates').upsert({
-            tutor_id: tutorId,
-            course_id: courseId,
-            certificate_code: certificateCode,
-            badge_title: badgeTitle,
-            badge_icon: 'Award',
-            score_achieved: scorePercentage,
-            issued_at: new Date().toISOString(),
-            is_valid: true,
-          }, { onConflict: 'tutor_id,course_id' }),
+      certificateCode = existingCert?.certificate_code || `SAB-CERT-${Math.floor(10000 + Math.random() * 90000)}`;
 
-          adminSupabase.from('tutor_course_enrollments').upsert({
-            tutor_id: tutorId,
-            course_id: courseId,
-            status: 'completed',
-            progress_percentage: 100,
-            completed_at: new Date().toISOString(),
-          }, { onConflict: 'tutor_id,course_id' }),
-        ]);
-      } catch (err) {
-        console.error('Certificate db error:', err);
-      }
+      await Promise.all([
+        adminSupabase.from('tutor_certificates').upsert({
+          tutor_id: tutorId,
+          course_id: courseId,
+          certificate_code: certificateCode,
+          badge_title: badgeTitle,
+          badge_icon: badgeIcon,
+          score_achieved: scorePercentage,
+          issued_at: new Date().toISOString(),
+          is_valid: true,
+        }, { onConflict: 'tutor_id,course_id' }),
+
+        adminSupabase.from('tutor_course_enrollments').upsert({
+          tutor_id: tutorId,
+          course_id: courseId,
+          status: 'completed',
+          progress_percentage: 100,
+          completed_at: new Date().toISOString(),
+          last_accessed_at: new Date().toISOString(),
+        }, { onConflict: 'tutor_id,course_id' }),
+      ]);
     }
 
     return {
@@ -282,7 +322,7 @@ export class TrainingRepository {
           *,
           course:training_courses(title, slug),
           tutor:tutor_profiles(
-            user:users(display_name, avatar_url)
+            user:users!tutor_profiles_user_id_fkey(display_name, avatar_url)
           )
         `)
         .eq('is_valid', true);
@@ -324,7 +364,7 @@ export class TrainingRepository {
           *,
           course:training_courses(title, slug),
           tutor:tutor_profiles(
-            user:users(display_name, avatar_url)
+            user:users!tutor_profiles_user_id_fkey(display_name, avatar_url)
           )
         `)
         .or(`id.eq.${certificateIdOrCode},certificate_code.eq.${certificateIdOrCode}`)
@@ -470,61 +510,107 @@ export class TrainingRepository {
     }
   }
 
-  async registerForLiveSession(sessionId: string, tutorId: string, tutorName = 'Verified Tutor', tutorAvatar?: string): Promise<{ success: boolean; isRegistered: boolean }> {
-    try {
-      const { data: existing } = await adminSupabase
-        .from('training_live_registrations')
-        .select('id')
-        .eq('session_id', sessionId)
-        .eq('tutor_id', tutorId)
-        .single();
+  async registerForLiveSession(sessionId: string, tutorId: string, tutorName?: string, tutorAvatar?: string): Promise<{ success: boolean; isRegistered: boolean }> {
+    const { data: existing, error: checkErr } = await adminSupabase
+      .from('training_live_registrations')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('tutor_id', tutorId)
+      .maybeSingle();
 
-      if (existing) {
-        await adminSupabase
-          .from('training_live_registrations')
-          .delete()
-          .eq('id', existing.id);
-        return { success: true, isRegistered: false };
-      } else {
-        await adminSupabase
-          .from('training_live_registrations')
-          .insert({
-            session_id: sessionId,
-            tutor_id: tutorId,
-            tutor_name: tutorName,
-            tutor_avatar: tutorAvatar,
-            registered_at: new Date().toISOString(),
-            attended: false,
-          });
-        return { success: true, isRegistered: true };
+    if (checkErr) {
+      console.error('Error checking live registration:', checkErr);
+      throw new Error(checkErr.message);
+    }
+
+    if (existing) {
+      const { error: delErr } = await adminSupabase
+        .from('training_live_registrations')
+        .delete()
+        .eq('id', existing.id);
+
+      if (delErr) {
+        console.error('Error unregistering from live session:', delErr);
+        throw new Error(delErr.message);
       }
-    } catch {
+      return { success: true, isRegistered: false };
+    } else {
+      let resolvedName = tutorName;
+      let resolvedAvatar = tutorAvatar;
+
+      if (!resolvedName) {
+        const { data: tp } = await adminSupabase
+          .from('tutor_profiles')
+          .select('user:users!tutor_profiles_user_id_fkey(display_name, avatar_url)')
+          .eq('id', tutorId)
+          .maybeSingle();
+        resolvedName = (tp?.user as any)?.display_name || 'Verified Tutor';
+        resolvedAvatar = (tp?.user as any)?.avatar_url || null;
+      }
+
+      const { error: insErr } = await adminSupabase
+        .from('training_live_registrations')
+        .insert({
+          session_id: sessionId,
+          tutor_id: tutorId,
+          tutor_name: resolvedName,
+          tutor_avatar: resolvedAvatar,
+          registered_at: new Date().toISOString(),
+          attended: false,
+        });
+
+      if (insErr) {
+        console.error('Error registering for live session:', insErr);
+        throw new Error(insErr.message);
+      }
       return { success: true, isRegistered: true };
     }
   }
 
   async confirmLiveAttendance(sessionId: string, tutorId: string): Promise<{ success: boolean; certificateCode: string }> {
-    const certCode = `SAB-LIVE-${Math.floor(10000 + Math.random() * 90000)}`;
-    try {
-      await adminSupabase
-        .from('training_live_registrations')
-        .upsert({
-          session_id: sessionId,
-          tutor_id: tutorId,
-          attended: true,
-          attended_minutes: 60,
-          certificate_issued: true,
-          certificate_code: certCode,
-        }, { onConflict: 'session_id,tutor_id' });
+    // 1. Fetch tutor profile for display name & avatar
+    const { data: tp } = await adminSupabase
+      .from('tutor_profiles')
+      .select('user:users!tutor_profiles_user_id_fkey(display_name, avatar_url)')
+      .eq('id', tutorId)
+      .maybeSingle();
 
-      return { success: true, certificateCode: certCode };
-    } catch {
-      return { success: true, certificateCode: certCode };
+    const tutorName = (tp?.user as any)?.display_name || 'Verified Tutor';
+    const tutorAvatar = (tp?.user as any)?.avatar_url || null;
+
+    // 2. Fetch existing registration if any
+    const { data: existingReg } = await adminSupabase
+      .from('training_live_registrations')
+      .select('certificate_code')
+      .eq('session_id', sessionId)
+      .eq('tutor_id', tutorId)
+      .maybeSingle();
+
+    const certCode = existingReg?.certificate_code || `SAB-LIVE-${Math.floor(10000 + Math.random() * 90000)}`;
+
+    const { error: upsertErr } = await adminSupabase
+      .from('training_live_registrations')
+      .upsert({
+        session_id: sessionId,
+        tutor_id: tutorId,
+        tutor_name: tutorName,
+        tutor_avatar: tutorAvatar,
+        attended: true,
+        attended_minutes: 60,
+        certificate_issued: true,
+        certificate_code: certCode,
+      }, { onConflict: 'session_id,tutor_id' });
+
+    if (upsertErr) {
+      console.error('Error confirming attendance in DB:', upsertErr);
+      throw new Error(upsertErr.message);
     }
+
+    return { success: true, certificateCode: certCode };
   }
 
   async createLiveSession(data: any): Promise<LiveTrainingSession> {
-    const slug = data.slug || data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    const slug = data.slug || (data.title || 'session').toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const newSession = {
       slug,
       title: data.title,
@@ -543,67 +629,36 @@ export class TrainingRepository {
       badge_title: data.badgeTitle || `${data.title} Attendance`,
     };
 
-    try {
-      const { data: created, error } = await adminSupabase
-        .from('training_live_sessions')
-        .insert(newSession)
-        .select()
-        .single();
+    const { data: created, error } = await adminSupabase
+      .from('training_live_sessions')
+      .insert(newSession)
+      .select()
+      .single();
 
-      if (error || !created) {
-        return {
-          id: `live-${Date.now()}`,
-          ...newSession,
-          trainerName: newSession.trainer_name,
-          trainerAvatar: newSession.trainer_avatar,
-          trainerRole: newSession.trainer_role,
-          scheduledAt: newSession.scheduled_at,
-          durationMinutes: newSession.duration_minutes,
-          maxAttendees: newSession.max_attendees,
-          currentAttendees: 0,
-          status: 'scheduled',
-          videoRoomId: newSession.video_room_id,
-          isMandatory: newSession.is_mandatory,
-          badgeTitle: newSession.badge_title,
-        };
-      }
-
-      return {
-        id: created.id,
-        slug: created.slug,
-        title: created.title,
-        headline: created.headline,
-        description: created.description,
-        trainerName: created.trainer_name,
-        trainerAvatar: created.trainer_avatar,
-        trainerRole: created.trainer_role,
-        category: created.category,
-        scheduledAt: created.scheduled_at,
-        durationMinutes: created.duration_minutes,
-        maxAttendees: created.max_attendees,
-        currentAttendees: 0,
-        status: created.status,
-        videoRoomId: created.video_room_id,
-        isMandatory: created.is_mandatory,
-        badgeTitle: created.badge_title,
-      };
-    } catch {
-      return {
-        id: `live-${Date.now()}`,
-        ...newSession,
-        trainerName: newSession.trainer_name,
-        trainerAvatar: newSession.trainer_avatar,
-        trainerRole: newSession.trainer_role,
-        scheduledAt: newSession.scheduled_at,
-        durationMinutes: newSession.duration_minutes,
-        maxAttendees: newSession.max_attendees,
-        currentAttendees: 0,
-        status: 'scheduled',
-        videoRoomId: newSession.video_room_id,
-        isMandatory: newSession.is_mandatory,
-        badgeTitle: newSession.badge_title,
-      };
+    if (error || !created) {
+      console.error('Error creating live session in DB:', error);
+      throw new Error(error?.message || 'Failed to create live session');
     }
+
+    return {
+      id: created.id,
+      slug: created.slug,
+      title: created.title,
+      headline: created.headline,
+      description: created.description,
+      trainerName: created.trainer_name,
+      trainerAvatar: created.trainer_avatar,
+      trainerRole: created.trainer_role,
+      category: created.category,
+      scheduledAt: created.scheduled_at,
+      durationMinutes: created.duration_minutes,
+      maxAttendees: created.max_attendees,
+      currentAttendees: 0,
+      status: created.status,
+      videoRoomId: created.video_room_id,
+      isMandatory: created.is_mandatory,
+      badgeTitle: created.badge_title,
+    };
   }
 }
 

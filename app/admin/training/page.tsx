@@ -41,6 +41,7 @@ export default function AdminTrainingDashboard() {
     totalCertificatesIssued: 0,
     totalEnrollments: 0,
     averageCompletionRate: 0,
+    safeguardingComplianceRate: 0,
   });
   const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -120,7 +121,7 @@ export default function AdminTrainingDashboard() {
             variant="default"
             size="default"
             onClick={() => setIsCreateModalOpen(true)}
-            className="font-bold text-xs bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs cursor-pointer"
+            className="font-bold text-xs bg-brand hover:opacity-90 text-white rounded-xl shadow-xs cursor-pointer"
             leftIcon={<Plus className="h-4 w-4" />}
           >
             Schedule Live Masterclass
@@ -176,7 +177,7 @@ export default function AdminTrainingDashboard() {
               <ShieldCheck className="h-4 w-4" />
             </div>
           </div>
-          <div className="text-2xl font-black text-emerald-600 font-heading">96.4%</div>
+          <div className="text-2xl font-black text-emerald-600 font-heading">{stats.safeguardingComplianceRate ?? 0}%</div>
           <span className="text-[11px] text-slate-400 block font-medium">Mandatory clearance rate</span>
         </div>
       </div>
@@ -187,7 +188,7 @@ export default function AdminTrainingDashboard() {
           type="button"
           onClick={() => setActiveTab("live")}
           className={`px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
-            activeTab === "live" ? "bg-slate-950 text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+            activeTab === "live" ? "bg-brand text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
           }`}
         >
           <Radio className="h-4 w-4 text-rose-400 animate-pulse" />
@@ -198,7 +199,7 @@ export default function AdminTrainingDashboard() {
           type="button"
           onClick={() => setActiveTab("courses")}
           className={`px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
-            activeTab === "courses" ? "bg-slate-950 text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+            activeTab === "courses" ? "bg-brand text-white shadow-sm" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
           }`}
         >
           <BookOpen className="h-4 w-4" />
@@ -269,7 +270,7 @@ export default function AdminTrainingDashboard() {
                   </Button>
 
                   <Link href={`/tutor/training/live/${s.id}`} target="_blank">
-                    <Button variant="default" size="sm" className="text-xs font-bold bg-slate-950 hover:bg-slate-800 text-white" rightIcon={<Radio className="h-3.5 w-3.5 text-rose-400 animate-pulse" />}>
+                    <Button variant="default" size="sm" className="text-xs font-bold bg-brand hover:opacity-90 text-white" rightIcon={<Radio className="h-3.5 w-3.5 text-rose-400 animate-pulse" />}>
                       Host Live Room
                     </Button>
                   </Link>
@@ -447,7 +448,7 @@ export default function AdminTrainingDashboard() {
                   variant="default"
                   size="sm"
                   isLoading={isSubmittingSession}
-                  className="bg-slate-950 hover:bg-slate-800 text-white font-bold"
+                  className="bg-brand hover:opacity-90 text-white font-bold"
                 >
                   Publish & Open Cohort
                 </Button>

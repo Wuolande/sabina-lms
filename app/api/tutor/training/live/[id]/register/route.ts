@@ -10,14 +10,16 @@ export async function POST(
     const params = await props.params;
     const sessionId = params.id;
     const tutorCtx = await getTutorContext(request);
-    const body = await request.json().catch(() => ({}));
-    const tutorId = body.tutorId || tutorCtx.tutorProfileId;
-    const tutorName = body.tutorName || tutorCtx.displayName || 'Verified Tutor';
+    const tutorId = tutorCtx.tutorProfileId;
+    const tutorName = tutorCtx.displayName || 'Verified Tutor';
 
     const result = await trainingRepository.registerForLiveSession(sessionId, tutorId, tutorName);
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error registering for live session:', error);
-    return NextResponse.json({ error: 'Failed to register' }, { status: 500 });
+    if (error?.name === 'UnauthorizedError' || error?.status === 401) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return NextResponse.json({ error: error?.message || 'Failed to register' }, { status: 500 });
   }
 }

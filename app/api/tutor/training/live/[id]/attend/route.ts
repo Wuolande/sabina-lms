@@ -1,20 +1,23 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { trainingRepository } from '@/src/modules/training/repositories/trainingRepository';
+import { getTutorContext } from '@/src/shared/auth/authService';
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   props: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await props.params;
     const sessionId = params.id;
-    const body = await request.json().catch(() => ({}));
-    const tutorId = body.tutorId || 'f9e96316-0e63-44ef-a08a-6b2862a3c55f';
+    const tutorCtx = await getTutorContext(request);
 
-    const result = await trainingRepository.confirmLiveAttendance(sessionId, tutorId);
+    const result = await trainingRepository.confirmLiveAttendance(sessionId, tutorCtx.tutorProfileId);
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error confirming attendance:', error);
-    return NextResponse.json({ error: 'Failed to confirm attendance' }, { status: 500 });
+    if (error?.name === 'UnauthorizedError' || error?.status === 401) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return NextResponse.json({ error: error?.message || 'Failed to confirm attendance' }, { status: 500 });
   }
 }

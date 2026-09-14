@@ -24,42 +24,29 @@ export class TrainingService {
   }
 
   async completeModule(moduleId: string, courseId: string): Promise<{ progress: number }> {
-    try {
-      const res = await fetch(`/api/tutor/training/module/${moduleId}/complete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId }),
-      });
-      if (!res.ok) return { progress: 100 };
-      return await res.json();
-    } catch {
-      return { progress: 100 };
+    const res = await fetch(`/api/tutor/training/module/${moduleId}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to complete module');
     }
+    return await res.json();
   }
 
   async submitQuiz(quizId: string, courseId: string, answers: Record<string, number>): Promise<QuizSubmissionResult> {
-    try {
-      const res = await fetch(`/api/tutor/training/quiz/${quizId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ courseId, answers }),
-      });
-      if (!res.ok) {
-        throw new Error('Failed to submit quiz');
-      }
-      return await res.json();
-    } catch (err) {
-      console.error('Quiz submit error:', err);
-      return {
-        scorePercentage: 100,
-        passed: true,
-        totalQuestions: Object.keys(answers).length || 1,
-        correctCount: Object.keys(answers).length || 1,
-        certificateCode: `SAB-CERT-${Math.floor(10000 + Math.random() * 90000)}`,
-        badgeTitle: 'Sabina Certified Educator',
-        explanationList: [],
-      };
+    const res = await fetch(`/api/tutor/training/quiz/${quizId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ courseId, answers }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to submit quiz');
     }
+    return await res.json();
   }
 
   async getCertificates(): Promise<TutorCertificate[]> {
@@ -111,66 +98,41 @@ export class TrainingService {
   }
 
   async registerForLiveSession(sessionId: string): Promise<{ success: boolean; isRegistered: boolean }> {
-    try {
-      const res = await fetch(`/api/tutor/training/live/${sessionId}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) return { success: true, isRegistered: true };
-      return await res.json();
-    } catch {
-      return { success: true, isRegistered: true };
+    const res = await fetch(`/api/tutor/training/live/${sessionId}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to register for live session');
     }
+    return await res.json();
   }
 
   async confirmLiveAttendance(sessionId: string): Promise<{ success: boolean; certificateCode: string }> {
-    try {
-      const res = await fetch(`/api/tutor/training/live/${sessionId}/attend`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) {
-        return { success: true, certificateCode: `SAB-LIVE-${Math.floor(10000 + Math.random() * 90000)}` };
-      }
-      return await res.json();
-    } catch {
-      return { success: true, certificateCode: `SAB-LIVE-${Math.floor(10000 + Math.random() * 90000)}` };
+    const res = await fetch(`/api/tutor/training/live/${sessionId}/attend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to confirm attendance');
     }
+    return await res.json();
   }
 
   async createLiveSession(data: any): Promise<LiveTrainingSession> {
-    try {
-      const res = await fetch('/api/admin/training/live', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        throw new Error('Failed to create live session');
-      }
-      const result = await res.json();
-      return result.session;
-    } catch (err) {
-      console.error('Failed to create live session:', err);
-      return {
-        id: `live-${Date.now()}`,
-        slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-        title: data.title,
-        headline: data.headline || data.title,
-        description: data.description || '',
-        trainerName: data.trainerName || 'Senior Master Trainer',
-        trainerRole: data.trainerRole || 'Educational Technologist',
-        category: data.category || 'Pedagogy',
-        scheduledAt: data.scheduledAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        durationMinutes: Number(data.durationMinutes) || 60,
-        maxAttendees: Number(data.maxAttendees) || 100,
-        currentAttendees: 0,
-        status: 'scheduled',
-        videoRoomId: `room-${Date.now()}`,
-        isMandatory: !!data.isMandatory,
-        badgeTitle: data.badgeTitle || `${data.title} Attendance`,
-      };
+    const res = await fetch('/api/admin/training/live', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to create live session');
     }
+    const result = await res.json();
+    return result.session;
   }
 }
 

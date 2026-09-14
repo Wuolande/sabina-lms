@@ -90,7 +90,7 @@ export default function TutorTrainingDashboard() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* ── 1. Hero Header & Certification Ribbon ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#14209C] p-6 sm:p-8 text-white shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand p-6 sm:p-8 text-white shadow-xl">
         <div className="absolute right-0 top-0 h-96 w-96 translate-x-1/3 -translate-y-1/3 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
         <div className="absolute right-40 bottom-0 h-64 w-64 translate-y-1/3 rounded-full bg-blue-500/10 blur-2xl pointer-events-none" />
 

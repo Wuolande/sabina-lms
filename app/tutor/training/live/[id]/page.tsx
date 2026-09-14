@@ -138,7 +138,7 @@ export default function MultiTutorLiveClassroomPage() {
           setSession(data);
           if (data?.hasAttended) {
             setHasConfirmedAttendance(true);
-            setCertificateCode(data.certificateCode || "SAB-LIVE-94812");
+            setCertificateCode(data.certificateCode || null);
           }
         })
         .finally(() => setLoading(false));
