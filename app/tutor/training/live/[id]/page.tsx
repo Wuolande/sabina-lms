@@ -51,7 +51,7 @@ export default function MultiTutorLiveClassroomPage() {
   const [isVideoOn, setIsVideoOn] = React.useState(false);
   const [activeSlideIndex, setActiveSlideIndex] = React.useState(0);
 
-  // Group chat state
+  // Group chat state - starts clean with official room instructions
   const [chatMessages, setChatMessages] = React.useState<LiveChatMessage[]>([
     {
       id: "m1",
@@ -60,47 +60,15 @@ export default function MultiTutorLiveClassroomPage() {
       text: "Welcome to the Live Sabina Masterclass Cohort! All audio is muted by default. Please use Chat & Q&A to participate.",
       timestamp: "Just now",
       isPinned: true
-    },
-    {
-      id: "m2",
-      senderName: "Dr. Marcus Vance",
-      senderRole: "trainer",
-      text: "Hello everyone! We will kick off today's LaTeX Whiteboard & Safeguarding simulation in 2 minutes. Feel free to download the session handout below.",
-      timestamp: "1m ago"
-    },
-    {
-      id: "m3",
-      senderName: "David Chen",
-      senderRole: "tutor",
-      text: "Excited for this workshop! Ready with notes.",
-      timestamp: "Just now"
     }
   ]);
   const [chatInput, setChatInput] = React.useState("");
 
-  // Q&A queue state
-  const [qnaItems, setQnaItems] = React.useState<LiveQnAItem[]>([
-    {
-      id: "q1",
-      authorName: "Fatima Al-Mansoor",
-      question: "How do we handle LaTeX math syntax errors in live student chat when a student types raw ASCII?",
-      upvotes: 8,
-      isAnswered: true,
-      answerText: "Use the live formatting preview toggle or type \\frac{a}{b} with the quick math symbol palette.",
-      createdAt: "5m ago"
-    },
-    {
-      id: "q2",
-      authorName: "David Chen",
-      question: "What is the policy for recording 1-on-1 trial lessons for internal safeguarding audit review?",
-      upvotes: 14,
-      isAnswered: false,
-      createdAt: "2m ago"
-    }
-  ]);
+  // Q&A queue state - live questions submitted by attending tutors
+  const [qnaItems, setQnaItems] = React.useState<LiveQnAItem[]>([]);
   const [qnaInput, setQnaInput] = React.useState("");
 
-  // In-class Live Poll state
+  // In-class Live Poll state - 0 initial votes, tally dynamically
   const [activePoll, setActivePoll] = React.useState<LivePoll>({
     id: "p1",
     sessionId: id,
@@ -113,8 +81,8 @@ export default function MultiTutorLiveClassroomPage() {
     ],
     correctOptionIndex: 1,
     isActive: true,
-    totalVotes: 42,
-    results: [2, 38, 2, 0]
+    totalVotes: 0,
+    results: [0, 0, 0, 0]
   });
   const [selectedPollOption, setSelectedPollOption] = React.useState<number | null>(null);
   const [hasVotedPoll, setHasVotedPoll] = React.useState(false);
@@ -186,6 +154,16 @@ export default function MultiTutorLiveClassroomPage() {
     if (hasVotedPoll) return;
     setSelectedPollOption(optionIndex);
     setHasVotedPoll(true);
+    setActivePoll((prev) => {
+      const currentResults = prev.results || [0, 0, 0, 0];
+      const nextResults = [...currentResults];
+      nextResults[optionIndex] = (nextResults[optionIndex] || 0) + 1;
+      return {
+        ...prev,
+        totalVotes: (prev.totalVotes || 0) + 1,
+        results: nextResults,
+      };
+    });
   };
 
   const handleConfirmAttendance = async () => {
@@ -469,7 +447,7 @@ export default function MultiTutorLiveClassroomPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between text-[11px] font-bold">
-                      <span className={m.senderRole === "trainer" ? "text-[#14209C]" : "text-slate-900"}>
+                      <span className={m.senderRole === "trainer" ? "text-brand" : "text-slate-900"}>
                         {m.senderName} {m.senderRole === "trainer" && "(Trainer)"}
                       </span>
                       <span className="text-[10px] text-slate-400 font-normal">{m.timestamp}</span>
@@ -485,9 +463,9 @@ export default function MultiTutorLiveClassroomPage() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Type a message to the cohort..."
-                  className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                  className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand"
                 />
-                <Button type="submit" variant="default" size="sm" className="bg-slate-950 hover:bg-slate-800 text-white rounded-xl">
+                <Button type="submit" variant="default" size="sm" className="bg-brand hover:opacity-90 text-white rounded-xl">
                   <Send className="h-3.5 w-3.5" />
                 </Button>
               </form>
@@ -498,37 +476,45 @@ export default function MultiTutorLiveClassroomPage() {
           {activeTab === "qna" && (
             <div className="flex-1 flex flex-col justify-between p-4 overflow-hidden">
               <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                {qnaItems.map((item) => (
-                  <div key={item.id} className="p-3.5 rounded-2xl border border-slate-200 bg-white space-y-2 shadow-xs">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-xs font-bold text-slate-900 leading-snug">
-                        {item.question}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleUpvote(item.id)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-[#14209C] text-xs font-bold shrink-0 transition-colors cursor-pointer"
-                      >
-                        <ThumbsUp className="h-3 w-3" />
-                        <span>{item.upvotes}</span>
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10px] text-slate-400">
-                      <span>Asked by {item.authorName}</span>
-                      <span>{item.createdAt}</span>
-                    </div>
-
-                    {item.isAnswered && item.answerText && (
-                      <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-[11px] space-y-0.5">
-                        <span className="font-bold flex items-center gap-1 text-emerald-800">
-                          <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Trainer Answer:
-                        </span>
-                        <p>{item.answerText}</p>
-                      </div>
-                    )}
+                {qnaItems.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center p-6 text-slate-400 space-y-2">
+                    <HelpCircle className="h-8 w-8 text-slate-300" />
+                    <p className="text-xs font-semibold text-slate-600">No questions in the queue yet</p>
+                    <p className="text-[11px] text-slate-400">Ask the master trainer a question below to have it answered live.</p>
                   </div>
-                ))}
+                ) : (
+                  qnaItems.map((item) => (
+                    <div key={item.id} className="p-3.5 rounded-2xl border border-slate-200 bg-white space-y-2 shadow-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs font-bold text-slate-900 leading-snug">
+                          {item.question}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleUpvote(item.id)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-brand text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                        >
+                          <ThumbsUp className="h-3 w-3" />
+                          <span>{item.upvotes}</span>
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400">
+                        <span>Asked by {item.authorName}</span>
+                        <span>{item.createdAt}</span>
+                      </div>
+
+                      {item.isAnswered && item.answerText && (
+                        <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-[11px] space-y-0.5">
+                          <span className="font-bold flex items-center gap-1 text-emerald-800">
+                            <CheckCircle2 className="h-3 w-3 text-emerald-600" /> Trainer Answer:
+                          </span>
+                          <p>{item.answerText}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
 
               <form onSubmit={handleAddQuestion} className="pt-3 border-t border-slate-100 flex items-center gap-2">
@@ -537,9 +523,9 @@ export default function MultiTutorLiveClassroomPage() {
                   value={qnaInput}
                   onChange={(e) => setQnaInput(e.target.value)}
                   placeholder="Ask a question to the master trainer..."
-                  className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+                  className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand"
                 />
-                <Button type="submit" variant="default" size="sm" className="bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-xs font-bold">
+                <Button type="submit" variant="default" size="sm" className="bg-brand hover:opacity-90 text-white rounded-xl text-xs font-bold">
                   Ask
                 </Button>
               </form>
@@ -554,7 +540,7 @@ export default function MultiTutorLiveClassroomPage() {
                   <Radio className="h-3.5 w-3.5" /> Active Live Poll
                 </span>
                 <span className="text-[11px] text-slate-400 font-bold">
-                  {activePoll.totalVotes} votes cast
+                  {activePoll.totalVotes ?? 0} votes cast
                 </span>
               </div>
 
@@ -564,26 +550,33 @@ export default function MultiTutorLiveClassroomPage() {
                 </h4>
 
                 <div className="space-y-2">
-                  {activePoll.options.map((opt, optIndex) => {
-                    const isSelected = selectedPollOption === optIndex;
-                    const voteCount = activePoll.results ? activePoll.results[optIndex] : 0;
-                    const percent = Math.round((voteCount / (activePoll.totalVotes || 1)) * 100);
+                  {activePoll.options.map((opt, idx) => {
+                    const count = (activePoll.results && activePoll.results[idx]) || 0;
+                    const total = activePoll.totalVotes || 0;
+                    const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+                    const isSelected = selectedPollOption === idx;
 
                     return (
                       <button
-                        key={optIndex}
+                        key={idx}
                         type="button"
+                        onClick={() => handleVotePoll(idx)}
                         disabled={hasVotedPoll}
-                        onClick={() => handleVotePoll(optIndex)}
-                        className={`w-full p-3 rounded-xl border text-left text-xs transition-all cursor-pointer relative overflow-hidden ${
-                          isSelected
-                            ? "border-emerald-500 bg-emerald-50 font-bold text-emerald-950"
-                            : "border-slate-200 hover:border-slate-300 bg-white text-slate-700"
+                        className={`w-full text-left p-3 rounded-xl border text-xs font-medium relative overflow-hidden transition-all ${
+                          hasVotedPoll
+                            ? idx === activePoll.correctOptionIndex
+                              ? "border-emerald-500/50 bg-emerald-50/40 text-emerald-950 font-bold"
+                              : isSelected
+                              ? "border-rose-400 bg-rose-50/30 text-rose-950"
+                              : "border-slate-200 bg-white text-slate-700"
+                            : "border-slate-200 bg-white hover:border-indigo-300 hover:bg-indigo-50/20 text-slate-800 cursor-pointer"
                         }`}
                       >
                         {hasVotedPoll && (
                           <div
-                            className="absolute top-0 bottom-0 left-0 bg-emerald-100/60 transition-all duration-500"
+                            className={`absolute left-0 top-0 bottom-0 transition-all duration-700 ${
+                              idx === activePoll.correctOptionIndex ? "bg-emerald-200/50" : "bg-slate-200/40"
+                            }`}
                             style={{ width: `${percent}%` }}
                           />
                         )}
@@ -614,7 +607,7 @@ export default function MultiTutorLiveClassroomPage() {
           {activeTab === "attendees" && (
             <div className="p-4 overflow-y-auto space-y-3">
               <span className="text-xs font-bold text-slate-500 block">
-                {session.currentAttendees + 1} Tutors Attending this Masterclass
+                {session.currentAttendees === 1 ? "1 Registered Tutor" : `${session.currentAttendees} Registered Tutors`}
               </span>
 
               <div className="space-y-2">
@@ -623,24 +616,30 @@ export default function MultiTutorLiveClassroomPage() {
                     <Avatar src={session.trainerAvatar} fallbackName={session.trainerName} size="sm" />
                     <div>
                       <strong className="text-xs font-bold text-slate-900 block leading-tight">{session.trainerName}</strong>
-                      <span className="text-[10px] text-[#14209C] font-semibold">Lead Host</span>
+                      <span className="text-[10px] text-brand font-semibold">Lead Host</span>
                     </div>
                   </div>
                   <Badge variant="success" size="sm">Host</Badge>
                 </div>
 
-                {(session.registeredAttendees || []).map((att) => (
-                  <div key={att.id} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50">
-                    <div className="flex items-center gap-2.5">
-                      <Avatar src={att.tutorAvatar} fallbackName={att.tutorName} size="sm" />
-                      <div>
-                        <strong className="text-xs font-bold text-slate-900 block leading-tight">{att.tutorName}</strong>
-                        <span className="text-[10px] text-slate-400">Tutor • Verified</span>
-                      </div>
-                    </div>
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" title="Online" />
+                {(session.registeredAttendees || []).length === 0 ? (
+                  <div className="p-4 rounded-xl border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                    No attending tutors registered yet. Your name will appear here upon RSVP.
                   </div>
-                ))}
+                ) : (
+                  (session.registeredAttendees || []).map((att) => (
+                    <div key={att.id} className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 hover:bg-slate-50">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar src={att.tutorAvatar} fallbackName={att.tutorName} size="sm" />
+                        <div>
+                          <strong className="text-xs font-bold text-slate-900 block leading-tight">{att.tutorName}</strong>
+                          <span className="text-[10px] text-slate-400">Tutor • Verified</span>
+                        </div>
+                      </div>
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" title="Online" />
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}

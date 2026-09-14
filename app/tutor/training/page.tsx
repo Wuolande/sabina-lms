@@ -39,12 +39,13 @@ export default function TutorTrainingDashboard() {
   const [activeMainTab, setActiveMainTab] = React.useState<"live" | "self_paced" | "certificates">("live");
   const [selectedFilter, setSelectedFilter] = React.useState<string>("all");
   const [registeringId, setRegisteringId] = React.useState<string | null>(null);
+  const [rsvpError, setRsvpError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     Promise.all([
       trainingService.getCourses(),
       trainingService.getLiveSessions(),
-      trainingService.getCertificates()
+      trainingService.getCertificates(),
     ])
       .then(([cList, lList, certList]) => {
         setCourses(cList);
@@ -59,6 +60,7 @@ export default function TutorTrainingDashboard() {
 
   const handleToggleRsvp = async (sessionId: string) => {
     setRegisteringId(sessionId);
+    setRsvpError(null);
     try {
       const res = await trainingService.registerForLiveSession(sessionId);
       setLiveSessions((prev) =>
@@ -74,6 +76,9 @@ export default function TutorTrainingDashboard() {
             : s
         )
       );
+    } catch (err: any) {
+      console.error("RSVP error:", err);
+      setRsvpError(err?.message || "Failed to update RSVP. Please refresh and try again.");
     } finally {
       setRegisteringId(null);
     }
@@ -196,6 +201,19 @@ export default function TutorTrainingDashboard() {
               <Radio className="h-3 w-3 mr-1 animate-pulse" /> Multi-Tutor Capacity: Up to 100 Tutors / Room
             </Badge>
           </div>
+
+          {rsvpError && (
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between shadow-xs">
+              <span className="font-semibold">{rsvpError}</span>
+              <button
+                type="button"
+                onClick={() => setRsvpError(null)}
+                className="text-rose-500 hover:text-rose-700 font-bold ml-3 text-sm cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           {/* Live Sessions Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

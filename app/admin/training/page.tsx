@@ -51,8 +51,8 @@ export default function AdminTrainingDashboard() {
   const [isSubmittingSession, setIsSubmittingSession] = React.useState(false);
   const [newTitle, setNewTitle] = React.useState("");
   const [newHeadline, setNewHeadline] = React.useState("");
-  const [newTrainerName, setNewTrainerName] = React.useState("Dr. Marcus Vance");
-  const [newTrainerRole, setNewTrainerRole] = React.useState("Lead Educational Technologist");
+  const [newTrainerName, setNewTrainerName] = React.useState("");
+  const [newTrainerRole, setNewTrainerRole] = React.useState("");
   const [newCategory, setNewCategory] = React.useState<any>("Classroom Tools");
   const [newDate, setNewDate] = React.useState("");
   const [newDuration, setNewDuration] = React.useState("60");
@@ -98,6 +98,8 @@ export default function AdminTrainingDashboard() {
       // Reset
       setNewTitle("");
       setNewHeadline("");
+      setNewTrainerName("");
+      setNewTrainerRole("");
     } finally {
       setIsSubmittingSession(false);
     }
@@ -379,6 +381,7 @@ export default function AdminTrainingDashboard() {
                   <Input
                     value={newTrainerName}
                     onChange={(e) => setNewTrainerName(e.target.value)}
+                    placeholder="e.g. Lead Master Trainer"
                     required
                   />
                 </div>

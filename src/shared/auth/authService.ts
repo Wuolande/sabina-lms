@@ -252,13 +252,51 @@ export async function getTutorContext(request: NextRequest): Promise<{ tutorProf
 
     const { data: profile } = await adminSupabase
       .from('users')
-      .select('id, display_name, tutor:tutor_profiles!tutor_profiles_user_id_fkey(id)')
+      .select('id, display_name, roles:user_roles!user_roles_user_id_fkey(role_id), tutor:tutor_profiles!tutor_profiles_user_id_fkey(id)')
       .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
       .single();
 
-    const tutorData = profile ? (Array.isArray((profile as any).tutor) ? (profile as any).tutor[0] : (profile as any).tutor) : null;
+    if (!profile) {
+      throw new UnauthorizedError();
+    }
 
-    if (!profile || !tutorData?.id) {
+    let tutorData = (profile as any).tutor
+      ? (Array.isArray((profile as any).tutor) ? (profile as any).tutor[0] : (profile as any).tutor)
+      : null;
+
+    if (!tutorData?.id) {
+      const roles = ((profile as any).roles || []).map((r: any) => r.role_id);
+      if (roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')) {
+        const { data: existingTutor } = await adminSupabase
+          .from('tutor_profiles')
+          .select('id')
+          .eq('user_id', profile.id)
+          .maybeSingle();
+
+        if (existingTutor) {
+          tutorData = existingTutor;
+        } else {
+          const { data: createdTutor } = await adminSupabase
+            .from('tutor_profiles')
+            .insert({
+              user_id: profile.id,
+              slug: `admin-tutor-${profile.id.slice(0, 8)}`,
+              headline: 'System Administrator & Master Educator',
+              bio: 'Administrator account for platform management and training inspection.',
+              verification_status: 'APPROVED',
+              account_status: 'ACTIVE',
+            })
+            .select('id')
+            .single();
+
+          if (createdTutor) {
+            tutorData = createdTutor;
+          }
+        }
+      }
+    }
+
+    if (!tutorData?.id) {
       throw new UnauthorizedError();
     }
 

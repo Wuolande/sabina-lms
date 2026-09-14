@@ -431,7 +431,7 @@ export class TrainingRepository {
           scheduledAt: s.scheduled_at,
           durationMinutes: s.duration_minutes,
           maxAttendees: s.max_attendees,
-          currentAttendees: regs.length > 0 ? regs.length : s.current_attendees,
+          currentAttendees: regs.length,
           status: s.status,
           videoRoomId: s.video_room_id,
           streamUrl: s.stream_url,
@@ -497,7 +497,7 @@ export class TrainingRepository {
         scheduledAt: session.scheduled_at,
         durationMinutes: session.duration_minutes,
         maxAttendees: session.max_attendees,
-        currentAttendees: regs.length > 0 ? regs.length : session.current_attendees,
+        currentAttendees: regs.length,
         status: session.status,
         videoRoomId: session.video_room_id,
         streamUrl: session.stream_url,
@@ -547,6 +547,18 @@ export class TrainingRepository {
         console.error('Error unregistering from live session:', delErr);
         throw new Error(delErr.message);
       }
+
+      // Keep current_attendees count column in sync
+      const { count } = await adminSupabase
+        .from('training_live_registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('session_id', sessionId);
+
+      await adminSupabase
+        .from('training_live_sessions')
+        .update({ current_attendees: count || 0 })
+        .eq('id', sessionId);
+
       return { success: true, isRegistered: false };
     } else {
       let resolvedName = tutorName;
@@ -577,6 +589,18 @@ export class TrainingRepository {
         console.error('Error registering for live session:', insErr);
         throw new Error(insErr.message);
       }
+
+      // Keep current_attendees count column in sync
+      const { count } = await adminSupabase
+        .from('training_live_registrations')
+        .select('*', { count: 'exact', head: true })
+        .eq('session_id', sessionId);
+
+      await adminSupabase
+        .from('training_live_sessions')
+        .update({ current_attendees: count || 0 })
+        .eq('id', sessionId);
+
       return { success: true, isRegistered: true };
     }
   }
