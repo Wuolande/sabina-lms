@@ -10,7 +10,8 @@
 import { NextResponse } from 'next/server';
 import { adminSupabase } from '@/src/shared/database/supabase';
 
-export const revalidate = 60; // ISR — revalidate every 60s
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const DEFAULTS = {
   primaryColor: '#14209C',

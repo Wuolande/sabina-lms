@@ -39,8 +39,8 @@ const portalItems = [
     sub: "Manage lessons, streak & messages",
     icon: GraduationCap,
     badge: "Student",
-    color: "text-brand-700",
-    bg: "bg-brand-50 group-hover:bg-brand-100",
+    color: "text-brand",
+    bg: "bg-brand/10 group-hover:bg-brand/20",
   },
   {
     href: "/tutor",
@@ -125,7 +125,7 @@ export function Navbar() {
               >
                 {link.label}
                 {active && (
-                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full bg-brand-700" />
+                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full bg-brand" />
                 )}
               </Link>
             );
@@ -144,7 +144,7 @@ export function Navbar() {
               className={cn(
                 "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150",
                 portalsOpen || pathname.startsWith("/student") || pathname.startsWith("/tutor") || pathname.startsWith("/admin")
-                  ? "text-brand-700 bg-brand-50/80 font-bold"
+                  ? "text-brand bg-brand/10 font-bold"
                   : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
               )}
               aria-expanded={portalsOpen}
@@ -153,7 +153,7 @@ export function Navbar() {
               <ChevronDown
                 className={cn(
                   "h-3.5 w-3.5 transition-transform duration-200",
-                  portalsOpen ? "rotate-180 text-brand-700" : "text-slate-400"
+                  portalsOpen ? "rotate-180 text-brand" : "text-slate-400"
                 )}
               />
             </button>
@@ -282,7 +282,7 @@ export function Navbar() {
                   className={cn(
                     "flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors",
                     active
-                      ? "bg-brand-50 text-brand-700 font-bold"
+                      ? "bg-brand/10 text-brand font-bold"
                       : "text-slate-800 hover:bg-slate-50"
                   )}
                 >
@@ -309,7 +309,7 @@ export function Navbar() {
                     onClick={() => setMobileOpen(false)}
                     className={cn(
                       "flex items-center gap-3 rounded-xl p-3 border transition-colors",
-                      active ? "border-brand-700 bg-brand-50/50" : "border-slate-100 bg-slate-50/60 hover:bg-slate-100"
+                      active ? "border-brand bg-brand/10" : "border-slate-100 bg-slate-50/60 hover:bg-slate-100"
                     )}
                   >
                     <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", p.bg.split(" ")[0])}>

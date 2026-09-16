@@ -24,21 +24,29 @@ export const metadata: Metadata = {
 
 import { ModalProvider } from "@/components/ui/modal-context";
 import { LogoProvider } from "@/components/ui/LogoContext";
+import { ThemeSynchronizer } from "@/components/ui/ThemeSynchronizer";
+import { adminSupabase } from "@/src/shared/database/supabase";
 
 const THEME_DEFAULTS = { primaryColor: '#14209C', secondaryColor: '#F9C31C', logoUrl: '' };
 
+function isValidHex(val: unknown): val is string {
+  return typeof val === 'string' && /^#[0-9A-Fa-f]{6}$/.test(val);
+}
+
 async function getPlatformTheme(): Promise<{ primaryColor: string; secondaryColor: string; logoUrl: string }> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/theme`, {
-      next: { revalidate: 60, tags: ['platform-theme'] },
-    });
-    if (!res.ok) return THEME_DEFAULTS;
-    const data = await res.json();
+    const { data, error } = await adminSupabase
+      .from('platform_theme')
+      .select('primary_color, secondary_color, logo_url')
+      .eq('id', 'default')
+      .maybeSingle();
+
+    if (error || !data) return THEME_DEFAULTS;
+
     return {
-      primaryColor:   /^#[0-9A-Fa-f]{6}$/.test(data.primaryColor)   ? data.primaryColor   : THEME_DEFAULTS.primaryColor,
-      secondaryColor: /^#[0-9A-Fa-f]{6}$/.test(data.secondaryColor) ? data.secondaryColor : THEME_DEFAULTS.secondaryColor,
-      logoUrl:        typeof data.logoUrl === 'string' ? data.logoUrl.trim() : '',
+      primaryColor:   isValidHex(data.primary_color)   ? data.primary_color   : THEME_DEFAULTS.primaryColor,
+      secondaryColor: isValidHex(data.secondary_color) ? data.secondary_color : THEME_DEFAULTS.secondaryColor,
+      logoUrl:        typeof data.logo_url === 'string' ? data.logo_url.trim() : '',
     };
   } catch {
     return THEME_DEFAULTS;
@@ -64,6 +72,7 @@ export default async function RootLayout({
         )}
       </head>
       <body suppressHydrationWarning className="flex min-h-full flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-100 selection:text-brand-900">
+        <ThemeSynchronizer initialPrimary={theme.primaryColor} initialSecondary={theme.secondaryColor} />
         <LogoProvider initialLogoUrl={theme.logoUrl}>
           <ModalProvider>
             {children}

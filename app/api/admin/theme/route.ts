@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { adminSupabase } from '@/src/shared/database/supabase';
 
 const DEFAULTS = {
@@ -64,8 +64,13 @@ export async function PUT(req: NextRequest) {
 
     if (error) throw new Error(error.message);
 
-    // Bust ISR cache for ALL layout segments so new colors and logo propagate immediately
+    // Bust ISR cache for ALL layout segments and public pages so new colors and logo propagate immediately
+    try {
+      revalidateTag('platform-theme');
+    } catch {}
     revalidatePath('/', 'layout');
+    revalidatePath('/', 'page');
+    revalidatePath('/(public)', 'layout');
     revalidatePath('/admin', 'layout');
     revalidatePath('/student', 'layout');
     revalidatePath('/tutor', 'layout');
