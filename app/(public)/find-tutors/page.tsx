@@ -19,6 +19,7 @@ import { TutorDiscoveryModal } from "@/components/discovery/TutorDiscoveryModal"
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { tutorService } from "@/services/tutorService";
 import { TutorProfile, Subject, Language, TutorSearchParams } from "@/types";
+import { cn } from "@/lib/utils";
 
 const subjectGroups = [
   { value: "all", label: "All Subject Groups" },
@@ -89,6 +90,7 @@ function FindTutorsContent() {
   const [bookingTutor, setBookingTutor] = React.useState<TutorProfile | null>(null);
   const [isBookingOpen, setIsBookingOpen] = React.useState(false);
   const [isDiscoveryOpen, setIsDiscoveryOpen] = React.useState(false);
+  const [mobileFiltersExpanded, setMobileFiltersExpanded] = React.useState(false);
 
   const [countriesList, setCountriesList] = React.useState<any[]>([]);
 
@@ -223,57 +225,82 @@ function FindTutorsContent() {
       </div>
 
       {/* ── 3. Reference Filter Suite (Attached Session Tabs + Cream Filter Container) ── */}
-      <div className="space-y-4">
-        {/* Session Type Pill Tab Strip */}
-        <div className="flex items-center">
-          <div className="inline-flex items-center gap-1.5 bg-[#F6F0E5] p-1 rounded-t-2xl sm:rounded-t-3xl border-t border-x border-[#EDE3D3]">
-            <button
-              type="button"
-              onClick={() => {
-                setSessionType("all");
-                setPage(1);
-              }}
-              className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
-                sessionType === "all"
-                  ? "bg-white text-slate-950 shadow-xs"
-                  : "text-slate-700 hover:text-slate-950"
-              }`}
-            >
-              All Sessions
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSessionType("private");
-                setPage(1);
-              }}
-              className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
-                sessionType === "private"
-                  ? "bg-white text-slate-950 shadow-xs"
-                  : "text-slate-700 hover:text-slate-950"
-              }`}
-            >
-              Private Sessions
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSessionType("group");
-                setPage(1);
-              }}
-              className={`px-4 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
-                sessionType === "group"
-                  ? "bg-white text-slate-950 shadow-xs"
-                  : "text-slate-700 hover:text-slate-950"
-              }`}
-            >
-              Group Sessions
-            </button>
-          </div>
-        </div>
+      {(() => {
+        const activeFiltersCount =
+          (selectedSubjectGroup !== "all" ? 1 : 0) +
+          (selectedSubject !== "all" ? 1 : 0) +
+          (selectedPriceRange !== "all" ? 1 : 0) +
+          (selectedCountry !== "all" ? 1 : 0) +
+          (selectedLanguage !== "all" ? 1 : 0) +
+          (keyword.trim() ? 1 : 0);
 
-        {/* Primary Filter Box (Soft Cream/Sand Background with 4 Column Selectors) */}
-        <div className="rounded-2xl sm:rounded-3xl sm:rounded-tl-none bg-[#FBF7F0] p-4 sm:p-6 border border-[#EFE8DC] shadow-xs">
+        return (
+          <div className="space-y-3 sm:space-y-4">
+            {/* Session Type Pill Tab Strip & Mobile Filter Toggle */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 bg-[#F6F0E5] p-1 rounded-t-2xl sm:rounded-t-3xl border-t border-x border-[#EDE3D3]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSessionType("all");
+                    setPage(1);
+                  }}
+                  className={`px-3.5 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
+                    sessionType === "all"
+                      ? "bg-white text-slate-950 shadow-xs"
+                      : "text-slate-700 hover:text-slate-950"
+                  }`}
+                >
+                  All Sessions
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSessionType("private");
+                    setPage(1);
+                  }}
+                  className={`px-3.5 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
+                    sessionType === "private"
+                      ? "bg-white text-slate-950 shadow-xs"
+                      : "text-slate-700 hover:text-slate-950"
+                  }`}
+                >
+                  Private
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSessionType("group");
+                    setPage(1);
+                  }}
+                  className={`px-3.5 sm:px-6 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-150 ${
+                    sessionType === "group"
+                      ? "bg-white text-slate-950 shadow-xs"
+                      : "text-slate-700 hover:text-slate-950"
+                  }`}
+                >
+                  Group
+                </button>
+              </div>
+
+              {/* Mobile Filter Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setMobileFiltersExpanded(!mobileFiltersExpanded)}
+                className="sm:hidden inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-xs active:bg-slate-50 min-h-[38px] cursor-pointer"
+              >
+                <span>{mobileFiltersExpanded ? "Hide Filters" : "Filter Tutors"}</span>
+                {activeFiltersCount > 0 && (
+                  <span className="h-4 min-w-4 px-1 rounded-full bg-brand text-[10px] font-black text-white flex items-center justify-center">
+                    {activeFiltersCount}
+                  </span>
+                )}
+                <ChevronDown className={cn("h-3.5 w-3.5 text-slate-500 transition-transform duration-200", mobileFiltersExpanded && "rotate-180")} />
+              </button>
+            </div>
+
+            {/* Primary Filter Box (Soft Cream/Sand Background with 4 Column Selectors) */}
+            <div className={cn("rounded-2xl sm:rounded-3xl sm:rounded-tl-none bg-[#FBF7F0] p-4 sm:p-6 border border-[#EFE8DC] shadow-xs transition-all", !mobileFiltersExpanded && "hidden sm:block")}>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Column 1: Subject group */}
             <div>
@@ -537,6 +564,8 @@ function FindTutorsContent() {
           </div>
         )}
       </div>
+    );
+  })()}
 
       {/* ── 5. Results Counter & Grid ── */}
       <div className="space-y-6 pt-2">

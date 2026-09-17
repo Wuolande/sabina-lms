@@ -88,6 +88,30 @@ export function Navbar() {
     setPortalsOpen(false);
   }, [pathname]);
 
+  // Lock body scroll when mobile menu is open
+  React.useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  // Close on Escape key press
+  React.useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        setPortalsOpen(false);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   // Click outside to close portals dropdown
   React.useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -266,106 +290,116 @@ export function Navbar() {
 
       {/* ─── 5. Comprehensive Mobile Drawer (Contains ALL Site Navs) ─── */}
       {mobileOpen && (
-        <div className="lg:hidden border-t border-slate-100 bg-white px-4 pb-8 pt-4 shadow-elevation max-h-[85vh] overflow-y-auto animate-slide-down">
-          {/* Main Marketplace Links */}
-          <div className="space-y-1">
-            <p className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-              Marketplace
-            </p>
-            {mainNavLinks.map((link) => {
-              const active = pathname === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    "flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-colors",
-                    active
-                      ? "bg-brand/10 text-brand font-bold"
-                      : "text-slate-800 hover:bg-slate-50"
-                  )}
-                >
-                  <span>{link.label}</span>
-                  <ArrowRight className="h-3.5 w-3.5 text-slate-300" />
-                </Link>
-              );
-            })}
-          </div>
+        <>
+          {/* Backdrop overlay */}
+          <div
+            className="fixed inset-0 top-[70px] bg-slate-950/60 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
 
-          {/* Portals & Workspaces Section */}
-          <div className="mt-5 pt-4 border-t border-slate-100">
-            <p className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">
-              Workspaces & Live LMS
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {portalItems.map((p) => {
-                const Icon = p.icon;
-                const active = pathname === p.href;
+          {/* Drawer container */}
+          <div className="lg:hidden fixed top-[70px] inset-x-0 bottom-0 z-50 bg-white px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-4 shadow-2xl overflow-y-auto overscroll-contain animate-slide-down border-t border-slate-100 touch-scroll">
+            {/* Main Marketplace Links */}
+            <div className="space-y-1">
+              <p className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
+                Marketplace
+              </p>
+              {mainNavLinks.map((link) => {
+                const active = pathname === link.href;
                 return (
                   <Link
-                    key={p.href}
-                    href={p.href}
+                    key={link.href}
+                    href={link.href}
                     onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl p-3 border transition-colors",
-                      active ? "border-brand bg-brand/10" : "border-slate-100 bg-slate-50/60 hover:bg-slate-100"
+                      "flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-semibold transition-colors min-h-[44px]",
+                      active
+                        ? "bg-brand/10 text-brand font-bold"
+                        : "text-slate-800 hover:bg-slate-50 active:bg-slate-100"
                     )}
                   >
-                    <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", p.bg.split(" ")[0])}>
-                      <Icon className={cn("h-4 w-4", p.color)} />
-                    </div>
-                    <div>
-                      <span className={cn("text-xs font-bold block", p.color)}>
-                        {p.label}
-                      </span>
-                      <span className="text-[10px] text-slate-500">
-                        {p.badge} access
-                      </span>
-                    </div>
+                    <span>{link.label}</span>
+                    <ArrowRight className="h-4 w-4 text-slate-300" />
                   </Link>
                 );
               })}
             </div>
-          </div>
 
-          {/* Company & Support */}
-          <div className="mt-5 pt-4 border-t border-slate-100">
-            <p className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">
-              Company
-            </p>
-            <div className="grid grid-cols-2 gap-1">
-              {secondaryLinks.map((s) => (
-                <Link
-                  key={s.href}
-                  href={s.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-lg"
-                >
-                  {s.label}
-                </Link>
-              ))}
+            {/* Portals & Workspaces Section */}
+            <div className="mt-5 pt-4 border-t border-slate-100">
+              <p className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">
+                Workspaces & Live LMS
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {portalItems.map((p) => {
+                  const Icon = p.icon;
+                  const active = pathname === p.href;
+                  return (
+                    <Link
+                      key={p.href}
+                      href={p.href}
+                      onClick={() => setMobileOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-xl p-3 border transition-colors min-h-[48px]",
+                        active ? "border-brand bg-brand/10" : "border-slate-100 bg-slate-50/60 hover:bg-slate-100 active:bg-slate-200"
+                      )}
+                    >
+                      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg shrink-0", p.bg.split(" ")[0])}>
+                        <Icon className={cn("h-4 w-4", p.color)} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className={cn("text-xs font-bold block truncate", p.color)}>
+                          {p.label}
+                        </span>
+                        <span className="text-[10px] text-slate-500">
+                          {p.badge} access
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Company & Support */}
+            <div className="mt-5 pt-4 border-t border-slate-100">
+              <p className="px-3 text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-1">
+                Company
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {secondaryLinks.map((s) => (
+                  <Link
+                    key={s.href}
+                    href={s.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="px-3.5 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 active:bg-slate-100 rounded-lg min-h-[40px] flex items-center"
+                  >
+                    {s.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Auth Action Buttons */}
+            <div className="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
+              <Link
+                href="/register"
+                onClick={() => setMobileOpen(false)}
+                className="h-12 min-h-[48px] flex items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-800 shadow-xs active:bg-slate-50"
+              >
+                Sign up
+              </Link>
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="h-12 min-h-[48px] flex items-center justify-center rounded-xl bg-brand text-sm font-bold text-white shadow-subtle hover:brightness-90 active:scale-[0.98] transition-all"
+              >
+                Log in
+              </Link>
             </div>
           </div>
-
-          {/* Auth Action Buttons */}
-          <div className="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
-            <Link
-              href="/register"
-              onClick={() => setMobileOpen(false)}
-              className="h-11 flex items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-800 shadow-xs"
-            >
-              Sign up
-            </Link>
-            <Link
-              href="/login"
-              onClick={() => setMobileOpen(false)}
-              className="h-11 flex items-center justify-center rounded-xl bg-brand text-sm font-bold text-white shadow-subtle hover:brightness-90 transition-all"
-            >
-              Log in
-            </Link>
-          </div>
-        </div>
+        </>
       )}
     </header>
   );

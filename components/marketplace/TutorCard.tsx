@@ -65,11 +65,11 @@ export function TutorCard({
   const tutorSlugOrId = tutor.slug || tutor.id;
 
   return (
-    <div className="group relative flex flex-col justify-between rounded-3xl border border-slate-200/70 bg-white p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.07)] hover:-translate-y-0.5 transition-all duration-200">
+    <div className="group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-slate-200/70 bg-white p-5 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.07)] hover:-translate-y-0.5 transition-all duration-200">
       
       {/* ─── Top Section: Avatar, Info & Price ─── */}
       <div>
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-3 sm:gap-4">
           
           {/* Avatar + Main Info */}
           <div className="flex items-start gap-4 min-w-0">
@@ -206,11 +206,11 @@ export function TutorCard({
       </div>
 
       {/* ─── Footer Action Buttons ─── */}
-      <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+      <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2.5">
         <Link href={`/tutors/${tutorSlugOrId}`} className="flex-1">
           <button
             type="button"
-            className="w-full h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs shadow-xs transition-all active:scale-[0.98]"
+            className="w-full h-11 min-h-[44px] px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs shadow-xs transition-all active:scale-[0.98]"
           >
             View Profile
           </button>
@@ -219,7 +219,7 @@ export function TutorCard({
         <button
           type="button"
           onClick={handleBookClick}
-          className="flex-1 h-10 px-4 rounded-xl bg-brand hover:brightness-90 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 shadow-subtle transition-all active:scale-[0.98]"
+          className="flex-1 h-11 min-h-[44px] px-3.5 rounded-xl bg-brand hover:brightness-90 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 shadow-subtle transition-all active:scale-[0.98]"
         >
           <Calendar className="h-3.5 w-3.5 text-white/90" />
           <span>Book Lesson</span>

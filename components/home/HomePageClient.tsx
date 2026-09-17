@@ -303,8 +303,8 @@ export function HomePageClient({
               </div>
 
               {/* Main Headline with Typewriter Keyboard Effect */}
-              <div className="min-h-[130px] sm:min-h-[160px] lg:min-h-[175px] flex items-start">
-                <h1 className="text-4xl sm:text-5xl lg:text-[54px] xl:text-[58px] font-extrabold tracking-[-0.03em] text-slate-950 leading-[1.12]">
+              <div className="min-h-[105px] sm:min-h-[160px] lg:min-h-[175px] flex items-start">
+                <h1 className="text-3xl sm:text-5xl lg:text-[54px] xl:text-[58px] font-extrabold tracking-[-0.03em] text-slate-950 leading-[1.15] sm:leading-[1.12]">
                   {displayText}
                   <span className="inline-block w-[3.5px] h-[0.85em] bg-brand ml-1.5 rounded-full animate-cursor align-middle" />
                 </h1>
@@ -450,8 +450,8 @@ export function HomePageClient({
                   />
                 </div>
 
-                {/* Floating Card 1 */}
-                <div className="absolute -left-4 sm:-left-8 top-16 z-30 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/90 p-3.5 shadow-elevation flex items-center gap-3 animate-float hover:scale-110 transition-all duration-300 group cursor-default">
+                {/* Floating Card 1 (Desktop) */}
+                <div className="hidden sm:flex absolute -left-4 sm:-left-8 top-16 z-30 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/90 p-3.5 shadow-elevation items-center gap-3 animate-float hover:scale-110 transition-all duration-300 group cursor-default">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand shadow-sm group-hover:bg-brand group-hover:text-white transition-colors duration-300">
                     <BookOpen className="h-5 w-5" />
                   </div>
@@ -465,8 +465,8 @@ export function HomePageClient({
                   </div>
                 </div>
 
-                {/* Floating Card 2 */}
-                <div className="absolute -right-2 sm:-right-6 top-8 z-30 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/90 p-4 shadow-elevation flex flex-col items-center justify-center animate-float-slow hover:scale-110 transition-all duration-300 text-center w-28 group cursor-default">
+                {/* Floating Card 2 (Desktop) */}
+                <div className="hidden sm:flex absolute -right-2 sm:-right-6 top-8 z-30 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/90 p-4 shadow-elevation flex-col items-center justify-center animate-float-slow hover:scale-110 transition-all duration-300 text-center w-28 group cursor-default">
                   <div className="relative h-12 w-12 flex items-center justify-center">
                     <svg className="h-12 w-12 -rotate-90" viewBox="0 0 36 36">
                       <path
@@ -495,8 +495,8 @@ export function HomePageClient({
                   </span>
                 </div>
 
-                {/* Floating Card 3 */}
-                <div className="absolute -right-4 sm:-right-8 bottom-4 z-30 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/90 p-3.5 shadow-elevation flex items-center gap-3 animate-float-alt hover:scale-110 transition-all duration-300 group cursor-default">
+                {/* Floating Card 3 (Desktop) */}
+                <div className="hidden sm:flex absolute -right-4 sm:-right-8 bottom-4 z-30 rounded-2xl bg-white/95 backdrop-blur-xl border border-white/90 p-3.5 shadow-elevation items-center gap-3 animate-float-alt hover:scale-110 transition-all duration-300 group cursor-default">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand shadow-sm group-hover:bg-brand group-hover:text-white transition-colors duration-300">
                     <Clock className="h-5 w-5" />
                   </div>
@@ -510,6 +510,34 @@ export function HomePageClient({
                   </div>
                 </div>
 
+              </div>
+
+              {/* Mobile Highlights Strip (< 640px) — Zero Overlap / Zero Overflow */}
+              <div className="sm:hidden grid grid-cols-3 gap-2 w-full mt-5 p-3 rounded-2xl bg-slate-50/90 border border-slate-100 text-center shadow-xs">
+                <div className="space-y-0.5">
+                  <span className="text-sm font-black text-slate-950 font-heading block">
+                    <CountUp to={hero.floatingCard1?.value ?? 20} suffix={hero.floatingCard1?.suffix || "+"} duration={1400} />
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-500 block leading-tight truncate">
+                    {hero.floatingCard1?.label || "Subjects"}
+                  </span>
+                </div>
+                <div className="space-y-0.5 border-x border-slate-200">
+                  <span className="text-sm font-black text-brand font-heading block">
+                    <CountUp to={hero.floatingCard2?.value ?? 10} suffix={hero.floatingCard2?.suffix || "k+"} duration={1400} />
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-500 block leading-tight truncate">
+                    {hero.floatingCard2?.label || "Students"}
+                  </span>
+                </div>
+                <div className="space-y-0.5">
+                  <span className="text-sm font-black text-slate-950 font-heading block">
+                    <CountUp to={hero.floatingCard3?.value ?? 480} suffix={hero.floatingCard3?.suffix || "+"} duration={1600} />
+                  </span>
+                  <span className="text-[10px] font-semibold text-slate-500 block leading-tight truncate">
+                    {hero.floatingCard3?.label || "Hours"}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -706,11 +734,11 @@ export function HomePageClient({
           </div>
 
           {/* Interactive Feature Tabs */}
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex items-center sm:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide touch-scroll px-1 sm:px-0 sm:flex-wrap">
             {[
-              { id: "video", label: "1. HD Video & Live Audio", icon: Video },
-              { id: "whiteboard", label: "2. Interactive Math & Code Canvas", icon: PenTool },
-              { id: "notes", label: "3. Synced Notes & Worksheets", icon: FileText },
+              { id: "video", label: "1. HD Video & Audio", icon: Video },
+              { id: "whiteboard", label: "2. Math & Code Canvas", icon: PenTool },
+              { id: "notes", label: "3. Notes & Worksheets", icon: FileText },
               { id: "goals", label: "4. Learning Streaks & ROI", icon: TrendingUp },
             ].map((tab) => {
               const Icon = tab.icon;
@@ -720,7 +748,7 @@ export function HomePageClient({
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTourTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                  className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer shrink-0 whitespace-nowrap min-h-[44px] ${
                     isActive
                       ? "bg-accent text-slate-950 shadow-glow font-extrabold"
                       : "bg-slate-900/90 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { StudentSidebar } from "@/components/layout/StudentSidebar";
 import { StudentHeader } from "@/components/layout/StudentHeader";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
 
 export default function StudentPortalLayout({
@@ -23,9 +24,13 @@ export default function StudentPortalLayout({
 
         <div className="flex flex-1 flex-col min-w-0">
           <StudentHeader onToggleSidebar={() => setSidebarOpen(true)} />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8">
             {children}
           </main>
+          <MobileBottomNav
+            role="student"
+            onOpenMenu={() => setSidebarOpen(true)}
+          />
         </div>
       </div>
     </div>

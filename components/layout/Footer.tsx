@@ -108,7 +108,7 @@ export function Footer() {
 
       {/* ─── Main Footer Body ─── */}
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14">
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-8 sm:gap-10 md:grid-cols-4 lg:grid-cols-5">
           {/* Brand Column */}
           <div className="col-span-2 lg:col-span-2 space-y-5">
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
@@ -126,11 +126,11 @@ export function Footer() {
                 <input
                   type="email"
                   placeholder="Your email address"
-                  className="flex-1 min-w-0 h-9 rounded-xl border border-slate-700 bg-slate-900 px-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
+                  className="flex-1 min-w-0 h-11 rounded-xl border border-slate-700 bg-slate-900 px-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
                 />
                 <button
                   type="submit"
-                  className="h-9 px-4 shrink-0 rounded-xl bg-brand text-xs font-bold text-white hover:brightness-90 transition-all shadow-subtle"
+                  className="h-11 px-5 shrink-0 rounded-xl bg-brand text-xs font-bold text-white hover:brightness-90 transition-all shadow-subtle min-h-[44px]"
                 >
                   Subscribe
                 </button>

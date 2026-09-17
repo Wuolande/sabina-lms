@@ -49,6 +49,7 @@
   * {
     @apply border-border;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
   }
 
   html {
@@ -72,6 +73,15 @@
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+
+  /* Prevent iOS Safari auto-zoom on focus on mobile screens */
+  @media screen and (max-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 }
 
@@ -137,6 +147,19 @@
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Safe-area padding helpers for notch / home bar mobile devices */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Momentum touch scrolling for mobile */
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
   }
 }
 

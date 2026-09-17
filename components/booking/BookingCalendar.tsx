@@ -199,7 +199,7 @@ export function BookingCalendar({
       </div>
 
       {/* ── Week Days Carousel Grid ── */}
-      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {weekDays.map((d) => {
           const isSelected = selectedDate === d.iso;
           return (
@@ -208,7 +208,7 @@ export function BookingCalendar({
               type="button"
               disabled={d.isPast}
               onClick={() => onSelectSlot(d.iso, selectedTime || "14:00")}
-              className={`p-2.5 sm:p-3 rounded-2xl border text-center transition-all relative ${
+              className={`p-1.5 sm:p-3 rounded-xl sm:rounded-2xl border text-center transition-all relative ${
                 isSelected
                   ? "border-brand bg-brand text-white shadow-md font-bold scale-[1.02]"
                   : d.isPast
@@ -217,15 +217,15 @@ export function BookingCalendar({
               }`}
             >
               {d.isToday && !isSelected && (
-                <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-brand" />
+                <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-brand" />
               )}
-              <span className={`text-[11px] block uppercase font-semibold ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
+              <span className={`text-[10px] sm:text-[11px] block uppercase font-semibold ${isSelected ? "text-slate-300" : "text-slate-500"}`}>
                 {d.dayName}
               </span>
-              <span className="text-base sm:text-lg font-black block my-0.5 font-heading">
+              <span className="text-sm sm:text-lg font-black block my-0.5 font-heading">
                 {d.dayNumber}
               </span>
-              <span className={`text-[10px] block font-medium ${isSelected ? "text-accent font-bold" : "text-slate-400"}`}>
+              <span className={`text-[9px] sm:text-[10px] block font-medium ${isSelected ? "text-accent font-bold" : "text-slate-400"}`}>
                 {d.isPast ? "Past" : "Open"}
               </span>
             </button>
@@ -292,7 +292,7 @@ export function BookingCalendar({
 
       {/* ── Time Slots Grid ── */}
       <div>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
           {filteredSlots.map((slot) => {
             const isSelected = selectedTime === slot.time;
             return (
@@ -300,7 +300,7 @@ export function BookingCalendar({
                 key={slot.time}
                 type="button"
                 onClick={() => onSelectSlot(selectedDate, slot.time)}
-                className={`py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-semibold transition-all relative flex flex-col items-center justify-center gap-0.5 ${
+                className={`min-h-[44px] py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-semibold transition-all relative flex flex-col items-center justify-center gap-0.5 active:scale-[0.98] ${
                   isSelected
                     ? "border-brand bg-brand-50/60 text-brand ring-2 ring-brand font-bold shadow-xs"
                     : "border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50/70"

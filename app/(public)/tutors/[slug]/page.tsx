@@ -271,7 +271,7 @@ export default function TutorProfilePage() {
   const embedVideoUrl = getEmbedVideoUrl(tutor.introVideoUrl);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-28 lg:pb-12">
       {/* ── Top Bar: Breadcrumb + Action Buttons ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <Breadcrumb
@@ -420,7 +420,7 @@ export default function TutorProfilePage() {
           </div>
 
           {/* ── In-Page Anchor Navigation Bar ── */}
-          <div className="sticky top-[70px] z-30 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl p-1.5 shadow-xs flex items-center gap-1 overflow-x-auto scrollbar-hide">
+          <div className="sticky top-[70px] z-30 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl p-1.5 shadow-xs flex items-center gap-1 overflow-x-auto scrollbar-hide touch-scroll">
             {profileTabs.map((tab) => (
               <button
                 key={tab.id}
@@ -1103,6 +1103,42 @@ export default function TutorProfilePage() {
         initialDate={selectedScheduleDate}
         initialTime={selectedScheduleTime}
       />
+
+      {/* ── Fixed Mobile Bottom Booking Bar (Instant 1-Tap Access on Mobile) ── */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 animate-slide-up">
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl font-black text-slate-950 font-heading leading-tight">
+              {formatCurrency(tutorHourlyRate, tutorCurrency)}
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium">/ 50-min</span>
+          </div>
+          <div className="flex items-center gap-1 text-[11px] text-slate-600">
+            <span className="text-amber-500 font-bold">★ {tutorAverageRating.toFixed(1)}</span>
+            <span className="text-slate-400">({tutorReviewCount})</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href={`/student/messages?tutor=${tutor.id}`}
+            className="h-11 w-11 flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Send message to tutor"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </Link>
+
+          <Button
+            variant="default"
+            size="default"
+            className="h-11 px-5 rounded-xl bg-brand hover:brightness-90 text-white font-extrabold text-xs shadow-sm flex items-center gap-1.5"
+            onClick={() => setIsBookingOpen(true)}
+          >
+            <Calendar className="h-4 w-4" />
+            <span>Book Lesson</span>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

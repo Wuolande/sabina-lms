@@ -1249,7 +1249,7 @@ export function TutorDiscoveryModal({
         </div>
 
         {/* ── Footer Navigation Buttons ── */}
-        <div className="px-5 sm:px-8 py-4 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
+        <div className="px-4 sm:px-8 py-3.5 sm:py-4 border-t border-slate-100 bg-white flex items-center justify-between shrink-0 safe-bottom">
           {step > 1 ? (
             <Button
               type="button"
