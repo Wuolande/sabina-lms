@@ -327,5 +327,63 @@ export const lessonService = {
       return false;
     }
   },
+
+  /**
+   * Record classroom arrival and start lesson.
+   */
+  async recordActualStart(lessonId: string, role: 'TUTOR' | 'STUDENT' = 'STUDENT'): Promise<any> {
+    try {
+      const res = await fetch('/api/classroom/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lessonId, role }),
+      });
+      if (!res.ok) return null;
+      return res.json();
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Tutor extends ongoing lesson duration (+5, +10, +15m).
+   */
+  async extendLesson(lessonId: string, additionalMinutes: number): Promise<{ success: boolean; error?: string; newScheduledEnd?: string }> {
+    try {
+      const res = await fetch('/api/classroom/extend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lessonId, additionalMinutes }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Failed to extend lesson' };
+      }
+      return data;
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Network error' };
+    }
+  },
+
+  /**
+   * Resolve attendance no-show (15m waiting rule).
+   */
+  async resolveNoShow(lessonId: string, role: 'TUTOR' | 'STUDENT', reason?: string): Promise<{ success: boolean; error?: string; resolution?: string }> {
+    try {
+      const res = await fetch('/api/classroom/no-show', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lessonId, role, reason }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Failed to resolve no-show' };
+      }
+      return data;
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Network error' };
+    }
+  },
 };
+
 

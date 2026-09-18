@@ -185,7 +185,14 @@ export interface Booking {
   updatedAt: string;
 }
 
-export type LessonStatus = "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED" | "DISPUTED";
+export type LessonStatus =
+  | "SCHEDULED"
+  | "LIVE"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "DISPUTED"
+  | "NO_SHOW_STUDENT"
+  | "NO_SHOW_TUTOR";
 
 export interface LessonMaterial {
   id: string;

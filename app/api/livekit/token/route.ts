@@ -127,7 +127,7 @@ export async function GET(req: NextRequest) {
     const userId = req.headers.get('x-auth-user-id') || identityParam || `anon-${Date.now()}`;
 
     // Verify participant
-    const { allowed, identity, displayName, isStudent, scheduledStart } = await verifyRoomParticipant(room, userId);
+    const { allowed, identity, displayName, isStudent, isTutor, scheduledStart } = await verifyRoomParticipant(room, userId);
 
     if (!allowed) {
       return NextResponse.json(
@@ -154,11 +154,17 @@ export async function GET(req: NextRequest) {
     // Resolve credentials
     const { apiKey, apiSecret, serverUrl } = await getLivekitCredentials();
 
-    // Generate JWT token
+    // Generate JWT token with role-based host grants
+    const isHost = !!isTutor;
     const at = new AccessToken(apiKey, apiSecret, {
       identity,
       name: username || displayName,
       ttl: '2h',
+      metadata: JSON.stringify({
+        role: isHost ? 'TUTOR' : 'STUDENT',
+        userId,
+        displayName: username || displayName,
+      }),
     });
 
     at.addGrant({
@@ -167,6 +173,8 @@ export async function GET(req: NextRequest) {
       canPublish: true,
       canSubscribe: true,
       canPublishData: true,
+      roomAdmin: isHost,
+      canUpdateOwnMetadata: true,
     });
 
     const token = await at.toJwt();

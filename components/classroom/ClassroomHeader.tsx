@@ -44,6 +44,10 @@ interface ClassroomHeaderProps {
   onToggleMic?: () => void;
   onToggleCamera?: () => void;
   onToggleScreenShare?: () => void;
+  // Tutor extensions
+  isTutor?: boolean;
+  onExtendLesson?: (minutes: number) => void;
+  isExtending?: boolean;
 }
 
 export function ClassroomHeader({
@@ -65,14 +69,22 @@ export function ClassroomHeader({
   onToggleMic,
   onToggleCamera,
   onToggleScreenShare,
+  isTutor = false,
+  onExtendLesson,
+  isExtending = false,
 }: ClassroomHeaderProps) {
+  const isOvertime = secondsRemaining <= 0;
+  const isEndingSoon = secondsRemaining < 300 && secondsRemaining > 0;
+
   const formatTimer = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    const absSeconds = Math.abs(totalSeconds);
+    const mins = Math.floor(absSeconds / 60);
+    const secs = absSeconds % 60;
+    const formatted = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    return totalSeconds < 0 ? `+${formatted}` : formatted;
   };
 
-  const isEndingSoon = secondsRemaining < 300 && secondsRemaining > 0;
+  const [isExtendMenuOpen, setIsExtendMenuOpen] = React.useState(false);
 
   return (
     <header className="flex h-14 w-full items-center justify-between border-b border-slate-800 bg-slate-900/90 px-3 sm:px-4 backdrop-blur-md shrink-0 select-none z-30 text-white">
@@ -165,18 +177,70 @@ export function ClassroomHeader({
         </div>
 
         {/* Live Lesson Countdown Timer */}
-        <div
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1 border transition ${
-            isEndingSoon
-              ? "bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse"
-              : "bg-slate-950/80 border-slate-800 text-slate-200"
-          }`}
-          title={isEndingSoon ? "Less than 5 minutes remaining in this class" : "Lesson Time Remaining"}
-        >
-          <Clock className={`h-3.5 w-3.5 ${isEndingSoon ? "text-rose-400" : "text-indigo-400"}`} />
-          <span className="font-mono text-xs font-bold tracking-wider">
-            {formatTimer(secondsRemaining)}
-          </span>
+        <div className="flex items-center gap-2">
+          <div
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1 border transition ${
+              isOvertime
+                ? "bg-amber-500/20 border-amber-500/40 text-amber-300"
+                : isEndingSoon
+                ? "bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse"
+                : "bg-slate-950/80 border-slate-800 text-slate-200"
+            }`}
+            title={
+              isOvertime
+                ? "Class in Overtime"
+                : isEndingSoon
+                ? "Less than 5 minutes remaining in this class"
+                : "Lesson Time Remaining"
+            }
+          >
+            <Clock
+              className={`h-3.5 w-3.5 ${
+                isOvertime ? "text-amber-400" : isEndingSoon ? "text-rose-400" : "text-indigo-400"
+              }`}
+            />
+            <span className="font-mono text-xs font-bold tracking-wider">
+              {formatTimer(secondsRemaining)}
+              {isOvertime && <span className="text-[10px] font-extrabold uppercase ml-1">Overtime</span>}
+            </span>
+          </div>
+
+          {/* Tutor Live Time Extension Button & Dropdown */}
+          {isTutor && onExtendLesson && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsExtendMenuOpen(!isExtendMenuOpen)}
+                disabled={isExtending}
+                title="Extend lesson duration"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/40 transition"
+              >
+                <span>{isExtending ? "Extending..." : "+Extend"}</span>
+              </button>
+
+              {isExtendMenuOpen && (
+                <div className="absolute top-full mt-1.5 left-0 z-50 flex flex-col bg-slate-900 border border-slate-700 rounded-xl p-1 shadow-2xl min-w-[120px] animate-in fade-in zoom-in-95">
+                  <div className="px-2 py-1 text-[10px] font-bold text-slate-400 border-b border-slate-800">
+                    Add Class Time:
+                  </div>
+                  {[5, 10, 15].map((mins) => (
+                    <button
+                      key={mins}
+                      type="button"
+                      onClick={() => {
+                        setIsExtendMenuOpen(false);
+                        onExtendLesson(mins);
+                      }}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-200 hover:text-white hover:bg-indigo-600 transition text-left"
+                    >
+                      <span>+{mins} minutes</span>
+                      <span className="text-[10px] text-indigo-300 font-normal">free</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
           folder: targetFolder,
           entity_type: 'USER_DOCUMENT',
           entity_id: caller.userId,
-        }).catch((err) => console.warn('[file_assets tracking notice]', err?.message));
+        });
       } else {
         const errJson = await cloudRes.json().catch(() => ({}));
         console.warn('[Cloudinary Document Upload Warning]', errJson);

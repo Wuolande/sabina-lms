@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
           folder: `sabina/avatars/${effectiveUserId}`,
           entity_type: 'USER_AVATAR',
           entity_id: effectiveUserId,
-        }).catch((err) => console.warn('[file_assets tracking notice]', err?.message));
+        });
       } else {
         const errJson = await cloudRes.json().catch(() => ({}));
         console.warn('[Cloudinary Avatar Upload Warning]', errJson);

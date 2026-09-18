@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
           folder: targetFolder,
           entity_type: 'TUTOR_INTRO_VIDEO',
           entity_id: caller.userId,
-        }).catch((err) => console.warn('[file_assets tracking notice]', err?.message));
+        });
       } else {
         const errJson = await cloudRes.json().catch(() => ({}));
         console.warn('[Cloudinary Video Upload Warning]', errJson);

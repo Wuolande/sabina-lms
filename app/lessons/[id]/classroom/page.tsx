@@ -129,6 +129,9 @@ function ClassinClassroomStage({
   secondsRemaining,
   onStudentConnected,
   endButtonLabel = "End Class",
+  onExtendLesson,
+  isExtending = false,
+  onTimeExtended,
 }: {
   lesson: Lesson360Aggregate;
   isTutor: boolean;
@@ -138,6 +141,9 @@ function ClassinClassroomStage({
   secondsRemaining: number;
   onStudentConnected?: () => void;
   endButtonLabel?: string;
+  onExtendLesson?: (minutes: number) => void;
+  isExtending?: boolean;
+  onTimeExtended?: (additionalSeconds: number) => void;
 }) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
@@ -314,6 +320,15 @@ function ClassinClassroomStage({
               time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             },
           ]);
+        } else if (data.type === "LESSON_EXTENDED") {
+          onTimeExtended?.(data.additionalSeconds || (data.additionalMinutes || 10) * 60);
+          setModerationToast(`⏰ Lesson extended by ${data.additionalMinutes || 10} minutes by Tutor!`);
+          setTimeout(() => setModerationToast(null), 5000);
+        } else if (data.type === "CLASS_ENDED_BY_TUTOR") {
+          setModerationToast("👋 Class concluded by Tutor. Redirecting...");
+          setTimeout(() => {
+            window.location.href = `/student/lessons/${lesson?.id || ""}`;
+          }, 1800);
         }
       } catch (err) {
         console.warn("Failed to parse data message:", err);
@@ -511,6 +526,9 @@ function ClassinClassroomStage({
         onToggleMic={handleToggleMic}
         onToggleCamera={handleToggleCamera}
         onToggleScreenShare={handleToggleScreenShare}
+        isTutor={isTutor}
+        onExtendLesson={onExtendLesson}
+        isExtending={isExtending}
       />
 
       {/* ─── FLOATING MODERATION TOAST BANNER (Zero Chat Pollution) ─── */}
@@ -807,6 +825,10 @@ export default function LiveClassroomPage() {
   const [feedbackNotes, setFeedbackNotes] = React.useState("");
   const [isEnding, setIsEnding] = React.useState(false);
 
+  // Time Extension & No-Show Lifecycle States
+  const [isExtending, setIsExtending] = React.useState(false);
+  const [isResolvingNoShow, setIsResolvingNoShow] = React.useState(false);
+
   // Waiting Room state
   const [bypassedWaitingRoom, setBypassedWaitingRoom] = React.useState(false);
 
@@ -910,9 +932,12 @@ export default function LiveClassroomPage() {
 
     init();
 
-    // Lesson Countdown Interval
+    // Stamp actual arrival start timestamp in database
+    lessonService.recordActualStart(id).catch(() => {});
+
+    // Lesson Countdown Interval (accurately counts down, and tracks overtime into negative values)
     const interval = setInterval(() => {
-      setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
+      setSecondsRemaining((prev) => prev - 1);
     }, 1000);
     return () => clearInterval(interval);
   }, [id]);
@@ -1001,6 +1026,72 @@ export default function LiveClassroomPage() {
     }
   };
 
+  // ─── Live Lesson Time Extension ───
+  const handleExtendLesson = async (minutes: number) => {
+    if (!lesson) return;
+    setIsExtending(true);
+    try {
+      const res = await lessonService.extendLesson(lesson.id, minutes);
+      if (res.success) {
+        setSecondsRemaining((prev) => prev + minutes * 60);
+      } else {
+        alert(res.error || "Unable to extend lesson duration.");
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to extend lesson duration.");
+    } finally {
+      setIsExtending(false);
+    }
+  };
+
+  // ─── Tutor Claims Student No-Show (15m Wait Policy) ───
+  const handleClaimStudentNoShow = async () => {
+    if (!lesson) return;
+    setIsResolvingNoShow(true);
+    try {
+      const res = await lessonService.resolveNoShow(
+        lesson.id,
+        "TUTOR",
+        "Student did not join within 15 minutes of scheduled start."
+      );
+      if (res.success) {
+        releaseHardwareTracks();
+        setIsEndModalOpen(false);
+        window.location.href = `/tutor/lessons/${lesson.id}?claimed=student_no_show`;
+      } else {
+        alert(res.error || "Unable to claim no-show compensation.");
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to resolve student no-show.");
+    } finally {
+      setIsResolvingNoShow(false);
+    }
+  };
+
+  // ─── Student Reports Tutor No-Show (15m Wait Policy) ───
+  const handleReportTutorNoShow = async () => {
+    if (!lesson) return;
+    setIsResolvingNoShow(true);
+    try {
+      const res = await lessonService.resolveNoShow(
+        lesson.id,
+        "STUDENT",
+        "Tutor did not join within 15 minutes of scheduled start."
+      );
+      if (res.success) {
+        releaseHardwareTracks();
+        setIsEndModalOpen(false);
+        window.location.href = `/student/lessons/${lesson.id}?refunded=tutor_no_show`;
+      } else {
+        alert(res.error || "Unable to report tutor absence.");
+      }
+    } catch (err: any) {
+      alert(err.message || "Failed to report tutor absence.");
+    } finally {
+      setIsResolvingNoShow(false);
+    }
+  };
+
   const providerMeta = PROVIDER_META[activeProvider];
   const isTutor = currentUserRole === "TUTOR";
   const currentUserName = isTutor
@@ -1040,10 +1131,14 @@ export default function LiveClassroomPage() {
     );
   }
 
-  // Quality of service indicators
+  // Quality of service & attendance indicators
   const isBeforeClass = scheduledStartMs > 0 && Date.now() < scheduledStartMs;
   const isStudentPresentOrAttended = hasStudentAttended;
   const endButtonLabel = isBeforeClass || !isStudentPresentOrAttended ? "Leave Room" : "End Class";
+
+  const minutesSinceStart = scheduledStartMs > 0 ? (Date.now() - scheduledStartMs) / (60 * 1000) : 0;
+  const hasWaited15Mins = minutesSinceStart >= 15;
+  const remainingWaitMins = Math.max(1, Math.ceil(15 - minutesSinceStart));
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-white overflow-hidden select-none">
@@ -1067,6 +1162,9 @@ export default function LiveClassroomPage() {
               secondsRemaining={secondsRemaining}
               onStudentConnected={() => setHasStudentAttended(true)}
               endButtonLabel={endButtonLabel}
+              onExtendLesson={handleExtendLesson}
+              isExtending={isExtending}
+              onTimeExtended={(addSec) => setSecondsRemaining((prev) => prev + addSec)}
             />
           </LiveKitRoom>
         ) : (
@@ -1168,7 +1266,13 @@ export default function LiveClassroomPage() {
           isBeforeClass
             ? "Leave Classroom Preview"
             : !isStudentPresentOrAttended
-            ? "Student Not in Classroom"
+            ? isTutor
+              ? hasWaited15Mins
+                ? "Claim Student Absence (15m Policy)"
+                : "Waiting for Student"
+              : hasWaited15Mins
+              ? "Report Tutor Absence (15m Policy)"
+              : "Waiting for Tutor"
             : "Conclude Classroom Session"
         }
         maxWidth="md"
@@ -1207,31 +1311,130 @@ export default function LiveClassroomPage() {
               </div>
             </div>
           ) : !isStudentPresentOrAttended ? (
-            /* Scenario 2: Class time is active, but student has NOT joined */
-            <div className="space-y-3">
-              <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-bold">Student has not joined this session yet.</p>
-                  <p className="text-slate-400 leading-relaxed">
-                    To protect service quality and fair billing, lessons cannot be marked as completed when the student is absent. You can leave now without affecting the schedule.
-                  </p>
+            /* Scenario 2: Class time is active, but participant absent */
+            isTutor ? (
+              /* Tutor waiting for Student */
+              <div className="space-y-3">
+                {hasWaited15Mins ? (
+                  <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-bold text-white">Student Absent (15-Minute Waiting Threshold Met)</p>
+                      <p className="text-slate-300 leading-relaxed">
+                        You have waited the required 15 minutes. Under platform attendance policy, you are entitled to 100% compensation for this scheduled session.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
+                    <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-bold">Waiting for Student ({remainingWaitMins}m remaining until No-Show claim)</p>
+                      <p className="text-slate-400 leading-relaxed">
+                        Platform attendance policy requires tutors to wait 15 minutes before claiming student absence compensation. You can leave now without affecting the schedule.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLeaveClassroom}
+                    className="text-xs text-slate-400 hover:text-white"
+                  >
+                    Leave Temporarily
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsEndModalOpen(false)} className="text-xs">
+                      Keep Waiting
+                    </Button>
+                    {hasWaited15Mins ? (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleClaimStudentNoShow}
+                        disabled={isResolvingNoShow}
+                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-600/30"
+                      >
+                        {isResolvingNoShow ? "Processing..." : "Claim Student No-Show (100% Payout)"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleLeaveClassroom}
+                        className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700"
+                      >
+                        Leave Room (Keep Scheduled)
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-                <Button variant="outline" size="sm" onClick={() => setIsEndModalOpen(false)} className="text-xs">
-                  Keep Waiting
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleLeaveClassroom}
-                  className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700"
-                >
-                  Leave Room (Keep Scheduled)
-                </Button>
+            ) : (
+              /* Student waiting for Tutor */
+              <div className="space-y-3">
+                {hasWaited15Mins ? (
+                  <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-200 text-xs">
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-bold text-white">Tutor Absent (15-Minute Waiting Threshold Met)</p>
+                      <p className="text-slate-300 leading-relaxed">
+                        Your tutor has not joined within 15 minutes of the scheduled start. Under platform terms, you are guaranteed an immediate 100% refund or platform credit.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-300 text-xs">
+                    <Clock className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-bold text-white">Waiting for Educator to connect ({remainingWaitMins}m until refund eligibility)</p>
+                      <p className="text-slate-400 leading-relaxed">
+                        Please stay in the classroom while your tutor connects. If your educator does not arrive within 15 minutes, you can claim an instant 100% refund.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center pt-2 border-t border-slate-800">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLeaveClassroom}
+                    className="text-xs text-slate-400 hover:text-white"
+                  >
+                    Leave Temporarily
+                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsEndModalOpen(false)} className="text-xs">
+                      Keep Waiting
+                    </Button>
+                    {hasWaited15Mins ? (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleReportTutorNoShow}
+                        disabled={isResolvingNoShow}
+                        className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-600/30"
+                      >
+                        {isResolvingNoShow ? "Reporting..." : "Report Tutor No-Show (100% Refund)"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={handleLeaveClassroom}
+                        className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700"
+                      >
+                        Leave Room
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            )
           ) : (
             /* Scenario 3: Standard Conclude Lesson (Student Attended) */
             <div className="space-y-4">

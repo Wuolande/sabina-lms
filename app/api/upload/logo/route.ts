@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
           folder: 'sabina/branding',
           entity_type: 'PLATFORM_LOGO',
           entity_id: 'brand',
-        }).catch((err) => console.warn('[file_assets tracking notice]', err?.message));
+        });
       } else {
         const errJson = await cloudRes.json().catch(() => ({}));
         console.warn('[Cloudinary Logo Upload Warning]', errJson);

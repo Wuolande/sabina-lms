@@ -153,19 +153,27 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure user_roles mapping reflects the validated safeRole
-    await adminSupabase.from('user_roles').upsert({
-      user_id: data.user.id,
-      role_id: safeRole,
-    }).catch((rErr) => console.warn('[Register user_roles error]', rErr?.message));
+    try {
+      await adminSupabase.from('user_roles').upsert({
+        user_id: data.user.id,
+        role_id: safeRole,
+      });
+    } catch (rErr: any) {
+      console.warn('[Register user_roles error]', rErr?.message);
+    }
 
     // If Tutor, seed empty tutor_profiles row if needed
     if (safeRole === 'TUTOR') {
-      await adminSupabase.from('tutor_profiles').upsert({
-        user_id: data.user.id,
-        bio: '',
-        headline: 'Instructor at Sabina LMS',
-        hourly_rate: 25.0,
-      }).catch((tErr) => console.warn('[Register tutor_profile seed notice]', tErr?.message));
+      try {
+        await adminSupabase.from('tutor_profiles').upsert({
+          user_id: data.user.id,
+          bio: '',
+          headline: 'Instructor at Sabina LMS',
+          hourly_rate: 25.0,
+        });
+      } catch (tErr: any) {
+        console.warn('[Register tutor_profile seed notice]', tErr?.message);
+      }
     }
 
     return NextResponse.json({
