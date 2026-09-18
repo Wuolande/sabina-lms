@@ -417,12 +417,29 @@ async function runTests() {
       .eq('id', testTutorProfileId)
       .single();
 
+    // 5a. Fraud Guard Test: Tutor claiming without having joined must be REJECTED
+    const { data: absentTutorClaim } = await supabase.rpc('resolve_no_show_atomic', {
+      p_lesson_id: lesNoShow.id,
+      p_reported_by_role: 'TUTOR',
+      p_reason: 'Student absent after 15m wait',
+    });
+    assert(absentTutorClaim.success === false, 'Claim must fail if tutor was never present in room');
+    assert(absentTutorClaim.error.includes('Tutor was not recorded as present'), 'Error must cite tutor absence');
+    console.log('✓ Anti-Fraud Guard verified: Absent tutor cannot claim student no-show compensation.');
+
+    // 5b. Tutor joins classroom (stamps tutor_joined_at)
+    await supabase.rpc('mark_lesson_started_atomic', {
+      p_lesson_id: lesNoShow.id,
+      p_participant_role: 'TUTOR',
+    });
+
+    // 5c. Now valid claim succeeds
     const { data: validClaimRes } = await supabase.rpc('resolve_no_show_atomic', {
       p_lesson_id: lesNoShow.id,
       p_reported_by_role: 'TUTOR',
       p_reason: 'Student absent after 15m wait',
     });
-    assert(validClaimRes.success === true, 'No-show resolution after 15m must succeed');
+    assert(validClaimRes.success === true, 'No-show resolution after 15m must succeed when tutor attended');
     assert.strictEqual(validClaimRes.resolution, 'NO_SHOW_STUDENT');
     assert.strictEqual(validClaimRes.payoutStatus, 'TUTOR_COMPENSATED_100');
 
@@ -446,7 +463,7 @@ async function runTests() {
     console.log('✓ Tutor compensated 100%: total_lessons incremented from ' + initialTutor.total_lessons + ' to ' + postTutor.total_lessons);
 
     // ─────────────────────────────────────────────────────────────
-    // TEST 6: Tutor No-Show Resolution (100% Student Refund)
+    // TEST 6: Tutor No-Show Protocol (100% Student Refund + Fraud Prevention)
     // ─────────────────────────────────────────────────────────────
     console.log('\n[TEST 6] Tutor No-Show Protocol (resolve_no_show_atomic)');
     const { data: bkTutorNs } = await supabase
@@ -486,12 +503,29 @@ async function runTests() {
       .single();
     createdLessonIds.push(lesTutorNs.id);
 
+    // 6a. Fraud Guard: Student claiming tutor absence without being present must be REJECTED
+    const { data: absentStudentClaim } = await supabase.rpc('resolve_no_show_atomic', {
+      p_lesson_id: lesTutorNs.id,
+      p_reported_by_role: 'STUDENT',
+      p_reason: 'Tutor did not arrive within 15 minutes',
+    });
+    assert(absentStudentClaim.success === false, 'Claim must fail if student was never present');
+    assert(absentStudentClaim.error.includes('Student was not recorded as present'), 'Error must cite student absence');
+    console.log('✓ Anti-Fraud Guard verified: Absent student cannot claim tutor no-show refund.');
+
+    // 6b. Student joins classroom (stamps student_joined_at)
+    await supabase.rpc('mark_lesson_started_atomic', {
+      p_lesson_id: lesTutorNs.id,
+      p_participant_role: 'STUDENT',
+    });
+
+    // 6c. Now valid student claim succeeds
     const { data: tutorNsRes } = await supabase.rpc('resolve_no_show_atomic', {
       p_lesson_id: lesTutorNs.id,
       p_reported_by_role: 'STUDENT',
       p_reason: 'Tutor did not arrive within 15 minutes',
     });
-    assert(tutorNsRes.success === true, 'Tutor no-show resolution must succeed');
+    assert(tutorNsRes.success === true, 'Tutor no-show resolution must succeed when student attended');
     assert.strictEqual(tutorNsRes.resolution, 'NO_SHOW_TUTOR');
     assert.strictEqual(tutorNsRes.refundStatus, 'STUDENT_REFUNDED_100');
 
@@ -505,6 +539,73 @@ async function runTests() {
     assert.strictEqual(refundedBk.payment_status, 'REFUNDED');
     console.log('✓ Tutor No-Show verified: lessons.status = NO_SHOW_TUTOR');
     console.log('✓ Student refunded 100%: bookings.payment_status = REFUNDED');
+
+    // ─────────────────────────────────────────────────────────────
+    // TEST 7: Early-Join Guard (Timer & State Integrity)
+    // ─────────────────────────────────────────────────────────────
+    console.log('\n[TEST 7] Early-Join Guard & Preview Mode (mark_lesson_started_atomic)');
+    const futureStart = new Date(Date.now() + 20 * 60 * 1000); // 20 minutes in future
+    const { data: bkEarly } = await supabase
+      .from('bookings')
+      .insert({
+        booking_ref: 'BK-EARLY-' + Date.now(),
+        student_id: testStudentId,
+        tutor_id: testTutorProfileId,
+        subject_id: testSubjectId,
+        subject_name: 'Future Physics Class',
+        start_time: futureStart.toISOString(),
+        end_time: new Date(futureStart.getTime() + 50 * 60 * 1000).toISOString(),
+        duration_minutes: 50,
+        price: 50,
+        currency: 'USD',
+        status: 'CONFIRMED',
+        payment_status: 'PAID',
+        video_room_id: 'room-early',
+      })
+      .select('id')
+      .single();
+    createdBookingIds.push(bkEarly.id);
+
+    const { data: lesEarly } = await supabase
+      .from('lessons')
+      .insert({
+        booking_id: bkEarly.id,
+        student_id: testStudentId,
+        tutor_id: testTutorProfileId,
+        subject_id: testSubjectId,
+        scheduled_start: futureStart.toISOString(),
+        scheduled_end: new Date(futureStart.getTime() + 50 * 60 * 1000).toISOString(),
+        status: 'SCHEDULED',
+        video_room_id: 'room-early',
+      })
+      .select('id')
+      .single();
+    createdLessonIds.push(lesEarly.id);
+
+    // Tutor arrives 20 minutes early
+    const { data: earlyJoinRes } = await supabase.rpc('mark_lesson_started_atomic', {
+      p_lesson_id: lesEarly.id,
+      p_participant_role: 'TUTOR',
+    });
+
+    assert.strictEqual(earlyJoinRes.success, true);
+    assert.strictEqual(earlyJoinRes.phase, 'PRE_CLASS_PREVIEW', 'Must return PRE_CLASS_PREVIEW phase');
+    assert(earlyJoinRes.startsInSeconds > 0, 'Must report seconds until start');
+
+    // Verify DB integrity: status must NOT be LIVE, actual_start must be NULL, but tutor_joined_at recorded
+    const { data: dbLesEarly } = await supabase
+      .from('lessons')
+      .select('status, actual_start, tutor_joined_at, student_joined_at')
+      .eq('id', lesEarly.id)
+      .single();
+
+    assert.strictEqual(dbLesEarly.status, 'SCHEDULED', 'Lesson status must remain SCHEDULED');
+    assert.strictEqual(dbLesEarly.actual_start, null, 'actual_start must NOT be stamped prematurely');
+    assert(dbLesEarly.tutor_joined_at, 'tutor_joined_at must be stamped for audit');
+    assert.strictEqual(dbLesEarly.student_joined_at, null, 'student_joined_at must remain null');
+
+    console.log('✓ Early-Join Guard verified: phase = PRE_CLASS_PREVIEW, startsInSeconds = ' + earlyJoinRes.startsInSeconds);
+    console.log('✓ State Integrity verified: status remains SCHEDULED, actual_start remains NULL, tutor_joined_at logged.');
 
     console.log('\n===============================================================');
     console.log('🎉 ALL CLASSROOM LIFECYCLE & ATTENDANCE TESTS PASSED!');

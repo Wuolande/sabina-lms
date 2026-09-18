@@ -13,6 +13,7 @@ import {
   Pencil,
   Lock,
   WifiOff,
+  Wifi,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -39,6 +40,8 @@ interface ParticipantVideoCardProps {
   onToggleWhiteboardAuth?: () => void;
   onRemoteMuteStudent?: () => void;
   className?: string;
+  /** Connection quality: 'excellent' | 'good' | 'poor' | 'lost' | undefined */
+  connectionQuality?: "excellent" | "good" | "poor" | "lost";
 }
 
 export function ParticipantVideoCard({
@@ -61,6 +64,7 @@ export function ParticipantVideoCard({
   onToggleWhiteboardAuth,
   onRemoteMuteStudent,
   className = "",
+  connectionQuality,
 }: ParticipantVideoCardProps) {
   return (
     <div
@@ -157,6 +161,27 @@ export function ParticipantVideoCard({
       <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 text-white">
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="text-xs font-bold text-slate-200 truncate">{displayName}</span>
+          {/* Network signal quality indicator */}
+          {connectionQuality && (
+            <span
+              title={`Connection: ${connectionQuality}`}
+              className={`shrink-0 ${
+                connectionQuality === "excellent"
+                  ? "text-emerald-400"
+                  : connectionQuality === "good"
+                  ? "text-amber-300"
+                  : connectionQuality === "poor"
+                  ? "text-rose-400"
+                  : "text-slate-500"
+              }`}
+            >
+              {connectionQuality === "lost" ? (
+                <WifiOff className="w-3 h-3" />
+              ) : (
+                <Wifi className="w-3 h-3" />
+              )}
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">

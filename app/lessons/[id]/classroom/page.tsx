@@ -13,7 +13,8 @@ import {
   useLocalParticipant,
   useRoomContext,
 } from "@livekit/components-react";
-import { Track } from "livekit-client";
+import { Track, RoomEvent, ConnectionQuality } from "livekit-client";
+import { useConnectionQualityIndicator } from "@livekit/components-react";
 import {
   Mic,
   MicOff,
@@ -31,6 +32,8 @@ import {
   Loader2,
   AlertCircle,
   Monitor,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -132,6 +135,8 @@ function ClassinClassroomStage({
   onExtendLesson,
   isExtending = false,
   onTimeExtended,
+  scheduledEnd,
+  onTimerResync,
 }: {
   lesson: Lesson360Aggregate;
   isTutor: boolean;
@@ -144,6 +149,10 @@ function ClassinClassroomStage({
   onExtendLesson?: (minutes: number) => void;
   isExtending?: boolean;
   onTimeExtended?: (additionalSeconds: number) => void;
+  /** ISO timestamp of scheduled class end — used to re-anchor timer on reconnect */
+  scheduledEnd?: string;
+  /** Called when a reconnect forces a timer wall-clock correction */
+  onTimerResync?: (newSecondsRemaining: number) => void;
 }) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
@@ -151,12 +160,49 @@ function ClassinClassroomStage({
   const screenShareTracks = useTracks([Track.Source.ScreenShare]);
   const screenShareTrack = screenShareTracks.find((t) => t.source === Track.Source.ScreenShare);
 
+  // Reconnection overlay state
+  const [isReconnecting, setIsReconnecting] = React.useState(false);
+
+  // ─── LiveKit Reconnection Resilience ───
+  React.useEffect(() => {
+    if (!room) return;
+
+    const handleReconnecting = () => {
+      setIsReconnecting(true);
+    };
+
+    const handleReconnected = () => {
+      setIsReconnecting(false);
+      // Re-anchor the timer to wall clock on reconnect
+      if (scheduledEnd && onTimerResync) {
+        const endMs = new Date(scheduledEnd).getTime();
+        const newRemaining = Math.floor((endMs - Date.now()) / 1000);
+        onTimerResync(newRemaining);
+      }
+    };
+
+    const handleDisconnected = () => {
+      setIsReconnecting(false);
+    };
+
+    room.on(RoomEvent.Reconnecting, handleReconnecting);
+    room.on(RoomEvent.Reconnected, handleReconnected);
+    room.on(RoomEvent.Disconnected, handleDisconnected);
+
+    return () => {
+      room.off(RoomEvent.Reconnecting, handleReconnecting);
+      room.off(RoomEvent.Reconnected, handleReconnected);
+      room.off(RoomEvent.Disconnected, handleDisconnected);
+    };
+  }, [room, scheduledEnd, onTimerResync]);
+
   // Notify parent when remote peer joins room
   React.useEffect(() => {
     if (participants.some((p) => !p.isLocal)) {
       onStudentConnected?.();
     }
   }, [participants, onStudentConnected]);
+
 
   // Media toggle states
   const [isMicEnabled, setIsMicEnabled] = React.useState(true);
@@ -488,6 +534,21 @@ function ClassinClassroomStage({
   const remoteParticipant = participants.find((p) => !p.isLocal);
   const isRemoteConnected = !!remoteParticipant;
 
+  // ─── Network Quality (LiveKit ConnectionQuality per participant) ───
+  const { quality: localQuality } = useConnectionQualityIndicator({ participant: localParticipant ?? undefined });
+  const { quality: remoteQuality } = useConnectionQualityIndicator({ participant: remoteParticipant ?? undefined });
+
+  const mapQuality = (q: ConnectionQuality | undefined): "excellent" | "good" | "poor" | "lost" | undefined => {
+    if (q === ConnectionQuality.Excellent) return "excellent";
+    if (q === ConnectionQuality.Good) return "good";
+    if (q === ConnectionQuality.Poor) return "poor";
+    if (q === ConnectionQuality.Lost) return "lost";
+    return undefined;
+  };
+
+  const localConnectionQuality = mapQuality(localQuality);
+  const remoteConnectionQuality = mapQuality(remoteQuality);
+
   // Render Local Video element (prefers LiveKit track, falls back to local media stream)
   const renderLocalVideo = () => {
     if (localCameraTrack && localCameraTrack.publication?.isSubscribed !== false) {
@@ -538,6 +599,30 @@ function ClassinClassroomStage({
         </div>
       )}
 
+      {/* ─── RECONNECTION OVERLAY (Network drop banner) ─── */}
+      {isReconnecting && (
+        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 bg-slate-900 border border-amber-500/50 rounded-2xl px-8 py-6 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <WifiOff className="w-6 h-6 text-amber-400 animate-pulse" />
+              <span className="text-white font-bold text-base">Reconnecting to class...</span>
+            </div>
+            <p className="text-slate-400 text-xs text-center max-w-xs">
+              Your connection was interrupted. Rejoining the session automatically — your lesson time is preserved.
+            </p>
+            <div className="flex gap-1 mt-1">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-amber-400"
+                  style={{ animation: `bounce 1s ease-in-out ${i * 0.2}s infinite` }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── MAIN STAGE VIEWPORT + SIDEBAR ─── */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Floating ClassIn Tools Palette (Timer, Dice, Trophy, Hand-raise) */}
@@ -572,6 +657,7 @@ function ClassinClassroomStage({
                   onToggleMic={isTutor ? handleToggleMic : undefined}
                   onToggleCamera={isTutor ? handleToggleCamera : undefined}
                   videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                  connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
                 />
 
                 {/* Student Tile */}
@@ -594,6 +680,7 @@ function ClassinClassroomStage({
                   onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
                   onAwardTrophy={isTutor ? () => handleAwardTrophy("Great job!") : undefined}
                   videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                  connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
                 />
               </div>
 
@@ -834,6 +921,11 @@ export default function LiveClassroomPage() {
 
   // Lesson Countdown Timer
   const [secondsRemaining, setSecondsRemaining] = React.useState(50 * 60);
+  // Pre-class phase: if participant joins before scheduled start, timer is frozen
+  const [preClassPhase, setPreClassPhase] = React.useState(false);
+  // Ref version so the countdown interval can read the current value without stale closure
+  const preClassPhaseRef = React.useRef(false);
+  React.useEffect(() => { preClassPhaseRef.current = preClassPhase; }, [preClassPhase]);
 
   // ─── Initialise Lesson Details and LiveKit Session ───
   React.useEffect(() => {
@@ -895,14 +987,22 @@ export default function LiveClassroomPage() {
         setActiveProvider(provider);
 
         if (les) {
-          // Dynamic timer based on actual lesson duration and scheduled end time
-          const duration = les.durationMinutes || 50;
-          if (les.scheduledEnd) {
-            const endMs = new Date(les.scheduledEnd).getTime();
-            const diffSec = Math.floor((endMs - Date.now()) / 1000);
-            setSecondsRemaining(diffSec > 0 ? diffSec : duration * 60);
+          // ─── WALL-CLOCK ANCHORED TIMER (Enterprise-grade, early-join safe) ───
+          // Always compute from scheduledStart→scheduledEnd, never from Date.now().
+          // This prevents early joiners from seeing an inflated countdown.
+          const startMs = les.scheduledStart ? new Date(les.scheduledStart).getTime() : Date.now();
+          const endMs = les.scheduledEnd ? new Date(les.scheduledEnd).getTime() : startMs + 50 * 60 * 1000;
+          const totalDurationSec = Math.floor((endMs - startMs) / 1000); // e.g. 3000s for 50m
+
+          if (Date.now() < startMs) {
+            // Joined before class starts — freeze timer at full duration, flag pre-class
+            setSecondsRemaining(totalDurationSec);
+            setPreClassPhase(true);
           } else {
-            setSecondsRemaining(duration * 60);
+            // Class has already started (or is in progress) — compute elapsed
+            const elapsedSec = Math.floor((Date.now() - startMs) / 1000);
+            setSecondsRemaining(totalDurationSec - elapsedSec); // may be negative (overtime)
+            setPreClassPhase(false);
           }
 
           const roomName = les.videoRoomId || `room-${les.id}`;
@@ -932,15 +1032,59 @@ export default function LiveClassroomPage() {
 
     init();
 
-    // Stamp actual arrival start timestamp in database
-    lessonService.recordActualStart(id).catch(() => {});
+    // Stamp actual arrival start timestamp in database and handle early-join phase
+    lessonService.recordActualStart(id).then((result) => {
+      if (result?.phase === "PRE_CLASS_PREVIEW") {
+        setPreClassPhase(true);
+        // Schedule countdown to begin at actual scheduledStart
+        const startsInMs = (result.startsInSeconds || 0) * 1000;
+        if (startsInMs > 0) {
+          const startTimeout = setTimeout(() => {
+            setPreClassPhase(false);
+          }, startsInMs);
+          // Store timeout id for cleanup — stored as a closure variable
+          return () => clearTimeout(startTimeout);
+        }
+      } else {
+        setPreClassPhase(false);
+      }
+    }).catch(() => {});
 
-    // Lesson Countdown Interval (accurately counts down, and tracks overtime into negative values)
+    // ─── WALL-CLOCK ANCHORED COUNTDOWN INTERVAL ───
+    // Uses a ref so the interval always reads the current preClassPhase value without stale closure.
+    // When preClassPhase is true, the timer freezes. On reconnect, onTimerResync corrects the value.
     const interval = setInterval(() => {
+      // Guard: don't tick down while we're in pre-class preview mode
+      if (preClassPhaseRef.current) return;
       setSecondsRemaining((prev) => prev - 1);
     }, 1000);
     return () => clearInterval(interval);
   }, [id]);
+
+  // ─── Pause countdown tick during pre-class phase ───
+  // Uses a separate effect so the interval can react to preClassPhase changes without restarts.
+  React.useEffect(() => {
+    if (!preClassPhase) return;
+    // While in pre-class, wall-clock recalc the timer every second without decrementing
+    const freezeInterval = setInterval(() => {
+      if (lesson?.scheduledStart && lesson?.scheduledEnd) {
+        const startMs = new Date(lesson.scheduledStart).getTime();
+        const endMs = new Date(lesson.scheduledEnd).getTime();
+        if (Date.now() >= startMs) {
+          // Class has now officially started — release the freeze
+          setPreClassPhase(false);
+          const elapsedSec = Math.floor((Date.now() - startMs) / 1000);
+          const totalDurationSec = Math.floor((endMs - startMs) / 1000);
+          setSecondsRemaining(totalDurationSec - elapsedSec);
+        } else {
+          // Still before start — keep timer anchored at full duration
+          const totalDurationSec = Math.floor((endMs - startMs) / 1000);
+          setSecondsRemaining(totalDurationSec);
+        }
+      }
+    }, 1000);
+    return () => clearInterval(freezeInterval);
+  }, [preClassPhase, lesson?.scheduledStart, lesson?.scheduledEnd]);
 
   const fetchJoinUrl = async (provider: VideoProviderType, room: string, topic: string) => {
     setJoinLoading(true);
@@ -1142,6 +1286,19 @@ export default function LiveClassroomPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-white overflow-hidden select-none">
+
+      {/* ─── PRE-CLASS PREVIEW BANNER ─── */}
+      {preClassPhase && lesson?.scheduledStart && (
+        <div className="absolute top-0 inset-x-0 z-[70] flex items-center justify-center gap-3 bg-amber-500/20 border-b border-amber-500/40 px-4 py-2 text-xs font-bold text-amber-300 backdrop-blur-sm">
+          <Clock className="w-3.5 h-3.5 shrink-0" />
+          <span>
+            Preview Mode — Class starts at{" "}
+            {new Date(lesson.scheduledStart).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.
+            Timer will begin at class start time.
+          </span>
+        </div>
+      )}
+
       {/* ─── LIVEKIT PROVIDER: ClassIn-Grade Interactive Stage ─── */}
       {activeProvider === "livekit" ? (
         livekitToken && livekitUrl ? (
@@ -1165,6 +1322,8 @@ export default function LiveClassroomPage() {
               onExtendLesson={handleExtendLesson}
               isExtending={isExtending}
               onTimeExtended={(addSec) => setSecondsRemaining((prev) => prev + addSec)}
+              scheduledEnd={lesson?.scheduledEnd}
+              onTimerResync={(newRemaining) => setSecondsRemaining(newRemaining)}
             />
           </LiveKitRoom>
         ) : (
