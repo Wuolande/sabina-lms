@@ -179,7 +179,7 @@ function FindTutorsContent() {
   const totalPages = Math.ceil(totalCount / 6);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
       {/* ── 1. Clean Breadcrumb ── */}
       <nav className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
         <Link href="/" className="hover:text-slate-900 transition-colors">
@@ -582,7 +582,7 @@ function FindTutorsContent() {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <TutorCardSkeleton key={i} />
             ))}
@@ -603,7 +603,7 @@ function FindTutorsContent() {
 
         {/* Tutors Grid */}
         {!isLoading && tutors.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {tutors.map((tutor) => (
               <TutorCard
                 key={tutor.id}

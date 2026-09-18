@@ -24,23 +24,23 @@ export function Skeleton({
  */
 export function TutorCardSkeleton() {
   return (
-    <div className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between space-y-6">
+    <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between space-y-5 sm:space-y-6">
       <div className="space-y-4">
         {/* Top Header: Avatar + Name/Details + Price/Star Pill */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3.5">
+        <div className="flex items-start justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
             {/* Rounded Avatar Box */}
-            <Skeleton className="h-14 w-14 rounded-2xl shrink-0" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32 rounded-lg" />
-              <Skeleton className="h-3.5 w-44 rounded-lg" />
-              <Skeleton className="h-3 w-28 rounded-lg" />
+            <Skeleton className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl shrink-0" />
+            <div className="space-y-2 min-w-0">
+              <Skeleton className="h-4 w-28 sm:w-32 rounded-lg" />
+              <Skeleton className="h-3.5 w-36 sm:w-44 rounded-lg" />
+              <Skeleton className="h-3 w-24 sm:w-28 rounded-lg" />
             </div>
           </div>
 
           {/* Top-Right Price & Rating Placeholder */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <Skeleton className="h-7 w-20 rounded-xl" />
+            <Skeleton className="h-7 w-16 sm:w-20 rounded-xl" />
             <Skeleton className="h-7 w-7 rounded-xl" />
           </div>
         </div>
@@ -77,12 +77,12 @@ export function TutorCardSkeleton() {
  */
 export function SubjectCardSkeleton() {
   return (
-    <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between space-y-5">
+    <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between space-y-4 sm:space-y-5">
       <div className="space-y-4">
         {/* Icon & Tutor Count Pill */}
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-12 w-12 rounded-2xl" />
-          <Skeleton className="h-6 w-20 rounded-full" />
+        <div className="flex items-center justify-between gap-2">
+          <Skeleton className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl shrink-0" />
+          <Skeleton className="h-6 w-20 rounded-full shrink-0" />
         </div>
 
         {/* Subject Title & Category */}
@@ -109,7 +109,7 @@ export function SubjectCardSkeleton() {
 
 export function StatCardSkeleton() {
   return (
-    <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-card space-y-4">
+    <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-card space-y-4">
       <div className="flex items-center justify-between">
         <Skeleton className="h-3 w-24 rounded-lg" />
         <Skeleton className="h-10 w-10 rounded-xl" />

@@ -279,21 +279,21 @@ export function HomePageClient({
   }, [displayText, isDeleting, currentTitleIndex, typewriterTitles]);
 
   return (
-    <div className="flex flex-col space-y-14 sm:space-y-28 pb-16 sm:pb-24 overflow-x-hidden w-full max-w-full bg-white">
+    <div className="flex flex-col space-y-14 sm:space-y-28 pb-16 sm:pb-24 overflow-x-hidden w-full max-w-full min-w-0 bg-white">
       
       {/* ─────────────────────────────────────────────────────────────
           1. HERO SECTION (Instant Uploaded Image & CMS)
       ───────────────────────────────────────────────────────────── */}
-      <section className="relative pt-4 sm:pt-14 pb-12 lg:pb-24 overflow-hidden">
+      <section className="relative pt-4 sm:pt-14 pb-12 lg:pb-24 overflow-hidden w-full max-w-full min-w-0">
         {/* Ambient atmospheric gradients */}
         <div className="absolute top-0 right-1/4 -mt-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-brand-100/50 blur-3xl pointer-events-none" />
         <div className="absolute top-1/3 left-0 -ml-20 w-60 sm:w-80 h-60 sm:h-80 rounded-full bg-brand-100/40 blur-3xl pointer-events-none" />
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
+        <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center w-full max-w-full min-w-0">
             
             {/* ── LEFT COLUMN: Text, CTA, Search and Social Proof ── */}
-            <div className="lg:col-span-6 space-y-5 sm:space-y-7 text-left z-10">
+            <div className="lg:col-span-6 space-y-5 sm:space-y-7 text-left z-10 w-full max-w-full min-w-0">
               
               {/* Pre-title Tag */}
               <div>
@@ -420,7 +420,7 @@ export function HomePageClient({
             </div>
 
             {/* ── RIGHT COLUMN: Circular Composition + Instant Uploaded Student Photo + Floating Cards ── */}
-            <div className="lg:col-span-6 relative flex flex-col items-center justify-center lg:justify-end min-h-0 sm:min-h-[540px] w-full">
+            <div className="lg:col-span-6 relative flex flex-col items-center justify-center lg:justify-end min-h-0 sm:min-h-[540px] w-full max-w-full min-w-0">
               <div className="relative w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[480px] aspect-square flex items-center justify-center">
                 
                 {/* Subtle Ambient Radial Glow */}
@@ -548,8 +548,8 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           2. STATS & CREDIBILITY BAR (Dynamic CMS CountUp)
       ───────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/80 p-4 sm:p-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-center">
+      <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/80 p-4 sm:p-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-center">
           <div className="space-y-0.5 sm:space-y-1">
             <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
               <CountUp to={stats.stat1?.value ?? 250} suffix={stats.stat1?.suffix || "+"} duration={1800} />
@@ -592,8 +592,8 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           3. EXPLORE DISCIPLINES & CATEGORIES (Instant Render)
       ───────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-6">
+      <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-6 w-full max-w-full min-w-0">
           <div>
             <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
               {catSection.pretitle}
@@ -611,7 +611,7 @@ export function HomePageClient({
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 touch-scroll scrollbar-hide">
+        <div className="w-full max-w-full min-w-0 flex items-center gap-2 overflow-x-auto pb-3 mb-4 touch-scroll scrollbar-hide">
           {categories.map((cat) => (
             <button
               key={cat.id}
@@ -630,33 +630,33 @@ export function HomePageClient({
 
         {/* Subjects Grid */}
         {isSubjectsLoading && filteredSubjects.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+          <div className="w-full max-w-full min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
               <SubjectCardSkeleton key={idx} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+          <div className="w-full max-w-full min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
             {filteredSubjects.map((sub) => (
               <Link
                 key={sub.id}
                 href={`/find-tutors?subject=${sub.slug}`}
-                className="group rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-elevation hover:border-brand/40 transition-all duration-200 flex flex-col justify-between"
+                className="w-full max-w-full min-w-0 group rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-elevation hover:border-brand/40 transition-all duration-200 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-brand-50 text-brand group-hover:bg-brand group-hover:text-white transition-all shadow-subtle">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-brand-50 text-brand group-hover:bg-brand group-hover:text-white transition-all shadow-subtle shrink-0">
                       <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
-                    <Badge variant="subtle" size="sm" className="font-bold text-[10px] sm:text-[11px] bg-slate-100 text-slate-700">
+                    <Badge variant="subtle" size="sm" className="font-bold text-[10px] sm:text-[11px] bg-slate-100 text-slate-700 shrink-0">
                       {sub.tutorCount || 25}+ Tutors
                     </Badge>
                   </div>
 
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-brand transition-colors mt-3 sm:mt-4">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-brand transition-colors mt-3 sm:mt-4 truncate">
                     {sub.name}
                   </h3>
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mt-0.5">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mt-0.5 truncate">
                     {sub.category}
                   </span>
 
@@ -680,8 +680,8 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           4. FEATURED ACCREDITED INSTRUCTORS (Instant Render)
       ───────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8">
+      <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8 w-full max-w-full min-w-0">
           <div>
             <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
               {tutSection.pretitle}
@@ -699,13 +699,13 @@ export function HomePageClient({
         </div>
 
         {isTutorsLoading && featuredTutors.length === 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {[1, 2, 3, 4].map((idx) => (
               <TutorCardSkeleton key={idx} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {featuredTutors.map((tutor) => (
               <TutorCard key={tutor.id} tutor={tutor} onBook={handleBook} />
             ))}
@@ -716,25 +716,25 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           5. THE LIVE VIDEO CLASSROOM (Dynamic CMS Product Tour)
       ───────────────────────────────────────────────────────────── */}
-      <section className="bg-[#050B18] py-16 sm:py-24 text-white relative overflow-hidden">
+      <section className="w-full max-w-full min-w-0 bg-[#050B18] py-14 sm:py-24 text-white relative overflow-hidden">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
 
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10 space-y-10">
+        <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 relative z-10 space-y-8 sm:space-y-10">
           <div className="text-center max-w-3xl mx-auto space-y-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-accent/15 text-accent border border-accent/30 px-3.5 py-1 rounded-full">
               <Sparkles className="h-3.5 w-3.5 text-accent" />
               {classroom.badge}
             </span>
-            <h2 className="text-3xl sm:text-5xl font-black text-white font-heading tracking-tight">
+            <h2 className="text-2xl sm:text-5xl font-black text-white font-heading tracking-tight">
               {classroom.title}
             </h2>
-            <p className="text-sm sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xs sm:text-base text-slate-400 max-w-2xl mx-auto leading-relaxed">
               {classroom.subtitle}
             </p>
           </div>
 
           {/* Interactive Feature Tabs */}
-          <div className="flex items-center sm:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide touch-scroll px-1 sm:px-0 sm:flex-wrap">
+          <div className="w-full max-w-full min-w-0 flex items-center sm:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide touch-scroll px-1 sm:px-0 sm:flex-wrap">
             {[
               { id: "video", label: "1. HD Video & Audio", icon: Video },
               { id: "whiteboard", label: "2. Math & Code Canvas", icon: PenTool },
@@ -762,7 +762,7 @@ export function HomePageClient({
           </div>
 
           {/* Classroom Stage Simulation Container */}
-          <div className="max-w-5xl mx-auto rounded-3xl border border-slate-800 bg-[#0B132B] shadow-2xl overflow-hidden">
+          <div className="w-full max-w-5xl min-w-0 mx-auto rounded-2xl sm:rounded-3xl border border-slate-800 bg-[#0B132B] shadow-2xl overflow-hidden">
             <div className="bg-slate-900/95 px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-rose-500/80" />
@@ -1001,8 +1001,8 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           6. HOW IT WORKS (Dynamic CMS 3-Step Roadmap)
       ───────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-12 space-y-2">
+      <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12 space-y-2">
           <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
             {howItWorks.pretitle}
           </span>
@@ -1011,14 +1011,14 @@ export function HomePageClient({
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
+        <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
           {(howItWorks.steps || []).map((step: any, idx: number) => {
             const icons = [Search, Calendar, Video];
             const Icon = icons[idx % icons.length];
             return (
               <div
                 key={idx}
-                className="relative rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-8 shadow-card flex flex-col justify-between space-y-4 sm:space-y-6 hover:shadow-elevation transition-all"
+                className="w-full max-w-full min-w-0 relative rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-8 shadow-card flex flex-col justify-between space-y-4 sm:space-y-6 hover:shadow-elevation transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl bg-brand-50 text-brand shadow-subtle font-extrabold text-base sm:text-lg">
@@ -1046,11 +1046,11 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           7. BECOME A TUTOR CALLOUT (Dynamic CMS)
       ───────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#081533] p-5 sm:p-14 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sm:gap-8 border border-slate-800/90 shadow-2xl relative overflow-hidden">
+      <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#081533] p-5 sm:p-14 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sm:gap-8 border border-slate-800/90 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="space-y-3 sm:space-y-4 max-w-2xl text-left relative z-10">
+          <div className="space-y-3 sm:space-y-4 max-w-2xl text-left relative z-10 w-full min-w-0">
             <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-accent/15 text-accent border border-accent/30 px-3 py-0.5 sm:px-3.5 sm:py-1 rounded-full">
               <Sparkles className="h-3.5 w-3.5 text-accent" />
               {becomeTutor.badge}
@@ -1102,7 +1102,7 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           9. FREQUENTLY ASKED QUESTIONS (Dynamic CMS FAQs)
       ───────────────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <section className="mx-auto w-full max-w-4xl min-w-0 px-4 sm:px-6 lg:px-8">
         <div className="text-center space-y-2 mb-8 sm:mb-10">
           <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
             {faqSection.pretitle}
@@ -1112,7 +1112,7 @@ export function HomePageClient({
           </h2>
         </div>
 
-        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-8 shadow-card space-y-3 sm:space-y-4 divide-y divide-slate-100">
+        <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-8 shadow-card space-y-3 sm:space-y-4 divide-y divide-slate-100">
           {faqs.map((faq: any, idx: number) => {
             const isOpen = openFaqIndex === idx;
             return (

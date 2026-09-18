@@ -36,17 +36,17 @@ export default function SubjectsPage() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-10">
+    <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8 sm:space-y-10">
       
       {/* ── Header ── */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
+      <div className="text-center max-w-3xl mx-auto space-y-4 w-full min-w-0">
         <Badge variant="subtle" size="sm" className="bg-brand-50 text-brand font-bold border border-brand-100">
           Complete Subject Directory ({subjects.length} Disciplines)
         </Badge>
-        <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-5xl font-black text-slate-900 tracking-tight font-heading">
           Explore all subjects & disciplines
         </h1>
-        <p className="text-base text-slate-600">
+        <p className="text-sm sm:text-base text-slate-600">
           Find certified 1-on-1 educators in over {subjects.length}+ academic fields, languages, software engineering, and test prep.
         </p>
 
@@ -64,7 +64,7 @@ export default function SubjectsPage() {
       </div>
 
       {/* Category Pills */}
-      <div className="flex flex-wrap items-center justify-center gap-2">
+      <div className="w-full max-w-full min-w-0 flex flex-wrap items-center justify-center gap-2">
         {categories.map((cat) => (
           <button
             key={cat}
@@ -82,17 +82,17 @@ export default function SubjectsPage() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-pulse">
+        <div className="w-full max-w-full min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 animate-pulse">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-64 rounded-2xl sm:rounded-3xl bg-slate-100 border border-slate-200" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="w-full max-w-full min-w-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filtered.map((sub) => (
             <div
               key={sub.id}
-              className="rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.07)] hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between"
+              className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.07)] hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between">

@@ -79,17 +79,17 @@ export default function BlogListingPage() {
   const standardPosts = featuredPost ? posts.slice(1) : posts;
 
   return (
-    <div className="min-h-screen bg-slate-50/50 py-12 sm:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-12 sm:space-y-16">
+    <div className="min-h-screen bg-slate-50/50 py-8 sm:py-16 w-full max-w-full min-w-0">
+      <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 space-y-8 sm:space-y-16">
         
         {/* ─── Hero Header & Search ─── */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
+        <div className="text-center max-w-3xl mx-auto space-y-4 w-full min-w-0">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-bold shadow-2xs">
             <BookOpen className="h-4 w-4 text-brand" />
             <span>SABINA LEARNING HUB & EDITORIAL</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight font-heading leading-tight">
+          <h1 className="text-2xl sm:text-5xl font-black text-slate-900 tracking-tight font-heading leading-tight">
             Knowledge, Strategies & <span className="text-brand">Learning Insights</span>
           </h1>
           <p className="text-sm sm:text-base text-slate-600">
@@ -97,7 +97,7 @@ export default function BlogListingPage() {
           </p>
 
           {/* Search bar */}
-          <form onSubmit={handleSearchSubmit} className="pt-2 max-w-lg mx-auto">
+          <form onSubmit={handleSearchSubmit} className="pt-2 max-w-lg mx-auto w-full">
             <div className="relative">
               <Input
                 type="text"
@@ -105,12 +105,12 @@ export default function BlogListingPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search articles by title, topic, or author..."
                 leftIcon={<Search className="h-4 w-4" />}
-                className="pr-24 bg-white shadow-xs rounded-2xl h-12"
+                className="pr-24 bg-white shadow-xs rounded-2xl h-12 text-sm"
               />
               <Button
                 type="submit"
                 size="sm"
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-brand hover:opacity-90 text-white font-bold rounded-xl text-xs px-4"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-brand hover:opacity-90 text-white font-bold rounded-xl text-xs px-4 min-h-[36px]"
               >
                 Search
               </Button>
@@ -119,7 +119,7 @@ export default function BlogListingPage() {
         </div>
 
         {/* ─── Category Filter Pills ─── */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 justify-start sm:justify-center no-scrollbar">
+        <div className="w-full max-w-full min-w-0 flex items-center gap-2 overflow-x-auto pb-2 justify-start sm:justify-center scrollbar-hide touch-scroll">
           {BLOG_CATEGORIES.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (
@@ -141,11 +141,11 @@ export default function BlogListingPage() {
 
         {/* ─── Articles Content Area ─── */}
         {loading ? (
-          <div className="space-y-8">
-            <div className="bg-white rounded-3xl p-8 border border-slate-200 animate-pulse h-96" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="space-y-6 sm:space-y-8 w-full min-w-0">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-slate-200 animate-pulse h-64 sm:h-96" />
+            <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="bg-white rounded-3xl border border-slate-200 p-4 space-y-4 animate-pulse">
+                <div key={i} className="w-full max-w-full min-w-0 bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-4 space-y-4 animate-pulse">
                   <div className="aspect-16/10 bg-slate-200 rounded-2xl w-full" />
                   <div className="h-4 bg-slate-200 rounded w-1/3" />
                   <div className="h-6 bg-slate-200 rounded w-4/5" />
@@ -156,7 +156,7 @@ export default function BlogListingPage() {
           </div>
         ) : posts.length === 0 ? (
           /* Empty Search State */
-          <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 max-w-md mx-auto space-y-4">
+          <div className="text-center py-12 sm:py-16 bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-md mx-auto space-y-4 w-full">
             <div className="h-12 w-12 rounded-2xl bg-brand-50 text-brand flex items-center justify-center mx-auto">
               <BookOpen className="h-6 w-6" />
             </div>
@@ -171,22 +171,22 @@ export default function BlogListingPage() {
                 setSearchQuery("");
                 setSelectedCategory("All");
               }}
-              className="rounded-xl font-bold text-xs"
+              className="rounded-xl font-bold text-xs min-h-[40px]"
             >
               Reset Filters
             </Button>
           </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-8 sm:space-y-12 w-full min-w-0">
             {/* Featured Post Hero */}
             {featuredPost && <FeaturedBlogCard post={featuredPost} />}
 
             {/* Main Articles Grid */}
             {standardPosts.length > 0 && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6 w-full min-w-0">
                 {featuredPost && (
                   <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-black text-slate-900 font-heading">
+                    <h2 className="text-lg sm:text-xl font-black text-slate-900 font-heading">
                       Latest Educational Articles
                     </h2>
                     <span className="text-xs text-slate-400 font-medium">
@@ -194,7 +194,7 @@ export default function BlogListingPage() {
                     </span>
                   </div>
                 )}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                   {standardPosts.map((post) => (
                     <BlogCard key={post.id} post={post} />
                   ))}
@@ -204,18 +204,18 @@ export default function BlogListingPage() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-8">
+              <div className="flex items-center justify-center gap-2 pt-6 sm:pt-8 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
                   disabled={page <= 1}
                   onClick={() => setPage(page - 1)}
-                  className="rounded-xl border-slate-200 gap-1 text-xs"
+                  className="rounded-xl border-slate-200 gap-1 text-xs min-h-[40px]"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <span>Previous</span>
                 </Button>
-                <span className="text-xs font-bold text-slate-600 px-4">
+                <span className="text-xs font-bold text-slate-600 px-3">
                   Page {page} of {totalPages}
                 </span>
                 <Button
@@ -223,7 +223,7 @@ export default function BlogListingPage() {
                   size="sm"
                   disabled={page >= totalPages}
                   onClick={() => setPage(page + 1)}
-                  className="rounded-xl border-slate-200 gap-1 text-xs"
+                  className="rounded-xl border-slate-200 gap-1 text-xs min-h-[40px]"
                 >
                   <span>Next</span>
                   <ChevronRight className="h-4 w-4" />
@@ -234,15 +234,15 @@ export default function BlogListingPage() {
         )}
 
         {/* ─── Newsletter Lead Magnet Banner ─── */}
-        <div className="bg-slate-900 rounded-3xl sm:rounded-[36px] p-8 sm:p-12 text-white relative overflow-hidden shadow-2xl">
+        <div className="w-full max-w-full min-w-0 bg-slate-900 rounded-2xl sm:rounded-[36px] p-5 sm:p-12 text-white relative overflow-hidden shadow-2xl">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
           
-          <div className="max-w-2xl relative z-10 space-y-4">
+          <div className="max-w-2xl relative z-10 space-y-4 w-full min-w-0">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-accent text-xs font-bold">
               <Mail className="h-3.5 w-3.5" />
               <span>WEEKLY STUDY DIGEST</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-heading tracking-tight leading-tight">
+            <h2 className="text-xl sm:text-3xl font-black font-heading tracking-tight leading-tight">
               Get the latest learning strategies delivered to your inbox
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">

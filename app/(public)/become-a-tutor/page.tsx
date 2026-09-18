@@ -27,16 +27,16 @@ export default function BecomeATutorPage() {
   const monthlyNet = monthlyGross - platformFee;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+    <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12 sm:space-y-16">
       {/* Hero */}
-      <div className="text-center max-w-3xl mx-auto space-y-4">
+      <div className="text-center max-w-3xl mx-auto space-y-4 w-full min-w-0">
         <Badge variant="secondary" size="sm" className="bg-accent-400 text-slate-950 font-bold">
           Join 250+ Certified Mentors
         </Badge>
-        <h1 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-5xl font-black text-slate-900 tracking-tight font-heading">
           Teach global students on your terms.
         </h1>
-        <p className="text-base text-slate-600">
+        <p className="text-sm sm:text-base text-slate-600">
           Set your own hourly rate, build your professional brand, teach through our live browser classroom, and enjoy automated bi-weekly payouts.
         </p>
 
@@ -50,13 +50,13 @@ export default function BecomeATutorPage() {
       </div>
 
       {/* Interactive Earnings Calculator */}
-      <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-gradient-to-br from-slate-900 to-brand-950 text-white p-5 sm:p-12 shadow-elevation">
-        <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8">
+      <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-gradient-to-br from-slate-900 to-brand-950 text-white p-5 sm:p-12 shadow-elevation">
+        <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 w-full min-w-0">
           <div className="text-center space-y-2">
             <span className="text-xs font-bold uppercase tracking-wider text-accent-400">
               Interactive Calculator
             </span>
-            <h2 className="text-xl sm:text-4xl font-black text-white">
+            <h2 className="text-xl sm:text-4xl font-black text-white font-heading">
               Estimate your monthly teaching income
             </h2>
           </div>
@@ -112,7 +112,7 @@ export default function BecomeATutorPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 Estimated Net Earnings
               </span>
-              <div className="text-3xl sm:text-5xl font-black text-accent-400">
+              <div className="text-3xl sm:text-5xl font-black text-accent-400 font-heading">
                 {formatCurrency(Math.round(monthlyNet))}
                 <span className="text-xs sm:text-sm font-semibold text-slate-300 block mt-0.5">/ month</span>
               </div>
@@ -130,13 +130,13 @@ export default function BecomeATutorPage() {
       </div>
 
       {/* Why teach with Sabina Edge */}
-      <div className="space-y-8">
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 text-center">
+      <div className="space-y-6 sm:space-y-8 w-full min-w-0">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 text-center font-heading">
           Why top educators choose Sabina Edge
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-card space-y-3">
+        <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+          <div className="w-full max-w-full min-w-0 rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-card space-y-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
               <DollarSign className="h-5 w-5" />
             </div>
@@ -146,7 +146,7 @@ export default function BecomeATutorPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-card space-y-3">
+          <div className="w-full max-w-full min-w-0 rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-card space-y-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
               <Video className="h-5 w-5" />
             </div>
@@ -156,7 +156,7 @@ export default function BecomeATutorPage() {
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-card space-y-3">
+          <div className="w-full max-w-full min-w-0 rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-card space-y-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
               <Globe className="h-5 w-5" />
             </div>

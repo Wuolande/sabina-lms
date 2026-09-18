@@ -83,22 +83,22 @@ export function PageLayout({ page }: PageLayoutProps) {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-12">
+    <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-16 space-y-8 sm:space-y-12">
       {/* ── 1. Page Header & Metadata ── */}
-      <div className="border-b border-slate-200 pb-8 space-y-4">
+      <div className="border-b border-slate-200 pb-6 sm:pb-8 space-y-4 w-full min-w-0">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 flex-wrap">
           <Link href="/" className="hover:text-brand transition">
             Home
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
           <span className="capitalize">{page.category}</span>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-          <span className="text-slate-900 font-bold truncate max-w-xs">{page.title}</span>
+          <span className="text-slate-900 font-bold truncate max-w-[200px] sm:max-w-xs">{page.title}</span>
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-3xl">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+          <div className="space-y-2 max-w-3xl w-full min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="subtle" size="sm" className="bg-brand-50 text-brand border-brand-100 font-bold uppercase tracking-wider text-[10px]">
                 {categoryLabels[page.category] || "Official Policy"}
@@ -115,12 +115,12 @@ export function PageLayout({ page }: PageLayoutProps) {
               </span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-950 tracking-tight font-heading leading-tight">
+            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-slate-950 tracking-tight font-heading leading-tight">
               {page.title}
             </h1>
 
             {page.metaDescription && (
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed pt-1">
+              <p className="text-xs sm:text-base text-slate-600 leading-relaxed pt-1">
                 {page.metaDescription}
               </p>
             )}
@@ -132,7 +132,7 @@ export function PageLayout({ page }: PageLayoutProps) {
               variant="outline"
               size="sm"
               onClick={handleCopyLink}
-              className="text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl"
+              className="text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl min-h-[38px]"
               leftIcon={copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-slate-500" />}
             >
               {copied ? "Link Copied" : "Share"}
@@ -141,7 +141,7 @@ export function PageLayout({ page }: PageLayoutProps) {
               variant="outline"
               size="sm"
               onClick={handlePrint}
-              className="text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl"
+              className="text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl min-h-[38px]"
               leftIcon={<Printer className="w-3.5 h-3.5 text-slate-500" />}
             >
               Print
@@ -151,11 +151,11 @@ export function PageLayout({ page }: PageLayoutProps) {
       </div>
 
       {/* ── 2. Content & Sidebar 2-Column Grid ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+      <div className="w-full max-w-full min-w-0 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 items-start">
         {/* Main Body */}
-        <div className="lg:col-span-8 space-y-8">
+        <div className="lg:col-span-8 space-y-6 sm:space-y-8 w-full min-w-0">
           <div
-            className="prose prose-slate max-w-none prose-headings:font-heading prose-headings:tracking-tight prose-h2:text-2xl prose-h2:font-extrabold prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-slate-900 prose-h2:border-b prose-h2:border-slate-100 prose-h2:pb-2 prose-h3:text-lg prose-h3:font-bold prose-h3:mt-6 prose-p:text-slate-700 prose-p:leading-relaxed prose-p:text-sm sm:prose-p:text-base prose-li:text-slate-700 prose-li:text-sm sm:prose-li:text-base prose-li:leading-relaxed prose-table:w-full prose-table:border-collapse prose-th:bg-slate-50 prose-th:p-3 prose-th:text-xs prose-th:font-bold prose-th:border prose-th:border-slate-200 prose-td:p-3 prose-td:text-xs prose-td:border prose-td:border-slate-200 prose-blockquote:border-l-4 prose-blockquote:border-brand prose-blockquote:bg-brand-50/50 prose-blockquote:p-4 prose-blockquote:rounded-r-2xl prose-blockquote:text-slate-800 prose-blockquote:font-normal prose-blockquote:text-sm prose-strong:text-slate-950 prose-strong:font-bold"
+            className="prose prose-slate max-w-none break-words overflow-hidden prose-headings:font-heading prose-headings:tracking-tight prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:font-extrabold prose-h2:mt-6 sm:prose-h2:mt-8 prose-h2:mb-4 prose-h2:text-slate-900 prose-h2:border-b prose-h2:border-slate-100 prose-h2:pb-2 prose-h3:text-base sm:prose-h3:text-lg prose-h3:font-bold prose-h3:mt-5 sm:prose-h3:mt-6 prose-p:text-slate-700 prose-p:leading-relaxed prose-p:text-xs sm:prose-p:text-base prose-li:text-slate-700 prose-li:text-xs sm:prose-li:text-base prose-li:leading-relaxed prose-table:w-full prose-table:block prose-table:overflow-x-auto prose-table:border-collapse prose-th:bg-slate-50 prose-th:p-2 sm:prose-th:p-3 prose-th:text-xs prose-th:font-bold prose-th:border prose-th:border-slate-200 prose-td:p-2 sm:prose-td:p-3 prose-td:text-xs prose-td:border prose-td:border-slate-200 prose-blockquote:border-l-4 prose-blockquote:border-brand prose-blockquote:bg-brand-50/50 prose-blockquote:p-3 sm:prose-blockquote:p-4 prose-blockquote:rounded-r-2xl prose-blockquote:text-slate-800 prose-blockquote:font-normal prose-blockquote:text-xs sm:prose-blockquote:text-sm prose-strong:text-slate-950 prose-strong:font-bold"
             dangerouslySetInnerHTML={{ __html: page.contentHtml }}
           />
 

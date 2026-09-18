@@ -17,11 +17,11 @@ export function FeaturedBlogCard({ post }: FeaturedBlogCardProps) {
   const formattedDate = post.publishedAt ? formatDate(post.publishedAt) : "Recently";
 
   return (
-    <article className="group relative bg-white rounded-3xl sm:rounded-[36px] border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 grid grid-cols-1 lg:grid-cols-12 gap-0">
+    <article className="w-full max-w-full min-w-0 group relative bg-white rounded-2xl sm:rounded-[36px] border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 grid grid-cols-1 lg:grid-cols-12 gap-0">
       {/* Image half */}
       <Link
         href={`/blog/${post.slug}`}
-        className="lg:col-span-7 relative min-h-[280px] sm:min-h-[380px] lg:min-h-full overflow-hidden bg-slate-100 block"
+        className="lg:col-span-7 relative min-h-[220px] sm:min-h-[380px] lg:min-h-full overflow-hidden bg-slate-100 block"
       >
         <Image
           src={post.featuredImage || "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=1200&q=80"}
@@ -33,7 +33,7 @@ export function FeaturedBlogCard({ post }: FeaturedBlogCardProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent lg:hidden" />
         
-        <div className="absolute top-5 left-5 z-10 flex items-center gap-2">
+        <div className="absolute top-4 left-4 sm:top-5 sm:left-5 z-10 flex items-center gap-2">
           <Badge
             variant="emerald-solid"
             size="sm"
@@ -45,7 +45,7 @@ export function FeaturedBlogCard({ post }: FeaturedBlogCardProps) {
           <Badge
             variant="neutral"
             size="sm"
-            className="bg-white/90 backdrop-blur-md text-slate-900 font-bold shadow-xs border-0"
+            className="bg-white/90 backdrop-blur-md text-slate-900 font-bold shadow-xs border-0 text-[10px] sm:text-xs"
           >
             {post.category}
           </Badge>
@@ -53,7 +53,7 @@ export function FeaturedBlogCard({ post }: FeaturedBlogCardProps) {
       </Link>
 
       {/* Content half */}
-      <div className="lg:col-span-5 p-6 sm:p-10 flex flex-col justify-between">
+      <div className="lg:col-span-5 p-5 sm:p-10 flex flex-col justify-between w-full min-w-0">
         <div>
           {/* Metadata */}
           <div className="flex items-center gap-3 text-xs text-slate-400 font-medium mb-4">

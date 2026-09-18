@@ -30,14 +30,14 @@ export function HomeBlogSection() {
   }
 
   return (
-    <section className="py-20 sm:py-28 bg-slate-50/70 border-t border-slate-200/60 relative overflow-hidden">
+    <section className="w-full max-w-full min-w-0 py-16 sm:py-28 bg-slate-50/70 border-t border-slate-200/60 relative overflow-hidden">
       {/* Subtle background glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-brand-100/40 blur-[120px] rounded-full pointer-events-none -z-10" />
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
-          <div className="max-w-2xl">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 sm:mb-16 w-full max-w-full min-w-0">
+          <div className="max-w-2xl min-w-0">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-50 border border-brand-100 text-brand text-xs font-bold mb-4 shadow-2xs">
               <BookOpen className="h-3.5 w-3.5 text-brand" />
               <span>SABINA LEARNING HUB</span>
@@ -53,7 +53,7 @@ export function HomeBlogSection() {
           <Link href="/blog" className="shrink-0">
             <Button
               variant="outline"
-              className="border-slate-300 hover:border-slate-900 bg-white text-slate-900 font-bold gap-2 rounded-2xl shadow-xs"
+              className="border-slate-300 hover:border-slate-900 bg-white text-slate-900 font-bold gap-2 rounded-2xl shadow-xs min-h-[44px]"
             >
               <span>Explore All Articles</span>
               <ArrowRight className="h-4 w-4" />
@@ -63,9 +63,9 @@ export function HomeBlogSection() {
 
         {/* Loading skeleton or 3-column Blog Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-3xl border border-slate-200 p-4 space-y-4 animate-pulse">
+              <div key={i} className="w-full max-w-full min-w-0 bg-white rounded-3xl border border-slate-200 p-4 space-y-4 animate-pulse">
                 <div className="aspect-16/10 bg-slate-200 rounded-2xl w-full" />
                 <div className="h-4 bg-slate-200 rounded w-1/3" />
                 <div className="h-6 bg-slate-200 rounded w-4/5" />
@@ -75,7 +75,7 @@ export function HomeBlogSection() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {posts.map((post) => (
               <BlogCard key={post.id} post={post} />
             ))}
