@@ -649,7 +649,7 @@ export function HomePageClient({
                       <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
                     <Badge variant="subtle" size="sm" className="font-bold text-[10px] sm:text-[11px] bg-slate-100 text-slate-700 shrink-0">
-                      {sub.tutorCount || 25}+ Tutors
+                      {sub.tutorCount ? `${sub.tutorCount}+ Tutors` : "Top Subject"}
                     </Badge>
                   </div>
 
@@ -678,19 +678,19 @@ export function HomePageClient({
       </section>
 
       {/* ─────────────────────────────────────────────────────────────
-          4. FEATURED ACCREDITED INSTRUCTORS (Instant Render)
+          4. FEATURED TUTORS
       ───────────────────────────────────────────────────────────── */}
-      <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-8 w-full max-w-full min-w-0">
+      <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 py-10 sm:py-16 space-y-6 sm:space-y-8">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
+            <span className="inline-flex items-center gap-1.5 text-xs font-black text-brand uppercase tracking-widest bg-brand-50 px-3 py-1 rounded-full">
+              <Sparkles className="h-3.5 w-3.5 text-brand" />
               {tutSection.pretitle}
             </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-950 tracking-[-0.02em] leading-tight mt-1.5">
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 font-heading tracking-tight mt-2">
               {tutSection.title}
             </h2>
           </div>
-
           <Link href="/find-tutors">
             <Button variant="default" size="sm" className="font-bold bg-brand hover:brightness-90 text-white rounded-xl shadow-subtle" rightIcon={<ArrowRight className="h-3.5 w-3.5" />}>
               {tutSection.ctaText}
@@ -704,11 +704,37 @@ export function HomePageClient({
               <TutorCardSkeleton key={idx} />
             ))}
           </div>
-        ) : (
+        ) : featuredTutors.length > 0 ? (
           <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {featuredTutors.map((tutor) => (
               <TutorCard key={tutor.id} tutor={tutor} onBook={handleBook} />
             ))}
+          </div>
+        ) : (
+          <div className="w-full rounded-3xl border border-dashed border-slate-300 bg-white/80 p-8 sm:p-12 text-center max-w-2xl mx-auto space-y-4">
+            <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand shadow-subtle mx-auto">
+              <GraduationCap className="h-7 w-7" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg sm:text-xl font-black text-slate-900 font-heading">
+                New Tutor Applications Are Open
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+                We are actively onboarding elite educators across our 5 flagship subjects. Join our certified faculty or browse incoming tutors.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link href="/become-a-tutor">
+                <Button variant="default" size="sm" className="font-bold bg-brand text-white rounded-xl shadow-subtle" rightIcon={<ArrowRight className="h-3.5 w-3.5" />}>
+                  Apply to Become a Tutor
+                </Button>
+              </Link>
+              <Link href="/find-tutors">
+                <Button variant="outline" size="sm" className="font-bold text-slate-700 rounded-xl">
+                  Explore Subject Catalog
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
       </section>
