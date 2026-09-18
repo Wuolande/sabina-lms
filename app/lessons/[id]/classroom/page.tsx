@@ -137,6 +137,8 @@ function ClassinClassroomStage({
   onTimeExtended,
   scheduledEnd,
   onTimerResync,
+  connectionError,
+  mediaDeviceWarning,
 }: {
   lesson: Lesson360Aggregate;
   isTutor: boolean;
@@ -153,6 +155,10 @@ function ClassinClassroomStage({
   scheduledEnd?: string;
   /** Called when a reconnect forces a timer wall-clock correction */
   onTimerResync?: (newSecondsRemaining: number) => void;
+  /** Error from LiveKitRoom signaling/connection */
+  connectionError?: string | null;
+  /** Media device access warning (camera/mic permission denied) */
+  mediaDeviceWarning?: boolean;
 }) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
@@ -623,6 +629,31 @@ function ClassinClassroomStage({
         </div>
       )}
 
+      {/* ─── LIVEKIT CONNECTION DIAGNOSTIC BANNER ─── */}
+      {connectionError && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-rose-950/95 border border-rose-700/80 text-white px-5 py-2.5 rounded-2xl shadow-2xl max-w-xl text-xs animate-in fade-in slide-in-from-top-2">
+          <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+          <div className="flex-1 text-left">
+            <p className="font-bold text-rose-200">Video Server Connection Warning</p>
+            <p className="text-rose-300/80 text-[11px] mt-0.5">
+              {connectionError.includes("invalid API key")
+                ? "LiveKit authentication failed (invalid API key). Local video preview is active. To enable peer video, configure LiveKit Cloud keys in Admin Settings."
+                : connectionError}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MEDIA DEVICE PERMISSION WARNING ─── */}
+      {mediaDeviceWarning && (
+        <div className="absolute top-28 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 bg-amber-950/95 border border-amber-700/80 text-white px-4 py-2 rounded-2xl shadow-2xl text-xs animate-in fade-in">
+          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+          <span className="text-amber-200 text-[11px]">
+            Camera or Microphone access was denied. Please allow permissions in your browser address bar.
+          </span>
+        </div>
+      )}
+
       {/* ─── MAIN STAGE VIEWPORT + SIDEBAR ─── */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Floating ClassIn Tools Palette (Timer, Dice, Trophy, Hand-raise) */}
@@ -715,6 +746,7 @@ function ClassinClassroomStage({
                     onToggleCamera={isTutor ? handleToggleCamera : undefined}
                     className="w-full h-full"
                     videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                    connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
                   />
                 </div>
                 <div className="flex-1 rounded-3xl overflow-hidden border border-slate-800">
@@ -737,6 +769,7 @@ function ClassinClassroomStage({
                     className="w-full h-full"
                     onAwardTrophy={isTutor ? () => handleAwardTrophy("Excellent answer!") : undefined}
                     videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                    connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
                   />
                 </div>
               </div>
@@ -769,6 +802,7 @@ function ClassinClassroomStage({
                 onToggleCamera={isTutor ? handleToggleCamera : undefined}
                 className="w-full h-full rounded-3xl"
                 videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
               />
               <ParticipantVideoCard
                 displayName={!isTutor ? `${studentName} (You)` : studentName}
@@ -789,6 +823,7 @@ function ClassinClassroomStage({
                 className="w-full h-full rounded-3xl"
                 onAwardTrophy={isTutor ? () => handleAwardTrophy("Great insight!") : undefined}
                 videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
               />
             </div>
           )}
@@ -809,6 +844,7 @@ function ClassinClassroomStage({
                   onToggleMic={isTutor ? handleToggleMic : undefined}
                   onToggleCamera={isTutor ? handleToggleCamera : undefined}
                   videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                  connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
                 />
                 <ParticipantVideoCard
                   displayName={!isTutor ? `${studentName} (You)` : studentName}
@@ -827,6 +863,7 @@ function ClassinClassroomStage({
                   onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
                   onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
                   videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                  connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
                 />
               </div>
 
@@ -901,6 +938,9 @@ export default function LiveClassroomPage() {
   // Livekit state
   const [livekitToken, setLivekitToken] = React.useState<string>("");
   const [livekitUrl, setLivekitUrl] = React.useState<string>("");
+  const [tokenError, setTokenError] = React.useState<string | null>(null);
+  const [livekitConnectionError, setLivekitConnectionError] = React.useState<string | null>(null);
+  const [mediaDeviceWarning, setMediaDeviceWarning] = React.useState(false);
 
   // External provider fallback state
   const [joinUrl, setJoinUrl] = React.useState<string>("");
@@ -1018,6 +1058,10 @@ export default function LiveClassroomPage() {
               const data = await tokenRes.json();
               setLivekitToken(data.token);
               setLivekitUrl(data.serverUrl || defaultLivekitUrl);
+              setTokenError(null);
+            } else {
+              const errData = await tokenRes.json().catch(() => ({}));
+              setTokenError(errData.error || "Failed to authenticate with the video room.");
             }
           } else {
             fetchJoinUrl(provider, roomName, topic);
@@ -1309,6 +1353,13 @@ export default function LiveClassroomPage() {
             serverUrl={livekitUrl}
             data-lk-theme="default"
             className="flex-1 flex flex-col overflow-hidden w-full h-full"
+            onError={(err) => {
+              console.error("[LiveKitRoom error]", err);
+              setLivekitConnectionError(err.message || "Failed to establish real-time video connection");
+            }}
+            onMediaDeviceFailure={() => {
+              setMediaDeviceWarning(true);
+            }}
           >
             <ClassinClassroomStage
               lesson={lesson!}
@@ -1324,8 +1375,38 @@ export default function LiveClassroomPage() {
               onTimeExtended={(addSec) => setSecondsRemaining((prev) => prev + addSec)}
               scheduledEnd={lesson?.scheduledEnd}
               onTimerResync={(newRemaining) => setSecondsRemaining(newRemaining)}
+              connectionError={livekitConnectionError}
+              mediaDeviceWarning={mediaDeviceWarning}
             />
           </LiveKitRoom>
+        ) : tokenError ? (
+          <div className="flex-1 flex items-center justify-center rounded-2xl border border-rose-900/40 bg-slate-900 text-center p-8">
+            <div className="space-y-4 max-w-md w-full">
+              <div className="w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
+                <AlertCircle className="w-7 h-7" />
+              </div>
+              <h3 className="text-base font-bold text-white">Classroom Access Notice</h3>
+              <p className="text-xs text-rose-300 leading-relaxed bg-rose-950/40 p-3.5 rounded-xl border border-rose-900/60">
+                {tokenError}
+              </p>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                  className="text-xs"
+                >
+                  Retry Connection
+                </Button>
+                <Link
+                  href={currentUserRole === "TUTOR" ? `/tutor/lessons/${id}` : `/student/lessons/${id}`}
+                  className="text-xs text-slate-400 hover:text-white transition px-3 py-1.5 rounded-lg bg-slate-800"
+                >
+                  Return to Dashboard
+                </Link>
+              </div>
+            </div>
+          </div>
         ) : (
           <div className="flex-1 flex items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 text-center p-8">
             <div className="space-y-3 max-w-md">
