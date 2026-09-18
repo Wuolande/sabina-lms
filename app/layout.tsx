@@ -71,15 +71,16 @@ export default async function RootLayout({
   const cssVars = `:root{--color-primary:${theme.primaryColor};--color-secondary:${theme.secondaryColor};}`;
 
   return (
-    <html lang="en" suppressHydrationWarning className={`h-full ${sans.variable} ${heading.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`h-full overflow-x-hidden max-w-[100vw] ${sans.variable} ${heading.variable}`}>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
         {/* Inject dynamic brand CSS variables — server-rendered, zero FOUC */}
         <style dangerouslySetInnerHTML={{ __html: cssVars }} />
         {theme.logoUrl && (
           <link rel="icon" href={theme.logoUrl} />
         )}
       </head>
-      <body suppressHydrationWarning className="flex min-h-full flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-100 selection:text-brand-900">
+      <body suppressHydrationWarning className="flex min-h-full w-full max-w-[100vw] overflow-x-hidden flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-100 selection:text-brand-900">
         <ThemeSynchronizer initialPrimary={theme.primaryColor} initialSecondary={theme.secondaryColor} />
         <LogoProvider initialLogoUrl={theme.logoUrl}>
           <ModalProvider>

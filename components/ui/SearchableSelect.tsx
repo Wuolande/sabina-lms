@@ -117,7 +117,7 @@ export function SearchableSelect({
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl border text-left text-xs sm:text-sm font-medium transition-all bg-white shadow-xs cursor-pointer",
+          "w-full min-h-[44px] flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-2xl border text-left text-xs sm:text-sm font-medium transition-all bg-white shadow-xs cursor-pointer",
           isOpen
             ? "border-brand ring-2 ring-brand/20"
             : "border-slate-200 hover:border-slate-300",
@@ -169,13 +169,13 @@ export function SearchableSelect({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-full h-8 pl-8 pr-3 text-xs bg-white rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
+                className="w-full h-10 pl-8 pr-3 text-base sm:text-xs bg-white rounded-xl border border-slate-200 font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
           </div>
 
           {/* Options List */}
-          <div className="overflow-y-auto p-1.5 space-y-0.5 max-h-56">
+          <div className="overflow-y-auto p-1.5 space-y-0.5 max-h-56 touch-scroll">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => {
                 const isSelected = opt.value === value;
@@ -185,7 +185,7 @@ export function SearchableSelect({
                     type="button"
                     onClick={() => handleSelect(opt.value)}
                     className={cn(
-                      "w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs sm:text-sm font-medium transition-colors cursor-pointer",
+                      "w-full min-h-[40px] flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs sm:text-sm font-medium transition-colors cursor-pointer",
                       isSelected
                         ? "bg-brand-50 text-brand-900 font-bold"
                         : "text-slate-700 hover:bg-slate-100/80"

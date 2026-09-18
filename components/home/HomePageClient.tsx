@@ -279,21 +279,21 @@ export function HomePageClient({
   }, [displayText, isDeleting, currentTitleIndex, typewriterTitles]);
 
   return (
-    <div className="flex flex-col space-y-24 sm:space-y-32 pb-24 overflow-hidden bg-white">
+    <div className="flex flex-col space-y-14 sm:space-y-28 pb-16 sm:pb-24 overflow-x-hidden w-full max-w-full bg-white">
       
       {/* ─────────────────────────────────────────────────────────────
           1. HERO SECTION (Instant Uploaded Image & CMS)
       ───────────────────────────────────────────────────────────── */}
-      <section className="relative pt-6 sm:pt-14 pb-16 lg:pb-24 overflow-hidden">
+      <section className="relative pt-4 sm:pt-14 pb-12 lg:pb-24 overflow-hidden">
         {/* Ambient atmospheric gradients */}
-        <div className="absolute top-0 right-1/4 -mt-24 w-96 h-96 rounded-full bg-brand-100/50 blur-3xl pointer-events-none" />
-        <div className="absolute top-1/3 left-0 -ml-20 w-80 h-80 rounded-full bg-brand-100/40 blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-1/4 -mt-24 w-72 sm:w-96 h-72 sm:h-96 rounded-full bg-brand-100/50 blur-3xl pointer-events-none" />
+        <div className="absolute top-1/3 left-0 -ml-20 w-60 sm:w-80 h-60 sm:h-80 rounded-full bg-brand-100/40 blur-3xl pointer-events-none" />
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
             
             {/* ── LEFT COLUMN: Text, CTA, Search and Social Proof ── */}
-            <div className="lg:col-span-6 space-y-6 sm:space-y-7 text-left z-10">
+            <div className="lg:col-span-6 space-y-5 sm:space-y-7 text-left z-10">
               
               {/* Pre-title Tag */}
               <div>
@@ -303,25 +303,25 @@ export function HomePageClient({
               </div>
 
               {/* Main Headline with Typewriter Keyboard Effect */}
-              <div className="min-h-[105px] sm:min-h-[160px] lg:min-h-[175px] flex items-start">
-                <h1 className="text-3xl sm:text-5xl lg:text-[54px] xl:text-[58px] font-extrabold tracking-[-0.03em] text-slate-950 leading-[1.15] sm:leading-[1.12]">
+              <div className="min-h-[90px] sm:min-h-[160px] lg:min-h-[175px] flex items-start">
+                <h1 className="text-2xl sm:text-5xl lg:text-[54px] xl:text-[58px] font-extrabold tracking-[-0.03em] text-slate-950 leading-[1.15] sm:leading-[1.12]">
                   {displayText}
-                  <span className="inline-block w-[3.5px] h-[0.85em] bg-brand ml-1.5 rounded-full animate-cursor align-middle" />
+                  <span className="inline-block w-[3px] sm:w-[3.5px] h-[0.85em] bg-brand ml-1 rounded-full animate-cursor align-middle" />
                 </h1>
               </div>
 
               {/* Subheading */}
-              <p className="text-base sm:text-[17px] text-slate-500 font-normal leading-relaxed max-w-lg">
+              <p className="text-sm sm:text-[17px] text-slate-500 font-normal leading-relaxed max-w-lg">
                 {hero.subheading}
               </p>
 
               {/* Primary Hero Actions: Preply-style "Find Your Tutor" Matchmaker CTA & Quick Search */}
               <div className="space-y-3 max-w-lg">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
                   <button
                     type="button"
                     onClick={() => setIsDiscoveryOpen(true)}
-                    className="h-14 px-6 sm:px-7 rounded-2xl bg-brand hover:opacity-90 text-white font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer group shrink-0"
+                    className="h-12 sm:h-14 px-5 sm:px-7 rounded-2xl bg-brand hover:opacity-90 text-white font-black text-xs sm:text-base flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer group shrink-0 min-h-[44px]"
                   >
                     <Sparkles className="h-4 w-4 text-accent fill-accent group-hover:rotate-12 transition-transform" />
                     <span>Find Your Tutor</span>
@@ -335,11 +335,11 @@ export function HomePageClient({
                         placeholder="Search subject or tutor..."
                         value={quickQuery}
                         onChange={(e) => setQuickQuery(e.target.value)}
-                        className="w-full h-14 rounded-2xl border border-slate-200 bg-white pl-4 pr-11 text-xs sm:text-sm font-medium text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                        className="w-full h-12 sm:h-14 rounded-2xl border border-slate-200 bg-white pl-4 pr-11 text-xs sm:text-sm font-medium text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-brand min-h-[44px]"
                       />
                       <button
                         type="submit"
-                        className="absolute right-2 top-2.5 h-9 w-9 rounded-xl bg-brand hover:brightness-90 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-subtle"
+                        className="absolute right-1.5 top-1.5 sm:top-2.5 h-9 w-9 rounded-xl bg-brand hover:brightness-90 text-white flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-subtle min-h-[36px] min-w-[36px]"
                         title="Search tutors"
                         aria-label="Search tutors"
                       >
@@ -351,7 +351,7 @@ export function HomePageClient({
 
                 {/* Matchmaker Trust Micro-Badge */}
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                  <span className="flex h-2 w-2 relative">
+                  <span className="flex h-2 w-2 relative shrink-0">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                   </span>
@@ -360,7 +360,7 @@ export function HomePageClient({
               </div>
 
               {/* Popular Tags */}
-              <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-500">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs font-semibold text-slate-500">
                 <span className="text-slate-400">Popular:</span>
                 {hero.popularTags?.map((tag: any, idx: number) => (
                   <Link
@@ -374,45 +374,45 @@ export function HomePageClient({
               </div>
 
               {/* Social Proof: Avatars + Stars */}
-              <div className="flex items-center gap-4 pt-3 border-t border-slate-100">
-                <div className="flex -space-x-2.5 overflow-hidden">
+              <div className="flex items-center gap-3 sm:gap-4 pt-3 border-t border-slate-100">
+                <div className="flex -space-x-2 overflow-hidden shrink-0">
                   <img
-                    className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
+                    className="inline-block h-8 w-8 sm:h-10 sm:w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120"
                     alt="Student 1"
                   />
                   <img
-                    className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
+                    className="inline-block h-8 w-8 sm:h-10 sm:w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
                     src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=120"
                     alt="Student 2"
                   />
                   <img
-                    className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
+                    className="inline-block h-8 w-8 sm:h-10 sm:w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
                     src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=120"
                     alt="Student 3"
                   />
                   <img
-                    className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
+                    className="inline-block h-8 w-8 sm:h-10 sm:w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
                     src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=120"
                     alt="Student 4"
                   />
                   <img
-                    className="inline-block h-10 w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
+                    className="inline-block h-8 w-8 sm:h-10 sm:w-10 rounded-full ring-2 ring-white object-cover shadow-sm"
                     src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=120"
                     alt="Student 5"
                   />
                 </div>
 
-                <div className="space-y-0.5">
+                <div className="space-y-0.5 min-w-0">
                   <div className="flex items-center gap-1">
                     <div className="flex text-amber-400 gap-0.5">
                       {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <Star key={i} className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-amber-400 text-amber-400" />
                       ))}
                     </div>
-                    <span className="text-sm font-black text-slate-900 ml-1">{hero.socialProofRating}</span>
+                    <span className="text-xs sm:text-sm font-black text-slate-900 ml-1">{hero.socialProofRating}</span>
                   </div>
-                  <p className="text-xs font-semibold text-slate-500">
+                  <p className="text-[11px] sm:text-xs font-semibold text-slate-500 truncate">
                     {hero.socialProofCount}
                   </p>
                 </div>
@@ -420,26 +420,26 @@ export function HomePageClient({
             </div>
 
             {/* ── RIGHT COLUMN: Circular Composition + Instant Uploaded Student Photo + Floating Cards ── */}
-            <div className="lg:col-span-6 relative flex items-center justify-center lg:justify-end min-h-[460px] sm:min-h-[540px]">
-              <div className="relative w-full max-w-[480px] aspect-square flex items-center justify-center">
+            <div className="lg:col-span-6 relative flex flex-col items-center justify-center lg:justify-end min-h-0 sm:min-h-[540px] w-full">
+              <div className="relative w-full max-w-[280px] sm:max-w-[400px] lg:max-w-[480px] aspect-square flex items-center justify-center">
                 
                 {/* Subtle Ambient Radial Glow */}
-                <div className="absolute inset-0 rounded-full bg-brand/10 blur-2xl pointer-events-none scale-105" />
+                <div className="absolute inset-0 rounded-full bg-brand/10 blur-2xl pointer-events-none scale-100 sm:scale-105" />
 
                 {/* Thin Outer Contour Ring */}
-                <div className="absolute inset-0 rounded-full border-2 border-brand/70 -rotate-12 scale-105 pointer-events-none transition-transform duration-700 hover:rotate-0" />
+                <div className="absolute inset-0 rounded-full border-2 border-brand/70 -rotate-12 scale-100 sm:scale-105 pointer-events-none transition-transform duration-700 hover:rotate-0" />
 
                 {/* Dynamic Brand Circular Backdrop */}
-                <div className="absolute inset-3 rounded-full bg-gradient-to-br from-brand via-brand/90 to-brand-950 shadow-2xl overflow-hidden" />
+                <div className="absolute inset-2 sm:inset-3 rounded-full bg-gradient-to-br from-brand via-brand/90 to-brand-950 shadow-2xl overflow-hidden" />
 
                 {/* Dynamic Accent Circle Accent */}
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 h-10 w-10 rounded-full bg-accent shadow-md z-20 animate-float" />
+                <div className="absolute right-1 sm:right-0 top-1/2 -translate-y-1/2 sm:translate-x-3 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-accent shadow-md z-20 animate-float" />
 
                 {/* Dynamic Brand Dot Accent */}
-                <div className="absolute left-2 bottom-12 h-14 w-14 rounded-full bg-brand shadow-md z-20 animate-float-alt" />
+                <div className="absolute left-1 sm:left-2 bottom-6 sm:bottom-12 h-10 w-10 sm:h-14 sm:w-14 rounded-full bg-brand shadow-md z-20 animate-float-alt" />
 
-                {/* Main Hero Student Photo (Instant Uploaded Cloudinary Photo with High Priority) */}
-                <div className="relative z-10 h-full w-full flex items-end justify-center overflow-hidden rounded-full pt-4">
+                {/* Main Hero Student Photo */}
+                <div className="relative z-10 h-full w-full flex items-end justify-center overflow-hidden rounded-full pt-3 sm:pt-4">
                   <img
                     src={hero.heroStudentImage || DEFAULT_HERO_IMAGE}
                     alt="Featured Student"
@@ -512,8 +512,8 @@ export function HomePageClient({
 
               </div>
 
-              {/* Mobile Highlights Strip (< 640px) — Zero Overlap / Zero Overflow */}
-              <div className="sm:hidden grid grid-cols-3 gap-2 w-full mt-5 p-3 rounded-2xl bg-slate-50/90 border border-slate-100 text-center shadow-xs">
+              {/* Mobile Highlights Strip (< 640px) — Stacked cleanly below photo */}
+              <div className="sm:hidden grid grid-cols-3 gap-2 w-full max-w-[340px] mt-4 p-3 rounded-2xl bg-slate-50/90 border border-slate-100 text-center shadow-xs">
                 <div className="space-y-0.5">
                   <span className="text-sm font-black text-slate-950 font-heading block">
                     <CountUp to={hero.floatingCard1?.value ?? 20} suffix={hero.floatingCard1?.suffix || "+"} duration={1400} />
@@ -549,41 +549,41 @@ export function HomePageClient({
           2. STATS & CREDIBILITY BAR (Dynamic CMS CountUp)
       ───────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-slate-100 bg-slate-50/80 p-6 sm:p-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-          <div className="space-y-1">
-            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 font-heading">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/80 p-4 sm:p-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-center">
+          <div className="space-y-0.5 sm:space-y-1">
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
               <CountUp to={stats.stat1?.value ?? 250} suffix={stats.stat1?.suffix || "+"} duration={1800} />
             </h3>
-            <p className="text-xs sm:text-sm font-semibold text-slate-500">
+            <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
               {stats.stat1?.label || "Verified Instructors"}
             </p>
           </div>
 
-          <div className="space-y-1">
-            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 font-heading">
+          <div className="space-y-0.5 sm:space-y-1">
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
               <CountUp to={stats.stat2?.value ?? 15000} suffix={stats.stat2?.suffix || "+"} duration={2000} />
             </h3>
-            <p className="text-xs sm:text-sm font-semibold text-slate-500">
+            <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
               {stats.stat2?.label || "Enrolled Students"}
             </p>
           </div>
 
-          <div className="space-y-1">
-            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 font-heading">
+          <div className="space-y-0.5 sm:space-y-1">
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
               <CountUp to={stats.stat3?.value ?? 98.9} decimals={stats.stat3?.decimals ?? 1} suffix={stats.stat3?.suffix || "%"} duration={1900} />
             </h3>
-            <p className="text-xs sm:text-sm font-semibold text-slate-500">
+            <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
               {stats.stat3?.label || "Lesson Success Rate"}
             </p>
           </div>
 
-          <div className="space-y-1">
-            <h3 className="text-3xl sm:text-4xl font-black text-slate-950 font-heading inline-flex items-center justify-center gap-1.5">
+          <div className="space-y-0.5 sm:space-y-1">
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading inline-flex items-center justify-center gap-1 sm:gap-1.5">
               <CountUp to={stats.stat4?.value ?? 4.98} decimals={stats.stat4?.decimals ?? 2} duration={1800} />
-              <Star className="h-6 w-6 sm:h-7 sm:w-7 text-amber-400 fill-amber-400 inline-block mb-1 shrink-0" />
+              <Star className="h-4 w-4 sm:h-7 sm:w-7 text-amber-400 fill-amber-400 inline-block mb-0.5 sm:mb-1 shrink-0" />
             </h3>
-            <p className="text-xs sm:text-sm font-semibold text-slate-500">
-              {stats.stat4?.label || "Average Student Rating"}
+            <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
+              {stats.stat4?.label || "Average Rating"}
             </p>
           </div>
         </div>
@@ -611,13 +611,13 @@ export function HomePageClient({
         </div>
 
         {/* Category Filter Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-4">
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 touch-scroll scrollbar-hide">
           {categories.map((cat) => (
             <button
               key={cat.id}
               type="button"
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer min-h-[38px] ${
                 selectedCategory === cat.id
                   ? "bg-brand text-white shadow-subtle font-extrabold"
                   : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -630,42 +630,42 @@ export function HomePageClient({
 
         {/* Subjects Grid */}
         {isSubjectsLoading && filteredSubjects.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((idx) => (
               <SubjectCardSkeleton key={idx} />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
             {filteredSubjects.map((sub) => (
               <Link
                 key={sub.id}
                 href={`/find-tutors?subject=${sub.slug}`}
-                className="group rounded-3xl border border-slate-200/80 bg-white p-6 shadow-card hover:shadow-elevation hover:border-brand/40 transition-all duration-200 flex flex-col justify-between"
+                className="group rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-6 shadow-card hover:shadow-elevation hover:border-brand/40 transition-all duration-200 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand group-hover:bg-brand group-hover:text-white transition-all shadow-subtle">
-                      <BookOpen className="h-6 w-6" />
+                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-brand-50 text-brand group-hover:bg-brand group-hover:text-white transition-all shadow-subtle">
+                      <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
-                    <Badge variant="subtle" size="sm" className="font-bold text-[11px] bg-slate-100 text-slate-700">
+                    <Badge variant="subtle" size="sm" className="font-bold text-[10px] sm:text-[11px] bg-slate-100 text-slate-700">
                       {sub.tutorCount || 25}+ Tutors
                     </Badge>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-900 group-hover:text-brand transition-colors mt-4">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 group-hover:text-brand transition-colors mt-3 sm:mt-4">
                     {sub.name}
                   </h3>
                   <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mt-0.5">
                     {sub.category}
                   </span>
 
-                  <p className="text-xs text-slate-500 line-clamp-2 mt-2 leading-relaxed">
+                  <p className="text-xs text-slate-500 line-clamp-2 mt-1.5 sm:mt-2 leading-relaxed">
                     {sub.description}
                   </p>
                 </div>
 
-                <div className="mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-brand">
+                <div className="mt-4 sm:mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-brand">
                   <span>From $25/hr</span>
                   <span className="flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     Explore <ArrowRight className="h-3.5 w-3.5" />
@@ -855,50 +855,50 @@ export function HomePageClient({
 
               {activeTourTab === "whiteboard" && (
                 <div className="animate-fade-in flex-1 space-y-4">
-                  <div className="flex items-center justify-between bg-slate-900 p-2 rounded-2xl border border-slate-800 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-accent text-slate-950 px-3 py-1 rounded-xl font-bold flex items-center gap-1">
+                  <div className="flex items-center justify-between gap-2 bg-slate-900 p-2 rounded-2xl border border-slate-800 text-xs overflow-x-auto touch-scroll scrollbar-hide">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="bg-accent text-slate-950 px-3 py-1 rounded-xl font-bold flex items-center gap-1 shrink-0 whitespace-nowrap">
                         <PenTool className="h-3.5 w-3.5" /> Pen (Active)
                       </span>
-                      <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer">
+                      <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer shrink-0 whitespace-nowrap">
                         Highlighter
                       </span>
-                      <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer font-serif">
+                      <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer font-serif shrink-0 whitespace-nowrap">
                         LaTeX Equation ($)
                       </span>
-                      <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer">
+                      <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer shrink-0 whitespace-nowrap">
                         Python Code
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                      <span>Grid: 100%</span>
-                      <Button variant="outline" size="sm" className="h-7 text-xs border-slate-700 text-white">
-                        Export Notes PDF
+                    <div className="flex items-center gap-2 text-[11px] text-slate-400 shrink-0">
+                      <span className="hidden sm:inline">Grid: 100%</span>
+                      <Button variant="outline" size="sm" className="h-7 text-xs border-slate-700 text-white whitespace-nowrap">
+                        Export PDF
                       </Button>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-slate-950 border border-slate-800 p-6 font-mono relative min-h-[260px] flex flex-col justify-center space-y-4">
+                  <div className="rounded-2xl bg-slate-950 border border-slate-800 p-4 sm:p-6 font-mono relative min-h-[240px] sm:min-h-[260px] flex flex-col justify-center space-y-3 sm:space-y-4">
                     <div className="space-y-2">
-                      <div className="text-accent text-sm font-bold">
+                      <div className="text-accent text-xs sm:text-sm font-bold truncate">
                         // Theorem: Fundamental Theorem of Calculus
                       </div>
-                      <div className="text-xl sm:text-2xl font-black text-white font-serif bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 inline-block">
+                      <div className="text-base sm:text-2xl font-black text-white font-serif bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800/80 inline-block overflow-x-auto max-w-full">
                         ∫ [0 to π] x · sin(x) dx = π
                       </div>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-400 leading-relaxed">
                         Annotation by <span className="text-accent font-bold">Dr. Elena Rostova</span>: &quot;Integrate by parts: let u = x and dv = sin(x)dx &rarr; du = dx, v = -cos(x)&quot;
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-3 pt-2 text-xs text-slate-400 border-t border-slate-800/80">
+                    <div className="flex items-center gap-2 sm:gap-3 pt-2 text-[11px] sm:text-xs text-slate-400 border-t border-slate-800/80 flex-wrap">
                       <span className="flex items-center gap-1.5 text-accent font-bold">
                         <span className="h-2 w-2 rounded-full bg-accent" />
-                        2 Users drawing simultaneously
+                        2 Users drawing live
                       </span>
                       <span>•</span>
-                      <span>Alex Rivera cursor active on Step 3</span>
+                      <span className="truncate">Alex Rivera cursor active on Step 3</span>
                     </div>
                   </div>
                 </div>
@@ -906,37 +906,37 @@ export function HomePageClient({
 
               {activeTourTab === "notes" && (
                 <div className="animate-fade-in flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="rounded-2xl bg-slate-900 p-5 border border-slate-800 space-y-3">
+                  <div className="rounded-2xl bg-slate-900 p-4 sm:p-5 border border-slate-800 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-accent flex items-center gap-1.5">
-                        <FileText className="h-4 w-4" /> AP_Calculus_Practice_Set_04.pdf
+                      <span className="text-xs font-bold text-accent flex items-center gap-1.5 truncate">
+                        <FileText className="h-4 w-4 shrink-0" /> AP_Calculus_Practice_04.pdf
                       </span>
-                      <span className="text-[10px] text-slate-400">2.4 MB • Verified</span>
+                      <span className="text-[10px] text-slate-400 shrink-0">2.4 MB</span>
                     </div>
-                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                    <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
                       <div className="flex items-center justify-between text-slate-300">
-                        <span>Q1. Directional Derivatives</span>
-                        <span className="text-accent font-bold">✓ Completed</span>
+                        <span className="truncate mr-2">Q1. Directional Derivatives</span>
+                        <span className="text-accent font-bold shrink-0">✓ Done</span>
                       </div>
                       <div className="flex items-center justify-between text-slate-300">
-                        <span>Q2. Gradient Vector Orthogonality</span>
-                        <span className="text-accent font-bold">✓ Completed</span>
+                        <span className="truncate mr-2">Q2. Gradient Orthogonality</span>
+                        <span className="text-accent font-bold shrink-0">✓ Done</span>
                       </div>
                       <div className="flex items-center justify-between text-slate-300">
-                        <span>Q3. Tangent Plane Equations</span>
-                        <span className="text-amber-400 font-bold">In Progress</span>
+                        <span className="truncate mr-2">Q3. Tangent Plane Equations</span>
+                        <span className="text-amber-400 font-bold shrink-0">In Progress</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl bg-slate-900 p-5 border border-slate-800 flex flex-col justify-between space-y-4">
+                  <div className="rounded-2xl bg-slate-900 p-4 sm:p-5 border border-slate-800 flex flex-col justify-between space-y-4">
                     <div className="space-y-2">
-                      <h4 className="text-sm font-bold text-white">Tutor Lesson Feedback</h4>
+                      <h4 className="text-sm font-bold text-white">Tutor Feedback</h4>
                       <p className="text-xs text-slate-300 leading-relaxed">
-                        “Alex showed outstanding comprehension of multi-variable gradients today. Focus on 3D surface visualizations before our next session on Thursday.”
+                        “Alex showed outstanding comprehension of multi-variable gradients today. Focus on 3D surface visualizations before Thursday.”
                       </p>
                     </div>
-                    <Button variant="default" size="sm" className="w-full font-bold bg-accent hover:opacity-90 text-slate-950 rounded-xl">
+                    <Button variant="default" size="sm" className="w-full font-bold bg-accent hover:opacity-90 text-slate-950 rounded-xl min-h-[44px]">
                       Download Lesson Summary Notes
                     </Button>
                   </div>
@@ -944,15 +944,15 @@ export function HomePageClient({
               )}
 
               {activeTourTab === "goals" && (
-                <div className="animate-fade-in flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="rounded-2xl bg-slate-900 p-5 border border-slate-800 space-y-2 text-center flex flex-col justify-center">
-                    <span className="text-3xl">🔥</span>
-                    <strong className="text-2xl font-black text-white font-heading">14 Days</strong>
+                <div className="animate-fade-in flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                  <div className="rounded-2xl bg-slate-900 p-4 sm:p-5 border border-slate-800 space-y-1.5 text-center flex flex-col justify-center">
+                    <span className="text-2xl sm:text-3xl">🔥</span>
+                    <strong className="text-xl sm:text-2xl font-black text-white font-heading">14 Days</strong>
                     <span className="text-xs text-amber-400 font-bold">Learning Streak</span>
                     <p className="text-[11px] text-slate-400">Top 5% student consistency</p>
                   </div>
 
-                  <div className="rounded-2xl bg-slate-900 p-5 border border-slate-800 space-y-3 flex flex-col justify-center">
+                  <div className="rounded-2xl bg-slate-900 p-4 sm:p-5 border border-slate-800 space-y-2.5 flex flex-col justify-center">
                     <div className="flex justify-between text-xs font-bold">
                       <span className="text-white">IELTS 7.5+ Target</span>
                       <span className="text-accent">75%</span>
@@ -963,8 +963,8 @@ export function HomePageClient({
                     <span className="text-[11px] text-slate-400 block text-center">On track for exam in Nov 2026</span>
                   </div>
 
-                  <div className="rounded-2xl bg-slate-900 p-5 border border-slate-800 space-y-2 text-center flex flex-col justify-center">
-                    <strong className="text-2xl font-black text-white font-heading">48.5 hrs</strong>
+                  <div className="rounded-2xl bg-slate-900 p-4 sm:p-5 border border-slate-800 space-y-1.5 text-center flex flex-col justify-center">
+                    <strong className="text-xl sm:text-2xl font-black text-white font-heading">48.5 hrs</strong>
                     <span className="text-xs text-accent font-bold">Total Learning Time</span>
                     <p className="text-[11px] text-slate-400">+12% faster mastery</p>
                   </div>
@@ -972,22 +972,22 @@ export function HomePageClient({
               )}
 
               {/* Bottom Classroom Control Toolbar */}
-              <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2">
-                  <span className="h-9 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer">
+              <div className="mt-5 sm:mt-6 pt-3 sm:pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <span className="h-10 sm:h-9 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer flex-1 sm:flex-none min-h-[40px]">
                     <Mic className="h-3.5 w-3.5 text-accent" /> Mute
                   </span>
-                  <span className="h-9 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer">
-                    <Video className="h-3.5 w-3.5 text-accent" /> Camera On
+                  <span className="h-10 sm:h-9 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center justify-center gap-1.5 cursor-pointer flex-1 sm:flex-none min-h-[40px]">
+                    <Video className="h-3.5 w-3.5 text-accent" /> Camera
                   </span>
-                  <span className="h-9 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white hidden sm:flex items-center gap-1.5 cursor-pointer">
+                  <span className="h-10 sm:h-9 px-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white hidden sm:flex items-center gap-1.5 cursor-pointer min-h-[40px]">
                     <Monitor className="h-3.5 w-3.5 text-slate-300" /> Share Screen
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Link href="/find-tutors">
-                    <Button variant="default" size="sm" className="font-extrabold bg-accent hover:opacity-90 text-slate-950 rounded-xl px-5 cursor-pointer">
+                <div className="flex items-center justify-center">
+                  <Link href="/find-tutors" className="w-full sm:w-auto">
+                    <Button variant="default" size="sm" className="w-full sm:w-auto font-extrabold bg-accent hover:opacity-90 text-slate-950 rounded-xl px-5 cursor-pointer h-11 min-h-[44px]">
                       Try a Live Lesson Now
                     </Button>
                   </Link>
@@ -1011,26 +1011,26 @@ export function HomePageClient({
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
           {(howItWorks.steps || []).map((step: any, idx: number) => {
             const icons = [Search, Calendar, Video];
             const Icon = icons[idx % icons.length];
             return (
               <div
                 key={idx}
-                className="relative rounded-3xl border border-slate-200/90 bg-white p-8 shadow-card flex flex-col justify-between space-y-6 hover:shadow-elevation transition-all"
+                className="relative rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-8 shadow-card flex flex-col justify-between space-y-4 sm:space-y-6 hover:shadow-elevation transition-all"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-brand shadow-subtle font-extrabold text-lg">
-                    <Icon className="h-7 w-7" />
+                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl bg-brand-50 text-brand shadow-subtle font-extrabold text-base sm:text-lg">
+                    <Icon className="h-6 w-6 sm:h-7 sm:w-7" />
                   </div>
-                  <span className="text-3xl font-black text-slate-200 font-heading">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-200 font-heading">
                     {step.num}
                   </span>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900 mb-2 font-heading">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 mb-1.5 sm:mb-2 font-heading">
                     {step.title}
                   </h3>
                   <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
@@ -1047,36 +1047,36 @@ export function HomePageClient({
           7. BECOME A TUTOR CALLOUT (Dynamic CMS)
       ───────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#081533] p-8 sm:p-14 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 border border-slate-800/90 shadow-2xl relative overflow-hidden">
+        <div className="rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#081533] p-5 sm:p-14 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sm:gap-8 border border-slate-800/90 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="space-y-4 max-w-2xl text-left relative z-10">
-            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-accent/15 text-accent border border-accent/30 px-3.5 py-1 rounded-full">
+          <div className="space-y-3 sm:space-y-4 max-w-2xl text-left relative z-10">
+            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest bg-accent/15 text-accent border border-accent/30 px-3 py-0.5 sm:px-3.5 sm:py-1 rounded-full">
               <Sparkles className="h-3.5 w-3.5 text-accent" />
               {becomeTutor.badge}
             </span>
-            <h2 className="text-2xl sm:text-4xl font-black text-white font-heading tracking-tight leading-tight">
+            <h2 className="text-xl sm:text-4xl font-black text-white font-heading tracking-tight leading-tight">
               {becomeTutor.title}
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-xl">
               {becomeTutor.subtitle}
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-300 pt-2">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-4 text-xs font-semibold text-slate-300 pt-1 sm:pt-2">
               {(becomeTutor.bulletPoints || []).map((bullet: string, idx: number) => (
                 <span key={idx} className="flex items-center gap-1.5 text-accent">
-                  <Check className="h-4 w-4 stroke-[3]" /> {bullet}
+                  <Check className="h-4 w-4 stroke-[3] shrink-0" /> {bullet}
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto shrink-0 relative z-10">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto shrink-0 relative z-10">
             <Link href="/onboarding/tutor" className="w-full sm:w-auto">
               <Button
                 variant="default"
                 size="lg"
-                className="w-full sm:w-auto font-extrabold bg-accent hover:opacity-90 text-slate-950 px-8 py-3.5 shadow-glow rounded-xl text-sm cursor-pointer"
+                className="w-full sm:w-auto font-extrabold bg-accent hover:opacity-90 text-slate-950 px-6 sm:px-8 py-3.5 shadow-glow rounded-xl text-sm cursor-pointer h-12 min-h-[44px]"
                 rightIcon={<ArrowRight className="h-4 w-4" />}
               >
                 {becomeTutor.ctaButtonText || "Apply as a Tutor"}
@@ -1085,7 +1085,7 @@ export function HomePageClient({
             <Link href="/how-it-works" className="w-full sm:w-auto">
               <button
                 type="button"
-                className="w-full sm:w-auto h-12 px-6 rounded-xl border border-white/20 hover:border-white/40 bg-white/5 hover:bg-white/10 text-xs sm:text-sm font-bold text-white transition-all text-center flex items-center justify-center cursor-pointer"
+                className="w-full sm:w-auto h-12 min-h-[44px] px-6 rounded-xl border border-white/20 hover:border-white/40 bg-white/5 hover:bg-white/10 text-xs sm:text-sm font-bold text-white transition-all text-center flex items-center justify-center cursor-pointer"
               >
                 {becomeTutor.secondaryButtonText || "How It Works for Tutors"}
               </button>
@@ -1103,34 +1103,34 @@ export function HomePageClient({
           9. FREQUENTLY ASKED QUESTIONS (Dynamic CMS FAQs)
       ───────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="text-center space-y-2 mb-10">
+        <div className="text-center space-y-2 mb-8 sm:mb-10">
           <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.18em] text-brand block">
             {faqSection.pretitle}
           </span>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-950 tracking-[-0.02em] leading-tight">
+          <h2 className="text-xl sm:text-4xl font-extrabold text-slate-950 tracking-[-0.02em] leading-tight">
             {faqSection.title}
           </h2>
         </div>
 
-        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-4 divide-y divide-slate-100">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-8 shadow-card space-y-3 sm:space-y-4 divide-y divide-slate-100">
           {faqs.map((faq: any, idx: number) => {
             const isOpen = openFaqIndex === idx;
             return (
-              <div key={idx} className="pt-4 first:pt-0">
+              <div key={idx} className="pt-3 sm:pt-4 first:pt-0">
                 <button
                   type="button"
                   onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  className="w-full flex items-center justify-between text-left py-2 font-bold text-sm sm:text-base text-slate-900 hover:text-brand transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-between text-left py-2 font-bold text-xs sm:text-base text-slate-900 hover:text-brand transition-colors cursor-pointer min-h-[44px] gap-2"
                 >
                   <span>{faq.q}</span>
                   <ChevronDown
-                    className={`h-4 w-4 text-slate-400 transition-transform ${
+                    className={`h-4 w-4 text-slate-400 transition-transform shrink-0 ${
                       isOpen ? "rotate-180 text-brand" : ""
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed animate-fade-in pr-4">
+                  <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed animate-fade-in pr-2 sm:pr-4">
                     {faq.a}
                   </p>
                 )}

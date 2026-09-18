@@ -201,7 +201,7 @@ function FindTutorsContent() {
         </div>
 
         {/* Discovery Matchmaker Trigger Card */}
-        <div className="shrink-0 p-4 rounded-2xl bg-gradient-to-br from-brand-50 via-white to-amber-50/40 border border-brand-100/90 shadow-xs flex items-center justify-between sm:justify-start gap-4">
+        <div className="w-full sm:w-auto shrink-0 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-brand-50 via-white to-amber-50/40 border border-brand-100/90 shadow-xs flex items-center justify-between sm:justify-start gap-3 sm:gap-4">
           <div className="space-y-0.5">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand bg-brand-100/80 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
               <Sparkles className="h-3 w-3 fill-brand" />
@@ -217,7 +217,7 @@ function FindTutorsContent() {
           <button
             type="button"
             onClick={() => setIsDiscoveryOpen(true)}
-            className="h-9 px-4 rounded-xl bg-brand hover:opacity-90 text-white font-bold text-xs shadow-xs transition-all shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5"
+            className="h-10 px-4 rounded-xl bg-brand hover:opacity-90 text-white font-bold text-xs shadow-xs transition-all shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5 min-h-[40px]"
           >
             <span>Start</span>
           </button>
@@ -400,13 +400,13 @@ function FindTutorsContent() {
                 setKeyword(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 pr-8 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 shadow-xs transition-colors"
+              className="w-full rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2.5 pr-8 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 shadow-xs transition-colors min-h-[44px]"
             />
             {keyword ? (
               <button
                 type="button"
                 onClick={() => setKeyword("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -416,9 +416,9 @@ function FindTutorsContent() {
           </div>
 
           {/* Middle & Right Selectors */}
-          <div className="flex items-center gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3 w-full sm:w-auto">
             {/* Sort by */}
-            <div className="min-w-[160px]">
+            <div className="w-full min-w-0 sm:min-w-[160px]">
               <SearchableSelect
                 placeholder="Sort by..."
                 value={sortBy}
@@ -434,7 +434,7 @@ function FindTutorsContent() {
             </div>
 
             {/* Select language */}
-            <div className="min-w-[180px]">
+            <div className="w-full min-w-0 sm:min-w-[180px]">
               <SearchableSelect
                 placeholder="All Languages"
                 searchPlaceholder="Search 70+ languages..."
