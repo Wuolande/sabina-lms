@@ -35,16 +35,17 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Get active rules for this day of week
-    const dayRules = (schedule.rules || []).filter(
-      (r: any) => r.dayOfWeek === dayOfWeek && r.isActive
-    );
+    // Get active rules for this day of week, sorted chronologically
+    const dayRules = (schedule.rules || [])
+      .filter((r: any) => r.dayOfWeek === dayOfWeek && r.isActive)
+      .sort((a: any, b: any) => String(a.startTime).localeCompare(String(b.startTime)));
 
     const duration = schedule.settings?.defaultLessonDuration || 50;
     const buffer = schedule.settings?.bufferMinutes || 10;
     const step = duration + buffer;
 
     const slots: Array<{ time: string; available: boolean; reason?: string }> = [];
+    const seenTimes = new Set<string>();
 
     for (const rule of dayRules) {
       const [startH, startM] = rule.startTime.split(':').map(Number);
@@ -58,17 +59,20 @@ export async function GET(req: NextRequest) {
         const m = currentMin % 60;
         const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
-        // Check if overlaps with existing lessons
-        const slotStartIso = `${targetDate}T${timeStr}:00Z`;
-        const isBooked = (schedule.upcomingLessons || []).some((l: any) => {
-          return l.status !== 'CANCELLED' && l.scheduledStart.startsWith(`${targetDate}T${timeStr}`);
-        });
+        if (!seenTimes.has(timeStr)) {
+          seenTimes.add(timeStr);
 
-        slots.push({
-          time: timeStr,
-          available: !isBooked,
-          reason: isBooked ? 'Booked by student' : 'Open for booking',
-        });
+          // Check if overlaps with existing lessons
+          const isBooked = (schedule.upcomingLessons || []).some((l: any) => {
+            return l.status !== 'CANCELLED' && l.scheduledStart.startsWith(`${targetDate}T${timeStr}`);
+          });
+
+          slots.push({
+            time: timeStr,
+            available: !isBooked,
+            reason: isBooked ? 'Booked by student' : 'Open for booking',
+          });
+        }
 
         currentMin += step;
       }

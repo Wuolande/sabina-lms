@@ -21,6 +21,7 @@ import {
   Globe,
   Eye,
   Wand2,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -46,6 +47,97 @@ const WORLD_TIMEZONES = [
   { label: "Sydney (AEST/AEDT, UTC+10/+11)", value: "Australia/Sydney" },
 ];
 
+interface SlotConflictInfo {
+  dayIdx: number;
+  slotIdx: number;
+  message: string;
+}
+
+function timeToMinutes(t: string): number {
+  if (!t) return 0;
+  const parts = t.split(':').map(Number);
+  return (parts[0] || 0) * 60 + (parts[1] || 0);
+}
+
+function formatDuration(startMin: number, endMin: number): string {
+  const diff = endMin - startMin;
+  if (diff <= 0) return '';
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+function findSlotConflicts(rules: TutorAvailabilityRuleItem[]): Map<string, SlotConflictInfo> {
+  const conflictMap = new Map<string, SlotConflictInfo>();
+
+  for (let day = 0; day <= 6; day++) {
+    const daySlots: { slot: TutorAvailabilityRuleItem; originalIndex: number }[] = [];
+    let count = 0;
+    for (const r of rules) {
+      if (r.dayOfWeek === day) {
+        daySlots.push({ slot: r, originalIndex: count });
+        count++;
+      }
+    }
+
+    // 1. Check inversions or invalid durations
+    daySlots.forEach(({ slot, originalIndex }) => {
+      if (!slot.isActive) return;
+      const startMin = timeToMinutes(slot.startTime);
+      const endMin = timeToMinutes(slot.endTime);
+
+      if (endMin <= startMin) {
+        conflictMap.set(`${day}-${originalIndex}`, {
+          dayIdx: day,
+          slotIdx: originalIndex,
+          message: 'End time must be after start time.',
+        });
+      } else if (endMin - startMin < 15) {
+        conflictMap.set(`${day}-${originalIndex}`, {
+          dayIdx: day,
+          slotIdx: originalIndex,
+          message: 'Minimum shift length is 15 minutes.',
+        });
+      }
+    });
+
+    // 2. Check pairwise overlaps among active slots on this day
+    for (let i = 0; i < daySlots.length; i++) {
+      const a = daySlots[i];
+      if (!a.slot.isActive) continue;
+      const startA = timeToMinutes(a.slot.startTime);
+      const endA = timeToMinutes(a.slot.endTime);
+      if (endA <= startA) continue;
+
+      for (let j = i + 1; j < daySlots.length; j++) {
+        const b = daySlots[j];
+        if (!b.slot.isActive) continue;
+        const startB = timeToMinutes(b.slot.startTime);
+        const endB = timeToMinutes(b.slot.endTime);
+        if (endB <= startB) continue;
+
+        // Collision test: startA < endB && endA > startB
+        if (startA < endB && endA > startB) {
+          conflictMap.set(`${day}-${a.originalIndex}`, {
+            dayIdx: day,
+            slotIdx: a.originalIndex,
+            message: `Overlaps with Shift #${j + 1} (${b.slot.startTime.slice(0, 5)}–${b.slot.endTime.slice(0, 5)})`,
+          });
+          conflictMap.set(`${day}-${b.originalIndex}`, {
+            dayIdx: day,
+            slotIdx: b.originalIndex,
+            message: `Overlaps with Shift #${i + 1} (${a.slot.startTime.slice(0, 5)}–${a.slot.endTime.slice(0, 5)})`,
+          });
+        }
+      }
+    }
+  }
+
+  return conflictMap;
+}
+
 export default function TutorAvailabilityPage() {
   const { toast } = useModal();
   const [activeTab, setActiveTab] = React.useState("weekly");
@@ -58,6 +150,10 @@ export default function TutorAvailabilityPage() {
     { tutorId: "", dayOfWeek: 4, startTime: "09:00:00", endTime: "17:00:00", isActive: true },
     { tutorId: "", dayOfWeek: 5, startTime: "09:00:00", endTime: "17:00:00", isActive: true },
   ]);
+
+  // Real-time conflict detector
+  const conflicts = React.useMemo(() => findSlotConflicts(rules), [rules]);
+  const hasConflicts = conflicts.size > 0;
 
   // Tab 2: Exceptions / Time-Off
   const [exceptions, setExceptions] = React.useState<any[]>([]);
@@ -142,11 +238,41 @@ export default function TutorAvailabilityPage() {
     let newEnd = "18:00:00";
 
     if (existing.length > 0) {
-      const last = existing[existing.length - 1];
-      const [lastH] = last.endTime.split(":").map(Number);
-      const nextH = Math.min(22, lastH + 1);
-      newStart = `${String(nextH).padStart(2, "0")}:00:00`;
-      newEnd = `${String(Math.min(23, nextH + 3)).padStart(2, "0")}:00:00`;
+      let maxEndMin = 0;
+      for (const slot of existing) {
+        const m = timeToMinutes(slot.endTime);
+        if (m > maxEndMin) maxEndMin = m;
+      }
+
+      if (maxEndMin + 60 <= 23 * 60) {
+        const startMin = Math.min(23 * 60, maxEndMin + 30);
+        const endMin = Math.min(24 * 60 - 1, startMin + 2 * 60);
+        const startH = Math.floor(startMin / 60);
+        const startM = startMin % 60;
+        const endH = Math.floor(endMin / 60);
+        const endM = endMin % 60;
+        newStart = `${String(startH).padStart(2, "0")}:${String(startM).padStart(2, "0")}:00`;
+        newEnd = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00`;
+      } else {
+        let minStartMin = 24 * 60;
+        for (const slot of existing) {
+          const m = timeToMinutes(slot.startTime);
+          if (m < minStartMin) minStartMin = m;
+        }
+        if (minStartMin >= 120) {
+          const startMin = Math.max(7 * 60, minStartMin - 2 * 60);
+          const endMin = minStartMin;
+          const startH = Math.floor(startMin / 60);
+          const startM = startMin % 60;
+          const endH = Math.floor(endMin / 60);
+          const endM = endMin % 60;
+          newStart = `${String(startH).padStart(2, "0")}:${String(startM).padStart(2, "0")}:00`;
+          newEnd = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}:00`;
+        } else {
+          newStart = "18:00:00";
+          newEnd = "20:00:00";
+        }
+      }
     }
 
     setRules([
@@ -311,16 +437,44 @@ export default function TutorAvailabilityPage() {
   };
 
   const handleSaveWeekly = async () => {
-    setSavingWeekly(true);
-    const ok = await lessonService.saveTutorAvailability(rules);
-    setSavingWeekly(false);
-    if (ok) {
+    if (hasConflicts) {
       toast({
-        title: "Working Hours Saved",
-        message: "Your weekly recurring multi-slot shifts have been saved in PostgreSQL.",
-        variant: "success",
+        title: "Scheduling Conflicts Detected",
+        message: "Please fix all overlapping shifts and invalid intervals before saving.",
+        variant: "destructive" as any,
       });
-      loadScheduleData();
+      return;
+    }
+    setSavingWeekly(true);
+    try {
+      const res = await fetch("/api/tutor/availability", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rules }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast({
+          title: "Working Hours Saved",
+          message: "Your weekly recurring shifts have been safely updated.",
+          variant: "success",
+        });
+        loadScheduleData();
+      } else {
+        toast({
+          title: "Save Failed",
+          message: data.error || "Failed to save shifts due to validation errors.",
+          variant: "destructive" as any,
+        });
+      }
+    } catch (err: any) {
+      toast({
+        title: "Network Error",
+        message: err.message || "Failed to reach server.",
+        variant: "destructive" as any,
+      });
+    } finally {
+      setSavingWeekly(false);
     }
   };
 
@@ -328,6 +482,19 @@ export default function TutorAvailabilityPage() {
   const handleAddException = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExceptionDate) return;
+
+    if (!isAllDayException) {
+      const sMin = timeToMinutes(exceptionStartTime);
+      const eMin = timeToMinutes(exceptionEndTime);
+      if (eMin <= sMin) {
+        toast({
+          title: "Invalid Time Interval",
+          message: "End time must be strictly after start time.",
+          variant: "destructive" as any,
+        });
+        return;
+      }
+    }
 
     const ok = await lessonService.addTimeOffException({
       date: newExceptionDate,
@@ -521,47 +688,95 @@ export default function TutorAvailabilityPage() {
                     <div className="flex-1 space-y-2.5">
                       {isDayActive ? (
                         <>
-                          {daySlots.map((slot, slotIdx) => (
-                            <div
-                              key={slotIdx}
-                              className="flex items-center gap-2.5 bg-slate-50/70 p-2.5 rounded-xl border border-slate-200/80"
-                            >
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">From</span>
-                                <input
-                                  type="time"
-                                  value={slot.startTime.slice(0, 5)}
-                                  onChange={(e) =>
-                                    updateSlotTime(dayIdx, slotIdx, "startTime", e.target.value)
-                                  }
-                                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#14209C]"
-                                />
-                              </div>
+                          {daySlots.map((slot, slotIdx) => {
+                            const conflict = conflicts.get(`${dayIdx}-${slotIdx}`);
+                            const sMin = timeToMinutes(slot.startTime);
+                            const eMin = timeToMinutes(slot.endTime);
+                            const durationStr = formatDuration(sMin, eMin);
 
-                              <span className="text-slate-400 font-bold">–</span>
-
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">To</span>
-                                <input
-                                  type="time"
-                                  value={slot.endTime.slice(0, 5)}
-                                  onChange={(e) =>
-                                    updateSlotTime(dayIdx, slotIdx, "endTime", e.target.value)
-                                  }
-                                  className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono text-slate-900 focus:outline-none focus:ring-1 focus:ring-[#14209C]"
-                                />
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={() => removeSlot(dayIdx, slotIdx)}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition ml-auto"
-                                title="Remove shift slot"
+                            return (
+                              <div
+                                key={slotIdx}
+                                className={`p-3 rounded-2xl border transition-all ${
+                                  conflict
+                                    ? "bg-rose-50/70 border-rose-300 ring-1 ring-rose-200"
+                                    : "bg-slate-50/70 border-slate-200/80 hover:border-slate-300"
+                                }`}
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ))}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                  <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 flex-1">
+                                    {/* From Input */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1.5">
+                                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                        From
+                                      </span>
+                                      <input
+                                        type="time"
+                                        value={slot.startTime.slice(0, 5)}
+                                        onChange={(e) =>
+                                          updateSlotTime(dayIdx, slotIdx, "startTime", e.target.value)
+                                        }
+                                        className={`w-full sm:w-28 rounded-xl border bg-white px-2.5 py-1.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 ${
+                                          conflict
+                                            ? "border-rose-400 focus:ring-rose-500"
+                                            : "border-slate-200 focus:ring-[#14209C]"
+                                        }`}
+                                      />
+                                    </div>
+
+                                    <span className="hidden sm:inline text-slate-400 font-bold">–</span>
+
+                                    {/* To Input */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1.5">
+                                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                        To
+                                      </span>
+                                      <input
+                                        type="time"
+                                        value={slot.endTime.slice(0, 5)}
+                                        onChange={(e) =>
+                                          updateSlotTime(dayIdx, slotIdx, "endTime", e.target.value)
+                                        }
+                                        className={`w-full sm:w-28 rounded-xl border bg-white px-2.5 py-1.5 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 ${
+                                          conflict
+                                            ? "border-rose-400 focus:ring-rose-500"
+                                            : "border-slate-200 focus:ring-[#14209C]"
+                                        }`}
+                                      />
+                                    </div>
+
+                                    {/* Duration Indicator */}
+                                    {durationStr && !conflict && (
+                                      <span className="col-span-2 sm:col-auto inline-flex items-center text-[10px] font-semibold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-md w-fit">
+                                        {durationStr}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* Remove Button */}
+                                  <div className="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
+                                    <button
+                                      type="button"
+                                      onClick={() => removeSlot(dayIdx, slotIdx)}
+                                      className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition ml-auto flex items-center gap-1 text-xs"
+                                      title="Remove shift slot"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                      <span className="sm:hidden text-[11px] font-medium text-rose-600">Remove Shift</span>
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Inline Conflict Warning */}
+                                {conflict && (
+                                  <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-rose-700 bg-rose-100/80 px-2.5 py-1.5 rounded-xl border border-rose-200">
+                                    <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 text-rose-600" />
+                                    <span>{conflict.message}</span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
 
                           <button
                             type="button"
@@ -581,12 +796,25 @@ export default function TutorAvailabilityPage() {
               })}
             </div>
 
+            {/* Global Conflict Warning Banner */}
+            {hasConflicts && (
+              <div className="mt-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 flex items-start gap-3 text-xs text-rose-800">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600 mt-0.5" />
+                <div>
+                  <span className="font-bold block text-sm text-rose-900">Scheduling Conflicts Detected</span>
+                  <span className="mt-0.5 block">
+                    Some shifts have overlapping hours or end before their start time. Please resolve highlighted conflicts before saving.
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="pt-6 border-t border-slate-100 flex justify-end">
               <Button
                 variant="default"
-                disabled={savingWeekly}
+                disabled={savingWeekly || hasConflicts}
                 onClick={handleSaveWeekly}
-                className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white text-xs flex items-center gap-1.5"
+                className="font-bold bg-[#14209C] hover:bg-[#0d1870] disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs flex items-center gap-1.5"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>{savingWeekly ? "Saving Shifts..." : "Save Working Hours"}</span>

@@ -155,6 +155,44 @@ export async function getAdminContext(request: NextRequest): Promise<UserContext
 }
 
 /**
+ * Extracts verified caller identity and permissions from session for universal routes.
+ */
+export async function getAuthenticatedCaller(
+  request: NextRequest
+): Promise<{ userId: string; email: string; displayName: string; roles: string[]; isAdmin: boolean }> {
+  try {
+    const supabase = await getServerSupabase();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new UnauthorizedError();
+    }
+
+    const { data: profile, error: profileError } = await adminSupabase
+      .from('users')
+      .select('id, email, display_name, roles:user_roles!user_roles_user_id_fkey(role_id)')
+      .or(`auth_id.eq.${user.id},email.eq.${user.email}`)
+      .single();
+
+    if (profileError || !profile) {
+      throw new UnauthorizedError();
+    }
+
+    const roles = ((profile.roles as { role_id: string }[]) || []).map((r) => r.role_id);
+    const isAdmin = roles.includes('ADMIN') || roles.includes('SUPER_ADMIN');
+
+    return {
+      userId: profile.id,
+      email: profile.email,
+      displayName: profile.display_name,
+      roles,
+      isAdmin,
+    };
+  } catch {
+    throw new UnauthorizedError();
+  }
+}
+
+/**
  * Extracts the current student's User ID from session (or impersonation cookie).
  */
 export async function getStudentContext(request: NextRequest): Promise<{ userId: string; email: string; displayName: string }> {

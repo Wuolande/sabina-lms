@@ -21,15 +21,15 @@ const DANGEROUS_EXTENSIONS = new Set([
   'msc', 'msi', 'msp', 'scr', 'dll', 'sys', 'drv', 'cpl', 'jar', 'apk',
   'com', 'gadget', 'pif', 'php', 'php3', 'php4', 'php5', 'phtml', 'asp',
   'aspx', 'jsp', 'cgi', 'pl', 'py', 'rb', 'ps1', 'ps2', 'psm1', 'psd1',
+  'svg', 'svgz', 'htm', 'html', 'xhtml', 'shtml',
 ]);
 
 const ALLOWED_MIME_TYPES = new Set([
-  // Images
+  // Raster Images only (SVGs strictly prohibited to eliminate Stored XSS)
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/gif',
-  'image/svg+xml',
   // Documents
   'application/pdf',
   'application/msword',
@@ -41,6 +41,22 @@ const ALLOWED_MIME_TYPES = new Set([
   'video/quicktime',
   'video/x-matroska',
 ]);
+
+/**
+ * Sanitizes user-supplied filenames to block directory traversal and illegal characters.
+ */
+export function sanitizeUploadFilename(filename: string): string {
+  if (!filename) return 'unnamed_file';
+  // Strip null bytes and directory traversal sequences
+  let clean = filename.replace(/\0/g, '').replace(/(\.\.[\/\\])+/g, '');
+  // Extract extension
+  const extMatch = clean.match(/\.([a-zA-Z0-9]+)$/);
+  const ext = extMatch ? extMatch[1].toLowerCase() : '';
+  const base = extMatch ? clean.slice(0, extMatch.index) : clean;
+  // Sanitize base
+  const sanitizedBase = base.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 60);
+  return ext ? `${sanitizedBase || 'file'}.${ext}` : (sanitizedBase || 'file');
+}
 
 /**
  * Validates magic bytes against expected file signatures.
@@ -120,20 +136,16 @@ function verifyMagicBytes(buffer: Buffer): string | null {
     return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   }
 
-  // Plain text or SVG check
-  const snippet = buffer.subarray(0, Math.min(buffer.length, 512)).toString('utf8');
-  if (snippet.includes('<svg') || snippet.includes('<?xml')) {
-    return 'image/svg+xml';
-  }
-
   return null;
 }
 
 /**
- * Heuristic anti-malware inspection for malicious scripts or macros.
+ * Heuristic anti-malware inspection for malicious scripts, macros, and executable payloads.
+ * Deep scans the initial 16KB of file content.
  */
 function scanMaliciousPayloads(buffer: Buffer): string | null {
-  const content = buffer.subarray(0, Math.min(buffer.length, 4096)).toString('utf8', 0, 4096).toLowerCase();
+  const scanLimit = Math.min(buffer.length, 16384);
+  const content = buffer.subarray(0, scanLimit).toString('utf8').toLowerCase();
 
   // Executable DOS/Windows headers (MZ / PE)
   if (buffer.length >= 2 && buffer[0] === 0x4D && buffer[1] === 0x5A) {
@@ -145,9 +157,28 @@ function scanMaliciousPayloads(buffer: Buffer): string | null {
     return 'Dangerous Linux ELF binary signature detected.';
   }
 
-  // Embedded malicious script tags in non-code files
-  if (content.includes('<script') || content.includes('javascript:') || content.includes('vbscript:')) {
-    return 'Dangerous embedded script payload detected in file header.';
+  // Embedded script tags, handlers or JavaScript URI
+  if (
+    content.includes('<script') ||
+    content.includes('javascript:') ||
+    content.includes('vbscript:') ||
+    content.includes('onerror=') ||
+    content.includes('onload=') ||
+    content.includes('<iframe') ||
+    content.includes('<object') ||
+    content.includes('<embed')
+  ) {
+    return 'Dangerous embedded script/iframe payload detected in file header.';
+  }
+
+  // SVG XML attempt in raster/document file
+  if (content.includes('<svg') || content.includes('xmlns:svg')) {
+    return 'SVG vectors and embedded XML scripts are prohibited for security.';
+  }
+
+  // PHP or ASP tags
+  if (content.includes('<?php') || content.includes('<%@') || content.includes('<%=')) {
+    return 'Dangerous server-side code execution tags detected in file.';
   }
 
   // Embedded shell invocation patterns
@@ -192,7 +223,7 @@ export async function scanFileForMalware(
   const detectedMime = verifyMagicBytes(fileBuffer);
   if (!detectedMime) {
     // If not matching a known safe binary signature, verify if it's text
-    if (!declaredMimeType.startsWith('text/') && declaredMimeType !== 'image/svg+xml') {
+    if (!declaredMimeType.startsWith('text/')) {
       return {
         safe: false,
         fileSize,

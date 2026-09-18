@@ -1,16 +1,35 @@
 /**
  * API Route: POST /api/upload/logo
  * -----------------------------------------------------------------------
- * Platform Logo upload handler with server-side malware scanning
- * and streaming to Cloudinary branding storage.
+ * Platform Logo upload handler with:
+ * - Admin Authentication Guard (Privilege Enforcement)
+ * - Anti-Malware Magic Bytes Scan (PNG, JPG, WebP only)
+ * - Media URL Obfuscation: Shields Cloudinary infrastructure from public view
  * -----------------------------------------------------------------------
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { scanFileForMalware } from '@/src/shared/security/fileScanner';
+import { getAdminContext } from '@/src/shared/auth/authService';
+import { scanFileForMalware, sanitizeUploadFilename } from '@/src/shared/security/fileScanner';
+import { maskMediaUrl } from '@/src/shared/security/mediaProxy';
+import { adminSupabase } from '@/src/shared/database/supabase';
+
+const ALLOWED_LOGO_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Enforce Admin Authorization
+    let admin;
+    try {
+      admin = await getAdminContext(req);
+    } catch {
+      return NextResponse.json(
+        { error: 'Forbidden: Only platform administrators can update brand logos.' },
+        { status: 403 }
+      );
+    }
+
+    // 2. Extract form data
     const formData = await req.formData();
     const file = formData.get('file') as File | null;
     const base64Data = formData.get('base64') as string | null;
@@ -22,7 +41,7 @@ export async function POST(req: NextRequest) {
     if (file) {
       const bytes = await file.arrayBuffer();
       fileBuffer = Buffer.from(bytes);
-      fileName = file.name || 'logo.png';
+      fileName = sanitizeUploadFilename(file.name || 'logo.png');
       fileMime = file.type || 'image/png';
     } else if (base64Data) {
       const match = base64Data.match(/^data:([^;]+);base64,(.+)$/);
@@ -38,7 +57,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No valid image file provided.' }, { status: 400 });
     }
 
-    // ─── Security & Anti-Malware Scan (Max 5MB) ───
+    // 3. Security & Anti-Malware Scan (Max 5MB)
     const scanResult = await scanFileForMalware(fileBuffer, fileName, fileMime, 5 * 1024 * 1024);
     if (!scanResult.safe) {
       return NextResponse.json(
@@ -47,13 +66,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let logoUrl = '';
+    const detectedMime = scanResult.detectedMime || fileMime;
+    if (!ALLOWED_LOGO_MIMES.has(detectedMime)) {
+      return NextResponse.json(
+        { error: 'Invalid logo format. Only PNG, JPG, and WebP raster images are permitted.' },
+        { status: 422 }
+      );
+    }
+
+    // 4. Stream to Cloudinary branding folder
+    let rawStorageUrl = '';
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'vtjhrq1w';
     const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'sabina';
 
-    // ─── Stream to Cloudinary ───
     const cloudinaryForm = new FormData();
-    const dataUri = `data:${scanResult.detectedMime || fileMime};base64,${fileBuffer.toString('base64')}`;
+    const dataUri = `data:${detectedMime};base64,${fileBuffer.toString('base64')}`;
     cloudinaryForm.append('file', dataUri);
     cloudinaryForm.append('upload_preset', uploadPreset);
     cloudinaryForm.append('folder', 'sabina/branding');
@@ -66,7 +93,21 @@ export async function POST(req: NextRequest) {
 
       if (cloudRes.ok) {
         const cloudJson = await cloudRes.json();
-        logoUrl = cloudJson.secure_url || cloudJson.url;
+        rawStorageUrl = cloudJson.secure_url || cloudJson.url;
+
+        // Record asset in file_assets table
+        await adminSupabase.from('file_assets').insert({
+          owner_id: admin.id,
+          public_id: cloudJson.public_id || `logo_${Date.now()}`,
+          secure_url: rawStorageUrl,
+          resource_type: 'image',
+          format: cloudJson.format || 'png',
+          mime_type: detectedMime,
+          bytes: fileBuffer.length,
+          folder: 'sabina/branding',
+          entity_type: 'PLATFORM_LOGO',
+          entity_id: 'brand',
+        }).catch((err) => console.warn('[file_assets tracking notice]', err?.message));
       } else {
         const errJson = await cloudRes.json().catch(() => ({}));
         console.warn('[Cloudinary Logo Upload Warning]', errJson);
@@ -75,15 +116,23 @@ export async function POST(req: NextRequest) {
       console.warn('[Cloudinary Logo Fetch Error]', cErr);
     }
 
-    if (!logoUrl) {
-      // Fallback: Use base64 Data URI if Cloudinary upload was unavailable
-      logoUrl = dataUri;
+    if (!rawStorageUrl) {
+      return NextResponse.json(
+        { error: 'Branding storage service temporarily unavailable.' },
+        { status: 503 }
+      );
     }
+
+    // 5. Obfuscate Cloudinary URL into randomized application media link
+    const maskedLogoUrl = maskMediaUrl(rawStorageUrl, {
+      mime: detectedMime,
+      fileName: 'platform_logo.webp',
+    });
 
     return NextResponse.json({
       success: true,
-      url: logoUrl,
-      logoUrl,
+      url: maskedLogoUrl,
+      logoUrl: maskedLogoUrl,
       fileName,
       fileSize: fileBuffer.length,
     });

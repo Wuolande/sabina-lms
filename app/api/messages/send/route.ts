@@ -10,6 +10,7 @@ import { domainMessageService } from '@/src/modules/messaging/services/messageSe
 import { getStudentContext, getTutorContext } from '@/src/shared/auth/authService';
 import { getSecuritySettings } from '@/src/shared/security/recaptchaService';
 import { sanitizeMessageContent } from '@/src/shared/security/contentFilter';
+import { checkRateLimit } from '@/src/shared/security/rateLimiter';
 import { z } from 'zod';
 
 const SendMessageSchema = z.object({
@@ -34,6 +35,20 @@ export async function POST(req: NextRequest) {
     } catch {
       const tutor = await getTutorContext(req);
       userId = tutor.userId;
+    }
+
+    // Rate Limiting: Max 30 messages per minute per user
+    const rateLimit = checkRateLimit(`msg_send_${userId}`, {
+      maxAttempts: 30,
+      windowMs: 60 * 1000,
+      lockoutDurationMs: 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'You are sending messages too quickly. Please slow down.' },
+        { status: 429 }
+      );
     }
 
     // Apply security content & anti-circumvention filter

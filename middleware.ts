@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/register') ||
     pathname.startsWith('/forgot-password') ||
-    pathname.startsWith('/api/upload') ||
+    pathname.startsWith('/api/media') ||
     pathname.startsWith('/api/homepage') ||
     pathname.startsWith('/api/blogs') ||
     pathname.startsWith('/api/tutors') ||
@@ -71,7 +71,7 @@ export async function middleware(request: NextRequest) {
 
   // 2. Unauthenticated Guard
   if (!user) {
-    if (pathname.startsWith('/api/admin')) {
+    if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized: Authentication required.' }, { status: 401 });
     }
     const loginUrl = new URL('/login', request.url);
@@ -83,7 +83,7 @@ export async function middleware(request: NextRequest) {
 
   // 3. Role-Based Route Validation
   if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-    // Admin has access to all portals
+    // Admin has access to all portals and APIs
     supabaseResponse.headers.set('X-Auth-User-Id', user.id);
     supabaseResponse.headers.set('X-User-Role', role);
     return supabaseResponse;
@@ -91,6 +91,9 @@ export async function middleware(request: NextRequest) {
 
   if (role === 'TUTOR') {
     if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Forbidden: Admin privilege required.' }, { status: 403 });
+      }
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('error', 'Admin access required');
       return NextResponse.redirect(loginUrl);
@@ -101,7 +104,15 @@ export async function middleware(request: NextRequest) {
   }
 
   if (role === 'STUDENT') {
-    if (pathname.startsWith('/admin') || pathname.startsWith('/tutor') || pathname.startsWith('/api/admin')) {
+    if (
+      pathname.startsWith('/admin') ||
+      pathname.startsWith('/tutor') ||
+      pathname.startsWith('/api/admin') ||
+      pathname.startsWith('/api/tutor')
+    ) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Forbidden: Insufficient privileges.' }, { status: 403 });
+      }
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('error', 'Higher privilege required');
       return NextResponse.redirect(loginUrl);
@@ -122,5 +133,8 @@ export const config = {
     '/tutor/:path*',
     '/student/:path*',
     '/api/admin/:path*',
+    '/api/tutor/:path*',
+    '/api/student/:path*',
+    '/api/upload/:path*',
   ],
 };
