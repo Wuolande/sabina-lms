@@ -31,6 +31,7 @@ import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { useModal } from "@/components/ui/modal-context";
 import { lessonService } from "@/services/lessonService";
 import { formatDate, formatTime } from "@/lib/utils";
+import { utcToLocalDateString, utcToLocalHour } from "@/src/shared/utils/timezone";
 
 type ViewMode = "week" | "month" | "day" | "agenda";
 
@@ -69,36 +70,45 @@ export default function TutorCalendarPage() {
     loadSchedule();
   }, [loadSchedule]);
 
-  // Compute 7 days for the active week offset
-  const weekDays = React.useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const activeTimezone = selectedTimezone === "local"
+    ? (typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" : "UTC")
+    : selectedTimezone;
 
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + currentWeekOffset * 7);
+  // Compute 7 days for the active week offset in activeTimezone
+  const weekDays = React.useMemo(() => {
+    const todayIso = utcToLocalDateString(new Date(), activeTimezone);
+    const [tY, tM, tD] = todayIso.split("-").map(Number);
+    const todayObj = new Date(Date.UTC(tY, tM - 1, tD, 12, 0, 0));
+    const dayOfWeek = todayObj.getUTCDay();
+
+    const startOfWeek = new Date(todayObj);
+    startOfWeek.setUTCDate(todayObj.getUTCDate() - dayOfWeek + currentWeekOffset * 7);
 
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(startOfWeek);
-      d.setDate(startOfWeek.getDate() + i);
-      const isToday = d.toDateString() === new Date().toDateString();
+      d.setUTCDate(startOfWeek.getUTCDate() + i);
       const iso = d.toISOString().split("T")[0];
+      const isToday = iso === todayIso;
       return {
         date: d,
         iso,
-        dayName: d.toLocaleDateString("en-US", { weekday: "short" }),
-        dayNumber: d.getDate(),
-        monthName: d.toLocaleDateString("en-US", { month: "short" }),
+        dayName: d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+        dayNumber: d.getUTCDate(),
+        monthName: d.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }),
         isToday,
       };
     });
-  }, [currentWeekOffset]);
+  }, [currentWeekOffset, activeTimezone]);
 
   const upcomingLessons = scheduleData?.upcomingLessons || [];
   const exceptions = scheduleData?.exceptions || [];
 
-  // Filter lessons for a specific day
+  // Filter lessons for a specific day in activeTimezone
   const getLessonsForDay = (dateIso: string) => {
-    return upcomingLessons.filter((l: any) => l.scheduledStart.startsWith(dateIso));
+    return upcomingLessons.filter((l: any) => {
+      if (!l.scheduledStart) return false;
+      return utcToLocalDateString(l.scheduledStart, activeTimezone) === dateIso;
+    });
   };
 
   const isDayBlocked = (dateIso: string) => {
@@ -277,8 +287,10 @@ export default function TutorCalendarPage() {
                   {/* 7 Day Columns for this Hour */}
                   {weekDays.map((day) => {
                     const lessonsInSlot = upcomingLessons.filter((l: any) => {
-                      if (!l.scheduledStart.startsWith(day.iso)) return false;
-                      const lessonHour = new Date(l.scheduledStart).getUTCHours();
+                      if (!l.scheduledStart) return false;
+                      const lessonDate = utcToLocalDateString(l.scheduledStart, activeTimezone);
+                      if (lessonDate !== day.iso) return false;
+                      const lessonHour = utcToLocalHour(l.scheduledStart, activeTimezone);
                       return lessonHour === hour;
                     });
 

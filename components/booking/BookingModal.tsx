@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { BookingCalendar } from "./BookingCalendar";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { bookingService } from "@/services/bookingService";
+import { localDateTimeToUtc } from "@/src/shared/utils/timezone";
 import {
   CheckCircle2,
   CreditCard,
@@ -59,6 +60,14 @@ export function BookingModal({
   const [selectedSubjectId, setSelectedSubjectId] = React.useState<string>("");
   const [selectedDate, setSelectedDate] = React.useState<string>("");
   const [selectedTime, setSelectedTime] = React.useState<string>("");
+  const [selectedUtcStartTime, setSelectedUtcStartTime] = React.useState<string>("");
+  const [studentTimezone, setStudentTimezone] = React.useState<string>(() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    } catch {
+      return "UTC";
+    }
+  });
   const [lessonGoals, setLessonGoals] = React.useState("");
   const [selectedTopicTag, setSelectedTopicTag] = React.useState("Exam Prep");
   const [paymentMethod, setPaymentMethod] = React.useState<string>("stripe");
@@ -275,12 +284,20 @@ export function BookingModal({
         }
       }
 
-      // 2. Create the booking atomically
+      if (!tutor) {
+        throw new Error("No tutor selected for booking.");
+      }
+
+      // 2. Create the booking atomically with verified UTC instant
+      const finalStartTime = selectedUtcStartTime || (selectedDate && selectedTime
+        ? localDateTimeToUtc(selectedDate, selectedTime, studentTimezone).toISOString()
+        : new Date().toISOString());
+
       const booking = await bookingService.createBooking({
         tutorId: tutor.id,
         subjectId: selectedSubjectId || tutorSubjects[0]?.subjectId,
         subjectName: selectedSubject?.name || "General Tutoring",
-        startTime: `${selectedDate}T${selectedTime.length === 5 ? selectedTime + ":00" : selectedTime}Z`,
+        startTime: finalStartTime,
         durationMinutes: selectedDuration,
         price: calculatedPrice,
         currency: currency,
@@ -359,9 +376,19 @@ export function BookingModal({
   const currentStepIndex =
     step === "duration" ? 0 : step === "calendar" ? 1 : step === "goals" ? 2 : step === "payment" ? 3 : 4;
 
-  const handleCalendarSlotSelect = (date: string, time: string) => {
+  const handleCalendarSlotSelect = (date: string, time: string, utcStartTime?: string) => {
     setSelectedDate(date);
     setSelectedTime(time);
+    if (utcStartTime) {
+      setSelectedUtcStartTime(utcStartTime);
+    } else if (date && time) {
+      try {
+        const utcInstant = localDateTimeToUtc(date, time, studentTimezone);
+        setSelectedUtcStartTime(utcInstant.toISOString());
+      } catch {
+        setSelectedUtcStartTime("");
+      }
+    }
   };
 
   const goalChips = [
@@ -607,6 +634,11 @@ export function BookingModal({
             selectedTime={selectedTime}
             onSelectSlot={handleCalendarSlotSelect}
             durationMinutes={selectedDuration}
+            tutorSlug={tutor?.slug}
+            tutorId={tutor?.id}
+            tutorTimezone={tutor?.user?.timezone}
+            initialTimezone={studentTimezone}
+            onTimezoneChange={setStudentTimezone}
           />
 
           {/* Nav Buttons */}

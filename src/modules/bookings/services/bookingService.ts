@@ -71,7 +71,18 @@ export class BookingService {
       }
     }
 
-    const result = await bookingRepository.createBookingAtomic(payload);
+    let result;
+    try {
+      result = await bookingRepository.createBookingAtomic(payload);
+    } catch (err: any) {
+      if (err.message?.includes('BOOKING_OVERLAP_DETECTED')) {
+        throw new ValidationError('This time slot has already been booked by another student. Please choose an alternate slot.');
+      }
+      if (err.message?.includes('BOOKING_PAST_NOT_ALLOWED')) {
+        throw new ValidationError('Cannot schedule a session in the past. Please choose an upcoming time slot.');
+      }
+      throw err;
+    }
 
     await auditRepository.record({
       actorUserId: actor.id,
