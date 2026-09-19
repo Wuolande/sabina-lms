@@ -11,6 +11,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminContext } from '@/src/shared/auth/authService';
 import { adminSupabase } from '@/src/shared/database/supabase';
 import { EmailLogRecord, SendEmailPayload } from '@/src/modules/communications/types/emailTypes';
+import { dispatchEmail } from '@/src/modules/communications/services/emailDispatcher';
+import { renderBrandedEmailHtml, formatEmailBodyHtml } from '@/src/modules/communications/templates/emailTemplates';
 
 export async function GET(req: NextRequest) {
   try {
@@ -70,28 +72,76 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email content is required.' }, { status: 400 });
     }
 
-    // Determine recipient count based on selected audience
-    let recipientCount = 1;
-    if (body.audience === 'ALL_STUDENTS') {
-      const { count } = await adminSupabase
+    // Determine recipients based on selected audience
+    let recipients: string[] = [];
+    if (body.audience === 'SINGLE_USER') {
+      if (body.recipientEmail?.includes('@')) {
+        recipients = [body.recipientEmail.trim().toLowerCase()];
+      }
+    } else if (body.audience === 'ALL_STUDENTS') {
+      const { data: students } = await adminSupabase
         .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'STUDENT');
-      recipientCount = count || 1;
+        .select('email')
+        .eq('role', 'STUDENT')
+        .limit(500);
+      recipients = (students || []).map((u: any) => u.email).filter(Boolean);
     } else if (body.audience === 'ALL_TUTORS') {
-      const { count } = await adminSupabase
+      const { data: tutors } = await adminSupabase
         .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'TUTOR');
-      recipientCount = count || 1;
+        .select('email')
+        .eq('role', 'TUTOR')
+        .limit(500);
+      recipients = (tutors || []).map((u: any) => u.email).filter(Boolean);
     } else if (body.audience === 'ALL_USERS') {
-      const { count } = await adminSupabase
+      const { data: allUsers } = await adminSupabase
         .from('users')
-        .select('*', { count: 'exact', head: true });
-      recipientCount = count || 1;
+        .select('email')
+        .limit(1000);
+      recipients = (allUsers || []).map((u: any) => u.email).filter(Boolean);
+    }
+
+    const recipientCount = recipients.length || 1;
+
+    // Fetch platform branding (logo & primary color)
+    let primaryColor = '#14209C';
+    let logoUrl = '';
+    try {
+      const { data: themeData } = await adminSupabase
+        .from('platform_theme')
+        .select('primary_color, logo_url')
+        .eq('id', 'default')
+        .single();
+      if (themeData?.primary_color) primaryColor = themeData.primary_color;
+      if (themeData?.logo_url) logoUrl = themeData.logo_url;
+    } catch {}
+
+    // Render RFC-compliant, responsive HTML with platform logo
+    const formattedContent = formatEmailBodyHtml(body.content);
+    const brandedHtml = renderBrandedEmailHtml({
+      title: body.subject,
+      bodyHtml: formattedContent,
+      logoUrl,
+      primaryColor,
+    });
+
+    // Real dispatch through active provider
+    let dispatchSuccess = true;
+    let dispatchError: string | undefined;
+
+    if (recipients.length > 0) {
+      const dispatchRes = await dispatchEmail({
+        to: recipients,
+        subject: body.subject,
+        html: brandedHtml,
+        text: body.content,
+        fromName: body.senderName || admin.displayName || 'Sabina LMS Operations',
+      });
+      dispatchSuccess = dispatchRes.success;
+      dispatchError = dispatchRes.error;
     }
 
     const logId = `eml-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const status = dispatchSuccess ? 'DELIVERED' : 'FAILED';
 
     // Record email dispatch in audit logs
     const { error: insertErr } = await adminSupabase.from('audit_logs').insert({
@@ -110,11 +160,20 @@ export async function POST(req: NextRequest) {
         templateType: body.templateType,
         subject: body.subject,
         fullContent: body.content,
+        status,
+        error: dispatchError || null,
       },
     });
 
     if (insertErr) {
       console.warn('[POST /api/admin/emails audit insert error]', insertErr.message);
+    }
+
+    if (!dispatchSuccess && dispatchError) {
+      return NextResponse.json({
+        success: false,
+        error: `Failed to dispatch email: ${dispatchError}`,
+      }, { status: 502 });
     }
 
     return NextResponse.json({
@@ -129,7 +188,7 @@ export async function POST(req: NextRequest) {
         subject: body.subject,
         contentSnippet: body.content.substring(0, 200),
         senderName: admin.displayName,
-        status: 'DELIVERED',
+        status,
         sentAt: new Date().toISOString(),
       },
     });

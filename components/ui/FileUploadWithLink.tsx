@@ -24,6 +24,7 @@ export interface FileUploadWithLinkProps {
   value: string;
   onChange: (url: string, fileMetadata?: { fileName?: string; fileSize?: number }) => void;
   type?: "image" | "document" | "video";
+  endpoint?: string;
   accept?: string;
   placeholder?: string;
   maxSizeBytes?: number;
@@ -36,6 +37,7 @@ export function FileUploadWithLink({
   value,
   onChange,
   type = "image",
+  endpoint: customEndpoint,
   accept,
   placeholder,
   maxSizeBytes,
@@ -64,11 +66,12 @@ export function FileUploadWithLink({
       : "https://example.com/avatar.jpg");
 
   const endpoint =
-    type === "video"
+    customEndpoint ||
+    (type === "video"
       ? "/api/upload/video"
       : type === "document"
       ? "/api/upload/document"
-      : "/api/upload/avatar";
+      : "/api/upload/avatar");
 
   const handleUploadFile = async (file: File) => {
     setErrorMsg(null);
@@ -99,7 +102,7 @@ export function FileUploadWithLink({
         throw new Error(data.error || "Upload failed.");
       }
 
-      const uploadedUrl = data.avatarUrl || data.documentUrl || data.videoUrl || data.url;
+      const uploadedUrl = data.logoUrl || data.avatarUrl || data.documentUrl || data.videoUrl || data.url;
       if (uploadedUrl) {
         onChange(uploadedUrl, {
           fileName: data.fileName || file.name,

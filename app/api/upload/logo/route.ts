@@ -14,7 +14,7 @@ import { scanFileForMalware, sanitizeUploadFilename } from '@/src/shared/securit
 import { maskMediaUrl } from '@/src/shared/security/mediaProxy';
 import { adminSupabase } from '@/src/shared/database/supabase';
 
-const ALLOWED_LOGO_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+const ALLOWED_LOGO_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
 
 export async function POST(req: NextRequest) {
   try {
@@ -69,12 +69,12 @@ export async function POST(req: NextRequest) {
     const detectedMime = scanResult.detectedMime || fileMime;
     if (!ALLOWED_LOGO_MIMES.has(detectedMime)) {
       return NextResponse.json(
-        { error: 'Invalid logo format. Only PNG, JPG, and WebP raster images are permitted.' },
+        { error: 'Invalid logo format. Only PNG, JPG, WebP, and SVG images are permitted.' },
         { status: 422 }
       );
     }
 
-    // 4. Stream to Cloudinary branding folder
+    // 4. Primary: Stream to Cloudinary branding folder
     let rawStorageUrl = '';
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'vtjhrq1w';
     const uploadPreset = process.env.CLOUDINARY_UPLOAD_PRESET || 'sabina';
@@ -116,6 +116,44 @@ export async function POST(req: NextRequest) {
       console.warn('[Cloudinary Logo Fetch Error]', cErr);
     }
 
+    // 5. Fallback: Upload to Supabase Storage branding bucket
+    if (!rawStorageUrl) {
+      try {
+        const ext = detectedMime.includes('svg') ? 'svg' : detectedMime.includes('webp') ? 'webp' : detectedMime.includes('jpeg') || detectedMime.includes('jpg') ? 'jpg' : 'png';
+        const storagePath = `logo-${Date.now()}.${ext}`;
+        const { data: uploadData, error: uploadErr } = await adminSupabase.storage
+          .from('branding')
+          .upload(storagePath, fileBuffer, {
+            contentType: detectedMime,
+            upsert: true,
+          });
+
+        if (!uploadErr && uploadData) {
+          const { data: publicUrlData } = adminSupabase.storage
+            .from('branding')
+            .getPublicUrl(storagePath);
+          rawStorageUrl = publicUrlData.publicUrl;
+
+          await adminSupabase.from('file_assets').insert({
+            owner_id: admin.id,
+            public_id: storagePath,
+            secure_url: rawStorageUrl,
+            resource_type: 'image',
+            format: ext,
+            mime_type: detectedMime,
+            bytes: fileBuffer.length,
+            folder: 'branding',
+            entity_type: 'PLATFORM_LOGO',
+            entity_id: 'brand',
+          });
+        } else if (uploadErr) {
+          console.warn('[Supabase Storage Logo Upload Error]', uploadErr.message);
+        }
+      } catch (sErr) {
+        console.warn('[Supabase Storage Logo Exception]', sErr);
+      }
+    }
+
     if (!rawStorageUrl) {
       return NextResponse.json(
         { error: 'Branding storage service temporarily unavailable.' },
@@ -123,16 +161,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Obfuscate Cloudinary URL into randomized application media link
-    const maskedLogoUrl = maskMediaUrl(rawStorageUrl, {
-      mime: detectedMime,
-      fileName: 'platform_logo.webp',
-    });
-
     return NextResponse.json({
       success: true,
-      url: maskedLogoUrl,
-      logoUrl: maskedLogoUrl,
+      url: rawStorageUrl,
+      logoUrl: rawStorageUrl,
       fileName,
       fileSize: fileBuffer.length,
     });

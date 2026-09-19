@@ -250,8 +250,81 @@ Sabina LMS Operations`,
 ];
 
 /**
+ * Converts markdown-style text or plain text into clean, mobile-responsive HTML paragraphs and buttons.
+ */
+export function formatEmailBodyHtml(rawText: string): string {
+  if (!rawText) return '';
+  const lines = rawText.split('\n');
+  const formatted: string[] = [];
+  let inBulletList = false;
+
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) {
+      if (inBulletList) {
+        formatted.push('</ul>');
+        inBulletList = false;
+      }
+      continue;
+    }
+
+    // Bullet points
+    if (line.startsWith('•') || line.startsWith('- ') || line.startsWith('* ')) {
+      if (!inBulletList) {
+        formatted.push('<ul style="margin: 12px 0 16px 20px; padding: 0; color: #334155; font-size: 14px; line-height: 1.6;">');
+        inBulletList = true;
+      }
+      const itemText = line.replace(/^[•\-\*]\s*/, '');
+      formatted.push(`<li style="margin-bottom: 6px;">${itemText}</li>`);
+      continue;
+    }
+
+    if (inBulletList) {
+      formatted.push('</ul>');
+      inBulletList = false;
+    }
+
+    // Action CTA Buttons (👉 URL)
+    const ctaMatch = line.match(/^👉\s*(.+?):\s*(https?:\/\/[^\s]+)$/i) || line.match(/^👉\s*\[?\s*(.+?)\s*\]?\s*:\s*(https?:\/\/[^\s]+)$/i);
+    if (ctaMatch) {
+      const buttonLabel = ctaMatch[1].trim();
+      const buttonUrl = ctaMatch[2].trim();
+      formatted.push(`
+        <div style="margin: 24px 0; text-align: center;">
+          <a href="${buttonUrl}" target="_blank" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-weight: 700; font-size: 14px; letter-spacing: -0.2px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            ${buttonLabel} &rarr;
+          </a>
+        </div>
+      `);
+      continue;
+    }
+
+    // Headings
+    if (line.startsWith('# ')) {
+      formatted.push(`<h1 style="color: #0f172a; font-size: 22px; font-weight: 800; margin: 20px 0 10px 0;">${line.substring(2)}</h1>`);
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      formatted.push(`<h2 style="color: #0f172a; font-size: 18px; font-weight: 700; margin: 16px 0 8px 0;">${line.substring(3)}</h2>`);
+      continue;
+    }
+
+    // Standard Paragraph
+    formatted.push(`<p style="color: #334155; font-size: 14px; line-height: 1.65; margin: 0 0 14px 0;">${line}</p>`);
+  }
+
+  if (inBulletList) {
+    formatted.push('</ul>');
+  }
+
+  return formatted.join('\n');
+}
+
+/**
  * Wraps raw email content in a high-deliverability, responsive HTML email shell
- * that features the admin's uploaded platform logo and primary brand theme color.
+ * that features the platform logo and primary brand theme color.
+ * Specially formatted for universal compatibility across Microsoft Outlook (Desktop Word Engine),
+ * Gmail, Apple Mail, Yahoo, and mobile clients.
  */
 export function renderBrandedEmailHtml(options: {
   title?: string;
@@ -265,11 +338,32 @@ export function renderBrandedEmailHtml(options: {
   const logo = options.logoUrl?.trim();
   const currentYear = options.year || new Date().getFullYear();
 
-  const logoMarkup = logo
-    ? `<img src="${logo}" alt="Sabina LMS" height="38" style="max-height:38px;max-width:220px;width:auto;height:auto;object-fit:contain;display:inline-block;vertical-align:middle;border:0;" />`
-    : `<table cellpadding="0" cellspacing="0" border="0" style="display:inline-table;vertical-align:middle;">
+  // Resolve absolute URL for remote email clients
+  let absoluteLogoUrl = logo || '';
+  if (absoluteLogoUrl && !absoluteLogoUrl.startsWith('http://') && !absoluteLogoUrl.startsWith('https://')) {
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://sabina.education').replace(/\/$/, '');
+    absoluteLogoUrl = `${appUrl}${absoluteLogoUrl.startsWith('/') ? '' : '/'}${absoluteLogoUrl}`;
+  }
+
+  // Cross-client logo markup:
+  // Wrapped in a high-contrast white card with explicit width and border attributes for Outlook desktop
+  const logoMarkup = absoluteLogoUrl
+    ? `<table cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;border-collapse:collapse;">
         <tr>
-          <td style="background-color:#ffffff;padding:6px 14px;border-radius:10px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:900;font-size:18px;color:${primary};letter-spacing:-0.5px;">
+          <td align="center" valign="middle" style="background-color:#ffffff;padding:8px 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.3);box-shadow:0 1px 3px rgba(0,0,0,0.08);">
+            <img
+              src="${absoluteLogoUrl}"
+              alt="Sabina LMS"
+              width="180"
+              border="0"
+              style="display:block;max-width:180px;max-height:42px;width:auto;height:auto;margin:0 auto;outline:none;border:none;text-decoration:none;-ms-interpolation-mode:bicubic;"
+            />
+          </td>
+        </tr>
+      </table>`
+    : `<table cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;border-collapse:collapse;">
+        <tr>
+          <td style="background-color:#ffffff;padding:8px 18px;border-radius:12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-weight:900;font-size:18px;color:${primary};letter-spacing:-0.5px;text-align:center;">
             SABINA <span style="color:#F9C31C;">EDGE</span>
           </td>
         </tr>
@@ -280,14 +374,20 @@ export function renderBrandedEmailHtml(options: {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>${options.title || 'Sabina LMS Notification'}</title>
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
+  </style>
+  <![endif]-->
 </head>
 <body style="margin:0;padding:0;background-color:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
   <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc;padding:32px 16px;">
     <tr>
       <td align="center">
         <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05),0 2px 4px -2px rgba(0,0,0,0.05);border:1px solid #e2e8f0;">
-          <!-- Header Bar with Dynamic Logo and Brand Primary Color -->
+          <!-- Header Bar with Branded Logo Card and Theme Primary Color -->
           <tr>
             <td style="background-color:${primary};padding:24px 32px;text-align:center;">
               ${logoMarkup}

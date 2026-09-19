@@ -1846,44 +1846,72 @@ function AdminCMSDashboardContent() {
             <div className="space-y-3">
               <FileUploadWithLink
                 label="Upload or Link Platform Logo"
-                description="Upload an image from your device or paste a hosted CDN / Cloudinary URL"
+                description="Upload an image from your device (PNG, JPG, WebP, SVG) or paste a hosted CDN URL"
                 value={logoUrl}
+                endpoint="/api/upload/logo"
                 onChange={(newUrl) => {
                   setLogoUrl(newUrl);
                   setGlobalLogoUrl(newUrl);
                 }}
                 type="image"
                 accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                maxSizeBytes={2 * 1024 * 1024}
+                maxSizeBytes={5 * 1024 * 1024}
                 placeholder="https://res.cloudinary.com/.../logo.png"
               />
             </div>
 
-            {/* Live Dual Theme Preview (Light & Dark) */}
-            <div className="space-y-2 pt-2 border-t border-slate-100">
-              <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                Live Surface Preview (Real-Time Adaptability)
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* 1. Light Navbar / Student Sidebar Preview */}
-                <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+            {/* Live 4-Surface Theme & Logo Preview */}
+            <div className="space-y-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
+                  Instant Multi-Surface Responsive Preview
+                </p>
+                <span className="text-[10px] text-slate-500 font-medium">Real-time pixel scaling &amp; contrast check</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                {/* 1. Public Navbar Preview */}
+                <div className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase text-slate-500">Light Surface (Navbar &amp; Student Portal)</span>
-                    <span className="text-[9px] font-mono text-slate-400">bg-white</span>
+                    <span className="text-[10px] font-bold uppercase text-slate-500">Public Navbar</span>
+                    <span className="text-[9px] font-mono text-slate-400">default</span>
                   </div>
-                  <div className="h-14 flex items-center px-4 rounded-lg bg-slate-50/70 border border-slate-100">
+                  <div className="h-16 flex items-center px-3 rounded-lg bg-slate-50/80 border border-slate-100">
                     <Logo size="default" href={undefined} />
                   </div>
                 </div>
 
-                {/* 2. Dark Sidebar / Admin Console Preview */}
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4 space-y-2 text-white">
+                {/* 2. Dark Sidebar Preview */}
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5 space-y-2 text-white">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase text-slate-400">Dark Surface (Admin &amp; Tutor Sidebars)</span>
-                    <span className="text-[9px] font-mono text-slate-500">bg-slate-950</span>
+                    <span className="text-[10px] font-bold uppercase text-slate-400">Admin/Tutor Sidebar</span>
+                    <span className="text-[9px] font-mono text-slate-500">sm (dark)</span>
                   </div>
-                  <div className="h-14 flex items-center px-4 rounded-lg bg-slate-900 border border-slate-800">
-                    <Logo size="default" variant="dark" href={undefined} />
+                  <div className="h-16 flex items-center px-3 rounded-lg bg-slate-900 border border-slate-800">
+                    <Logo size="sm" variant="dark" href={undefined} />
+                  </div>
+                </div>
+
+                {/* 3. Auth Card Preview */}
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase text-slate-500">Sign In / Register</span>
+                    <span className="text-[9px] font-mono text-slate-400">lg</span>
+                  </div>
+                  <div className="h-16 flex items-center justify-center px-3 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                    <Logo size="lg" href={undefined} />
+                  </div>
+                </div>
+
+                {/* 4. Branded Email Header Preview */}
+                <div className="rounded-xl border border-slate-200 p-3.5 space-y-2 overflow-hidden" style={{ backgroundColor: primaryColor }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase text-white/90">Email Header</span>
+                    <span className="text-[9px] font-mono text-white/70">pill card</span>
+                  </div>
+                  <div className="h-16 flex items-center justify-center px-3">
+                    <div className="bg-white px-3.5 py-1.5 rounded-xl shadow-xs border border-white/40 flex items-center justify-center">
+                      <Logo size="default" href={undefined} />
+                    </div>
                   </div>
                 </div>
               </div>

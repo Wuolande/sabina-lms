@@ -147,9 +147,77 @@ export async function dispatchEmail(options: SendEmailOptions): Promise<EmailDis
         return { success: true, provider: 'sendgrid' };
       }
 
+      case 'postmark': {
+        const serverToken = config.postmarkServerToken || process.env.POSTMARK_SERVER_TOKEN;
+        if (!serverToken) {
+          throw new Error('Postmark Server Token is missing in Email Provider settings.');
+        }
+
+        const res = await fetch('https://api.postmarkapp.com/email', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-Postmark-Server-Token': serverToken,
+          },
+          body: JSON.stringify({
+            From: from,
+            To: to.join(', '),
+            Subject: options.subject,
+            HtmlBody: options.html,
+            TextBody: options.text,
+            ReplyTo: options.replyTo || config.replyToEmail,
+          }),
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.Message || `Postmark HTTP error ${res.status}`);
+        }
+
+        const data = await res.json();
+        return { success: true, messageId: data.MessageID, provider: 'postmark' };
+      }
+
+      case 'mailgun': {
+        const apiKey = config.mailgunApiKey || process.env.MAILGUN_API_KEY;
+        const domain = config.mailgunDomain || process.env.MAILGUN_DOMAIN;
+        if (!apiKey || !domain) {
+          throw new Error('Mailgun API key or sending domain is missing in Email Provider settings.');
+        }
+
+        const authHeader = 'Basic ' + Buffer.from(`api:${apiKey}`).toString('base64');
+        const form = new URLSearchParams();
+        form.append('from', from);
+        to.forEach((recip) => form.append('to', recip));
+        form.append('subject', options.subject);
+        form.append('html', options.html);
+        if (options.text) form.append('text', options.text);
+        if (options.replyTo || config.replyToEmail) {
+          form.append('h:Reply-To', options.replyTo || config.replyToEmail);
+        }
+
+        const res = await fetch(`https://api.mailgun.net/v3/${domain}/messages`, {
+          method: 'POST',
+          headers: {
+            Authorization: authHeader,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: form.toString(),
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json().catch(() => ({}));
+          throw new Error(errJson.message || `Mailgun HTTP error ${res.status}`);
+        }
+
+        const data = await res.json();
+        return { success: true, messageId: data.id, provider: 'mailgun' };
+      }
+
       default: {
         // Mock / Development log dispatch
-        console.log(`[Email Dispatch Mock (${provider})] To: ${to.join(', ')} | Subject: "${options.subject}"`);
+        console.log(`[Email Dispatch Mock (${provider})] To: ${to.join(', ')} | From: "${from}" | Subject: "${options.subject}"`);
         return {
           success: true,
           messageId: `mock-${Date.now()}-${Math.random().toString(36).substring(7)}`,

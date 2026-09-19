@@ -21,8 +21,9 @@ const sizeConfig = {
     strokeWidth: 2.2,
     gap: "gap-2",
     textSize: "text-base",
-    imgClass: "max-h-7 max-w-[140px]",
+    imgClass: "h-7 sm:h-8 max-w-[140px] w-auto",
     squareImgClass: "h-7 w-7",
+    darkPill: "px-2 py-0.5 rounded-lg bg-white/10 backdrop-blur-xs border border-white/10 shadow-xs",
   },
   default: {
     iconBox: "h-9 w-9 rounded-xl",
@@ -30,8 +31,9 @@ const sizeConfig = {
     strokeWidth: 2.2,
     gap: "gap-2.5",
     textSize: "text-xl",
-    imgClass: "max-h-9 max-w-[180px]",
+    imgClass: "h-8 sm:h-9 max-w-[180px] w-auto",
     squareImgClass: "h-9 w-9",
+    darkPill: "px-2.5 py-1 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 shadow-xs",
   },
   lg: {
     iconBox: "h-11 w-11 rounded-2xl",
@@ -39,8 +41,9 @@ const sizeConfig = {
     strokeWidth: 2.3,
     gap: "gap-3",
     textSize: "text-2xl",
-    imgClass: "max-h-11 max-w-[220px]",
+    imgClass: "h-11 sm:h-12 max-w-[220px] w-auto",
     squareImgClass: "h-11 w-11",
+    darkPill: "px-3 py-1.5 rounded-xl bg-white/10 backdrop-blur-xs border border-white/10 shadow-xs",
   },
   xl: {
     iconBox: "h-14 w-14 rounded-2xl",
@@ -48,8 +51,9 @@ const sizeConfig = {
     strokeWidth: 2.4,
     gap: "gap-3.5",
     textSize: "text-3xl",
-    imgClass: "max-h-14 max-w-[280px]",
+    imgClass: "h-14 sm:h-16 max-w-[280px] w-auto",
     squareImgClass: "h-14 w-14",
+    darkPill: "px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/10 shadow-xs",
   },
 };
 
@@ -63,15 +67,20 @@ export function Logo({
 }: LogoProps) {
   const config = sizeConfig[size];
   const { logoUrl } = useLogo();
+  const [hasError, setHasError] = React.useState(false);
 
-  // If a custom logo has been uploaded by the admin, render it
-  if (logoUrl) {
+  React.useEffect(() => {
+    setHasError(false);
+  }, [logoUrl]);
+
+  // If a custom logo has been uploaded by the admin and has not errored, render it
+  if (logoUrl && !hasError) {
     const isDarkSurface = variant === "dark";
     const imageElement = (
       <div
         className={cn(
-          "inline-flex items-center select-none group transition-transform duration-200",
-          isDarkSurface ? "py-0.5 px-1 rounded-lg bg-white/5 hover:bg-white/10" : "",
+          "inline-flex items-center select-none group transition-transform duration-200 shrink-0",
+          isDarkSurface ? config.darkPill : "",
           className
         )}
       >
@@ -79,10 +88,10 @@ export function Logo({
         <img
           src={logoUrl}
           alt="Platform Logo"
+          onError={() => setHasError(true)}
           className={cn(
-            "object-contain w-auto transition-transform duration-200 group-hover:scale-[1.02]",
-            !showText && showIcon ? config.squareImgClass : config.imgClass,
-            isDarkSurface ? "drop-shadow-xs" : ""
+            "object-contain object-left shrink-0 transition-transform duration-200 group-hover:scale-[1.02]",
+            !showText && showIcon ? config.squareImgClass : config.imgClass
           )}
           loading="eager"
         />
