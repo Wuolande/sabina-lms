@@ -3,10 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, CheckCircle2, ArrowLeft, AlertCircle, KeyRound, ShieldCheck } from "lucide-react";
+import { Lock, CheckCircle2, ArrowLeft, AlertCircle, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Logo } from "@/components/ui/Logo";
+import { PasswordStrengthMeter, PasswordConfirmationFeedback } from "@/components/ui/PasswordStrengthMeter";
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -30,35 +31,6 @@ function ResetPasswordContent() {
       if (hashToken) setToken(hashToken);
     }
   }, []);
-
-  const calculateStrength = (pass: string) => {
-    if (!pass) return 0;
-    let score = 0;
-    if (pass.length >= 8) score += 1;
-    if (/[A-Z]/.test(pass)) score += 1;
-    if (/[0-9]/.test(pass)) score += 1;
-    if (/[^A-Za-z0-9]/.test(pass)) score += 1;
-    return score;
-  };
-
-  const strength = calculateStrength(password);
-
-  const getStrengthLabel = (s: number) => {
-    switch (s) {
-      case 1:
-        return { label: "Weak (add capital, number or symbol)", color: "bg-rose-500", text: "text-rose-600" };
-      case 2:
-        return { label: "Fair (add more variety)", color: "bg-amber-500", text: "text-amber-600" };
-      case 3:
-        return { label: "Good (meets requirements)", color: "bg-blue-500", text: "text-blue-600" };
-      case 4:
-        return { label: "Strong & Secure", color: "bg-emerald-500", text: "text-emerald-600" };
-      default:
-        return { label: "Too Short (min 8 chars)", color: "bg-slate-200", text: "text-slate-400" };
-    }
-  };
-
-  const strengthInfo = getStrengthLabel(strength);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,22 +130,7 @@ function ResetPasswordContent() {
                   onChange={(e) => setPassword(e.target.value)}
                   leftIcon={<Lock className="h-4 w-4" />}
                 />
-
-                {/* Password Strength Meter */}
-                {password && (
-                  <div className="mt-2 space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-slate-500">Strength:</span>
-                      <span className={`font-bold ${strengthInfo.text}`}>{strengthInfo.label}</span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden flex gap-1">
-                      <div className={`h-full flex-1 rounded-full ${strength >= 1 ? strengthInfo.color : "bg-slate-200"}`} />
-                      <div className={`h-full flex-1 rounded-full ${strength >= 2 ? strengthInfo.color : "bg-slate-200"}`} />
-                      <div className={`h-full flex-1 rounded-full ${strength >= 3 ? strengthInfo.color : "bg-slate-200"}`} />
-                      <div className={`h-full flex-1 rounded-full ${strength >= 4 ? strengthInfo.color : "bg-slate-200"}`} />
-                    </div>
-                  </div>
-                )}
+                <PasswordStrengthMeter password={password} />
               </div>
 
               <div>
@@ -188,18 +145,7 @@ function ResetPasswordContent() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   leftIcon={<Lock className="h-4 w-4" />}
                 />
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-[11px] text-slate-600 space-y-1.5">
-                <div className="flex items-center gap-1.5 font-bold text-slate-700">
-                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Password Security Standard:</span>
-                </div>
-                <ul className="list-disc pl-4 space-y-0.5 text-slate-500">
-                  <li>At least 8 characters long</li>
-                  <li>Mix of uppercase and lowercase letters</li>
-                  <li>At least one number and one symbol</li>
-                </ul>
+                <PasswordConfirmationFeedback password={password} confirmPassword={confirmPassword} />
               </div>
 
               <Button

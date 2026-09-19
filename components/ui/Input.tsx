@@ -42,12 +42,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <button
           type="button"
           onClick={() => setShowPassword((prev) => !prev)}
-          className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-700/20"
+          className="cursor-pointer text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all p-1.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-700/20 active:scale-90"
           aria-label={showPassword ? "Hide password" : "Show password"}
+          title={showPassword ? "Hide password" : "Show password"}
           tabIndex={-1}
         >
           {showPassword ? (
-            <EyeOff className="h-4 w-4 text-slate-500 hover:text-slate-800" />
+            <EyeOff className="h-4 w-4 text-slate-600 hover:text-slate-900" />
           ) : (
             <Eye className="h-4 w-4 text-slate-400 hover:text-slate-700" />
           )}
@@ -101,7 +102,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
 
           {computedRightElement && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center z-10">
               {computedRightElement}
             </div>
           )}

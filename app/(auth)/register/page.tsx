@@ -3,10 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Logo } from "@/components/ui/Logo";
+import {
+  PasswordStrengthMeter,
+  PasswordConfirmationFeedback,
+} from "@/components/ui/PasswordStrengthMeter";
 
 function RegisterContent() {
   const router = useRouter();
@@ -18,6 +22,7 @@ function RegisterContent() {
   const [lastName, setLastName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
 
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
@@ -26,6 +31,18 @@ function RegisterContent() {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg(null);
+
+    if (password.length < 8) {
+      setErrorMsg("Password must be at least 8 characters long.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMsg("Passwords do not match. Please verify both entries.");
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -148,7 +165,7 @@ function RegisterContent() {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Password
+                Password *
               </label>
               <Input
                 type="password"
@@ -158,44 +175,34 @@ function RegisterContent() {
                 onChange={(e) => setPassword(e.target.value)}
                 leftIcon={<Lock className="h-4 w-4" />}
               />
+              <PasswordStrengthMeter password={password} />
+            </div>
 
-              {password && (
-                <div className="mt-2 space-y-1">
-                  <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500">Strength:</span>
-                    <span
-                      className={`font-bold ${
-                        password.length < 8
-                          ? "text-slate-400"
-                          : password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)
-                          ? "text-emerald-600"
-                          : "text-amber-600"
-                      }`}
-                    >
-                      {password.length < 8
-                        ? "Min 8 characters required"
-                        : password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password)
-                        ? "Strong & Compliant"
-                        : "Fair (add uppercase & number)"}
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden flex gap-1">
-                    <div className={`h-full flex-1 rounded-full ${password.length >= 8 ? "bg-emerald-500" : "bg-slate-200"}`} />
-                    <div className={`h-full flex-1 rounded-full ${password.length >= 8 && /[A-Z]/.test(password) ? "bg-emerald-500" : "bg-slate-200"}`} />
-                    <div className={`h-full flex-1 rounded-full ${password.length >= 8 && /[0-9]/.test(password) ? "bg-emerald-500" : "bg-slate-200"}`} />
-                    <div className={`h-full flex-1 rounded-full ${password.length >= 8 && /[^A-Za-z0-9]/.test(password) ? "bg-emerald-500" : "bg-slate-200"}`} />
-                  </div>
-                </div>
-              )}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Confirm Password *
+              </label>
+              <Input
+                type="password"
+                required
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                leftIcon={<Lock className="h-4 w-4" />}
+              />
+              <PasswordConfirmationFeedback
+                password={password}
+                confirmPassword={confirmPassword}
+              />
             </div>
 
             <Button
               type="submit"
               variant="default"
               size="lg"
-              className="w-full font-bold bg-brand-700 hover:bg-brand-800 shadow-card"
+              className="w-full font-bold bg-brand-700 hover:bg-brand-800 shadow-card cursor-pointer"
               isLoading={isLoading}
-              disabled={isLoading || (password.length > 0 && password.length < 8)}
+              disabled={isLoading || password.length < 8 || password !== confirmPassword}
             >
               Continue to {role === "STUDENT" ? "Student" : "Tutor"} Setup
             </Button>

@@ -38,6 +38,7 @@ import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { FileUploadWithLink } from "@/components/ui/FileUploadWithLink";
 import { useModal } from "@/components/ui/modal-context";
 import { studentService } from "@/services/studentService";
+import { PasswordStrengthMeter, PasswordConfirmationFeedback } from "@/components/ui/PasswordStrengthMeter";
 
 export default function StudentSettingsPage() {
   const { toast } = useModal();
@@ -338,18 +339,6 @@ export default function StudentSettingsPage() {
       setIsDeleting(false);
     }
   };
-
-  // Password strength calculation
-  const getPasswordStrength = (pass: string) => {
-    if (!pass) return 0;
-    let score = 0;
-    if (pass.length >= 8) score += 25;
-    if (/[A-Z]/.test(pass)) score += 25;
-    if (/[0-9]/.test(pass)) score += 25;
-    if (/[^A-Za-z0-9]/.test(pass)) score += 25;
-    return score;
-  };
-  const passStrength = getPasswordStrength(newPassword);
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-16">
@@ -823,28 +812,7 @@ export default function StudentSettingsPage() {
                   onChange={(e) => setNewPassword(e.target.value)}
                   leftIcon={<Lock className="w-4 h-4" />}
                 />
-
-                {/* Password Strength Indicator */}
-                {newPassword && (
-                  <div className="mt-2 space-y-1">
-                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${
-                          passStrength <= 25
-                            ? "bg-rose-500 w-1/4"
-                            : passStrength <= 50
-                            ? "bg-amber-500 w-2/4"
-                            : passStrength <= 75
-                            ? "bg-blue-500 w-3/4"
-                            : "bg-emerald-500 w-full"
-                        }`}
-                      />
-                    </div>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      Strength: {passStrength >= 75 ? "Strong" : passStrength >= 50 ? "Moderate" : "Weak"}
-                    </span>
-                  </div>
-                )}
+                <PasswordStrengthMeter password={newPassword} />
               </div>
 
               <div>
@@ -858,11 +826,12 @@ export default function StudentSettingsPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   leftIcon={<Lock className="w-4 h-4" />}
                 />
+                <PasswordConfirmationFeedback password={newPassword} confirmPassword={confirmPassword} />
               </div>
 
               <Button
                 type="submit"
-                disabled={updatingPassword}
+                disabled={updatingPassword || newPassword.length < 8 || newPassword !== confirmPassword || !currentPassword}
                 variant="default"
                 className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white text-xs"
               >

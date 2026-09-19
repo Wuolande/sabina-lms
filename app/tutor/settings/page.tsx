@@ -35,6 +35,7 @@ import { Tabs } from "@/components/ui/Tabs";
 import { Modal } from "@/components/ui/Modal";
 import { useModal } from "@/components/ui/modal-context";
 import { tutorService } from "@/services/tutorService";
+import { PasswordStrengthMeter, PasswordConfirmationFeedback } from "@/components/ui/PasswordStrengthMeter";
 
 export default function TutorSettingsAndRatesPage() {
   const { toast } = useModal();
@@ -656,6 +657,7 @@ export default function TutorSettingsAndRatesPage() {
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 placeholder="Enter current password"
+                leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
               />
             </div>
 
@@ -669,7 +671,9 @@ export default function TutorSettingsAndRatesPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter strong new password"
+                leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
               />
+              <PasswordStrengthMeter password={newPassword} />
             </div>
 
             <div>
@@ -682,12 +686,14 @@ export default function TutorSettingsAndRatesPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
+                leftIcon={<Lock className="w-4 h-4 text-slate-400" />}
               />
+              <PasswordConfirmationFeedback password={newPassword} confirmPassword={confirmPassword} />
             </div>
 
             <Button
               type="submit"
-              disabled={updatingPassword}
+              disabled={updatingPassword || newPassword.length < 8 || newPassword !== confirmPassword || !currentPassword}
               variant="default"
               className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white text-xs flex items-center gap-1.5"
             >
