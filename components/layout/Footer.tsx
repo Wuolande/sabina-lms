@@ -23,13 +23,12 @@ const footerLinks = {
     { href: "/tutor", label: "Tutor Dashboard" },
   ],
   company: [
-    { href: "/about", label: "About Sabina Edge" },
+    { href: "/about", label: "About Us" },
     { href: "/contact", label: "Contact Support" },
     { href: "/privacy", label: "Privacy Policy" },
     { href: "/terms", label: "Terms of Service" },
     { href: "/refund-policy", label: "Refund Policy" },
     { href: "/cookies", label: "Cookie Policy" },
-    { href: "/admin", label: "Admin Console", accent: true },
   ],
 };
 

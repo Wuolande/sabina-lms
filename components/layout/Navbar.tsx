@@ -30,6 +30,7 @@ const mainNavLinks = [
   { href: "/subjects", label: "Subjects" },
   { href: "/how-it-works", label: "How It Works" },
   { href: "/become-a-tutor", label: "Become a Tutor" },
+  { href: "/about", label: "About Us" },
   { href: "/blog", label: "Blog" },
 ];
 
@@ -45,21 +46,12 @@ const portalItems = [
   },
   {
     href: "/tutor",
-    label: "Tutor Console",
+    label: "Tutor Portal",
     sub: "Calendar, availability & earnings",
     icon: Briefcase,
     badge: "Tutor",
     color: "text-emerald-700",
     bg: "bg-emerald-50 group-hover:bg-emerald-100",
-  },
-  {
-    href: "/admin",
-    label: "Admin Panel",
-    sub: "Platform management & audits",
-    icon: Shield,
-    badge: "Staff",
-    color: "text-amber-700",
-    bg: "bg-amber-50 group-hover:bg-amber-100",
   },
   {
     href: "/lessons/les_01/classroom",
@@ -173,7 +165,7 @@ export function Navbar() {
               onClick={() => setPortalsOpen(!portalsOpen)}
               className={cn(
                 "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150",
-                portalsOpen || pathname.startsWith("/student") || pathname.startsWith("/tutor") || pathname.startsWith("/admin")
+                portalsOpen || pathname.startsWith("/student") || pathname.startsWith("/tutor")
                   ? "text-brand bg-brand/10 font-bold"
                   : "text-slate-600 hover:text-slate-950 hover:bg-slate-50"
               )}

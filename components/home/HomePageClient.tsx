@@ -649,7 +649,9 @@ export function HomePageClient({
                       <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
                     <Badge variant="subtle" size="sm" className="font-bold text-[10px] sm:text-[11px] bg-slate-100 text-slate-700 shrink-0">
-                      {sub.tutorCount ? `${sub.tutorCount}+ Tutors` : "Top Subject"}
+                      {typeof sub.tutorCount === "number" && sub.tutorCount > 0
+                        ? `${sub.tutorCount} ${sub.tutorCount === 1 ? "Tutor" : "Tutors"}`
+                        : "Top Subject"}
                     </Badge>
                   </div>
 

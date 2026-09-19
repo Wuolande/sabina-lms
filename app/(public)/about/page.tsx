@@ -1,15 +1,69 @@
 import { PageLayout } from "@/components/cms/PageLayout";
 import { adminSupabase } from "@/src/shared/database/supabase";
 
-export const metadata = {
-  title: "About Us & Educational Mission | Sabina Edge LMS",
-  description: "Discover the story, mission, and technology behind Sabina Edge — the elite 1-on-1 tutoring platform.",
-};
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function generateMetadata() {
+  try {
+    const { data: page } = await adminSupabase.rpc("get_cms_page_by_slug", {
+      p_slug: "about",
+    });
+
+    if (page?.metaTitle || page?.title) {
+      return {
+        title: page.metaTitle || `${page.title} | Sabina Edge LMS`,
+        description: page.metaDescription || "Discover the story, mission, and technology behind Sabina Edge — the elite 1-on-1 tutoring platform.",
+      };
+    }
+  } catch {
+    // Fallback
+  }
+
+  return {
+    title: "About Us & Educational Mission | Sabina Edge LMS",
+    description: "Discover the story, mission, and technology behind Sabina Edge — the elite 1-on-1 tutoring platform.",
+  };
+}
 
 export default async function AboutPage() {
-  const { data: page } = await adminSupabase.rpc("get_cms_page_by_slug", {
-    p_slug: "about",
-  });
+  let page = null;
+  try {
+    const res = await adminSupabase.rpc("get_cms_page_by_slug", {
+      p_slug: "about",
+    });
+    if (res?.data) {
+      page = res.data;
+    }
+  } catch {
+    // Fallback
+  }
+
+  if (!page) {
+    try {
+      const { data: row } = await adminSupabase
+        .from("platform_pages")
+        .select("*")
+        .eq("slug", "about")
+        .single();
+      if (row) {
+        page = {
+          id: row.id,
+          slug: row.slug,
+          title: row.title,
+          category: row.category,
+          metaTitle: row.meta_title,
+          metaDescription: row.meta_description,
+          contentHtml: row.content_html,
+          isPublished: row.is_published,
+          readingTimeMinutes: row.reading_time_minutes || 6,
+          updatedAt: row.updated_at,
+        };
+      }
+    } catch {
+      // Fallback
+    }
+  }
 
   const fallbackPage = {
     slug: "about",

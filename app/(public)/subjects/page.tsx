@@ -106,7 +106,9 @@ export default function SubjectsPage() {
                       </span>
                     )}
                     <span className="text-[10px] sm:text-[11px] font-semibold bg-slate-100 text-slate-700 px-2 sm:px-2.5 py-0.5 rounded-full">
-                      {sub.tutorCount || 10}+ Tutors
+                      {typeof sub.tutorCount === "number" && sub.tutorCount > 0
+                        ? `${sub.tutorCount} ${sub.tutorCount === 1 ? "Tutor" : "Tutors"}`
+                        : "Verified Curriculum"}
                     </span>
                   </div>
                 </div>

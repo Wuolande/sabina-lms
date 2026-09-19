@@ -48,18 +48,18 @@ interface TutorDiscoveryModalProps {
 }
 
 const DEFAULT_FALLBACK_SUBJECTS: Subject[] = [
-  { id: "english", name: "English", slug: "english", category: "Languages", tutorCount: 45, description: "Master English conversational, business, and grammar skills." },
-  { id: "mathematics", name: "Mathematics", slug: "mathematics", category: "STEM", tutorCount: 38, description: "Calculus, algebra, geometry, and advanced math tutoring." },
-  { id: "physics", name: "Physics", slug: "physics", category: "STEM", tutorCount: 24, description: "Classical mechanics, electromagnetism, and quantum physics." },
-  { id: "chemistry", name: "Chemistry", slug: "chemistry", category: "STEM", tutorCount: 21, description: "Organic, inorganic, and physical chemistry foundations." },
-  { id: "biology", name: "Biology", slug: "biology", category: "STEM", tutorCount: 19, description: "Cellular biology, genetics, physiology, and anatomy." },
-  { id: "spanish", name: "Spanish", slug: "spanish", category: "Languages", tutorCount: 32, description: "From beginner vocabulary to fluent conversational Spanish." },
-  { id: "french", name: "French", slug: "french", category: "Languages", tutorCount: 22, description: "Conversational French, pronunciation, and DELF/DALF prep." },
-  { id: "python-coding", name: "Python & Coding", slug: "python-data-science", category: "Coding", tutorCount: 29, description: "Python programming, data structures, algorithms, and AI." },
-  { id: "web-dev", name: "Web Development", slug: "web-development", category: "Coding", tutorCount: 26, description: "Full-stack web apps with React, Next.js, and TypeScript." },
-  { id: "ielts-toefl", name: "IELTS & TOEFL Prep", slug: "ielts-toefl-prep", category: "Exam Prep", tutorCount: 35, description: "Band 8+ targeted strategies and practice exams." },
-  { id: "sat-prep", name: "SAT & ACT Prep", slug: "sat-act-prep", category: "Exam Prep", tutorCount: 18, description: "Score improvement strategies for Math and Reading." },
-  { id: "business-finance", name: "Business & Finance", slug: "business-finance", category: "Business", tutorCount: 20, description: "Accounting, corporate finance, economics, and case prep." },
+  { id: "english", name: "English", slug: "english", category: "Languages", tutorCount: 0, description: "Master English conversational, business, and grammar skills." },
+  { id: "mathematics", name: "Mathematics", slug: "mathematics", category: "STEM", tutorCount: 0, description: "Calculus, algebra, geometry, and advanced math tutoring." },
+  { id: "physics", name: "Physics", slug: "physics", category: "STEM", tutorCount: 0, description: "Classical mechanics, electromagnetism, and quantum physics." },
+  { id: "chemistry", name: "Chemistry", slug: "chemistry", category: "STEM", tutorCount: 0, description: "Organic, inorganic, and physical chemistry foundations." },
+  { id: "biology", name: "Biology", slug: "biology", category: "STEM", tutorCount: 0, description: "Cellular biology, genetics, physiology, and anatomy." },
+  { id: "spanish", name: "Spanish", slug: "spanish", category: "Languages", tutorCount: 0, description: "From beginner vocabulary to fluent conversational Spanish." },
+  { id: "french", name: "French", slug: "french", category: "Languages", tutorCount: 0, description: "Conversational French, pronunciation, and DELF/DALF prep." },
+  { id: "python-coding", name: "Python & Coding", slug: "python-data-science", category: "Coding", tutorCount: 0, description: "Python programming, data structures, algorithms, and AI." },
+  { id: "web-dev", name: "Web Development", slug: "web-development", category: "Coding", tutorCount: 0, description: "Full-stack web apps with React, Next.js, and TypeScript." },
+  { id: "ielts-toefl", name: "IELTS & TOEFL Prep", slug: "ielts-toefl-prep", category: "Exam Prep", tutorCount: 0, description: "Band 8+ targeted strategies and practice exams." },
+  { id: "sat-prep", name: "SAT & ACT Prep", slug: "sat-act-prep", category: "Exam Prep", tutorCount: 0, description: "Score improvement strategies for Math and Reading." },
+  { id: "business-finance", name: "Business & Finance", slug: "business-finance", category: "Business", tutorCount: 0, description: "Accounting, corporate finance, economics, and case prep." },
 ];
 
 function SubjectIconBadge({ name, category }: { name?: string; category?: string }) {
@@ -764,7 +764,9 @@ export function TutorDiscoveryModal({
                             </span>
                             <span className="text-slate-300">·</span>
                             <span className="text-[11px] text-brand font-semibold">
-                              {sub.tutorCount || 15}+ tutors
+                              {typeof sub.tutorCount === "number" && sub.tutorCount > 0
+                                ? `${sub.tutorCount} ${sub.tutorCount === 1 ? "certified tutor" : "certified tutors"}`
+                                : "Verified curriculum"}
                             </span>
                           </div>
                         </div>
