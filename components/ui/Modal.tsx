@@ -65,7 +65,7 @@ export function Modal({
     <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
       {/* Frosted Glass Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -76,8 +76,8 @@ export function Modal({
         aria-modal="true"
         className={cn(
           "relative z-[100000] w-full",
-          "rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl",
-          "border border-slate-200/90",
+          "rounded-t-3xl sm:rounded-3xl bg-white dark:bg-slate-900 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)]",
+          "border border-slate-200/90 dark:border-slate-800",
           "animate-in slide-in-from-bottom sm:zoom-in-95 fade-in duration-200",
           "flex flex-col",
           "max-h-[92vh] sm:max-h-[90vh] overflow-hidden",

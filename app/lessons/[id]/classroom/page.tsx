@@ -39,6 +39,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Modal } from "@/components/ui/Modal";
+import { useModal } from "@/components/ui/modal-context";
 import { lessonService } from "@/services/lessonService";
 import { Lesson360Aggregate } from "@/src/modules/lessons/domain/types";
 import { VideoProviderType } from "@/src/modules/video/types/videoProviderTypes";
@@ -927,6 +928,7 @@ export default function LiveClassroomPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
+  const { toast } = useModal();
 
   const [lesson, setLesson] = React.useState<Lesson360Aggregate | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -1222,11 +1224,12 @@ export default function LiveClassroomPage() {
       const res = await lessonService.extendLesson(lesson.id, minutes);
       if (res.success) {
         setSecondsRemaining((prev) => prev + minutes * 60);
+        toast({ title: "Lesson Extended", message: `Successfully extended by ${minutes} minutes.`, variant: "success" });
       } else {
-        alert(res.error || "Unable to extend lesson duration.");
+        toast({ title: "Extension Failed", message: res.error || "Unable to extend lesson duration.", variant: "warning" });
       }
     } catch (err: any) {
-      alert(err.message || "Failed to extend lesson duration.");
+      toast({ title: "Extension Error", message: err.message || "Failed to extend lesson duration.", variant: "danger" });
     } finally {
       setIsExtending(false);
     }
@@ -1247,10 +1250,10 @@ export default function LiveClassroomPage() {
         setIsEndModalOpen(false);
         window.location.href = `/tutor/lessons/${lesson.id}?claimed=student_no_show`;
       } else {
-        alert(res.error || "Unable to claim no-show compensation.");
+        toast({ title: "No-Show Claim Notice", message: res.error || "Unable to claim no-show compensation.", variant: "warning" });
       }
     } catch (err: any) {
-      alert(err.message || "Failed to resolve student no-show.");
+      toast({ title: "No-Show Error", message: err.message || "Failed to resolve student no-show.", variant: "danger" });
     } finally {
       setIsResolvingNoShow(false);
     }
@@ -1271,10 +1274,10 @@ export default function LiveClassroomPage() {
         setIsEndModalOpen(false);
         window.location.href = `/student/lessons/${lesson.id}?refunded=tutor_no_show`;
       } else {
-        alert(res.error || "Unable to report tutor absence.");
+        toast({ title: "Absence Report Notice", message: res.error || "Unable to report tutor absence.", variant: "warning" });
       }
     } catch (err: any) {
-      alert(err.message || "Failed to report tutor absence.");
+      toast({ title: "Absence Report Error", message: err.message || "Failed to report tutor absence.", variant: "danger" });
     } finally {
       setIsResolvingNoShow(false);
     }

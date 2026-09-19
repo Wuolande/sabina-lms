@@ -69,7 +69,7 @@ export function ResponsiveModal({
 
   const content = (
     <div
-      className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-sm transition-all duration-200 animate-in fade-in"
+      className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/60 backdrop-blur-md transition-all duration-200 animate-in fade-in"
       onClick={() => {
         if (!preventBackdropClose) onClose();
       }}
@@ -77,7 +77,7 @@ export function ResponsiveModal({
       aria-modal="true"
     >
       <div
-        className={`w-full ${sizeClasses[size]} bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200/80 dark:border-slate-800 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden transform transition-all duration-200 animate-in slide-in-from-bottom sm:zoom-in-95 relative z-[100000] ${className}`}
+        className={`w-full ${sizeClasses[size]} bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] border border-slate-200/90 dark:border-slate-800 flex flex-col max-h-[92vh] sm:max-h-[90vh] overflow-hidden transform transition-all duration-200 animate-in slide-in-from-bottom sm:zoom-in-95 relative z-[100000] ${className}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Mobile Pull Indicator Handle */}

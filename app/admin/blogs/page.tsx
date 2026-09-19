@@ -40,6 +40,7 @@ import { Badge } from "@/components/ui/Badge";
 import { FileUploadWithLink } from "@/components/ui/FileUploadWithLink";
 import { RichTextEditor } from "@/components/cms/RichTextEditor";
 import { adminService } from "@/services/adminService";
+import { useModal } from "@/components/ui/modal-context";
 import {
   BlogPost,
   BlogPostPayload,
@@ -75,6 +76,7 @@ const DEFAULT_POST_FORM: BlogPostPayload = {
 };
 
 export default function AdminBlogManagementPage() {
+  const { toast } = useModal();
   const [posts, setPosts] = React.useState<BlogPost[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -97,9 +99,10 @@ export default function AdminBlogManagementPage() {
   const [tagInput, setTagInput] = React.useState("");
   const [deleteConfirmPost, setDeleteConfirmPost] = React.useState<BlogPost | null>(null);
 
-  const triggerToast = (msg: string) => {
+  const triggerToast = (msg: string, variant: "success" | "danger" | "warning" | "info" = "success") => {
     setSavedMessage(msg);
-    setTimeout(() => setSavedMessage(null), 3000);
+    setTimeout(() => setSavedMessage(null), 3500);
+    toast({ title: msg, variant });
   };
 
   const loadBlogs = React.useCallback(async () => {

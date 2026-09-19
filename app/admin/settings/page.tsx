@@ -56,6 +56,7 @@ import { adminService } from "@/services/adminService";
 import { Logo } from "@/components/ui/Logo";
 import { useLogo } from "@/components/ui/LogoContext";
 import { FileUploadWithLink } from "@/components/ui/FileUploadWithLink";
+import { useModal } from "@/components/ui/modal-context";
 import {
   SecuritySettings,
   DEFAULT_SECURITY_SETTINGS,
@@ -91,6 +92,8 @@ export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = React.useState<
     "policies" | "branding" | "security" | "email" | "video" | "payments" | "subjects" | "languages" | "countries" | "timezones" | "currencies"
   >("policies");
+
+  const { confirm, toast } = useModal();
 
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -225,9 +228,10 @@ export default function AdminSettingsPage() {
     loadTaxonomy();
   }, [loadTaxonomy]);
 
-  const triggerToast = (msg: string) => {
+  const triggerToast = (msg: string, variant: "success" | "danger" | "warning" | "info" = "success") => {
     setSavedMessage(msg);
-    setTimeout(() => setSavedMessage(null), 3000);
+    setTimeout(() => setSavedMessage(null), 3500);
+    toast({ title: msg, variant });
   };
 
   // Branding & Theme Save
@@ -416,7 +420,13 @@ export default function AdminSettingsPage() {
 
   // Subject Delete
   const handleDeleteSubject = async (id: string) => {
-    if (!confirm("Are you sure you want to delete or deactivate this subject?")) return;
+    const isConfirmed = await confirm({
+      title: "Delete Subject?",
+      message: "Are you sure you want to delete or deactivate this subject? This will affect course listings and search filters across the platform.",
+      confirmText: "Delete Subject",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
     await adminService.deleteSubject(id);
     loadTaxonomy();
     triggerToast("Subject removed from platform");
@@ -438,7 +448,13 @@ export default function AdminSettingsPage() {
 
   // Language Delete
   const handleDeleteLanguage = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this language?")) return;
+    const isConfirmed = await confirm({
+      title: "Delete Language?",
+      message: "Are you sure you want to delete this language from available options?",
+      confirmText: "Delete Language",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
     await adminService.deleteLanguage(id);
     loadTaxonomy();
     triggerToast("Language deleted");
@@ -460,7 +476,13 @@ export default function AdminSettingsPage() {
 
   // Country Delete
   const handleDeleteCountry = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this country?")) return;
+    const isConfirmed = await confirm({
+      title: "Delete Country?",
+      message: "Are you sure you want to delete this country from platform geographical records?",
+      confirmText: "Delete Country",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
     await adminService.deleteCountry(id);
     loadTaxonomy();
     triggerToast("Country deleted");
@@ -482,7 +504,13 @@ export default function AdminSettingsPage() {
 
   // Timezone Delete
   const handleDeleteTimezone = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this timezone?")) return;
+    const isConfirmed = await confirm({
+      title: "Delete Timezone?",
+      message: "Are you sure you want to delete this timezone? Tutors or lessons scheduled in this timezone may need adjustment.",
+      confirmText: "Delete Timezone",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
     await adminService.deleteTimezone(id);
     loadTaxonomy();
     triggerToast("Timezone deleted");

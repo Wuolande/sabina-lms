@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useModal } from "@/components/ui/modal-context";
 import {
   Bold,
   Italic,
@@ -47,6 +48,7 @@ export function RichTextEditor({
   minHeight = "400px",
   placeholder = "Write or paste formatted content here...",
 }: RichTextEditorProps) {
+  const { prompt } = useModal();
   const [viewMode, setViewMode] = React.useState<"visual" | "html" | "split">("visual");
   const editorRef = React.useRef<HTMLDivElement>(null);
   const isUpdatingRef = React.useRef(false);
@@ -79,17 +81,31 @@ export function RichTextEditor({
     }
   };
 
-  const insertLink = () => {
-    const url = prompt("Enter URL:", "https://");
-    if (url && url !== "https://") {
-      exec("createLink", url);
+  const insertLink = async () => {
+    const url = await prompt({
+      title: "Insert Hyperlink",
+      message: "Enter the web destination URL for this link:",
+      placeholder: "https://example.com",
+      defaultValue: "https://",
+      confirmText: "Insert Link",
+      variant: "primary",
+    });
+    if (url && url.trim() && url.trim() !== "https://") {
+      exec("createLink", url.trim());
     }
   };
 
-  const insertImage = () => {
-    const url = prompt("Enter Image URL:", "https://images.unsplash.com/");
-    if (url && url !== "https://") {
-      exec("insertImage", url);
+  const insertImage = async () => {
+    const url = await prompt({
+      title: "Insert Remote Image",
+      message: "Enter the direct image URL:",
+      placeholder: "https://images.unsplash.com/...",
+      defaultValue: "https://images.unsplash.com/",
+      confirmText: "Insert Image",
+      variant: "primary",
+    });
+    if (url && url.trim() && url.trim() !== "https://") {
+      exec("insertImage", url.trim());
     }
   };
 

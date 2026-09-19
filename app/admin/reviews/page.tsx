@@ -9,8 +9,10 @@ import { StatCard } from "@/components/ui/StatCard";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/Table";
 import { adminService } from "@/services/adminService";
 import { formatDate } from "@/lib/utils";
+import { useModal } from "@/components/ui/modal-context";
 
 export default function AdminReviewsPage() {
+  const { confirm, toast } = useModal();
   const [data, setData] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
@@ -32,11 +34,21 @@ export default function AdminReviewsPage() {
   }, [loadReviews]);
 
   const handleRemove = async (id: string) => {
-    if (!confirm("Are you sure you want to permanently delete this student review?")) return;
+    const isConfirmed = await confirm({
+      title: "Delete Student Review?",
+      message: "Are you sure you want to permanently delete this student review? This action cannot be undone and will recalculate the tutor's rating.",
+      confirmText: "Delete Review",
+      variant: "danger",
+    });
+    if (!isConfirmed) return;
+
     setDeletingId(id);
     try {
       await adminService.deleteReview(id);
       await loadReviews();
+      toast({ title: "Review deleted successfully", variant: "success" });
+    } catch (err: any) {
+      toast({ title: "Failed to delete review", message: err.message, variant: "danger" });
     } finally {
       setDeletingId(null);
     }
