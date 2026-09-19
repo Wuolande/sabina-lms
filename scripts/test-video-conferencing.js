@@ -240,47 +240,42 @@ async function testVideoConferencing() {
     console.log('✓ Token cryptographic signature verified with secret key.');
     testResults.passed.push('TEST 3: Cryptographic Token Verification');
 
-    // TEST 4: LiveKit Server Network Handshake
+    // TEST 4: LiveKit Server Network Handshake & WebSocket Verification
     console.log('\n[TEST 4] LiveKit Server Network Handshake & Credential Verification...');
-    const serverUrl = config.livekitUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || 'wss://demo.livekit.cloud';
+    const serverUrl = config.livekitUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || 'wss://sabina-02kwvz9b.livekit.cloud';
     console.log('  Testing connection to:', serverUrl);
 
-    const httpUrl = serverUrl.replace(/^wss:\/\//, 'https://').replace(/^ws:\/\//, 'http://');
+    // 4a. Native WebSocket Connection Handshake
+    const wsResult = await new Promise((resolve) => {
+      const wsUrl = `${serverUrl}/rtc?access_token=${tutorJwt}&protocol=15`;
+      const ws = new WebSocket(wsUrl);
+      const timer = setTimeout(() => {
+        try { ws.close(); } catch {}
+        resolve({ success: false, error: 'WebSocket connection timed out after 8s' });
+      }, 8000);
 
-    const handshakeResult = await new Promise((resolve) => {
-      const target = `${httpUrl}/rtc?access_token=${tutorJwt}`;
-      const req = https.get(target, (res) => {
-        let body = '';
-        res.on('data', (c) => (body += c.toString()));
-        res.on('end', () => {
-          resolve({
-            statusCode: res.statusCode,
-            statusMessage: res.statusMessage,
-            body: body.trim(),
-          });
-        });
-      });
-      req.on('error', (err) => resolve({ error: err.message }));
-      req.setTimeout(5000, () => {
-        req.destroy();
-        resolve({ error: 'Timed out after 5s' });
-      });
+      ws.onopen = () => {
+        clearTimeout(timer);
+        ws.close(1000, 'Handshake verified');
+        resolve({ success: true });
+      };
+      ws.onerror = (err) => {
+        clearTimeout(timer);
+        resolve({ success: false, error: err.message || 'WebSocket error' });
+      };
     });
 
-    console.log('  Handshake HTTP Status:', handshakeResult.statusCode, handshakeResult.statusMessage);
-    console.log('  Handshake Body:', handshakeResult.body || handshakeResult.error);
+    assert(wsResult.success === true, `LiveKit WebSocket handshake failed: ${wsResult.error}`);
+    console.log('✓ WebSocket connection successfully established with LiveKit Cloud cluster!');
 
-    if (handshakeResult.statusCode === 401 && handshakeResult.body === 'invalid API key') {
-      testResults.findings.push({
-        severity: 'CRITICAL',
-        code: 'LIVEKIT_INVALID_CLOUD_CREDENTIALS',
-        title: 'LiveKit Cloud rejected token (401 Unauthorized: invalid API key)',
-        detail: 'The current LIVEKIT_API_KEY="devkey" is a local test placeholder. The livekit.cloud server rejects devkey.',
-        impact: 'Remote peer-to-peer WebRTC connections between student and tutor will fail on demo.livekit.cloud until valid LiveKit Cloud keys are configured.',
-      });
-    }
+    // 4b. RoomService API Client Verification
+    const httpUrl = serverUrl.replace(/^wss:\/\//, 'https://').replace(/^ws:\/\//, 'http://');
+    const { RoomServiceClient } = require('livekit-server-sdk');
+    const roomSvc = new RoomServiceClient(httpUrl, apiKey, apiSecret);
+    const rooms = await roomSvc.listRooms();
+    console.log(`✓ RoomServiceClient authorized by LiveKit Cloud. Active rooms: ${rooms.length}`);
 
-    testResults.passed.push('TEST 4: LiveKit Handshake diagnostic completed');
+    testResults.passed.push('TEST 4: LiveKit Cloud WebSocket Handshake & RoomService API Client');
 
     // TEST 5: Alternate Providers Status
     console.log('\n[TEST 5] Alternate Video Providers Status...');
