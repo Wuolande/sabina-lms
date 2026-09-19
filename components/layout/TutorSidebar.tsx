@@ -50,6 +50,23 @@ export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
       .catch(() => {});
   }, []);
 
+  // Close sidebar on route change
+  React.useEffect(() => {
+    onClose?.();
+  }, [pathname]);
+
+  // Lock body scroll on mobile when sidebar is open
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 
@@ -64,7 +81,7 @@ export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-slate-950 text-slate-300 border-r border-slate-800 transition-transform duration-300 ease-out lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-slate-950 text-slate-300 border-r border-slate-800 transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -159,13 +176,20 @@ export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
           >
             ← Marketplace
           </Link>
-          <Link
-            href="/login"
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-400 transition-colors"
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+              } finally {
+                window.location.href = '/login';
+              }
+            }}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-400 transition-colors cursor-pointer"
           >
             <LogOut className="h-3.5 w-3.5" />
             Sign out
-          </Link>
+          </button>
         </div>
       </aside>
     </>

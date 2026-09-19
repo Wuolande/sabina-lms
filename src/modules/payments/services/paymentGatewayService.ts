@@ -364,6 +364,24 @@ export async function verifyPayment(payload: VerifyPaymentPayload): Promise<Veri
   const config = await getPaymentProviderConfig();
   const gateway = payload.gateway;
 
+  let resolvedBookingPrice = 45;
+  let resolvedBookingCurrency = 'USD';
+  if (payload.bookingId) {
+    try {
+      const { data: bData } = await adminSupabase
+        .from('bookings')
+        .select('price, currency')
+        .eq('id', payload.bookingId)
+        .maybeSingle();
+      if (bData?.price) {
+        resolvedBookingPrice = Number(bData.price);
+        resolvedBookingCurrency = bData.currency || 'USD';
+      }
+    } catch {
+      // Fallback to default
+    }
+  }
+
   try {
     switch (gateway) {
       case 'stripe': {
@@ -405,8 +423,8 @@ export async function verifyPayment(payload: VerifyPaymentPayload): Promise<Veri
           gateway: 'stripe',
           mode: 'sandbox',
           transactionId: payload.intentId,
-          amount: 45,
-          currency: 'USD',
+          amount: resolvedBookingPrice,
+          currency: resolvedBookingCurrency,
           status: 'PAID',
           receiptUrl: `https://dashboard.stripe.com/test/payments/${payload.intentId}`,
         };
@@ -458,8 +476,8 @@ export async function verifyPayment(payload: VerifyPaymentPayload): Promise<Veri
           gateway: 'paypal',
           mode: 'sandbox',
           transactionId: payload.intentId,
-          amount: 45,
-          currency: 'USD',
+          amount: resolvedBookingPrice,
+          currency: resolvedBookingCurrency,
           status: 'PAID',
         };
       }
@@ -494,8 +512,8 @@ export async function verifyPayment(payload: VerifyPaymentPayload): Promise<Veri
           gateway: 'razorpay',
           mode: 'sandbox',
           transactionId: payload.paymentId || payload.intentId,
-          amount: 45,
-          currency: 'INR',
+          amount: resolvedBookingPrice,
+          currency: resolvedBookingCurrency === 'USD' ? 'INR' : resolvedBookingCurrency,
           status: 'PAID',
         };
       }
@@ -527,8 +545,8 @@ export async function verifyPayment(payload: VerifyPaymentPayload): Promise<Veri
           gateway: 'paystack',
           mode: 'sandbox',
           transactionId: payload.reference || payload.intentId,
-          amount: 45,
-          currency: 'NGN',
+          amount: resolvedBookingPrice,
+          currency: resolvedBookingCurrency === 'USD' ? 'NGN' : resolvedBookingCurrency,
           status: 'PAID',
         };
       }

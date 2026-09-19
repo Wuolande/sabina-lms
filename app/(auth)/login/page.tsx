@@ -7,20 +7,11 @@ import {
   Lock,
   Mail,
   AlertCircle,
-  Zap,
   ArrowRight,
-  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Logo } from "@/components/ui/Logo";
-
-const ADMIN_ACCOUNT = {
-  email: "admin@sabinaedge.com",
-  pass: "Admin@123456",
-  role: "ADMIN",
-  target: "/admin",
-};
 
 function LoginPageContent() {
   const router = useRouter();
@@ -33,33 +24,7 @@ function LoginPageContent() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(errorParam);
 
-  const handleAdminQuickLogin = async () => {
-    setIsLoading(true);
-    setErrorMsg(null);
-    setEmail(ADMIN_ACCOUNT.email);
-    setPassword(ADMIN_ACCOUNT.pass);
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: ADMIN_ACCOUNT.email, password: ADMIN_ACCOUNT.pass }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        setErrorMsg(data.error || "Login failed");
-        setIsLoading(false);
-        return;
-      }
-
-      const destination = redirectPath || ADMIN_ACCOUNT.target;
-      router.push(destination);
-    } catch (err) {
-      setErrorMsg("An unexpected error occurred");
-      setIsLoading(false);
-    }
-  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,9 +49,9 @@ function LoginPageContent() {
 
       const userRole = data.user?.user_metadata?.role;
       let defaultTarget = "/student";
-      if (userRole === "ADMIN" || userRole === "SUPER_ADMIN" || trimmedEmail.includes("admin")) {
+      if (userRole === "ADMIN" || userRole === "SUPER_ADMIN") {
         defaultTarget = "/admin";
-      } else if (userRole === "TUTOR" || trimmedEmail.includes("tutor")) {
+      } else if (userRole === "TUTOR") {
         defaultTarget = "/tutor";
       }
 
@@ -113,38 +78,6 @@ function LoginPageContent() {
       </div>
 
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md px-4 space-y-4">
-        {/* ── 1-Click Super Admin Fast Pass ── */}
-        <div className="rounded-3xl border border-amber-200/90 bg-gradient-to-br from-amber-50/90 via-white to-amber-50/50 p-4 shadow-sm space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-950 uppercase tracking-wider">
-              <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-              Quick Administrator Access
-            </span>
-            <span className="text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full">
-              Super Admin
-            </span>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleAdminQuickLogin}
-            disabled={isLoading}
-            className="w-full p-3 rounded-2xl border border-amber-200 bg-white hover:bg-amber-100/70 active:scale-[0.99] transition-all flex items-center justify-between cursor-pointer group shadow-xs disabled:opacity-60"
-          >
-            <div className="flex items-center gap-2.5 text-left">
-              <div className="p-2 rounded-xl bg-amber-100 text-amber-800 group-hover:bg-amber-200 transition-colors">
-                <ShieldCheck className="h-4.5 w-4.5 text-amber-700" />
-              </div>
-              <div>
-                <strong className="text-xs font-extrabold text-slate-900 block">System Administrator</strong>
-                <span className="text-[11px] text-slate-500 block font-mono">admin@sabinaedge.com</span>
-              </div>
-            </div>
-            <span className="text-xs font-bold text-amber-800 group-hover:text-amber-950 flex items-center gap-1">
-              Sign In <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </span>
-          </button>
-        </div>
 
         {/* ── Standard Credentials Form ── */}
         <div className="bg-white py-6 px-6 sm:px-8 shadow-card rounded-3xl border border-slate-200/80 space-y-5">

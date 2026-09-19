@@ -526,8 +526,8 @@ function ClassinClassroomStage({
   // Tracks query
   const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare]);
 
-  const tutorName = lesson?.tutor?.displayName || "Dr. Elena Rostova";
-  const studentName = lesson?.student?.displayName || "Alex Rivera";
+  const tutorName = lesson?.tutor?.displayName || "Instructor";
+  const studentName = lesson?.student?.displayName || "Student";
   const durationMin = lesson?.durationMinutes || 50;
   const isTrial = durationMin <= 30;
 
@@ -1006,8 +1006,8 @@ export default function LiveClassroomPage() {
         scheduledEnd: new Date(Date.now() + 24 * 60 * 60 * 1000 + 50 * 60 * 1000).toISOString(),
         status: "CONFIRMED" as Lesson360Aggregate["status"],
         videoRoomId: `room-${lessonId}`,
-        student: { displayName: "Alex Rivera", avatarUrl: "" },
-        tutor: { displayName: "Dr. Elena Rostova", avatarUrl: "" },
+        student: { displayName: "Student", avatarUrl: "" },
+        tutor: { displayName: "Instructor", avatarUrl: "" },
         subject: { name: "Physics & Mechanics" },
         materials: [],
       };
@@ -1283,8 +1283,8 @@ export default function LiveClassroomPage() {
   const providerMeta = PROVIDER_META[activeProvider];
   const isTutor = currentUserRole === "TUTOR";
   const currentUserName = isTutor
-    ? lesson?.tutor?.displayName || "Dr. Elena Rostova"
-    : lesson?.student?.displayName || "Alex Rivera";
+    ? lesson?.tutor?.displayName || "Instructor"
+    : lesson?.student?.displayName || "Student";
 
   // Check early arrival for student waiting room
   const scheduledStartMs = lesson?.scheduledStart ? new Date(lesson.scheduledStart).getTime() : 0;

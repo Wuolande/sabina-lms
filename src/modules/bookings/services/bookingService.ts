@@ -44,7 +44,7 @@ export class BookingService {
     // Validate price based on tutor's hourly rate and possible trial discount
     const tutorProfile = await adminSupabase
       .from('tutor_profiles')
-      .select('hourly_rate')
+      .select('hourly_rate, currency')
       .eq('id', payload.tutorId)
       .single();
       
@@ -62,13 +62,21 @@ export class BookingService {
       
       // If client marked this as a trial, apply platform trial discount
       const requestedPrice = Number(payload.price);
-      const trialDiscountedPrice = expectedPrice * (1 - policies.trialLessonDiscountPercent / 100);
+      const trialDiscountedPrice = expectedPrice * (1 - (policies.trialLessonDiscountPercent || 0) / 100);
       
       const margin = 0.5; // Allow small rounding error (cents)
-      if (Math.abs(requestedPrice - expectedPrice) > margin && Math.abs(requestedPrice - trialDiscountedPrice) > margin) {
-         // The requested price is neither the full price nor the exact trial price
-         console.warn(`[BookingService] Client requested price ${requestedPrice} but expected ${expectedPrice} or trial ${trialDiscountedPrice}. Accepting as custom price but logging.`);
+      const isExpected = Math.abs(requestedPrice - expectedPrice) <= margin;
+      const isTrial = Math.abs(requestedPrice - trialDiscountedPrice) <= margin;
+
+      if (!isExpected && !isTrial) {
+        throw new ValidationError(
+          `Price manipulation detected: The requested price ($${requestedPrice}) does not match the educator standard rate ($${expectedPrice.toFixed(2)}) or trial rate ($${trialDiscountedPrice.toFixed(2)}).`
+        );
       }
+
+      // Always enforce server authoritative calculated price and currency
+      payload.price = isTrial ? Number(trialDiscountedPrice.toFixed(2)) : Number(expectedPrice.toFixed(2));
+      payload.currency = tutorProfile.data.currency || payload.currency || 'USD';
     }
 
     let result;

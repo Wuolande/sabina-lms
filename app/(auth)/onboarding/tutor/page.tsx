@@ -58,6 +58,25 @@ export default function TutorOnboardingPage() {
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setSubjectsList(data);
+          setPrimarySubjectId((prev) => prev || data[0].id);
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/auth/session?role=TUTOR')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.authenticated && data.user) {
+          if (data.user.displayName) {
+            setDisplayName(data.user.displayName);
+            const parts = data.user.displayName.split(" ");
+            if (parts.length > 1) {
+              setFirstName(parts[0]);
+              setLastName(parts.slice(1).join(" "));
+            } else {
+              setFirstName(data.user.displayName);
+            }
+          }
         }
       })
       .catch(() => {});
@@ -68,114 +87,84 @@ export default function TutorOnboardingPage() {
   const [lastName, setLastName] = React.useState("");
   const [displayName, setDisplayName] = React.useState("");
   const [country, setCountry] = React.useState("United Kingdom");
-  const [timezone, setTimezone] = React.useState("Europe/London (GMT+1)");
+  const [timezone, setTimezone] = React.useState(() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/London (GMT+1)";
+    } catch {
+      return "Europe/London (GMT+1)";
+    }
+  });
   const [phone, setPhone] = React.useState("");
   const [avatarPreview, setAvatarPreview] = React.useState("");
 
   // ── STEP 2: TEACHING PROFILE & BIO ──
-  const [headline, setHeadline] = React.useState(
-    "Oxford Ph.D. in Pure Mathematics • 10+ Yrs AP Calculus, Olympiad & STEP/MAT Coach"
-  );
-  const [bioAboutMe, setBioAboutMe] = React.useState(
-    "I am a Senior Lecturer and dedicated mathematics mentor with a Ph.D. from the University of Oxford. Over the past 10 years, I have helped more than 350 students bridge the gap between mechanical calculations and deep, intuitive conceptual understanding."
-  );
-  const [bioExperience, setBioExperience] = React.useState(
-    "I have taught undergraduate analysis at Oxford and coached regional Olympiad teams to top-tier finishes. My specialized tracks cover AP Calculus AB/BC, IB Math AA HL, SAT Math 800 preparation, and Oxbridge STEP/MAT entrance exams."
-  );
-  const [bioStyle, setBioStyle] = React.useState(
-    "My virtual classroom is fully interactive. Every student receives live visual derivation on a collaborative whiteboard, step-by-step LaTeX formula breakdowns, and personalized problem sets after each session."
-  );
+  const [headline, setHeadline] = React.useState("");
+  const [bioAboutMe, setBioAboutMe] = React.useState("");
+  const [bioExperience, setBioExperience] = React.useState("");
+  const [bioStyle, setBioStyle] = React.useState("");
   const [selectedLanguages, setSelectedLanguages] = React.useState([
     { code: "en", name: "English", proficiency: "Native / Bilingual" },
-    { code: "fr", name: "French", proficiency: "Advanced (C1)" },
   ]);
 
   // ── STEP 3: ACADEMIC DEGREES ──
-  const [degrees, setDegrees] = React.useState([
-    {
-      id: "deg-1",
-      degree: "Ph.D. in Pure Mathematics",
-      institution: "University of Oxford",
-      fieldOfStudy: "Algebraic Geometry & Differential Topology",
-      startYear: "2015",
-      endYear: "2019",
-      honors: "Doctoral Thesis Distinction • Clarendon Scholar",
-      documentName: "Oxford_PhD_Diploma_Verified.pdf",
-    },
-    {
-      id: "deg-2",
-      degree: "M.Sc. in Mathematical Sciences",
-      institution: "Imperial College London",
-      fieldOfStudy: "Applied Mathematics",
-      startYear: "2013",
-      endYear: "2015",
-      honors: "First Class Honours (Dean's List)",
-      documentName: "Imperial_MSc_Transcript.pdf",
-    },
-  ]);
+  const [degrees, setDegrees] = React.useState<Array<{
+    id: string;
+    degree: string;
+    institution: string;
+    fieldOfStudy: string;
+    startYear: string;
+    endYear: string;
+    honors: string;
+    documentName: string;
+  }>>([]);
 
   // ── STEP 4: CERTIFICATIONS & LICENSES ──
-  const [certifications, setCertifications] = React.useState([
-    {
-      id: "cert-1",
-      title: "Qualified Teacher Status (QTS)",
-      issuer: "UK Department for Education",
-      issueYear: "2019",
-      credentialId: "QTS-GB-884920",
-    },
-    {
-      id: "cert-2",
-      title: "AP Calculus Master Instructor Certification",
-      issuer: "College Board",
-      issueYear: "2020",
-      credentialId: "CB-AP-992143",
-    },
-  ]);
+  const [certifications, setCertifications] = React.useState<Array<{
+    id: string;
+    title: string;
+    issuer: string;
+    issueYear: string;
+    credentialId: string;
+  }>>([]);
 
   // ── STEP 5: WORK EXPERIENCE ──
-  const [experiences, setExperiences] = React.useState([
-    {
-      id: "exp-1",
-      role: "Senior Lecturer in Mathematics",
-      organization: "Oxford Mathematical Institute",
-      startYear: "2019",
-      endYear: "Present",
-      description: "Delivering lecture series on Differential Topology and Multivariable Calculus.",
-    },
-    {
-      id: "exp-2",
-      role: "Lead Olympiad & STEP Coach",
-      organization: "Westminster Academic Academy",
-      startYear: "2016",
-      endYear: "2021",
-      description: "Mentored high-school students for British Mathematical Olympiad and Oxford MAT exams.",
-    },
-  ]);
+  const [experiences, setExperiences] = React.useState<Array<{
+    id: string;
+    role: string;
+    organization: string;
+    startYear: string;
+    endYear: string;
+    description: string;
+  }>>([]);
 
   // ── STEP 6: SUBJECTS & PRICING ──
-  const [primarySubjectId, setPrimarySubjectId] = React.useState("sub-2"); // Mathematics
-  const [secondarySubjectIds, setSecondarySubjectIds] = React.useState<string[]>(["sub-5", "sub-4"]); // Physics, Python
-  const [hourlyRate, setHourlyRate] = React.useState(65);
+  const [primarySubjectId, setPrimarySubjectId] = React.useState("");
+  const [secondarySubjectIds, setSecondarySubjectIds] = React.useState<string[]>([]);
+  const [hourlyRate, setHourlyRate] = React.useState(35);
   const [offerTrialDiscount, setOfferTrialDiscount] = React.useState(true);
-  const [trialPrice, setTrialPrice] = React.useState(32);
+  const [trialPrice, setTrialPrice] = React.useState(18);
   const [instantBookingEnabled, setInstantBookingEnabled] = React.useState(true);
   const [noticeHours, setNoticeHours] = React.useState("12");
 
   // ── STEP 7: AVAILABILITY ──
   const [schedule, setSchedule] = React.useState([
-    { day: "Monday", active: true, start: "09:00", end: "18:00" },
-    { day: "Tuesday", active: true, start: "09:00", end: "18:00" },
-    { day: "Wednesday", active: true, start: "09:00", end: "18:00" },
-    { day: "Thursday", active: true, start: "09:00", end: "18:00" },
+    { day: "Monday", active: true, start: "09:00", end: "17:00" },
+    { day: "Tuesday", active: true, start: "09:00", end: "17:00" },
+    { day: "Wednesday", active: true, start: "09:00", end: "17:00" },
+    { day: "Thursday", active: true, start: "09:00", end: "17:00" },
     { day: "Friday", active: true, start: "09:00", end: "17:00" },
-    { day: "Saturday", active: true, start: "10:00", end: "15:00" },
+    { day: "Saturday", active: false, start: "10:00", end: "14:00" },
     { day: "Sunday", active: false, start: "10:00", end: "14:00" },
   ]);
 
   // ── STEP 8: VIDEO INTRO ──
-  const [videoUrl, setVideoUrl] = React.useState("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-  const [agreedToQualityCheck, setAgreedToQualityCheck] = React.useState(true);
-  const [agreedToTerms, setAgreedToTerms] = React.useState(true);
+  const [videoUrl, setVideoUrl] = React.useState("");
+  const [agreedToQualityCheck, setAgreedToQualityCheck] = React.useState(false);
+  const [agreedToTerms, setAgreedToTerms] = React.useState(false);
+
+  // Submitting state & error
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
 
   // Helper actions
   const addDegree = () => {
@@ -186,8 +175,8 @@ export default function TutorOnboardingPage() {
         degree: "",
         institution: "",
         fieldOfStudy: "",
-        startYear: "2020",
-        endYear: "2024",
+        startYear: new Date().getFullYear().toString(),
+        endYear: "",
         honors: "",
         documentName: "",
       },
@@ -222,7 +211,7 @@ export default function TutorOnboardingPage() {
         id: `exp-${Date.now()}`,
         role: "",
         organization: "",
-        startYear: "2022",
+        startYear: new Date().getFullYear().toString(),
         endYear: "Present",
         description: "",
       },
@@ -235,8 +224,71 @@ export default function TutorOnboardingPage() {
 
   const completionPercentage = Math.round((currentStep / ONBOARDING_STEPS.length) * 100);
 
-  const handleSubmit = () => {
-    setIsSubmitted(true);
+  const handleSubmit = async () => {
+    const finalDisplayName = displayName.trim() || `${firstName} ${lastName}`.trim();
+    if (!finalDisplayName) {
+      setSubmitError("Please provide your display name or first/last name in Step 1.");
+      return;
+    }
+
+    if (!headline.trim() || headline.trim().length < 5) {
+      setSubmitError("Please provide a professional headline of at least 5 characters in Step 2.");
+      return;
+    }
+
+    if (!bioAboutMe.trim() || bioAboutMe.trim().length < 20) {
+      setSubmitError("Please write an About Me bio of at least 20 characters in Step 2.");
+      return;
+    }
+
+    if (!primarySubjectId) {
+      setSubmitError("Please select a primary subject in Step 6.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const res = await fetch("/api/tutor/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: finalDisplayName,
+          country,
+          timezone,
+          phone,
+          avatarUrl: avatarPreview || undefined,
+          headline: headline.trim(),
+          bioAboutMe: bioAboutMe.trim(),
+          bioExperience: bioExperience.trim() || undefined,
+          bioStyle: bioStyle.trim() || undefined,
+          languages: selectedLanguages,
+          degrees,
+          certifications,
+          experiences,
+          primarySubjectId,
+          secondarySubjectIds,
+          hourlyRate,
+          trialPrice,
+          instantBookingEnabled,
+          noticeHours,
+          schedule,
+          videoUrl: videoUrl.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit tutor application.");
+      }
+
+      setIsSubmitted(true);
+    } catch (err: any) {
+      setSubmitError(err.message || "An unexpected error occurred during submission.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -308,21 +360,21 @@ export default function TutorOnboardingPage() {
                 What happens next?
               </div>
               <ul className="space-y-1.5 text-slate-600 pl-6 list-disc">
-                <li>Registrar verifies Oxford diploma & UK QTS credential ID.</li>
-                <li>Video introduction analyzed for clarity & sound quality.</li>
-                <li>Your tutor profile goes live on the marketplace.</li>
+                <li>Registrar verifies your academic diplomas and teaching credentials.</li>
+                <li>Video introduction analyzed for audio/video clarity and student safety.</li>
+                <li>Your verified tutor profile goes live on the Sabina marketplace.</li>
               </ul>
             </div>
 
             <div className="flex justify-center gap-3 pt-4">
               <Link href="/tutor">
-                <Button variant="default" size="lg" className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs">
-                  Explore Tutor Console
+                <Button variant="default" size="lg" className="font-extrabold bg-[#0B1E8A] hover:bg-[#081566] text-white rounded-xl shadow-xs">
+                  Open Tutor Dashboard
                 </Button>
               </Link>
-              <Link href={`/tutors/dr-elena-rostova`}>
+              <Link href="/tutor/profile">
                 <Button variant="outline" size="lg" className="font-bold border-slate-200 rounded-xl">
-                  View Public Profile Preview
+                  Manage Teaching Profile
                 </Button>
               </Link>
             </div>
@@ -1398,6 +1450,14 @@ export default function TutorOnboardingPage() {
                     </div>
                   </div>
 
+                  {/* Error banner */}
+                  {submitError && (
+                    <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                      <span className="font-bold">Submission Notice:</span>
+                      <span>{submitError}</span>
+                    </div>
+                  )}
+
                   {/* Agreements */}
                   <div className="space-y-3 pt-2">
                     <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50/50 cursor-pointer">
@@ -1432,12 +1492,13 @@ export default function TutorOnboardingPage() {
                     <Button
                       variant="default"
                       size="lg"
-                      disabled={!agreedToQualityCheck || !agreedToTerms}
-                      className="font-extrabold bg-[#0B1E8A] hover:bg-[#081566] text-white rounded-2xl shadow-card px-10 py-3.5"
+                      isLoading={isSubmitting}
+                      disabled={isSubmitting || !agreedToQualityCheck || !agreedToTerms}
+                      className="font-extrabold bg-[#0B1E8A] hover:bg-[#081566] text-white rounded-2xl shadow-card px-10 py-3.5 disabled:opacity-60"
                       onClick={handleSubmit}
                       rightIcon={<ShieldCheck className="h-5 w-5 text-[#F9C31C]" />}
                     >
-                      Submit Tutor Application for Verification
+                      {isSubmitting ? "Submitting Application..." : "Submit Tutor Application for Verification"}
                     </Button>
                   </div>
                 </div>

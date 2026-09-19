@@ -120,14 +120,41 @@ async function getServerSupabase() {
 }
 
 /**
+ * Universal Auth User Extractor: Checks Bearer JWT first, falls back to cookie session.
+ */
+export async function extractAuthUser(request?: NextRequest) {
+  if (request) {
+    const authHeader = request.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7).trim();
+      const { data, error } = await adminSupabase.auth.getUser(token);
+      if (!error && data?.user) {
+        return data.user;
+      }
+    }
+  }
+
+  try {
+    const supabase = await getServerSupabase();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (!error && user) {
+      return user;
+    }
+  } catch {
+    // cookies() unavailable outside request scope
+  }
+
+  return null;
+}
+
+/**
  * Extracts the admin UserContext from an incoming Next.js API route request.
  */
 export async function getAdminContext(request: NextRequest): Promise<UserContext> {
   try {
-    const supabase = await getServerSupabase();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const user = await extractAuthUser(request);
 
-    if (authError || !user) {
+    if (!user) {
       throw new UnauthorizedError();
     }
 
@@ -161,9 +188,8 @@ export async function getAuthenticatedCaller(
   request: NextRequest
 ): Promise<{ userId: string; email: string; displayName: string; roles: string[]; isAdmin: boolean }> {
   try {
-    const supabase = await getServerSupabase();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const user = await extractAuthUser(request);
+    if (!user) {
       throw new UnauthorizedError();
     }
 
@@ -197,8 +223,7 @@ export async function getAuthenticatedCaller(
  */
 export async function getStudentContext(request: NextRequest): Promise<{ userId: string; email: string; displayName: string }> {
   try {
-    const supabase = await getServerSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await extractAuthUser(request);
     if (!user) throw new UnauthorizedError();
 
     // ── IMPERSONATION CHECK ──
@@ -249,8 +274,7 @@ export async function getStudentContext(request: NextRequest): Promise<{ userId:
  */
 export async function getTutorContext(request: NextRequest): Promise<{ tutorProfileId: string; userId: string; displayName: string }> {
   try {
-    const supabase = await getServerSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await extractAuthUser(request);
     if (!user) throw new UnauthorizedError();
 
     // ── IMPERSONATION CHECK ──

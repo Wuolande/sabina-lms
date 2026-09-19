@@ -51,6 +51,23 @@ export function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
       .catch(() => {});
   }, []);
 
+  // Close sidebar on route change
+  React.useEffect(() => {
+    onClose?.();
+  }, [pathname]);
+
+  // Lock body scroll on mobile when sidebar is open
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + "/");
 
@@ -66,7 +83,7 @@ export function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white border-r border-slate-100 shadow-elevation lg:static lg:shadow-none lg:translate-x-0 transition-transform duration-300 ease-out",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-white border-r border-slate-100 shadow-elevation lg:static lg:z-auto lg:shadow-none lg:translate-x-0 transition-transform duration-300 ease-out",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -162,13 +179,20 @@ export function StudentSidebar({ isOpen, onClose }: StudentSidebarProps) {
           >
             ← Marketplace
           </Link>
-          <Link
-            href="/login"
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-red-600 transition-colors"
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+              } finally {
+                window.location.href = '/login';
+              }
+            }}
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
           >
             <LogOut className="h-3.5 w-3.5" />
             Sign out
-          </Link>
+          </button>
         </div>
       </aside>
     </>

@@ -11,11 +11,13 @@ import { Logo } from "@/components/ui/Logo";
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tokenParam = searchParams.get("token") || searchParams.get("access_token") || searchParams.get("code") || "";
+  const tokenParam = searchParams.get("token") || searchParams.get("access_token") || "";
+  const codeParam = searchParams.get("code") || "";
 
   const [password, setPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [token, setToken] = React.useState(tokenParam);
+  const [code, setCode] = React.useState(codeParam);
   const [loading, setLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
@@ -81,6 +83,7 @@ function ResetPasswordContent() {
         body: JSON.stringify({
           password,
           accessToken: token || undefined,
+          code: code || undefined,
         }),
       });
 

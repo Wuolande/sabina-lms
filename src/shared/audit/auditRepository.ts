@@ -54,12 +54,13 @@ export class AuditRepository {
    * Never throws — audit failures must never block the main operation.
    */
   async record(entry: AuditLogEntry): Promise<void> {
-    const id = entry.idempotencyKey
-      || `aud-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const isUuid = (val?: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val || '');
+    const id = (entry.idempotencyKey && isUuid(entry.idempotencyKey))
+      ? entry.idempotencyKey
+      : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined);
 
     try {
-      const { error } = await adminSupabase.from('audit_logs').insert({
-        id,
+      const insertPayload: Record<string, any> = {
         actor_user_id: entry.actorUserId || null,
         actor_name: entry.actorName,
         actor_role: entry.actorRole || null,
@@ -73,7 +74,12 @@ export class AuditRepository {
         metadata: entry.metadata || {},
         before_state: entry.beforeState || null,
         after_state: entry.afterState || null,
-      });
+      };
+      if (id) {
+        insertPayload.id = id;
+      }
+
+      const { error } = await adminSupabase.from('audit_logs').insert(insertPayload);
 
       if (error) {
         // Do not rethrow — audit failures are logged but non-blocking

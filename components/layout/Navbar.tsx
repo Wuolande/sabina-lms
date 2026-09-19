@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -80,7 +81,12 @@ export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [portalsOpen, setPortalsOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
   const portalsRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close dropdowns on route change
   React.useEffect(() => {
@@ -289,7 +295,7 @@ export function Navbar() {
       </div>
 
       {/* ─── 5. Comprehensive Mobile Drawer (Contains ALL Site Navs) ─── */}
-      {mobileOpen && (
+      {mounted && mobileOpen && typeof document !== "undefined" && createPortal(
         <>
           {/* Backdrop overlay */}
           <div
@@ -399,7 +405,8 @@ export function Navbar() {
               </Link>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </header>
   );

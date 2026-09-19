@@ -69,9 +69,15 @@ export async function POST(req: NextRequest) {
         query = query.eq('booking_ref', bookingRef);
       }
 
-      const { error: updateErr } = await query;
+      const { data: updatedBooking, error: updateErr } = await query.select('id').maybeSingle();
       if (updateErr) {
         console.warn('[POST /api/payments/verify] Booking settlement warning:', updateErr.message);
+      } else if (updatedBooking?.id) {
+        // Sync linked lesson status
+        await adminSupabase.from('lessons').update({
+          status: 'SCHEDULED',
+          updated_at: new Date().toISOString(),
+        }).eq('booking_id', updatedBooking.id);
       }
     }
 

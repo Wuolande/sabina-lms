@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     // 6. Reset Rate Limiter on Successful Login
     resetRateLimit(rateLimitIdentifier);
 
-    return NextResponse.json({ success: true, user: data.user });
+    return NextResponse.json({ success: true, user: data.user, session: data.session });
   } catch (err: any) {
     console.error('[POST /api/auth/login]', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });

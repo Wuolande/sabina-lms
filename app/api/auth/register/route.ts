@@ -140,39 +140,77 @@ export async function POST(request: NextRequest) {
     }
 
     // 9. Synchronize profile in public.users and public.user_roles tables atomically
-    const { error: profileError } = await adminSupabase.from('users').insert({
-      id: data.user.id,
-      auth_id: data.user.id,
-      email: normalizedEmail,
-      display_name: displayName,
-      role: safeRole,
-    });
+    const fName = (firstName || displayName.split(' ')[0] || normalizedEmail.split('@')[0]).trim();
+    const lName = (lastName || displayName.split(' ').slice(1).join(' ') || 'Member').trim();
 
-    if (profileError && !profileError.message.includes('duplicate key')) {
-      console.error('[Register User Profile Notice]', profileError.message);
+    // The auth.users trigger provisions a public.users row; find it or fallback
+    const { data: dbUser } = await adminSupabase
+      .from('users')
+      .select('id')
+      .or(`auth_id.eq.${data.user.id},email.eq.${normalizedEmail}`)
+      .maybeSingle();
+
+    let publicUserId: string;
+
+    if (dbUser) {
+      publicUserId = dbUser.id;
+      await adminSupabase.from('users').update({
+        first_name: fName,
+        last_name: lName,
+        display_name: displayName,
+        auth_id: data.user.id,
+      }).eq('id', publicUserId);
+    } else {
+      const { data: insertedUser } = await adminSupabase.from('users').insert({
+        id: data.user.id,
+        auth_id: data.user.id,
+        email: normalizedEmail,
+        first_name: fName,
+        last_name: lName,
+        display_name: displayName,
+      }).select('id').single();
+      publicUserId = insertedUser?.id || data.user.id;
     }
 
     // Ensure user_roles mapping reflects the validated safeRole
     try {
       await adminSupabase.from('user_roles').upsert({
-        user_id: data.user.id,
+        user_id: publicUserId,
         role_id: safeRole,
       });
     } catch (rErr: any) {
       console.warn('[Register user_roles error]', rErr?.message);
     }
 
-    // If Tutor, seed empty tutor_profiles row if needed
+    // If Tutor, seed empty tutor_profiles row with valid slug
     if (safeRole === 'TUTOR') {
       try {
+        const cleanName = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'tutor';
+        const tutorSlug = `${cleanName}-${publicUserId.slice(0, 8)}`;
         await adminSupabase.from('tutor_profiles').upsert({
-          user_id: data.user.id,
+          user_id: publicUserId,
+          slug: tutorSlug,
           bio: '',
           headline: 'Instructor at Sabina LMS',
           hourly_rate: 25.0,
-        });
+          verification_status: 'PENDING',
+          account_status: 'ACTIVE',
+        }, { onConflict: 'user_id' });
       } catch (tErr: any) {
         console.warn('[Register tutor_profile seed notice]', tErr?.message);
+      }
+    }
+
+    // If Student, seed student_profiles default row
+    if (safeRole === 'STUDENT') {
+      try {
+        await adminSupabase.from('student_profiles').upsert({
+          user_id: publicUserId,
+          current_level: 'Intermediate',
+          weekly_study_hours_target: 5,
+        }, { onConflict: 'user_id' });
+      } catch (sErr: any) {
+        console.warn('[Register student_profile seed notice]', sErr?.message);
       }
     }
 

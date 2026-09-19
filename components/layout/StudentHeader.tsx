@@ -350,14 +350,21 @@ export function StudentHeader({ onToggleSidebar }: StudentHeaderProps) {
 
               {/* Sign Out */}
               <div className="p-2 border-t border-slate-100 bg-slate-50/50">
-                <Link
-                  href="/login"
-                  onClick={() => setIsProfileMenuOpen(false)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-colors text-xs font-bold"
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsProfileMenuOpen(false);
+                    try {
+                      await fetch('/api/auth/logout', { method: 'POST' });
+                    } finally {
+                      window.location.href = '/login';
+                    }
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 hover:bg-rose-50 transition-colors text-xs font-bold cursor-pointer text-left"
                 >
                   <LogOut className="w-4 h-4" />
                   <span>Sign Out</span>
-                </Link>
+                </button>
               </div>
             </div>
           )}
