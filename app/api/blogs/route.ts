@@ -18,6 +18,15 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '9', 10);
     const recent = searchParams.get('recent');
+    const featured = searchParams.get('featured');
+    const limitParam = searchParams.get('limit');
+
+    if (featured === 'true' || searchParams.get('is_featured') === 'true') {
+      const limit = parseInt(limitParam || recent || '6', 10) || 6;
+      const featuredPosts = await serverBlogService.getFeaturedPosts(limit);
+      console.log(`[GET /api/blogs?featured=true&limit=${limit}] Returned ${featuredPosts.length} posts`);
+      return NextResponse.json({ posts: featuredPosts });
+    }
 
     if (recent) {
       const limit = parseInt(recent, 10) || 3;
@@ -29,6 +38,7 @@ export async function GET(req: NextRequest) {
     const response = await serverBlogService.getPublishedPosts({
       search,
       category: category === 'All' ? undefined : category,
+      isFeatured: featured === 'false' ? false : undefined,
       page,
       pageSize,
     });

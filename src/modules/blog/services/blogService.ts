@@ -67,6 +67,7 @@ function mapDbRowToBlogPost(row: any): BlogPost {
     readTime: row.read_time || '5 min read',
     tags: parsedTags,
     isPublished: row.is_published ?? row.status === 'published',
+    isFeatured: row.is_featured !== undefined ? Boolean(row.is_featured) : true,
     status: (row.status as any) || (row.is_published ? 'published' : 'draft'),
     publishedAt: row.published_at || row.created_at,
     seoTitle: row.seo_title || row.title,
@@ -111,6 +112,10 @@ export const serverBlogService = {
       .from('blogs')
       .select('*', { count: 'exact' })
       .eq('is_published', true);
+
+    if (options.isFeatured !== undefined) {
+      query = query.eq('is_featured', options.isFeatured);
+    }
 
     if (options.category && options.category !== 'All') {
       query = query.ilike('category', `%${options.category}%`);
@@ -198,6 +203,27 @@ export const serverBlogService = {
 
     if (error) {
       console.error('[serverBlogService.getRecentPosts]', error);
+      return [];
+    }
+
+    return (data || []).map(mapDbRowToBlogPost);
+  },
+
+  /**
+   * Fetch featured posts (for homepage showcase carousel)
+   */
+  async getFeaturedPosts(limit: number = 6): Promise<BlogPost[]> {
+    const db = getBlogClient();
+    const { data, error } = await db
+      .from('blogs')
+      .select('*')
+      .eq('is_published', true)
+      .eq('is_featured', true)
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('[serverBlogService.getFeaturedPosts]', error);
       return [];
     }
 
@@ -307,6 +333,7 @@ export const serverBlogService = {
       read_time: readTime,
       tags: payload.tags || [],
       is_published: isPublished,
+      is_featured: payload.isFeatured ?? true,
       status,
       published_at: publishedAt,
       seo_title: payload.seoTitle || payload.title,
@@ -358,6 +385,7 @@ export const serverBlogService = {
     if (payload.featuredImage !== undefined) updateData.featured_image = payload.featuredImage;
     if (payload.readTime !== undefined) updateData.read_time = payload.readTime;
     if (payload.tags !== undefined) updateData.tags = payload.tags;
+    if (payload.isFeatured !== undefined) updateData.is_featured = payload.isFeatured;
 
     if (payload.isPublished !== undefined || payload.status !== undefined) {
       const isPub = payload.isPublished ?? payload.status === 'published';

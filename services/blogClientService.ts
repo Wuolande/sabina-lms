@@ -51,6 +51,22 @@ export const blogClientService = {
   },
 
   /**
+   * Fetch featured articles for homepage carousel
+   */
+  async getFeaturedPosts(limit: number = 6): Promise<BlogPost[]> {
+    try {
+      const res = await fetch(`/api/blogs?featured=true&limit=${limit}`, {
+        cache: 'no-store',
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.posts || [];
+    } catch {
+      return [];
+    }
+  },
+
+  /**
    * Fetch an individual article by slug
    */
   async getPostBySlug(slug: string): Promise<{ post: BlogPost; relatedPosts: BlogPost[] } | null> {

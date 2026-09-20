@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Clock, Calendar, ArrowRight, User } from "lucide-react";
+import { Clock, Calendar, ArrowRight, User, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { BlogPost } from "@/src/modules/blog/types/blogTypes";
 import { formatDate } from "@/lib/utils";
@@ -15,6 +15,7 @@ interface BlogCardProps {
 
 export function BlogCard({ post, featured = false }: BlogCardProps) {
   const formattedDate = post.publishedAt ? formatDate(post.publishedAt) : "Recently";
+  const isFeaturedPost = Boolean(featured || post.isFeatured);
 
   return (
     <article className="group flex flex-col bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 overflow-hidden shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
@@ -27,7 +28,17 @@ export function BlogCard({ post, featured = false }: BlogCardProps) {
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <div className="absolute top-3 sm:top-4 left-3 sm:left-4 z-10">
+        <div className="absolute top-3 sm:top-4 left-3 sm:left-4 z-10 flex items-center gap-1.5 flex-wrap">
+          {isFeaturedPost && (
+            <Badge
+              variant="brand-solid"
+              size="sm"
+              className="bg-brand-600 text-white font-bold shadow-xs border-0 text-[10px] sm:text-xs flex items-center gap-1"
+            >
+              <Sparkles className="h-3 w-3 text-amber-300 fill-amber-300" />
+              <span>Featured</span>
+            </Badge>
+          )}
           <Badge
             variant="neutral"
             size="sm"

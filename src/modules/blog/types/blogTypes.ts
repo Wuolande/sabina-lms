@@ -29,6 +29,7 @@ export interface BlogPost {
   readTime: string;
   tags: string[];
   isPublished: boolean;
+  isFeatured?: boolean;
   status: 'draft' | 'published' | 'archived';
   publishedAt?: string;
   
@@ -60,6 +61,7 @@ export interface BlogPostPayload {
   readTime?: string;
   tags?: string[];
   isPublished?: boolean;
+  isFeatured?: boolean;
   status?: 'draft' | 'published' | 'archived';
   
   // SEO & Social Graph Metadata
@@ -77,6 +79,7 @@ export interface BlogFilterOptions {
   category?: string;
   tag?: string;
   status?: 'all' | 'published' | 'draft';
+  isFeatured?: boolean;
   page?: number;
   pageSize?: number;
 }
