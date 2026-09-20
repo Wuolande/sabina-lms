@@ -19,13 +19,18 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const category = searchParams.get('category') || undefined;
     const status = (searchParams.get('status') as any) || 'all';
+    const featured = searchParams.get('featured');
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
+
+    const isFeatured =
+      featured === 'true' ? true : featured === 'false' ? false : undefined;
 
     const response = await serverBlogService.getAllPostsAdmin({
       search,
       category: category === 'All' ? undefined : category,
       status,
+      isFeatured,
       page,
       pageSize,
     });

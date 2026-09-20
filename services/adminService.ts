@@ -749,6 +749,7 @@ export const adminService = {
     search?: string;
     category?: string;
     status?: string;
+    featured?: boolean;
     page?: number;
     pageSize?: number;
   } = {}): Promise<any> {
@@ -756,6 +757,7 @@ export const adminService = {
     if (options.search) params.set('search', options.search);
     if (options.category && options.category !== 'All') params.set('category', options.category);
     if (options.status && options.status !== 'all') params.set('status', options.status);
+    if (options.featured !== undefined) params.set('featured', String(options.featured));
     if (options.page) params.set('page', String(options.page));
     if (options.pageSize) params.set('pageSize', String(options.pageSize));
 

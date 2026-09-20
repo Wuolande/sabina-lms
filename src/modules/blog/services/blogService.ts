@@ -274,6 +274,10 @@ export const serverBlogService = {
       }
     }
 
+    if (options.isFeatured !== undefined) {
+      query = query.eq('is_featured', options.isFeatured);
+    }
+
     if (options.category && options.category !== 'All') {
       query = query.ilike('category', `%${options.category}%`);
     }

@@ -66,6 +66,7 @@ const DEFAULT_POST_FORM: BlogPostPayload = {
   tags: ["Education", "Online Tutoring", "Language Learning"],
   status: "published",
   isPublished: true,
+  isFeatured: true,
   seoTitle: "",
   seoDescription: "",
   seoKeywords: "online tutoring, language learning, study tips",
@@ -86,6 +87,7 @@ export default function AdminBlogManagementPage() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [categoryFilter, setCategoryFilter] = React.useState("All");
   const [statusFilter, setStatusFilter] = React.useState<"all" | "published" | "draft">("all");
+  const [featuredOnlyFilter, setFeaturedOnlyFilter] = React.useState(false);
   const [page, setPage] = React.useState(1);
   const [totalPages, setTotalPages] = React.useState(1);
   const [totalPosts, setTotalPosts] = React.useState(0);
@@ -112,6 +114,7 @@ export default function AdminBlogManagementPage() {
         search: searchQuery.trim() || undefined,
         category: categoryFilter === "All" ? undefined : categoryFilter,
         status: statusFilter === "all" ? undefined : statusFilter,
+        featured: featuredOnlyFilter ? true : undefined,
         page,
         pageSize: 15,
       });
@@ -126,7 +129,7 @@ export default function AdminBlogManagementPage() {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, categoryFilter, statusFilter, page]);
+  }, [searchQuery, categoryFilter, statusFilter, featuredOnlyFilter, page]);
 
   React.useEffect(() => {
     loadBlogs();
@@ -160,6 +163,7 @@ export default function AdminBlogManagementPage() {
       tags: post.tags || [],
       status: post.status,
       isPublished: post.isPublished,
+      isFeatured: post.isFeatured !== undefined ? post.isFeatured : true,
       seoTitle: post.seoTitle || post.title,
       seoDescription: post.seoDescription || post.excerpt,
       seoKeywords: post.seoKeywords || "",
@@ -263,6 +267,24 @@ export default function AdminBlogManagementPage() {
     }
   };
 
+  // 1-Click Quick Toggle Featured for Homepage Carousel
+  const handleQuickToggleFeatured = async (post: BlogPost) => {
+    const nextFeatured = !(post.isFeatured ?? true);
+    try {
+      await adminService.updateAdminBlog(post.id, {
+        isFeatured: nextFeatured,
+      });
+      triggerToast(
+        nextFeatured
+          ? "Article pinned to Homepage Featured Carousel"
+          : "Article removed from Homepage Featured Carousel"
+      );
+      loadBlogs();
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to update featured status", "danger");
+    }
+  };
+
   // Delete Handler
   const handleDeletePost = async () => {
     if (!deleteConfirmPost) return;
@@ -278,6 +300,7 @@ export default function AdminBlogManagementPage() {
 
   const publishedCount = posts.filter((p) => p.isPublished).length;
   const draftCount = posts.filter((p) => !p.isPublished).length;
+  const featuredCount = posts.filter((p) => p.isFeatured).length;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
@@ -325,7 +348,7 @@ export default function AdminBlogManagementPage() {
       )}
 
       {/* ─── KPI Ribbon ─── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Articles</p>
           <p className="text-2xl font-black text-slate-900 mt-1">{totalPosts}</p>
@@ -335,8 +358,15 @@ export default function AdminBlogManagementPage() {
           <p className="text-2xl font-black text-emerald-700 mt-1">{publishedCount}</p>
         </div>
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600">Drafts</p>
-          <p className="text-2xl font-black text-amber-700 mt-1">{draftCount}</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
+            <Sparkles className="h-3 w-3 fill-amber-500 text-amber-500" />
+            <span>Featured Carousel</span>
+          </p>
+          <p className="text-2xl font-black text-amber-700 mt-1">{featuredCount}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Drafts</p>
+          <p className="text-2xl font-black text-slate-700 mt-1">{draftCount}</p>
         </div>
         <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-wider text-brand">Active Topics</p>
@@ -371,7 +401,25 @@ export default function AdminBlogManagementPage() {
           </select>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+          {/* Featured Only Filter Pill Button */}
+          <button
+            type="button"
+            onClick={() => setFeaturedOnlyFilter(!featuredOnlyFilter)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              featuredOnlyFilter
+                ? "bg-amber-50 border-amber-300 text-amber-900 shadow-xs"
+                : "bg-white border-slate-200 text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <Sparkles
+              className={`h-3.5 w-3.5 ${
+                featuredOnlyFilter ? "text-amber-500 fill-amber-500" : "text-slate-400"
+              }`}
+            />
+            <span>Featured Only</span>
+          </button>
+
           <div className="flex rounded-xl bg-slate-100 p-1">
             {(["all", "published", "draft"] as const).map((st) => (
               <button
@@ -403,6 +451,7 @@ export default function AdminBlogManagementPage() {
                 <th className="px-4 py-4">Category</th>
                 <th className="px-4 py-4">Author</th>
                 <th className="px-4 py-4">SEO Score</th>
+                <th className="px-4 py-4">Featured</th>
                 <th className="px-4 py-4">Status</th>
                 <th className="px-4 py-4">Published Date</th>
                 <th className="px-6 py-4 text-right">Actions</th>
@@ -411,14 +460,14 @@ export default function AdminBlogManagementPage() {
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-xs text-slate-400">
+                  <td colSpan={8} className="px-6 py-12 text-center text-xs text-slate-400">
                     <RefreshCw className="h-6 w-6 animate-spin text-brand mx-auto mb-2" />
                     <span>Loading articles from database...</span>
                   </td>
                 </tr>
               ) : posts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-xs text-slate-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-xs text-slate-500">
                     <BookOpen className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                     <p className="font-bold text-slate-700">No articles found</p>
                     <p className="mt-1">Click &quot;New Article&quot; to publish your first blog post.</p>
@@ -473,6 +522,33 @@ export default function AdminBlogManagementPage() {
                         >
                           {hasSeo ? "Optimized" : "Basic"}
                         </Badge>
+                      </td>
+
+                      {/* Featured Carousel Toggle */}
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => handleQuickToggleFeatured(post)}
+                          title={
+                            post.isFeatured
+                              ? "Click to remove from homepage carousel"
+                              : "Click to feature on homepage carousel"
+                          }
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border cursor-pointer ${
+                            post.isFeatured
+                              ? "bg-amber-50 border-amber-200 text-amber-800 shadow-2xs hover:bg-amber-100"
+                              : "bg-slate-50 border-slate-200 text-slate-400 hover:text-slate-700 hover:border-slate-300"
+                          }`}
+                        >
+                          <Sparkles
+                            className={`h-3 w-3 ${
+                              post.isFeatured
+                                ? "fill-amber-500 text-amber-500"
+                                : "text-slate-400"
+                            }`}
+                          />
+                          <span>{post.isFeatured ? "Featured" : "Standard"}</span>
+                        </button>
                       </td>
 
                       {/* Status */}
@@ -1021,38 +1097,79 @@ export default function AdminBlogManagementPage() {
                 </div>
               )}
 
-              {/* ─── Publishing Status Toggle ─── */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div>
-                  <strong className="block text-xs font-bold text-slate-900">
-                    Publish Live on Frontend Hub
-                  </strong>
-                  <p className="text-[11px] text-slate-500">
-                    When active, this article is visible on the homepage showcase and the public `/blog` catalog.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFormData((prev) => {
-                      const nextPub = !prev.isPublished;
-                      return {
+              {/* ─── Publishing & Featured Status Toggles ─── */}
+              <div className="pt-4 border-t border-slate-100 space-y-3">
+                {/* Featured on Homepage Carousel Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                      <Sparkles className="h-4 w-4 fill-amber-500 text-amber-600" />
+                    </div>
+                    <div>
+                      <strong className="block text-xs font-bold text-slate-900 flex items-center gap-2">
+                        <span>Featured on Homepage Carousel</span>
+                        <span className="text-[10px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-amber-200/80 text-amber-800">
+                          Spotlight
+                        </span>
+                      </strong>
+                      <p className="text-[11px] text-slate-600">
+                        When enabled, this article is showcased prominently in the homepage educational carousel.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
                         ...prev,
-                        isPublished: nextPub,
-                        status: nextPub ? "published" : "draft",
-                      };
-                    })
-                  }
-                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    formData.isPublished ? "bg-emerald-600" : "bg-slate-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
-                      formData.isPublished ? "translate-x-5" : "translate-x-0"
+                        isFeatured: !prev.isFeatured,
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      formData.isFeatured ? "bg-amber-500" : "bg-slate-300"
                     }`}
-                  />
-                </button>
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                        formData.isFeatured ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Publish Live Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <div>
+                    <strong className="block text-xs font-bold text-slate-900">
+                      Publish Live on Frontend Hub
+                    </strong>
+                    <p className="text-[11px] text-slate-500">
+                      When active, this article is visible on the public `/blog` catalog and search indexes.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => {
+                        const nextPub = !prev.isPublished;
+                        return {
+                          ...prev,
+                          isPublished: nextPub,
+                          status: nextPub ? "published" : "draft",
+                        };
+                      })
+                    }
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      formData.isPublished ? "bg-emerald-600" : "bg-slate-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition duration-200 ease-in-out ${
+                        formData.isPublished ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
 
               {/* ─── Modal Footer Actions ─── */}
