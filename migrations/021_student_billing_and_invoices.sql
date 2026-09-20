@@ -122,12 +122,12 @@ BEGIN
         'invoices', v_invoices,
         'paymentMethods', v_methods,
         'billingProfile', jsonb_build_object(
-            'billingName', COALESCE(v_profile.billing_name, v_student.display_name),
-            'billingEmail', COALESCE(v_profile.billing_email, v_student.email),
+            'billingName', COALESCE(v_profile.billing_name, v_student.display_name, ''),
+            'billingEmail', COALESCE(v_profile.billing_email, v_student.email, ''),
             'taxId', COALESCE(v_profile.tax_id, ''),
-            'addressLine1', COALESCE(v_profile.address_line1, '742 Evergreen Terrace'),
-            'city', COALESCE(v_profile.city, 'Springfield'),
-            'postalCode', COALESCE(v_profile.postal_code, '97477'),
+            'addressLine1', COALESCE(v_profile.address_line1, ''),
+            'city', COALESCE(v_profile.city, ''),
+            'postalCode', COALESCE(v_profile.postal_code, ''),
             'country', COALESCE(v_profile.billing_country, v_student.country, 'United States')
         )
     ) INTO result;

@@ -348,50 +348,47 @@ export const studentService = {
     expMonth: number;
     expYear: number;
     isDefault?: boolean;
-  }): Promise<any | null> {
-    try {
-      const res = await fetch('/api/student/billing/payment-methods', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) return null;
-      return res.json();
-    } catch {
-      return null;
+  }): Promise<any> {
+    const res = await fetch('/api/student/billing/payment-methods', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to save payment method');
     }
+    return res.json();
   },
 
   /**
    * Delete a saved payment method.
    */
-  async deletePaymentMethod(methodId: string): Promise<any | null> {
-    try {
-      const res = await fetch(`/api/student/billing/payment-methods?id=${methodId}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) return null;
-      return res.json();
-    } catch {
-      return null;
+  async deletePaymentMethod(methodId: string): Promise<any> {
+    const res = await fetch(`/api/student/billing/payment-methods?id=${methodId}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to delete payment method');
     }
+    return res.json();
   },
 
   /**
    * Set a card as default payment method.
    */
-  async setDefaultPaymentMethod(methodId: string): Promise<any | null> {
-    try {
-      const res = await fetch('/api/student/billing/payment-methods', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ methodId }),
-      });
-      if (!res.ok) return null;
-      return res.json();
-    } catch {
-      return null;
+  async setDefaultPaymentMethod(methodId: string): Promise<any> {
+    const res = await fetch('/api/student/billing/payment-methods', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ methodId }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update default payment method');
     }
+    return res.json();
   },
 
   /**
@@ -405,18 +402,17 @@ export const studentService = {
     city: string;
     postalCode: string;
     country: string;
-  }): Promise<any | null> {
-    try {
-      const res = await fetch('/api/student/billing', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) return null;
-      return res.json();
-    } catch {
-      return null;
+  }): Promise<any> {
+    const res = await fetch('/api/student/billing', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update billing profile');
     }
+    return res.json();
   },
 
   /**

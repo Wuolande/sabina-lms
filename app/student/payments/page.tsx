@@ -36,7 +36,7 @@ import { studentService } from "@/services/studentService";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
 
 export default function StudentPaymentsPage() {
-  const { toast } = useModal();
+  const { toast, confirm } = useModal();
   const [activeTab, setActiveTab] = React.useState("invoices");
   const [billingData, setBillingData] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -50,8 +50,8 @@ export default function StudentPaymentsPage() {
   const [isAddCardOpen, setIsAddCardOpen] = React.useState(false);
   const [cardBrand, setCardBrand] = React.useState("Visa");
   const [cardNumber, setCardNumber] = React.useState("");
-  const [expMonth, setExpMonth] = React.useState(8);
-  const [expYear, setExpYear] = React.useState(2028);
+  const [expMonth, setExpMonth] = React.useState(new Date().getMonth() + 1);
+  const [expYear, setExpYear] = React.useState(new Date().getFullYear() + 2);
   const [isDefaultCard, setIsDefaultCard] = React.useState(true);
   const [addingCard, setAddingCard] = React.useState(false);
 
@@ -84,15 +84,43 @@ export default function StudentPaymentsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   React.useEffect(() => {
     loadBilling();
   }, [loadBilling]);
 
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
+    // Auto-detect brand based on standard IIN ranges
+    if (raw.startsWith("4")) {
+      setCardBrand("Visa");
+    } else if (/^(5[1-5]|2[2-7])/.test(raw)) {
+      setCardBrand("Mastercard");
+    } else if (/^3[47]/.test(raw)) {
+      setCardBrand("American Express");
+    } else if (/^(6011|65|64[4-9])/.test(raw)) {
+      setCardBrand("Discover");
+    }
+
+    // Format with 4-digit spacing
+    const formatted = raw.match(/.{1,4}/g)?.join(" ") || raw;
+    setCardNumber(formatted);
+  };
+
   const handleAddCard = async (e: React.FormEvent) => {
     e.preventDefault();
-    const last4Digits = cardNumber.replace(/\s+/g, "").slice(-4) || "4242";
+    const digitsOnly = cardNumber.replace(/\D/g, "");
+    if (digitsOnly.length < 15) {
+      toast({
+        title: "Invalid Card Number",
+        message: "Please enter a complete 15 or 16-digit card number.",
+        variant: "warning",
+      });
+      return;
+    }
+
+    const last4Digits = digitsOnly.slice(-4);
 
     setAddingCard(true);
     try {
@@ -106,26 +134,36 @@ export default function StudentPaymentsPage() {
 
       if (updated) {
         setBillingData(updated);
-        toast({ title: "Card Added", message: `${cardBrand} ending in ${last4Digits} saved successfully.`, variant: "success" });
+        toast({ title: "Card Saved! 💳", message: `${cardBrand} ending in ${last4Digits} is now ready for 1-click booking.`, variant: "success" });
         setIsAddCardOpen(false);
         setCardNumber("");
       }
-    } catch {
-      toast({ title: "Error", message: "Failed to save payment method.", variant: "danger" });
+    } catch (err: any) {
+      toast({ title: "Error", message: err.message || "Failed to save payment method.", variant: "danger" });
     } finally {
       setAddingCard(false);
     }
   };
 
   const handleDeleteCard = async (methodId: string) => {
+    const isConfirmed = await confirm({
+      title: "Remove Payment Card?",
+      message: "Are you sure you want to remove this card from your account? It will no longer be available for 1-click booking.",
+      confirmText: "Yes, Remove Card",
+      cancelText: "Keep Card",
+      variant: "danger",
+    });
+
+    if (!isConfirmed) return;
+
     try {
       const updated = await studentService.deletePaymentMethod(methodId);
       if (updated) {
         setBillingData(updated);
-        toast({ title: "Card Removed", message: "Payment method has been deleted.", variant: "info" });
+        toast({ title: "Card Removed", message: "Payment method has been deleted from your profile.", variant: "info" });
       }
-    } catch {
-      toast({ title: "Error", message: "Failed to delete payment card.", variant: "danger" });
+    } catch (err: any) {
+      toast({ title: "Error", message: err.message || "Failed to delete payment card.", variant: "danger" });
     }
   };
 
@@ -134,10 +172,10 @@ export default function StudentPaymentsPage() {
       const updated = await studentService.setDefaultPaymentMethod(methodId);
       if (updated) {
         setBillingData(updated);
-        toast({ title: "Default Updated", message: "Default payment method updated.", variant: "success" });
+        toast({ title: "Default Updated", message: "Your primary 1-click booking card was updated.", variant: "success" });
       }
-    } catch {
-      toast({ title: "Error", message: "Failed to set default card.", variant: "danger" });
+    } catch (err: any) {
+      toast({ title: "Error", message: err.message || "Failed to set default card.", variant: "danger" });
     }
   };
 
@@ -157,10 +195,10 @@ export default function StudentPaymentsPage() {
 
       if (updated) {
         setBillingData(updated);
-        toast({ title: "Billing Info Saved", message: "Official invoice details updated.", variant: "success" });
+        toast({ title: "Billing Profile Saved! ✅", message: "Your official invoice and receipt details were updated.", variant: "success" });
       }
-    } catch {
-      toast({ title: "Error", message: "Failed to update billing details.", variant: "danger" });
+    } catch (err: any) {
+      toast({ title: "Error", message: err.message || "Failed to update billing details.", variant: "danger" });
     } finally {
       setSavingProfile(false);
     }
@@ -199,7 +237,7 @@ export default function StudentPaymentsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 print:hidden">
           <Button
             variant="outline"
             size="sm"
@@ -213,7 +251,10 @@ export default function StudentPaymentsPage() {
           <Button
             variant="default"
             size="sm"
-            onClick={() => setIsAddCardOpen(true)}
+            onClick={() => {
+              setIsDefaultCard(paymentMethods.length === 0);
+              setIsAddCardOpen(true);
+            }}
             className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white text-xs flex items-center gap-1.5 shadow-sm"
           >
             <Plus className="h-4 w-4" />
@@ -223,32 +264,41 @@ export default function StudentPaymentsPage() {
       </div>
 
       {/* 2. Financial Metrics Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Spent"
-          value={formatCurrency(summary.totalSpent, "USD")}
-          icon={<DollarSign className="h-5 w-5 text-[#14209C]" />}
-          description="Cumulative lesson investment"
-        />
-        <StatCard
-          title="Settled Invoices"
-          value={`${summary.paidInvoices} of ${summary.totalInvoices}`}
-          icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
-          description="All payments confirmed"
-        />
-        <StatCard
-          title="Average Lesson Cost"
-          value={formatCurrency(summary.averagePerLesson, "USD")}
-          icon={<CreditCard className="h-5 w-5 text-blue-600" />}
-          description="Per 50-minute session"
-        />
-        <StatCard
-          title="Active Payment Cards"
-          value={paymentMethods.length}
-          icon={<ShieldCheck className="h-5 w-5 text-emerald-600" />}
-          description="Default: Visa •••• 4242"
-        />
-      </div>
+      {(() => {
+        const defaultMethod = paymentMethods.find((pm: any) => pm.isDefault) || paymentMethods[0];
+        return (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 print:hidden">
+            <StatCard
+              title="Total Spent"
+              value={formatCurrency(summary.totalSpent, "USD")}
+              icon={<DollarSign className="h-5 w-5 text-[#14209C]" />}
+              description="Cumulative lesson investment"
+            />
+            <StatCard
+              title="Settled Invoices"
+              value={`${summary.paidInvoices} of ${summary.totalInvoices}`}
+              icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
+              description="All payments confirmed"
+            />
+            <StatCard
+              title="Average Lesson Cost"
+              value={formatCurrency(summary.averagePerLesson, "USD")}
+              icon={<CreditCard className="h-5 w-5 text-blue-600" />}
+              description="Per 50-minute session"
+            />
+            <StatCard
+              title="Active Payment Cards"
+              value={paymentMethods.length}
+              icon={<ShieldCheck className="h-5 w-5 text-emerald-600" />}
+              description={
+                defaultMethod
+                  ? `Default: ${defaultMethod.cardBrand} •••• ${defaultMethod.last4}`
+                  : "No card registered"
+              }
+            />
+          </div>
+        );
+      })()}
 
       {/* 3. Navigation Tabs */}
       <Tabs
@@ -260,6 +310,7 @@ export default function StudentPaymentsPage() {
         activeTab={activeTab}
         onChange={setActiveTab}
         variant="line"
+        className="print:hidden"
       />
 
       {/* ═══════════════════════════════════════════════════════════
@@ -406,67 +457,93 @@ export default function StudentPaymentsPage() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {paymentMethods.map((pm) => (
-                <div
-                  key={pm.id}
-                  className="rounded-3xl p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white shadow-lg space-y-6 relative overflow-hidden"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold tracking-widest uppercase text-indigo-200">
-                        {pm.cardBrand}
-                      </span>
-                      {pm.isDefault && (
-                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                          Default Card
-                        </span>
-                      )}
-                    </div>
-                    <Lock className="w-4 h-4 text-slate-400" />
-                  </div>
-
-                  {/* Card Chip Visual */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-7 rounded-lg bg-amber-400/80 border border-amber-300/40 shadow-xs flex items-center justify-center">
-                      <div className="w-6 h-4 border border-amber-600/40 rounded-xs" />
-                    </div>
-                    <span className="text-lg sm:text-xl font-mono tracking-widest font-bold text-slate-100">
-                      •••• •••• •••• {pm.last4}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-700/60">
-                    <div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
-                        Expires
-                      </span>
-                      <strong className="font-mono text-slate-200">
-                        {pm.expMonth < 10 ? `0${pm.expMonth}` : pm.expMonth}/{pm.expYear}
-                      </strong>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {!pm.isDefault && (
-                        <button
-                          onClick={() => handleSetDefaultCard(pm.id)}
-                          className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition cursor-pointer"
-                        >
-                          Make Default
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDeleteCard(pm.id)}
-                        className="p-1.5 text-slate-400 hover:text-rose-400 transition cursor-pointer"
-                        title="Remove Card"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+            {paymentMethods.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/60 p-10 text-center space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-[#14209C] flex items-center justify-center mx-auto shadow-xs">
+                  <CreditCard className="w-7 h-7" />
                 </div>
-              ))}
-            </div>
+                <div className="max-w-md mx-auto space-y-1">
+                  <h4 className="text-base font-bold text-slate-900">No Saved Cards Yet</h4>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Save a credit or debit card for fast 1-click booking, automatic tutor reservations, and recurring lesson packages. All card credentials are encrypted with bank-level 256-bit security.
+                  </p>
+                </div>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => {
+                    setIsDefaultCard(true);
+                    setIsAddCardOpen(true);
+                  }}
+                  className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white text-xs inline-flex items-center gap-2 shadow-sm cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Add Credit or Debit Card</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {paymentMethods.map((pm) => (
+                  <div
+                    key={pm.id}
+                    className="rounded-3xl p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white shadow-lg space-y-6 relative overflow-hidden"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold tracking-widest uppercase text-indigo-200">
+                          {pm.cardBrand}
+                        </span>
+                        {pm.isDefault && (
+                          <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            Default Card
+                          </span>
+                        )}
+                      </div>
+                      <Lock className="w-4 h-4 text-slate-400" />
+                    </div>
+
+                    {/* Card Chip Visual */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-7 rounded-lg bg-amber-400/80 border border-amber-300/40 shadow-xs flex items-center justify-center">
+                        <div className="w-6 h-4 border border-amber-600/40 rounded-xs" />
+                      </div>
+                      <span className="text-lg sm:text-xl font-mono tracking-widest font-bold text-slate-100">
+                        •••• •••• •••• {pm.last4}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-700/60">
+                      <div>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Expires
+                        </span>
+                        <strong className="font-mono text-slate-200">
+                          {pm.expMonth < 10 ? `0${pm.expMonth}` : pm.expMonth}/{pm.expYear}
+                        </strong>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {!pm.isDefault && (
+                          <button
+                            onClick={() => handleSetDefaultCard(pm.id)}
+                            className="px-2.5 py-1 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-bold text-white transition cursor-pointer"
+                          >
+                            Make Default
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteCard(pm.id)}
+                          className="p-1.5 text-slate-400 hover:text-rose-400 transition cursor-pointer"
+                          title="Remove Card"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -617,9 +694,13 @@ export default function StudentPaymentsPage() {
               required
               placeholder="4242 4242 4242 4242"
               value={cardNumber}
-              onChange={(e) => setCardNumber(e.target.value)}
+              onChange={handleCardNumberChange}
+              maxLength={19}
               leftIcon={<CreditCard className="w-4 h-4" />}
             />
+            <span className="text-[10px] text-slate-400 mt-1 block">
+              Enter 15-16 digit card number. Card brand is detected automatically.
+            </span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -627,26 +708,34 @@ export default function StudentPaymentsPage() {
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                 Exp Month
               </label>
-              <Input
-                type="number"
-                min={1}
-                max={12}
+              <select
                 value={expMonth}
                 onChange={(e) => setExpMonth(Number(e.target.value))}
-              />
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+              >
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <option key={m} value={m}>
+                    {String(m).padStart(2, "0")} - {new Date(2000, m - 1, 1).toLocaleString("en-US", { month: "short" })}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                 Exp Year
               </label>
-              <Input
-                type="number"
-                min={2026}
-                max={2035}
+              <select
                 value={expYear}
                 onChange={(e) => setExpYear(Number(e.target.value))}
-              />
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#14209C]"
+              >
+                {Array.from({ length: 12 }, (_, i) => new Date().getFullYear() + i).map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -705,20 +794,27 @@ export default function StudentPaymentsPage() {
             </div>
 
             {/* Billed to */}
-            <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Billed To (Student)</span>
                 <strong className="text-slate-900 font-bold block">{billingName || "Student"}</strong>
-                <p className="text-slate-500">{billingEmail || ""}</p>
-                <p className="text-slate-500">{addressLine1}, {city} {postalCode}</p>
-                {taxId && <p className="text-slate-700 font-mono font-bold">Tax ID: {taxId}</p>}
+                {billingEmail && <p className="text-slate-500">{billingEmail}</p>}
+                {(addressLine1 || city || postalCode) ? (
+                  <p className="text-slate-500">
+                    {[addressLine1, city, postalCode].filter(Boolean).join(", ")}
+                  </p>
+                ) : (
+                  <p className="text-slate-400 italic text-[11px]">Billing address not set</p>
+                )}
+                {country && <p className="text-slate-500">{country}</p>}
+                {taxId && <p className="text-slate-700 font-mono font-bold mt-1">Tax / VAT ID: {taxId}</p>}
               </div>
 
               <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Payment Summary</span>
                 <p className="text-slate-700">Payment Date: <strong className="text-slate-900">{formatDate(selectedInvoice.date)}</strong></p>
                 <p className="text-slate-700">Channel: <strong className="text-slate-900 capitalize">{selectedInvoice.paymentMethod}</strong></p>
-                <p className="text-slate-700">LiveKit Room: <span className="font-mono text-slate-600">Active</span></p>
+                <p className="text-slate-700">LiveKit Classroom: <span className="font-mono text-emerald-600 font-semibold">Active & Secured</span></p>
               </div>
             </div>
 
@@ -755,7 +851,7 @@ export default function StudentPaymentsPage() {
             </div>
 
             {/* Print & Download Actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 print:hidden">
               <span className="text-[11px] text-slate-400">
                 Authorized electronic receipt generated by Sabina LMS.
               </span>
@@ -764,7 +860,7 @@ export default function StudentPaymentsPage() {
                 variant="default"
                 size="sm"
                 onClick={() => window.print()}
-                className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white flex items-center gap-1.5"
+                className="font-bold bg-[#14209C] hover:bg-[#0d1870] text-white flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print Official Invoice</span>

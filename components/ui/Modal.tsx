@@ -62,10 +62,10 @@ export function Modal({
   if (!isOpen || !mounted) return null;
 
   const modalContent = (
-    <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[99999] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto print:static print:p-0 print:overflow-visible print:z-auto print:block">
       {/* Frosted Glass Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity animate-in fade-in duration-200 print:hidden"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -81,18 +81,19 @@ export function Modal({
           "animate-in slide-in-from-bottom sm:zoom-in-95 fade-in duration-200",
           "flex flex-col",
           "max-h-[92vh] sm:max-h-[90vh] overflow-hidden",
+          "print:shadow-none print:border-none print:max-h-none print:w-full print:max-w-full print:rounded-none print:overflow-visible",
           maxWidthMap[maxWidth],
           className
         )}
       >
         {/* Mobile Pull Indicator Handle */}
-        <div className="sm:hidden pt-3 pb-1 flex justify-center shrink-0 bg-white">
+        <div className="sm:hidden pt-3 pb-1 flex justify-center shrink-0 bg-white print:hidden">
           <div className="w-12 h-1.5 bg-slate-300 rounded-full" />
         </div>
 
         {/* Header */}
         {(title || !hideCloseButton) && (
-          <div className="flex items-start justify-between gap-4 px-5 py-3.5 sm:px-6 sm:py-5 border-b border-slate-100 shrink-0 bg-white">
+          <div className="flex items-start justify-between gap-4 px-5 py-3.5 sm:px-6 sm:py-5 border-b border-slate-100 shrink-0 bg-white print:border-b-0 print:px-0">
             <div className="space-y-0.5 min-w-0 flex-1">
               {title && (
                 <h2 className="text-lg sm:text-xl font-bold text-slate-950 font-heading leading-tight truncate sm:whitespace-normal">
@@ -108,7 +109,7 @@ export function Modal({
               <button
                 type="button"
                 onClick={onClose}
-                className="shrink-0 flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors focus:outline-none cursor-pointer"
+                className="shrink-0 flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors focus:outline-none cursor-pointer print:hidden"
                 aria-label="Close"
               >
                 <X className="h-5 w-5 sm:h-4.5 sm:w-4.5" />

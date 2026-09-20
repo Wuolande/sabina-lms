@@ -305,3 +305,24 @@
       disabled:bg-slate-50 disabled:text-slate-400 disabled:cursor-not-allowed;
   }
 }
+
+/* ─── Universal Print Optimization ─── */
+@media print {
+  aside,
+  nav,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+
