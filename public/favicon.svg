@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="brandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14209C" />
+      <stop offset="100%" stop-color="#0E1668" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="100%" stop-color="#F9C31C" />
+    </linearGradient>
+  </defs>
+  <!-- Background rounded rect -->
+  <rect width="64" height="64" rx="16" fill="url(#brandGrad)"/>
+  <!-- Mortarboard cap / Education Icon -->
+  <polygon points="32,15 54,26 32,37 10,26" fill="url(#goldGrad)" />
+  <!-- Lower cap body -->
+  <path d="M19,31.5 L19,43 C19,48 45,48 45,43 L45,31.5 L32,38 Z" fill="#FFFFFF" fill-opacity="0.9" />
+  <!-- Tassel ribbon -->
+  <path d="M50,28.5 L50,42 C50,44 48,44.5 48,43 L48,29.5 Z" fill="url(#goldGrad)" />
+  <circle cx="48" cy="44" r="2" fill="url(#goldGrad)" />
+</svg>

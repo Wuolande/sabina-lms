@@ -46,26 +46,66 @@ async function getPage(slug: string) {
 export async function generateMetadata({ params }: CustomPageProps) {
   const { slug } = await params;
   const page = await getPage(slug);
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
 
   if (!page || !page.isPublished) {
     return {
-      title: "Page Not Found | Sabina Edge LMS",
+      title: "Page Not Found | Sabina Education",
     };
   }
 
+  const title = page.metaTitle || `${page.title} | Sabina Education`;
+  const description = page.metaDescription || `Read ${page.title} on Sabina Education.`;
+
   return {
-    title: page.metaTitle || `${page.title} | Sabina Edge LMS`,
-    description: page.metaDescription || `Read ${page.title} on Sabina Edge.`,
+    title,
+    description,
+    alternates: {
+      canonical: `/pages/${slug}`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `${baseUrl}/pages/${slug}`,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
 export default async function DynamicCustomPage({ params }: CustomPageProps) {
   const { slug } = await params;
   const page = await getPage(slug);
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
 
   if (!page || !page.isPublished) {
     notFound();
   }
 
-  return <PageLayout page={page} />;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: page.title,
+    description: page.metaDescription,
+    url: `${baseUrl}/pages/${slug}`,
+    dateModified: page.updatedAt,
+    publisher: {
+      "@type": "EducationalOrganization",
+      name: "Sabina Education",
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <PageLayout page={page} />
+    </>
+  );
 }

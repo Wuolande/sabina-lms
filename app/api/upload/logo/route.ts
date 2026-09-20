@@ -14,7 +14,7 @@ import { scanFileForMalware, sanitizeUploadFilename } from '@/src/shared/securit
 import { maskMediaUrl } from '@/src/shared/security/mediaProxy';
 import { adminSupabase } from '@/src/shared/database/supabase';
 
-const ALLOWED_LOGO_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']);
+const ALLOWED_LOGO_MIMES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'image/x-icon', 'image/vnd.microsoft.icon']);
 
 export async function POST(req: NextRequest) {
   try {

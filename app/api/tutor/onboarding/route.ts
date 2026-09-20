@@ -124,8 +124,8 @@ export async function POST(req: NextRequest) {
 
     // 1. Update public.users table with profile data
     const parts = data.displayName.split(' ');
-    const fName = (data.firstName || parts[0] || 'Tutor').trim();
-    const lName = (data.lastName || parts.slice(1).join(' ') || 'Educator').trim();
+    const fName = ((data as any).firstName || parts[0] || 'Tutor').trim();
+    const lName = ((data as any).lastName || parts.slice(1).join(' ') || 'Educator').trim();
 
     const userUpdates: Record<string, any> = {
       first_name: fName,
@@ -289,7 +289,7 @@ export async function POST(req: NextRequest) {
           proficiency,
         };
       })
-      .filter(Boolean);
+      .filter((row): row is { application_id: string; language_id: any; proficiency: string } => Boolean(row));
 
     if (appLangRows.length > 0) {
       await adminSupabase

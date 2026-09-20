@@ -3,8 +3,8 @@ import { PageLayout } from "@/components/cms/PageLayout";
 import { adminSupabase } from "@/src/shared/database/supabase";
 
 export const metadata = {
-  title: "Cookie Policy & Tracking Technologies | Sabina Edge LMS",
-  description: "Information on cookies, session storage, and analytics technologies used on Sabina Edge.",
+  title: "Cookie Policy & Tracking Technologies",
+  description: "Information on cookies, session storage, and analytics technologies used on Sabina.",
 };
 
 export default async function CookiePolicyPage() {

@@ -3,8 +3,8 @@ import { PageLayout } from "@/components/cms/PageLayout";
 import { adminSupabase } from "@/src/shared/database/supabase";
 
 export const metadata = {
-  title: "Privacy Policy & GDPR Data Protection | Sabina Edge LMS",
-  description: "Learn how Sabina Edge collects, uses, protects, and handles your personal information, learning records, and biometric classroom data.",
+  title: "Privacy Policy & GDPR Data Protection",
+  description: "Learn how Sabina collects, uses, protects, and handles your personal information, learning records, and classroom data.",
 };
 
 export default async function PrivacyPage() {

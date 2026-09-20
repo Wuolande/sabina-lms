@@ -3,7 +3,7 @@ import { PageLayout } from "@/components/cms/PageLayout";
 import { adminSupabase } from "@/src/shared/database/supabase";
 
 export const metadata = {
-  title: "100% Satisfaction Guarantee & Refund Policy | Sabina Edge LMS",
+  title: "100% Satisfaction Guarantee & Refund Policy",
   description: "Our commitment to student satisfaction, trial lesson guarantees, cancellation rules, and refund processing timelines.",
 };
 

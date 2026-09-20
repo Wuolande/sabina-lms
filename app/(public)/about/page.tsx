@@ -12,8 +12,8 @@ export async function generateMetadata() {
 
     if (page?.metaTitle || page?.title) {
       return {
-        title: page.metaTitle || `${page.title} | Sabina Edge LMS`,
-        description: page.metaDescription || "Discover the story, mission, and technology behind Sabina Edge — the elite 1-on-1 tutoring platform.",
+        title: page.metaTitle || page.title || "About Us & Educational Mission",
+        description: page.metaDescription || "Discover the story, mission, and technology behind Sabina — the elite 1-on-1 tutoring platform.",
       };
     }
   } catch {
@@ -21,8 +21,8 @@ export async function generateMetadata() {
   }
 
   return {
-    title: "About Us & Educational Mission | Sabina Edge LMS",
-    description: "Discover the story, mission, and technology behind Sabina Edge — the elite 1-on-1 tutoring platform.",
+    title: "About Us & Educational Mission",
+    description: "Discover the story, mission, and technology behind Sabina — the elite 1-on-1 tutoring platform.",
   };
 }
 

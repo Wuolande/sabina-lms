@@ -2,7 +2,7 @@ import { PageLayout } from "@/components/cms/PageLayout";
 import { adminSupabase } from "@/src/shared/database/supabase";
 
 export const metadata = {
-  title: "Pricing Transparency & Satisfaction Guarantee | Sabina Edge LMS",
+  title: "Pricing Transparency & Satisfaction Guarantee",
   description: "Transparent lesson pricing, zero subscription lock-ins, and 100% money-back satisfaction guarantees.",
 };
 

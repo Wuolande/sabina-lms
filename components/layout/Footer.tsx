@@ -199,15 +199,11 @@ export function Footer() {
               Company
             </h4>
             <ul className="space-y-2.5">
-              {footerLinks.company.map(({ href, label, accent }) => (
+              {footerLinks.company.map(({ href, label }) => (
                 <li key={label}>
                   <Link
                     href={href}
-                    className={`text-sm transition-colors ${
-                      accent
-                        ? "text-accent hover:brightness-110 font-semibold"
-                        : "text-slate-400 hover:text-white"
-                    }`}
+                    className="text-sm text-slate-400 hover:text-white transition-colors"
                   >
                     {label}
                   </Link>

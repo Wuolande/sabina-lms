@@ -30,6 +30,8 @@ const ALLOWED_MIME_TYPES = new Set([
   'image/png',
   'image/webp',
   'image/gif',
+  'image/x-icon',
+  'image/vnd.microsoft.icon',
   // Documents
   'application/pdf',
   'application/msword',
@@ -124,6 +126,16 @@ function verifyMagicBytes(buffer: Buffer): string | null {
     buffer[3] === 0xA3
   ) {
     return 'video/webm';
+  }
+
+  // ICO: 00 00 01 00
+  if (
+    buffer[0] === 0x00 &&
+    buffer[1] === 0x00 &&
+    buffer[2] === 0x01 &&
+    buffer[3] === 0x00
+  ) {
+    return 'image/x-icon';
   }
 
   // DOCX / ZIP: 50 4B 03 04

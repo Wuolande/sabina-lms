@@ -87,6 +87,7 @@ import {
   ApplePayBadge,
   GooglePayBadge,
 } from "@/components/payments/PaymentLogos";
+import { BrandingAndSeoTab, BrandingSeoState } from "@/components/admin/settings/BrandingAndSeoTab";
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = React.useState<
@@ -99,12 +100,24 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = React.useState(false);
   const [savedMessage, setSavedMessage] = React.useState<string | null>(null);
 
-  // Platform Branding & Logo state
+  // Platform Branding, SEO & Asset state
   const { setLogoUrl: setGlobalLogoUrl } = useLogo();
-  const [primaryColor, setPrimaryColor] = React.useState("#14209C");
-  const [secondaryColor, setSecondaryColor] = React.useState("#F9C31C");
-  const [logoUrl, setLogoUrl] = React.useState("");
   const [themeSaving, setThemeSaving] = React.useState(false);
+  const [brandingSeo, setBrandingSeo] = React.useState<BrandingSeoState>({
+    primaryColor: "#14209C",
+    secondaryColor: "#F9C31C",
+    logoUrl: "",
+    faviconUrl: "",
+    appleTouchIconUrl: "",
+    ogImageUrl: "",
+    metaTitle: "Sabina Edge | Premium 1-on-1 Online Tutoring & Live Classroom",
+    metaDescription: "Connect with certified, elite private tutors for 1-on-1 live video lessons in languages, STEM, coding, and exam prep.",
+    keywords: ["online tutoring", "private tutor", "learn languages", "math tutor", "python coding", "live classroom", "ielts prep"],
+    googleSiteVerification: "",
+    bingSiteVerification: "",
+    twitterHandle: "@SabinaLMS",
+    allowIndexing: true,
+  });
 
   // Taxonomy data from DB
   const [taxonomy, setTaxonomy] = React.useState<{
@@ -204,15 +217,28 @@ export default function AdminSettingsPage() {
       if (videoData) setVideoConfig(videoData);
       if (paymentData) setPaymentConfig(paymentData);
 
-      // Load Brand Theme & Logo
+      // Load Brand Theme, SEO & Assets
       try {
         const themeRes = await fetch('/api/admin/theme');
         if (themeRes.ok) {
           const themeData = await themeRes.json();
-          if (themeData.primaryColor) setPrimaryColor(themeData.primaryColor);
-          if (themeData.secondaryColor) setSecondaryColor(themeData.secondaryColor);
+          setBrandingSeo((prev) => ({
+            ...prev,
+            primaryColor: themeData.primaryColor || prev.primaryColor,
+            secondaryColor: themeData.secondaryColor || prev.secondaryColor,
+            logoUrl: themeData.logoUrl ?? prev.logoUrl,
+            faviconUrl: themeData.faviconUrl ?? prev.faviconUrl,
+            appleTouchIconUrl: themeData.appleTouchIconUrl ?? prev.appleTouchIconUrl,
+            ogImageUrl: themeData.ogImageUrl ?? prev.ogImageUrl,
+            metaTitle: themeData.metaTitle || prev.metaTitle,
+            metaDescription: themeData.metaDescription || prev.metaDescription,
+            keywords: Array.isArray(themeData.keywords) ? themeData.keywords : prev.keywords,
+            googleSiteVerification: themeData.googleSiteVerification ?? prev.googleSiteVerification,
+            bingSiteVerification: themeData.bingSiteVerification ?? prev.bingSiteVerification,
+            twitterHandle: themeData.twitterHandle || prev.twitterHandle,
+            allowIndexing: themeData.allowIndexing !== undefined ? themeData.allowIndexing : prev.allowIndexing,
+          }));
           if (themeData.logoUrl !== undefined) {
-            setLogoUrl(themeData.logoUrl || "");
             setGlobalLogoUrl(themeData.logoUrl || "");
           }
         }
@@ -234,32 +260,39 @@ export default function AdminSettingsPage() {
     toast({ title: msg, variant });
   };
 
-  // Branding & Theme Save
-  const handleSaveTheme = async (overrideLogoUrl?: string) => {
+  // Branding & SEO Save
+  const handleSaveTheme = async (override?: Partial<BrandingSeoState>) => {
     setThemeSaving(true);
-    const targetLogo = overrideLogoUrl !== undefined ? overrideLogoUrl : logoUrl;
+    const payload = { ...brandingSeo, ...override };
     try {
       const res = await fetch('/api/admin/theme', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ primaryColor, secondaryColor, logoUrl: targetLogo }),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Failed to save branding settings');
-      document.documentElement.style.setProperty('--color-primary', primaryColor);
-      document.documentElement.style.setProperty('--color-secondary', secondaryColor);
-      setGlobalLogoUrl(targetLogo);
-      triggerToast("Branding, theme colors & platform logo saved successfully!");
+      if (!res.ok) throw new Error('Failed to save branding & SEO settings');
+      document.documentElement.style.setProperty('--color-primary', payload.primaryColor);
+      document.documentElement.style.setProperty('--color-secondary', payload.secondaryColor);
+      setGlobalLogoUrl(payload.logoUrl);
+      triggerToast("Branding, SEO metadata, icons & social card saved successfully!");
     } catch (err: any) {
-      triggerToast("Failed to save branding: " + (err.message || "Error"));
+      triggerToast("Failed to save branding: " + (err.message || "Error"), "danger");
     } finally {
       setThemeSaving(false);
     }
   };
 
-  const handleRemoveLogo = async () => {
-    setLogoUrl("");
+  const handleResetLogo = async () => {
+    const confirmed = await confirm({
+      title: "Reset Platform Logo?",
+      message: "This will restore the default SVG/text brand wordmark across all headers and emails.",
+      confirmText: "Reset Logo",
+      variant: "warning",
+    });
+    if (!confirmed) return;
+    setBrandingSeo((prev) => ({ ...prev, logoUrl: "" }));
     setGlobalLogoUrl("");
-    await handleSaveTheme("");
+    await handleSaveTheme({ logoUrl: "" });
   };
 
   // Reset page when filters change
@@ -758,7 +791,7 @@ export default function AdminSettingsPage() {
       <div className="flex border-b border-slate-200 gap-2 overflow-x-auto pb-px">
         {[
           { id: "policies", label: "Economics & Policies", icon: Settings },
-          { id: "branding", label: "Branding & Logo", icon: Palette },
+          { id: "branding", label: "Branding & SEO", icon: Palette },
           { id: "security", label: "Security & reCAPTCHA", icon: ShieldCheck },
           { id: "email", label: "Email Providers & SMTP", icon: Mail },
           { id: "video", label: "Live Classroom", icon: Video },
@@ -788,203 +821,15 @@ export default function AdminSettingsPage() {
         })}
       </div>
 
-      {/* ─── TAB: Branding & Logo Management ─── */}
+      {/* ─── TAB: Branding, SEO & Social Share Management ─── */}
       {activeTab === "branding" && (
-        <div className="space-y-6 max-w-4xl animate-fade-in">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-5">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Palette className="h-5 w-5 text-brand" />
-                  <h3 className="text-sm sm:text-base font-black text-slate-900 uppercase tracking-wider font-heading">
-                    Platform Branding &amp; Logo Management
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  Upload your platform logo and define theme brand colors. Changes instantly reflect across all dashboards, sidebars, and outbound emails.
-                </p>
-              </div>
-
-              {logoUrl && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRemoveLogo}
-                  disabled={themeSaving}
-                  className="text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
-                  leftIcon={<Trash2 className="h-3.5 w-3.5" />}
-                >
-                  Reset to Default Wordmark
-                </Button>
-              )}
-            </div>
-
-            {/* Recommended Specifications Card */}
-            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 text-xs space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-brand">
-                <Sparkles className="h-4 w-4 text-accent shrink-0" />
-                <span>Recommended Logo Specifications:</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11px] text-slate-700 font-medium">
-                <div className="p-2.5 bg-white/80 rounded-xl border border-indigo-100/60">
-                  <span className="font-bold text-slate-950 block">Dimensions:</span>
-                  <span>400 × 120 px (Landscape) or 512 × 512 px (Square)</span>
-                </div>
-                <div className="p-2.5 bg-white/80 rounded-xl border border-indigo-100/60">
-                  <span className="font-bold text-slate-950 block">Accepted Formats:</span>
-                  <span>PNG (transparent background), SVG, WebP, JPG</span>
-                </div>
-                <div className="p-2.5 bg-white/80 rounded-xl border border-indigo-100/60">
-                  <span className="font-bold text-slate-950 block">Max File Size:</span>
-                  <span>Up to 5 MB (Auto-optimized for ultra-fast CDN loading)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Upload Area */}
-            <div className="space-y-3">
-              <FileUploadWithLink
-                label="Upload or Link Platform Logo"
-                description="Upload an image from your device or paste a hosted CDN URL"
-                value={logoUrl}
-                endpoint="/api/upload/logo"
-                onChange={(newUrl) => {
-                  setLogoUrl(newUrl);
-                  setGlobalLogoUrl(newUrl);
-                  handleSaveTheme(newUrl);
-                }}
-                type="image"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                maxSizeBytes={5 * 1024 * 1024}
-                placeholder="https://res.cloudinary.com/.../logo.png"
-              />
-            </div>
-
-            {/* Live 4-Surface Theme & Logo Preview */}
-            <div className="space-y-3 pt-3 border-t border-slate-100">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">
-                  Instant Multi-Surface Responsive Preview
-                </p>
-                <span className="text-[10px] text-slate-500 font-medium">Auto-scales across all portals &amp; emails</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                {/* 1. Public Navbar Preview */}
-                <div className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase text-slate-500">Public Navbar</span>
-                    <span className="text-[9px] font-mono text-slate-400">default</span>
-                  </div>
-                  <div className="h-16 flex items-center px-3 rounded-lg bg-slate-50/80 border border-slate-100">
-                    <Logo size="default" href={undefined} />
-                  </div>
-                </div>
-
-                {/* 2. Dark Sidebar Preview */}
-                <div className="rounded-xl border border-slate-800 bg-slate-950 p-3.5 space-y-2 text-white">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase text-slate-400">Admin/Tutor Sidebar</span>
-                    <span className="text-[9px] font-mono text-slate-500">sm (dark)</span>
-                  </div>
-                  <div className="h-16 flex items-center px-3 rounded-lg bg-slate-900 border border-slate-800">
-                    <Logo size="sm" variant="dark" href={undefined} />
-                  </div>
-                </div>
-
-                {/* 3. Auth Card Preview */}
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase text-slate-500">Sign In / Register</span>
-                    <span className="text-[9px] font-mono text-slate-400">lg</span>
-                  </div>
-                  <div className="h-16 flex items-center justify-center px-3 rounded-lg bg-white border border-slate-200 shadow-2xs">
-                    <Logo size="lg" href={undefined} />
-                  </div>
-                </div>
-
-                {/* 4. Branded Email Header Preview */}
-                <div className="rounded-xl border border-slate-200 p-3.5 space-y-2 overflow-hidden" style={{ backgroundColor: primaryColor }}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase text-white/90">Email Header</span>
-                    <span className="text-[9px] font-mono text-white/70">pill card</span>
-                  </div>
-                  <div className="h-16 flex items-center justify-center px-3">
-                    <div className="bg-white px-3.5 py-1.5 rounded-xl shadow-xs border border-white/40 flex items-center justify-center">
-                      <Logo size="default" href={undefined} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Brand Colors */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-              <div className="p-4 rounded-2xl border border-slate-200 space-y-3 bg-slate-50/50">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Primary Theme Color</span>
-                  <div className="h-6 w-6 rounded-md border border-slate-200" style={{ backgroundColor: primaryColor }} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="h-10 w-14 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white"
-                  />
-                  <Input
-                    value={primaryColor}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) setPrimaryColor(v);
-                    }}
-                    placeholder="#14209C"
-                    className="font-mono text-xs uppercase"
-                  />
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl border border-slate-200 space-y-3 bg-slate-50/50">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Accent / Secondary Color</span>
-                  <div className="h-6 w-6 rounded-md border border-slate-200" style={{ backgroundColor: secondaryColor }} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={secondaryColor}
-                    onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="h-10 w-14 rounded-xl border border-slate-200 cursor-pointer p-0.5 bg-white"
-                  />
-                  <Input
-                    value={secondaryColor}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      if (/^#[0-9A-Fa-f]{0,6}$/.test(v)) setSecondaryColor(v);
-                    }}
-                    placeholder="#F9C31C"
-                    className="font-mono text-xs uppercase"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Save Button */}
-            <div className="pt-2 flex justify-end">
-              <Button
-                type="button"
-                variant="default"
-                size="default"
-                onClick={() => handleSaveTheme()}
-                disabled={themeSaving}
-                className="bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs shadow-sm cursor-pointer"
-                leftIcon={<Palette className="h-4 w-4" />}
-              >
-                {themeSaving ? "Saving Branding..." : "Save Branding & Theme"}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <BrandingAndSeoTab
+          state={brandingSeo}
+          onChange={(updates) => setBrandingSeo((prev) => ({ ...prev, ...updates }))}
+          onSave={() => handleSaveTheme()}
+          saving={themeSaving}
+          onResetLogo={handleResetLogo}
+        />
       )}
 
       {/* ─── TAB 1: Economics & Policies ─── */}
