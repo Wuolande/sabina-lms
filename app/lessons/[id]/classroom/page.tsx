@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * /lessons/[id]/classroom — SSR-Safe Entry Page
  * -----------------------------------------------------------------------
@@ -9,6 +11,9 @@
  * classroom component is ONLY ever loaded and executed in the browser,
  * preventing the "Application error: a client-side exception has occurred"
  * on Vercel.
+ *
+ * NOTE: "use client" is required here because next/dynamic with ssr:false
+ * can only be used inside Client Components.
  * -----------------------------------------------------------------------
  */
 
