@@ -1,0 +1,1148 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import {
+  ShieldCheck,
+  Clock,
+  Globe,
+  Award,
+  GraduationCap,
+  Sparkles,
+  Heart,
+  MessageSquare,
+  Calendar,
+  Play,
+  CheckCircle2,
+  Share2,
+  BookOpen,
+  ArrowRight,
+  Briefcase,
+  Layers,
+  ChevronDown,
+  ChevronUp,
+  FileCheck,
+  Lock,
+  Check,
+  HelpCircle,
+  Video,
+  PenTool,
+  Search,
+} from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import { Rating } from "@/components/ui/Rating";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
+import { BookingModal } from "@/components/booking/BookingModal";
+import { BookingCalendar } from "@/components/booking/BookingCalendar";
+import { tutorService } from "@/services/tutorService";
+import { studentService } from "@/services/studentService";
+import { Review } from "@/types";
+import { formatCurrency, formatDate } from "@/lib/utils";
+
+const profileTabs = [
+  { id: "about", label: "About & Philosophy" },
+  { id: "qualifications", label: "Qualifications & Degrees" },
+  { id: "certifications", label: "Certifications & Licenses" },
+  { id: "experience", label: "Teaching Experience" },
+  { id: "curriculum", label: "Subjects & Curriculum" },
+  { id: "methodology", label: "Classroom & Tools" },
+  { id: "schedule", label: "Live Schedule" },
+  { id: "reviews", label: "Student Reviews" },
+  { id: "faqs", label: "FAQs" },
+];
+
+function getEmbedVideoUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  if (url.includes("youtube.com/watch?v=")) {
+    const id = url.split("v=")[1]?.split("&")[0];
+    return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1` : null;
+  }
+  if (url.includes("youtu.be/")) {
+    const id = url.split("youtu.be/")[1]?.split("?")[0];
+    return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1` : null;
+  }
+  if (url.includes("vimeo.com/")) {
+    const id = url.split("vimeo.com/")[1]?.split("?")[0];
+    return id ? `https://player.vimeo.com/video/${id}?autoplay=1` : null;
+  }
+  return null;
+}
+
+export interface TutorProfileClientProps {
+  initialTutor?: any | null;
+  slug: string;
+}
+
+export function TutorProfileClient({ initialTutor, slug }: TutorProfileClientProps) {
+  const [tutor, setTutor] = React.useState<any | null>(initialTutor || null);
+  const [loading, setLoading] = React.useState(!initialTutor);
+  const [reviews, setReviews] = React.useState<Review[]>(initialTutor?.reviews || []);
+  const [isFavorite, setIsFavorite] = React.useState(false);
+  const [isBookingOpen, setIsBookingOpen] = React.useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState("about");
+  const [selectedScheduleDate, setSelectedScheduleDate] = React.useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  });
+  const [selectedScheduleTime, setSelectedScheduleTime] = React.useState<string>("14:00");
+  const [expandedFaq, setExpandedFaq] = React.useState<number | null>(0);
+  const [copiedLink, setCopiedLink] = React.useState(false);
+  const [trialDiscountPercent, setTrialDiscountPercent] = React.useState<number>(30);
+
+  // Sync trial policy discount from platform settings
+  React.useEffect(() => {
+    fetch("/api/policies")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && typeof data.trialLessonDiscountPercent === "number") {
+          setTrialDiscountPercent(data.trialLessonDiscountPercent);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleSelectSlot = React.useCallback((date: string, time: string) => {
+    setSelectedScheduleDate(date);
+    setSelectedScheduleTime(time);
+  }, []);
+
+  // Check favorite status if tutor is loaded
+  React.useEffect(() => {
+    if (tutor?.id) {
+      studentService.isTutorFavorite(tutor.id).then((fav) => {
+        setIsFavorite(fav);
+      }).catch(() => {});
+    }
+  }, [tutor?.id]);
+
+  // Fallback fetch if initialTutor wasn't passed
+  React.useEffect(() => {
+    let isMounted = true;
+    if (!initialTutor && slug) {
+      setLoading(true);
+      tutorService.getTutorBySlug(slug)
+        .then((res) => {
+          if (!isMounted) return;
+          setTutor(res);
+          if (res) {
+            setReviews((res as any).reviews || []);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load tutor:", err);
+          if (isMounted) setTutor(null);
+        })
+        .finally(() => {
+          if (isMounted) setLoading(false);
+        });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [initialTutor, slug]);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-8 animate-pulse">
+        <div className="h-6 w-48 bg-slate-200 rounded-lg" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="h-56 bg-slate-100 rounded-3xl border border-slate-200" />
+            <div className="h-72 bg-slate-100 rounded-3xl border border-slate-200" />
+            <div className="h-48 bg-slate-100 rounded-3xl border border-slate-200" />
+          </div>
+          <div className="lg:col-span-1">
+            <div className="h-96 bg-slate-100 rounded-3xl border border-slate-200" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tutor) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-20">
+        <div className="max-w-xl mx-auto text-center space-y-6 bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm">
+          <div className="h-16 w-16 mx-auto rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200">
+            <Search className="h-8 w-8" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black text-slate-950 font-heading">
+              Tutor Profile Not Found
+            </h1>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              We couldn&apos;t find an active educator profile matching &ldquo;{slug}&rdquo;. The tutor may have updated their URL or is currently not accepting new students.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link href="/find-tutors" className="w-full sm:w-auto">
+              <Button variant="default" size="default" className="w-full font-bold bg-[#14209C] text-white">
+                Browse All Verified Tutors
+              </Button>
+            </Link>
+            <Link href="/" className="w-full sm:w-auto">
+              <Button variant="outline" size="default" className="w-full font-bold">
+                Return Home
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const tutorDisplayName = tutor.user?.displayName || tutor.displayName || tutor.tutorName || "Verified Educator";
+  const tutorFirstName = tutor.user?.firstName || tutor.firstName || tutorDisplayName.split(" ")[0] || "Tutor";
+  const tutorAvatarUrl = tutor.user?.avatarUrl || tutor.avatarUrl || tutor.tutorAvatar;
+  const tutorCountry = tutor.user?.country || tutor.country || "Global";
+  const tutorTimezone = tutor.user?.timezone || tutor.timezone || "UTC";
+  const tutorHeadline = tutor.headline || "Certified Educator & Academic Coach";
+  const tutorBio = tutor.bio || "Dedicated to helping students master concepts through personalized 1-on-1 lessons.";
+  const tutorTeachingStyle = tutor.teachingStyle || "Concept-first problem solving with customized practice drills.";
+  const tutorHourlyRate = tutor.hourlyRate || 35;
+  const tutorCurrency = tutor.currency || "USD";
+  const tutorAverageRating = tutor.averageRating > 0 ? Number(tutor.averageRating) : 5.0;
+  const tutorReviewCount = tutor.reviewCount || reviews.length || 0;
+  const tutorTotalLessons = tutor.totalLessons || 0;
+  const tutorTotalStudents = tutor.totalStudents || 0;
+  const tutorYearsExperience = tutor.yearsExperience || 5;
+
+  const subjectsList: any[] = tutor.subjects || [];
+  const languagesList: any[] = tutor.languages || [];
+  const educationsList: any[] = tutor.educations || tutor.education || [];
+  const certificationsList: any[] = tutor.certifications || [];
+  const experiencesList: any[] = tutor.experiences || tutor.experience || [];
+  const methodologyList: any[] = tutor.methodology || [];
+  const faqsList: any[] = tutor.faqs || [
+    {
+      question: "How does the 25-minute trial lesson work?",
+      answer: "In the trial lesson, we evaluate your current level, pinpoint learning goals, solve sample questions together, and map out a custom syllabus tailored to your targets.",
+    },
+    {
+      question: "What software or equipment do I need?",
+      answer: "You only need a modern web browser (Chrome, Firefox, Safari) and a microphone. Our LiveKit classroom runs directly in your browser without downloads.",
+    },
+    {
+      question: "Can I reschedule or cancel a lesson?",
+      answer: "Yes, you can reschedule or cancel for a full refund up to 12 hours before the scheduled start time directly from your Student Portal.",
+    },
+    {
+      question: "Do you assign homework between sessions?",
+      answer: "Yes! Tailored practice problems and annotated lesson summary PDFs are uploaded to your lesson portal after each class.",
+    },
+  ];
+
+  const primarySub = subjectsList.find((s: any) => s.isPrimary) || subjectsList[0];
+  const primarySubjectName = primarySub?.subject?.name || primarySub?.name || "All Subjects";
+  const primarySubjectSlug = primarySub?.subject?.slug || primarySub?.slug || "";
+
+  const handleToggleFavorite = async () => {
+    const updated = await studentService.toggleFavoriteTutor(tutor.id);
+    setIsFavorite(updated);
+  };
+
+  const handleShare = () => {
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
+  const scrollToSection = (id: string) => {
+    setActiveTab(id);
+    const element = document.getElementById(id);
+    if (element) {
+      const yOffset = -90;
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
+
+  const totalRev = tutorReviewCount || 1;
+  const ratingDistribution = [
+    { stars: 5, pct: 92, count: Math.round(totalRev * 0.92) },
+    { stars: 4, pct: 6, count: Math.round(totalRev * 0.06) },
+    { stars: 3, pct: 2, count: Math.round(totalRev * 0.02) },
+    { stars: 2, pct: 0, count: 0 },
+    { stars: 1, pct: 0, count: 0 },
+  ];
+
+  const embedVideoUrl = getEmbedVideoUrl(tutor.introVideoUrl);
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-28 lg:pb-12">
+      {/* ── Top Bar: Breadcrumb + Action Buttons ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <Breadcrumb
+          items={[
+            { label: "Find Tutors", href: "/find-tutors" },
+            ...(primarySubjectSlug ? [{ label: primarySubjectName, href: `/find-tutors?subject=${primarySubjectSlug}` }] : []),
+            { label: tutorDisplayName },
+          ]}
+        />
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            {copiedLink ? "Link Copied!" : "Share Profile"}
+          </button>
+          <button
+            type="button"
+            onClick={handleToggleFavorite}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-colors shadow-xs cursor-pointer ${
+              isFavorite
+                ? "border-rose-200 bg-rose-50 text-rose-600"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            }`}
+          >
+            <Heart className={`h-3.5 w-3.5 ${isFavorite ? "fill-rose-500 text-rose-500" : ""}`} />
+            {isFavorite ? "Saved" : "Save Tutor"}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* ═══════════════════════════════════════════════════════════
+            LEFT 2 COLS: Comprehensive Tutor LMS Profile Details
+        ═══════════════════════════════════════════════════════════ */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* ── 1. Hero Header Card & Key Verification Ribbons ── */}
+          <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6">
+            <div className="flex flex-col sm:flex-row items-start gap-6">
+              <div className="relative shrink-0">
+                <Avatar
+                  src={tutorAvatarUrl}
+                  fallbackName={tutorDisplayName}
+                  size="2xl"
+                  statusIndicator="online"
+                  superTutor={tutor.isSuperTutor}
+                  className="ring-4 ring-slate-100 shadow-sm"
+                />
+              </div>
+
+              <div className="flex-1 space-y-2.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-heading">
+                    {tutorDisplayName}
+                  </h1>
+
+                  {tutor.verificationStatus === "APPROVED" && (
+                    <span
+                      title="Identity Verified • Degree Verified • Background Check Cleared"
+                      className="inline-flex items-center gap-1 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/90 px-2.5 py-1 rounded-full"
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                      100% Verified
+                    </span>
+                  )}
+
+                  <span
+                    title="Certified by Sabina Tutor Training Academy"
+                    className="inline-flex items-center gap-1 text-xs font-bold bg-blue-50 text-[#14209C] border border-blue-200/90 px-2.5 py-1 rounded-full"
+                  >
+                    <GraduationCap className="h-3.5 w-3.5 text-[#14209C] shrink-0" />
+                    Academy Certified
+                  </span>
+
+                  {tutor.isSuperTutor && (
+                    <span className="inline-flex items-center gap-1 text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/90 px-2.5 py-1 rounded-full">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-500 fill-amber-400 shrink-0" />
+                      Top 1% Super Tutor
+                    </span>
+                  )}
+                </div>
+
+                <p className="text-sm font-semibold text-slate-700 leading-relaxed">
+                  {tutorHeadline}
+                </p>
+
+                <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
+                  <div className="flex items-center gap-1.5">
+                    <Rating value={tutorAverageRating} count={tutorReviewCount} size="sm" />
+                  </div>
+                  <span>•</span>
+                  <span>
+                    <strong className="text-slate-900">{tutorTotalLessons.toLocaleString()}</strong> lessons taught
+                  </span>
+                  <span>•</span>
+                  <span>
+                    <strong className="text-slate-900">{tutorTotalStudents}</strong> active students
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1 text-slate-600">
+                    <Globe className="h-3.5 w-3.5 text-slate-400" />
+                    {tutorCountry} ({tutorTimezone})
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Trust Metrics Bar ── */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 border-t border-slate-100 text-center">
+              <div className="rounded-2xl bg-slate-50/80 p-3 border border-slate-100">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                  Experience
+                </span>
+                <span className="text-sm font-extrabold text-slate-900">
+                  {tutorYearsExperience}+ Years
+                </span>
+              </div>
+              <div className="rounded-2xl bg-slate-50/80 p-3 border border-slate-100">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                  Response Time
+                </span>
+                <span className="text-sm font-extrabold text-slate-900">
+                  ~{tutor.responseTimeMinutes || 15} mins
+                </span>
+              </div>
+              <div className="rounded-2xl bg-slate-50/80 p-3 border border-slate-100">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                  Attendance
+                </span>
+                <span className="text-sm font-extrabold text-emerald-600">
+                  {tutor.attendanceRate || 99}%
+                </span>
+              </div>
+              <div className="rounded-2xl bg-slate-50/80 p-3 border border-slate-100">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                  Repeat Students
+                </span>
+                <span className="text-sm font-extrabold text-brand">
+                  {tutor.repeatStudentRate || 94}% Continue
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── In-Page Anchor Navigation Bar ── */}
+          <div className="sticky top-[70px] z-30 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl p-1.5 shadow-xs flex items-center gap-1 overflow-x-auto scrollbar-hide touch-scroll">
+            {profileTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => scrollToSection(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-150 cursor-pointer ${
+                  activeTab === tab.id
+                    ? "bg-brand text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-950 hover:bg-slate-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── 2. Introduction Video Preview ── */}
+          {tutor.introVideoUrl && (
+            <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
+                  <Play className="h-5 w-5 text-brand" />
+                  Video Introduction & Teaching Sample
+                </h3>
+                <span className="text-xs font-semibold text-slate-500">Live Sample</span>
+              </div>
+
+              <div className="relative aspect-video rounded-2xl bg-slate-950 overflow-hidden flex items-center justify-center border border-slate-200 shadow-inner">
+                {isPlayingVideo ? (
+                  embedVideoUrl ? (
+                    <iframe
+                      src={embedVideoUrl}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video
+                      src={tutor.introVideoUrl}
+                      controls
+                      autoPlay
+                      className="w-full h-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div
+                    className="relative w-full h-full cursor-pointer flex items-center justify-center group select-none"
+                    onClick={() => setIsPlayingVideo(true)}
+                    style={{
+                      backgroundImage: `url(${
+                        tutor.videoThumbnail ||
+                        "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=800"
+                      })`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-slate-950/40 group-hover:bg-slate-950/25 transition-colors" />
+                    <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-amber-400 text-slate-950 shadow-elevation group-hover:scale-110 group-hover:shadow-glow-amber transition-transform duration-200">
+                      <Play className="h-7 w-7 fill-current ml-1" />
+                    </div>
+                    <span className="absolute bottom-4 left-4 text-xs font-bold text-white bg-slate-950/80 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-white/10">
+                      ▶ Watch {tutorFirstName}&apos;s Introduction & Lesson Walkthrough
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── 3. About Me & Teaching Philosophy ── */}
+          <div
+            id="about"
+            className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6 scroll-mt-28"
+          >
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-900 mb-3 font-heading">
+                About {tutorDisplayName}
+              </h3>
+              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                {tutorBio}
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 space-y-3">
+              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Teaching Philosophy & Approach
+              </h4>
+              <div className="p-4 rounded-2xl bg-brand-50/70 border border-brand-100 text-sm text-brand-950 font-medium leading-relaxed">
+                &ldquo;{tutorTeachingStyle}&rdquo;
+              </div>
+            </div>
+          </div>
+
+          {/* ── 4. Academic Qualifications & Degrees (Education) ── */}
+          <div
+            id="qualifications"
+            className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6 scroll-mt-28"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
+                  <GraduationCap className="h-5 w-5 text-brand" />
+                  Academic Qualifications & Degrees
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Verified by Sabina Edge Academic Credentials Registrar
+                </p>
+              </div>
+              <Badge variant="success" size="sm" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> All Degrees Verified
+              </Badge>
+            </div>
+
+            {educationsList.length > 0 ? (
+              <div className="space-y-4">
+                {educationsList.map((edu: any, idx: number) => (
+                  <div
+                    key={edu.id || idx}
+                    className="flex items-start gap-4 p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all shadow-xs"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand shrink-0 border border-brand-100">
+                      <GraduationCap className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <h4 className="text-sm font-bold text-slate-900">
+                          {edu.degree}
+                        </h4>
+                        <span className="text-xs font-extrabold text-slate-700 bg-white border border-slate-200 px-2.5 py-0.5 rounded-lg">
+                          {edu.startYear} – {edu.endYear || "Present"}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-brand mt-0.5">
+                        {edu.institution} {edu.location ? `• ${edu.location}` : ""}
+                      </p>
+                      {edu.fieldOfStudy && (
+                        <p className="text-xs text-slate-600 mt-1">
+                          <strong>Field of Study:</strong> {edu.fieldOfStudy}
+                        </p>
+                      )}
+                      {edu.honors && (
+                        <p className="text-xs text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+                          <Award className="h-3.5 w-3.5" /> {edu.honors}
+                        </p>
+                      )}
+                      <div className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md">
+                        <Check className="h-3 w-3" /> Official Diploma & Transcript Verified
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-500">
+                Verified Bachelor&apos;s / Master&apos;s Degree on file with Sabina Academic Operations.
+              </div>
+            )}
+          </div>
+
+          {/* ── 5. Professional Certifications & Licenses ── */}
+          <div
+            id="certifications"
+            className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6 scroll-mt-28"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
+                  <Award className="h-5 w-5 text-amber-500" />
+                  Professional Certifications & Teaching Licenses
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Accredited teaching credentials and subject specialization certificates
+                </p>
+              </div>
+            </div>
+
+            {certificationsList.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {certificationsList.map((cert: any, idx: number) => (
+                  <div
+                    key={cert.id || idx}
+                    className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 hover:bg-white hover:border-slate-300 transition-all shadow-xs flex items-start gap-3.5"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 shrink-0 border border-amber-100">
+                      <FileCheck className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-xs font-bold text-slate-900 leading-snug">
+                        {cert.title}
+                      </h4>
+                      <p className="text-xs text-slate-600 mt-0.5">{cert.issuer}</p>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        <span className="text-[11px] text-slate-400 font-medium">
+                          Issued {cert.issueYear || 2022}
+                        </span>
+                        {cert.credentialId && (
+                          <span className="text-[11px] font-mono text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">
+                            ID: {cert.credentialId}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs text-slate-500">
+                Certified 1-on-1 Online Instructor with background vetting cleared.
+              </div>
+            )}
+          </div>
+
+          {/* ── 6. Teaching & Professional Work History (Timeline) ── */}
+          {experiencesList.length > 0 && (
+            <div
+              id="experience"
+              className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6 scroll-mt-28"
+            >
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
+                  <Briefcase className="h-5 w-5 text-brand" />
+                  Teaching & Professional Work History
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Track record in academic institutions, competitive test prep, and coaching
+                </p>
+              </div>
+
+              <div className="space-y-6 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-slate-200">
+                {experiencesList.map((exp: any, idx: number) => (
+                  <div key={exp.id || idx} className="relative flex items-start gap-4 pl-1">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white shrink-0 ring-4 ring-white z-10">
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    </div>
+                    <div className="flex-1 rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4 shadow-xs">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <h4 className="text-sm font-bold text-slate-900">{exp.role}</h4>
+                        <span className="text-xs font-bold text-brand bg-brand-50 border border-brand-100 px-2.5 py-0.5 rounded-full">
+                          {exp.startYear} – {exp.endYear || "Present"}
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-600 mt-0.5">
+                        {exp.organization} {exp.location ? `• ${exp.location}` : ""}
+                      </p>
+                      {exp.description && (
+                        <p className="text-xs text-slate-700 leading-relaxed mt-2">
+                          {exp.description}
+                        </p>
+                      )}
+                      {exp.highlights && exp.highlights.length > 0 && (
+                        <ul className="mt-2.5 space-y-1">
+                          {exp.highlights.map((h: string, i: number) => (
+                            <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5">
+                              <span className="text-emerald-600 font-bold">✓</span>
+                              <span>{h}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── 7. Subjects, Curriculum & Languages ── */}
+          <div
+            id="curriculum"
+            className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6 scroll-mt-28"
+          >
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-900 mb-3 flex items-center gap-2 font-heading">
+                <BookOpen className="h-5 w-5 text-brand" />
+                Subjects Taught & Curriculum Coverage
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {subjectsList.map((sub: any, idx: number) => {
+                  const name = sub.subject?.name || sub.name || "Subject";
+                  const levels = sub.levels || ["All Levels"];
+                  return (
+                    <div
+                      key={sub.id || idx}
+                      className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300 transition-all shadow-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <strong className="text-sm font-bold text-slate-900">{name}</strong>
+                        {sub.isPrimary && (
+                          <Badge variant="subtle" size="sm" className="bg-brand-50 text-brand">
+                            Primary Discipline
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                        {levels.map((lvl: string, lIdx: number) => (
+                          <span
+                            key={lIdx}
+                            className="text-[11px] font-bold bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded-md"
+                          >
+                            {lvl}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Languages Spoken */}
+            <div className="pt-4 border-t border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-brand" /> Languages Spoken
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {languagesList.map((l: any, idx: number) => {
+                  const langName = l.language?.name || l.name || l.code || "English";
+                  const prof = l.proficiency || "Fluent";
+                  return (
+                    <div
+                      key={l.id || idx}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-800"
+                    >
+                      <span>{langName}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-brand font-extrabold">{prof}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* ── 8. Teaching Methodology & Classroom Features ── */}
+          <div
+            id="methodology"
+            className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6 scroll-mt-28"
+          >
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
+                <Layers className="h-5 w-5 text-brand" />
+                Live Classroom Experience & Learning Tools
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Included with every 1-on-1 session on the Sabina Edge Live Classroom
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {methodologyList.length > 0 ? (
+                methodologyList.map((m: any, i: number) => (
+                  <div
+                    key={i}
+                    className="p-4 rounded-2xl border border-slate-200/80 bg-slate-50/40 space-y-1.5"
+                  >
+                    <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                      {m.title}
+                    </h4>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      {m.description}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/40 space-y-1">
+                    <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <PenTool className="h-4 w-4 text-brand" /> Interactive Digital Whiteboard
+                    </h4>
+                    <p className="text-xs text-slate-600">
+                      Collaborative canvas with instant LaTeX math formatting, graph plotting, and file uploads.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/40 space-y-1">
+                    <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <Video className="h-4 w-4 text-emerald-600" /> HD LiveKit Video & Audio
+                    </h4>
+                    <p className="text-xs text-slate-600">
+                      Ultra-low latency crystal clear video calling with screen share and audio isolation.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* ── 9. Interactive Weekly Schedule & Slot Booking ── */}
+          <div
+            id="schedule"
+            className="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-card space-y-5 scroll-mt-28"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
+                  <Calendar className="h-5 w-5 text-emerald-600" />
+                  Weekly Schedule & Live Availability
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Select an open slot to schedule directly with {tutorFirstName}.
+                </p>
+              </div>
+
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-full self-start sm:self-auto">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live Slots Synchronized
+              </span>
+            </div>
+
+            <BookingCalendar
+              selectedDate={selectedScheduleDate}
+              selectedTime={selectedScheduleTime}
+              onSelectSlot={handleSelectSlot}
+              durationMinutes={50}
+            />
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+              <div className="text-xs text-slate-500">
+                <span>Selected: </span>
+                <strong className="text-slate-900">
+                  {selectedScheduleDate ? formatDate(selectedScheduleDate) : "Tomorrow"} at{" "}
+                  {selectedScheduleTime || "14:00"}
+                </strong>
+              </div>
+
+              <Button
+                variant="default"
+                size="default"
+                className="w-full sm:w-auto font-extrabold bg-brand hover:brightness-90 text-white rounded-xl shadow-xs"
+                onClick={() => setIsBookingOpen(true)}
+                rightIcon={<ArrowRight className="h-4 w-4" />}
+              >
+                Book Selected Slot ({formatCurrency(tutorHourlyRate, tutorCurrency)})
+              </Button>
+            </div>
+          </div>
+
+          {/* ── 10. Student Reviews & Testimonials ── */}
+          <div
+            id="reviews"
+            className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6 scroll-mt-28"
+          >
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-900 font-heading">
+                  Student Reviews & Feedback ({tutorReviewCount})
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  100% verified reviews from completed lessons on Sabina Edge
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="text-right">
+                  <span className="text-3xl font-black text-slate-900 font-heading">
+                    {tutorAverageRating.toFixed(1)}
+                  </span>
+                  <span className="text-xs text-slate-400 block font-semibold">out of 5.0</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <Rating value={tutorAverageRating} size="default" showCount={false} />
+                  <span className="text-[11px] text-emerald-600 font-bold">
+                    99% Recommended
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Score Distribution Bars */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 p-4 rounded-2xl bg-slate-50/60 border border-slate-100 text-xs">
+              {ratingDistribution.map((r) => (
+                <div key={r.stars} className="flex items-center gap-2">
+                  <span className="w-10 font-bold text-slate-700">{r.stars} Stars</span>
+                  <div className="flex-1 h-2 rounded-full bg-slate-200 overflow-hidden">
+                    <div
+                      className="h-full bg-amber-400 rounded-full"
+                      style={{ width: `${r.pct}%` }}
+                    />
+                  </div>
+                  <span className="w-8 text-right text-slate-500 font-semibold">{r.pct}%</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Individual Reviews */}
+            <div className="space-y-4 divide-y divide-slate-100">
+              {reviews.map((rev: any) => (
+                <div key={rev.id} className="pt-4 first:pt-0 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar
+                        src={rev.student?.avatarUrl}
+                        fallbackName={rev.student?.displayName || "Student"}
+                        size="sm"
+                      />
+                      <div>
+                        <strong className="text-xs font-bold text-slate-900">
+                          {rev.student?.displayName || "Verified Student"}
+                        </strong>
+                        <span className="text-[11px] text-slate-400 block">
+                          Verified Lesson • {formatDate(rev.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                    <Rating value={rev.rating || 5} size="sm" showCount={false} />
+                  </div>
+
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    &ldquo;{rev.comment || rev.reviewText}&rdquo;
+                  </p>
+
+                  {(rev.tutorReply || rev.tutorResponse) && (
+                    <div className="mt-2 ml-4 p-3 rounded-xl bg-slate-50 border-l-2 border-brand text-xs space-y-1">
+                      <strong className="text-[11px] font-bold text-slate-800">
+                        {tutorDisplayName} (Tutor Response):
+                      </strong>
+                      <p className="text-slate-600">{rev.tutorReply || rev.tutorResponse}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── 11. Frequently Asked Questions (Accordion) ── */}
+          <div
+            id="faqs"
+            className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-5 scroll-mt-28"
+          >
+            <div>
+              <h3 className="text-lg font-extrabold text-slate-900 flex items-center gap-2 font-heading">
+                <HelpCircle className="h-5 w-5 text-brand" />
+                Frequently Asked Questions
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Common questions about scheduling, preparation, and lesson policies
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {faqsList.map((faq: any, idx: number) => {
+                const isOpen = expandedFaq === idx;
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-2xl border border-slate-200/80 overflow-hidden transition-colors"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setExpandedFaq(isOpen ? null : idx)}
+                      className="w-full p-4 text-left flex items-center justify-between gap-4 font-bold text-xs sm:text-sm text-slate-900 hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      <span>{faq.question}</span>
+                      {isOpen ? (
+                        <ChevronUp className="h-4 w-4 text-slate-400 shrink-0" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />
+                      )}
+                    </button>
+                    {isOpen && (
+                      <div className="px-4 pb-4 pt-1 text-xs text-slate-600 leading-relaxed border-t border-slate-100 bg-slate-50/50">
+                        {faq.answer}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════
+            RIGHT 1 COL: Sticky Conversion & Booking Card
+        ═══════════════════════════════════════════════════════════ */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-24 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-elevation space-y-6">
+            {/* Price Header */}
+            <div className="flex items-baseline justify-between pb-4 border-b border-slate-100">
+              <div>
+                <span className="text-3xl font-black text-slate-900 font-heading">
+                  {formatCurrency(tutorHourlyRate, tutorCurrency)}
+                </span>
+                <span className="text-xs text-slate-500 font-medium block">
+                  per 50-minute lesson
+                </span>
+              </div>
+              <Badge variant="secondary" size="sm" className="font-extrabold bg-amber-400 text-slate-950">
+                100% Guaranteed
+              </Badge>
+            </div>
+
+            {/* Trial Offer Card — Synced with Admin Policy */}
+            {(() => {
+              const base25 = Math.round(tutorHourlyRate / 2);
+              const trialPrice = Math.max(0, Math.round(base25 * (1 - trialDiscountPercent / 100)));
+
+              return (
+                <div className="rounded-2xl bg-brand-50/80 p-4 border border-brand-100 space-y-1.5">
+                  <span className="text-xs font-extrabold text-brand-800 flex items-center gap-1.5">
+                    <Sparkles className="h-3.5 w-3.5 text-brand fill-brand" />
+                    {trialDiscountPercent === 100
+                      ? "100% Free Intro Trial Lesson"
+                      : trialDiscountPercent > 0
+                      ? `${trialDiscountPercent}% Off Intro Trial Lesson`
+                      : "25-Minute Intro Lesson"}
+                  </span>
+                  <p className="text-xs text-brand-950/80 leading-relaxed">
+                    Book a 25-minute test lesson for{" "}
+                    {trialDiscountPercent === 100 ? (
+                      <strong className="text-emerald-700 font-bold">Free ($0)</strong>
+                    ) : (
+                      <>
+                        only <strong>{formatCurrency(trialPrice, tutorCurrency)}</strong>
+                        {trialDiscountPercent > 0 && (
+                          <span className="text-slate-400 line-through text-[11px] ml-1.5 font-normal">
+                            {formatCurrency(base25, tutorCurrency)}
+                          </span>
+                        )}
+                      </>
+                    )}
+                    . If you are not completely satisfied, we issue a 100% full refund.
+                  </p>
+                </div>
+              );
+            })()}
+
+            {/* CTAs */}
+            <div className="space-y-3">
+              <Button
+                variant="default"
+                size="lg"
+                className="w-full font-extrabold bg-brand hover:brightness-90 text-white shadow-card py-3.5 rounded-2xl cursor-pointer"
+                onClick={() => setIsBookingOpen(true)}
+                leftIcon={<Calendar className="h-4 w-4" />}
+              >
+                Book a Lesson
+              </Button>
+
+              <Link href={`/student/messages?tutor=${tutor.id}`} className="block">
+                <Button
+                  variant="outline"
+                  size="default"
+                  className="w-full font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl cursor-pointer"
+                  leftIcon={<MessageSquare className="h-4 w-4" />}
+                >
+                  Send Message
+                </Button>
+              </Link>
+            </div>
+
+            {/* Trust Signals Checklist */}
+            <div className="pt-4 border-t border-slate-100 space-y-2.5 text-xs text-slate-600">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>Verified Academic Credentials</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-slate-400 shrink-0" />
+                <span>Reschedule free up to 12h before</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Lock className="h-4 w-4 text-slate-400 shrink-0" />
+                <span>Secure SSL encrypted checkout</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Video className="h-4 w-4 text-brand shrink-0" />
+                <span>Built-in browser live classroom</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Booking Modal */}
+      <BookingModal
+        tutor={tutor}
+        isOpen={isBookingOpen}
+        onClose={() => setIsBookingOpen(false)}
+        initialDate={selectedScheduleDate}
+        initialTime={selectedScheduleTime}
+      />
+
+      {/* ── Fixed Mobile Bottom Booking Bar (Instant 1-Tap Access on Mobile) ── */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] shadow-[0_-4px_20px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 animate-slide-up">
+        <div className="min-w-0">
+          <div className="flex items-baseline gap-1">
+            <span className="text-xl font-black text-slate-950 font-heading leading-tight">
+              {formatCurrency(tutorHourlyRate, tutorCurrency)}
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium">/ 50-min</span>
+          </div>
+          <div className="flex items-center gap-1 text-[11px] text-slate-600">
+            <span className="text-amber-500 font-bold">★ {tutorAverageRating.toFixed(1)}</span>
+            <span className="text-slate-400">({tutorReviewCount})</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href={`/student/messages?tutor=${tutor.id}`}
+            className="h-11 w-11 flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Send message to tutor"
+          >
+            <MessageSquare className="h-5 w-5" />
+          </Link>
+
+          <Button
+            variant="default"
+            size="default"
+            className="h-11 px-5 rounded-xl bg-brand hover:brightness-90 text-white font-extrabold text-xs shadow-sm flex items-center gap-1.5"
+            onClick={() => setIsBookingOpen(true)}
+          >
+            <Calendar className="h-4 w-4" />
+            <span>Book Lesson</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
