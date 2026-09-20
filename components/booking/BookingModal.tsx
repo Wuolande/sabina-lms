@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { TutorProfile } from "@/types";
 import { Modal } from "@/components/ui/Modal";
+import { useModal } from "@/components/ui/modal-context";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { BookingCalendar } from "./BookingCalendar";
@@ -55,6 +56,7 @@ export function BookingModal({
   initialDate,
   initialTime,
 }: BookingModalProps) {
+  const { toast } = useModal();
   const [step, setStep] = React.useState<"duration" | "calendar" | "goals" | "payment" | "confirmed">("duration");
   const [selectedDuration, setSelectedDuration] = React.useState<number>(50);
   const [selectedSubjectId, setSelectedSubjectId] = React.useState<string>("");
@@ -357,10 +359,21 @@ export function BookingModal({
       setConfirmedBookingId(bId);
       setConfirmedLessonId(lId);
       setStep("confirmed");
+      toast({
+        title: "Booking Confirmed! 🎉",
+        message: `Your session with ${tutorName} is scheduled for ${formatDate(selectedDate)} at ${selectedTime}.`,
+        variant: "success",
+      });
       onSuccess?.(bId);
     } catch (err: any) {
       console.error("Booking error", err);
-      setAuthError(err.message || "Failed to complete booking. Please try again.");
+      const msg = err.message || "Failed to complete booking. Please try again.";
+      setAuthError(msg);
+      toast({
+        title: "Booking Issue",
+        message: msg,
+        variant: "danger",
+      });
     } finally {
       setIsLoading(false);
     }
