@@ -169,6 +169,9 @@ export default async function RootLayout({
         {/* Explicit fallback icon links */}
         <link rel="icon" href={favicon} />
         <link rel="apple-touch-icon" href={appleIcon} />
+        {/* RSS 2.0 & Atom Feed Alternate Links */}
+        <link rel="alternate" type="application/rss+xml" title="Sabina Education RSS Feed" href={`${baseUrl}/rss.xml`} />
+        <link rel="alternate" type="application/atom+xml" title="Sabina Education Atom Feed" href={`${baseUrl}/feed.xml`} />
         {/* Schema.org Organization & WebSite JSON-LD */}
         <script
           type="application/ld+json"
