@@ -216,12 +216,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      requiresEmailConfirmation: !data.user.email_confirmed_at,
       user: {
         id: data.user.id,
         email: normalizedEmail,
         role: safeRole,
       },
-      message: 'Account successfully registered.',
+      message: data.user.email_confirmed_at
+        ? 'Account successfully registered.'
+        : 'Account created. Please enter the 6-digit confirmation code sent to your email.',
     });
   } catch (err: any) {
     console.error('[POST /api/auth/register]', err);
