@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Search,
@@ -14,6 +15,15 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+
+export const metadata: Metadata = {
+  title: "How It Works — Global 1-on-1 Online Tutoring",
+  description:
+    "Learn how Sabina powers your learning journey. Find verified tutors, schedule lessons across timezones, join live HD video classrooms, and achieve academic mastery.",
+  alternates: {
+    canonical: "/how-it-works",
+  },
+};
 
 export default function HowItWorksPage() {
   return (

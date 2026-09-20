@@ -56,5 +56,46 @@ export default async function TutorProfilePage({ params }: TutorPageProps) {
     tutor = null;
   }
 
-  return <TutorProfileClient initialTutor={tutor} slug={slug} />;
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const tutorName = tutor
+    ? `${tutor.firstName || ""} ${tutor.lastName || ""}`.trim() || tutor.displayName || tutor.name || "Educator"
+    : "Educator";
+
+  const jsonLd = tutor
+    ? {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        name: tutorName,
+        jobTitle: tutor.headline || "Certified Educator",
+        description: tutor.bio || undefined,
+        image: tutor.avatarUrl || undefined,
+        url: `${baseUrl}/tutors/${slug}`,
+        offers: {
+          "@type": "Offer",
+          price: tutor.hourlyRate || 35,
+          priceCurrency: tutor.currency || "USD",
+          availability: "https://schema.org/InStock",
+        },
+        aggregateRating:
+          tutor.reviewCount > 0
+            ? {
+                "@type": "AggregateRating",
+                ratingValue: tutor.averageRating || 5.0,
+                reviewCount: tutor.reviewCount,
+              }
+            : undefined,
+      }
+    : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <TutorProfileClient initialTutor={tutor} slug={slug} />
+    </>
+  );
 }

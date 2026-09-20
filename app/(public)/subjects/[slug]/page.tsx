@@ -117,5 +117,32 @@ export default async function SubjectDetailPage({
     console.error("[SubjectDetailPage] SSR load tutors error:", err);
   }
 
-  return <SubjectDetailClient initialSubject={subject} initialTutors={tutors} />;
+  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const courseSchema = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: `${subject.name} 1-on-1 Online Tutoring`,
+    description: subject.description || `Master ${subject.name} with certified 1-on-1 private tutors on Sabina Education.`,
+    provider: {
+      "@type": "Organization",
+      name: "Sabina Education",
+      sameAs: baseUrl,
+    },
+    educationalCredentialAwarded: "Certificate of Completion",
+    hasCourseInstance: {
+      "@type": "CourseInstance",
+      courseMode: "online",
+      courseWorkload: "PT50M",
+    },
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchema) }}
+      />
+      <SubjectDetailClient initialSubject={subject} initialTutors={tutors} />
+    </>
+  );
 }
