@@ -40,6 +40,58 @@ import { useModal } from "@/components/ui/modal-context";
 import { studentService } from "@/services/studentService";
 import { PasswordStrengthMeter, PasswordConfirmationFeedback } from "@/components/ui/PasswordStrengthMeter";
 
+function SettingsToggle({
+  checked,
+  onChange,
+  label,
+  description,
+  badge,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  label: string;
+  description: string;
+  badge?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-slate-300 transition-colors gap-4">
+      <div className="space-y-0.5 min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <strong className="text-xs font-bold text-slate-900 block truncate">
+            {label}
+          </strong>
+          {badge && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-[#14209C] border border-indigo-100 shrink-0">
+              {badge}
+            </span>
+          )}
+        </div>
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          {description}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#14209C] focus:ring-offset-2 ${
+          checked ? "bg-[#14209C]" : "bg-slate-300"
+        }`}
+      >
+        <span className="sr-only">{label}</span>
+        <span
+          aria-hidden="true"
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+            checked ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
 export default function StudentSettingsPage() {
   const { toast } = useModal();
   const [activeTab, setActiveTab] = React.useState("profile");
@@ -251,6 +303,10 @@ export default function StudentSettingsPage() {
   // Password Change Handler
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentPassword) {
+      toast({ title: "Current Password Required", message: "Please enter your current password.", variant: "warning" });
+      return;
+    }
     if (newPassword.length < 8) {
       toast({ title: "Weak Password", message: "New password must be at least 8 characters.", variant: "warning" });
       return;
@@ -268,14 +324,14 @@ export default function StudentSettingsPage() {
         body: JSON.stringify({ currentPassword, newPassword }),
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Password update failed");
+        throw new Error(data.error || "Password update failed");
       }
 
       toast({
-        title: "Password Changed",
-        message: "Your account password was updated successfully.",
+        title: "Password Changed! 🔒",
+        message: data.message || "Your account password was updated successfully.",
         variant: "success",
       });
 
@@ -283,7 +339,7 @@ export default function StudentSettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {
-      toast({ title: "Error", message: err.message || "Failed to update password.", variant: "danger" });
+      toast({ title: "Update Failed", message: err.message || "Failed to update password.", variant: "danger" });
     } finally {
       setUpdatingPassword(false);
     }
@@ -293,18 +349,16 @@ export default function StudentSettingsPage() {
   const handleDeactivate = async () => {
     setIsDeactivating(true);
     try {
-      const ok = await studentService.deactivateAccount(deactivateReason);
-      if (ok) {
-        toast({
-          title: "Account Paused",
-          message: "Your student account has been temporarily deactivated.",
-          variant: "info",
-        });
-        setIsDeactivateOpen(false);
-        loadSettings();
-      }
-    } catch {
-      toast({ title: "Error", message: "Failed to deactivate account.", variant: "danger" });
+      await studentService.deactivateAccount(deactivateReason);
+      toast({
+        title: "Account Paused",
+        message: "Your student account has been temporarily deactivated.",
+        variant: "info",
+      });
+      setIsDeactivateOpen(false);
+      loadSettings();
+    } catch (err: any) {
+      toast({ title: "Error", message: err.message || "Failed to deactivate account.", variant: "danger" });
     } finally {
       setIsDeactivating(false);
     }
@@ -324,17 +378,15 @@ export default function StudentSettingsPage() {
 
     setIsDeleting(true);
     try {
-      const ok = await studentService.deleteAccountPermanently(deleteConfirmation.trim());
-      if (ok) {
-        toast({
-          title: "Account Erased",
-          message: "Your student data has been permanently deleted in compliance with GDPR.",
-          variant: "info",
-        });
-        window.location.href = "/";
-      }
-    } catch {
-      toast({ title: "Error", message: "Failed to delete account.", variant: "danger" });
+      await studentService.deleteAccountPermanently(deleteConfirmation.trim());
+      toast({
+        title: "Account Erased",
+        message: "Your student data has been permanently deleted in compliance with GDPR.",
+        variant: "info",
+      });
+      window.location.href = "/";
+    } catch (err: any) {
+      toast({ title: "Error", message: err.message || "Failed to delete account.", variant: "danger" });
     } finally {
       setIsDeleting(false);
     }
@@ -670,91 +722,43 @@ export default function StudentSettingsPage() {
               </p>
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="space-y-0.5">
-                  <strong className="text-xs font-bold text-slate-900 block">
-                    Email Notifications
-                  </strong>
-                  <p className="text-[11px] text-slate-500">
-                    Receive lesson booking confirmations, tutor homework alerts, and payment receipts.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifEmail}
-                  onChange={(e) => setNotifEmail(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#14209C] focus:ring-[#14209C] cursor-pointer"
-                />
-              </div>
+            <div className="space-y-3">
+              <SettingsToggle
+                label="Email Notifications"
+                description="Receive lesson booking confirmations, tutor homework alerts, and official tax payment receipts."
+                badge="Primary"
+                checked={notifEmail}
+                onChange={setNotifEmail}
+              />
 
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="space-y-0.5">
-                  <strong className="text-xs font-bold text-slate-900 block">
-                    Upcoming Class Reminders (1 Hour & 15 Mins Prior)
-                  </strong>
-                  <p className="text-[11px] text-slate-500">
-                    Automated countdown notifications with direct LiveKit classroom launch links.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifReminders}
-                  onChange={(e) => setNotifReminders(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#14209C] focus:ring-[#14209C] cursor-pointer"
-                />
-              </div>
+              <SettingsToggle
+                label="Upcoming Class Reminders (1 Hour & 15 Mins Prior)"
+                description="Automated countdown notifications with direct LiveKit virtual classroom launch links."
+                badge="Recommended"
+                checked={notifReminders}
+                onChange={setNotifReminders}
+              />
 
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="space-y-0.5">
-                  <strong className="text-xs font-bold text-slate-900 block">
-                    In-App Notification Center & Audio Chimes
-                  </strong>
-                  <p className="text-[11px] text-slate-500">
-                    Receive flyout alerts and bell badges on direct chat messages and homework reviews.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifInApp}
-                  onChange={(e) => setNotifInApp(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#14209C] focus:ring-[#14209C] cursor-pointer"
-                />
-              </div>
+              <SettingsToggle
+                label="In-App Notification Center & Audio Chimes"
+                description="Receive instant flyout alerts and bell badges on direct chat messages and tutor reviews."
+                checked={notifInApp}
+                onChange={setNotifInApp}
+              />
 
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="space-y-0.5">
-                  <strong className="text-xs font-bold text-slate-900 block">
-                    SMS & WhatsApp Alerts
-                  </strong>
-                  <p className="text-[11px] text-slate-500">
-                    Get instantaneous text notifications on mobile for emergency schedule changes.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifSms}
-                  onChange={(e) => setNotifSms(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#14209C] focus:ring-[#14209C] cursor-pointer"
-                />
-              </div>
+              <SettingsToggle
+                label="SMS & WhatsApp Alerts"
+                description="Get instantaneous text notifications on your verified mobile phone for emergency schedule changes."
+                checked={notifSms}
+                onChange={setNotifSms}
+              />
 
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="space-y-0.5">
-                  <strong className="text-xs font-bold text-slate-900 block">
-                    Promotional Learning Discounts & Newsletters
-                  </strong>
-                  <p className="text-[11px] text-slate-500">
-                    Occasional offers on multi-session bundles and exam preparation workshops.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifMarketing}
-                  onChange={(e) => setNotifMarketing(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#14209C] focus:ring-[#14209C] cursor-pointer"
-                />
-              </div>
+              <SettingsToggle
+                label="Promotional Learning Discounts & Newsletters"
+                description="Occasional offers on multi-session bundles, seasonal discounts, and exam preparation workshops."
+                checked={notifMarketing}
+                onChange={setNotifMarketing}
+              />
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex justify-end">
@@ -856,7 +860,7 @@ export default function StudentSettingsPage() {
                     Current Web Browser Session
                   </strong>
                   <span className="text-[11px] text-slate-500">
-                    IP: 192.168.1.1 • Location: {country} • Active Now
+                    Encrypted TLS 1.3 Session • Location: {country || "Detected"} • Active Now
                   </span>
                 </div>
               </div>
@@ -888,39 +892,20 @@ export default function StudentSettingsPage() {
 
             {/* Privacy Toggles */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="space-y-0.5">
-                  <strong className="text-xs font-bold text-slate-900 block">
-                    Share Learning Goals with Verified Instructors
-                  </strong>
-                  <p className="text-[11px] text-slate-500">
-                    Allows your booked tutors to view active milestones and prepare tailored worksheets.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={shareGoalsWithTutors}
-                  onChange={(e) => setShareGoalsWithTutors(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#14209C] focus:ring-[#14209C] cursor-pointer"
-                />
-              </div>
+              <SettingsToggle
+                label="Share Learning Goals with Verified Instructors"
+                description="Allows your booked tutors to view active milestones and prepare tailored worksheets."
+                badge="Recommended"
+                checked={shareGoalsWithTutors}
+                onChange={setShareGoalsWithTutors}
+              />
 
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div className="space-y-0.5">
-                  <strong className="text-xs font-bold text-slate-900 block">
-                    Display Anonymized Learning Streak in Community Leaderboards
-                  </strong>
-                  <p className="text-[11px] text-slate-500">
-                    Show your consecutive study streak on student rankings without exposing private contact info.
-                  </p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={showProfileInLeaderboards}
-                  onChange={(e) => setShowProfileInLeaderboards(e.target.checked)}
-                  className="w-4 h-4 rounded text-[#14209C] focus:ring-[#14209C] cursor-pointer"
-                />
-              </div>
+              <SettingsToggle
+                label="Display Anonymized Learning Streak in Community Leaderboards"
+                description="Show your consecutive study streak on student rankings without exposing private contact info."
+                checked={showProfileInLeaderboards}
+                onChange={setShowProfileInLeaderboards}
+              />
             </div>
 
             {/* Export Data Card */}

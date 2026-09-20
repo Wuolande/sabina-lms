@@ -431,50 +431,49 @@ export const studentService = {
   /**
    * Update student settings atomically.
    */
-  async updateSettings(payload: any): Promise<any | null> {
-    try {
-      const res = await fetch('/api/student/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) return null;
-      return res.json();
-    } catch {
-      return null;
+  async updateSettings(payload: any): Promise<any> {
+    const res = await fetch('/api/student/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update settings');
     }
+    return res.json();
   },
 
   /**
    * Deactivate student account temporarily.
    */
   async deactivateAccount(reason: string): Promise<boolean> {
-    try {
-      const res = await fetch('/api/student/settings/deactivate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
-      });
-      return res.ok;
-    } catch {
-      return false;
+    const res = await fetch('/api/student/settings/deactivate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to deactivate account');
     }
+    return true;
   },
 
   /**
    * Delete student account permanently under GDPR.
    */
   async deleteAccountPermanently(confirmation: string): Promise<boolean> {
-    try {
-      const res = await fetch('/api/student/settings/delete-account', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirmation }),
-      });
-      return res.ok;
-    } catch {
-      return false;
+    const res = await fetch('/api/student/settings/delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmation }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to delete account');
     }
+    return true;
   },
 
   /**

@@ -1,24 +1,33 @@
 /**
  * API Route: POST /api/user/password
+ *           PUT  /api/user/password
  * -----------------------------------------------------------------------
- * Allows authenticated users (tutors, students, admins) to change password.
- * Validates password criteria and updates credentials.
+ * Allows authenticated users (students, tutors, admins) to change password.
+ * Validates current password and updates credentials in Supabase Auth.
  * -----------------------------------------------------------------------
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getTutorContext } from '@/src/shared/auth/authService';
+import { getAuthenticatedCaller } from '@/src/shared/auth/authService';
 import { adminSupabase } from '@/src/shared/database/supabase';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://cgppcryxlyerofydivnq.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-export async function POST(req: NextRequest) {
+async function handlePasswordUpdate(req: NextRequest) {
   try {
-    const tutor = await getTutorContext(req);
+    const caller = await getAuthenticatedCaller(req);
     const body = await req.json();
     const { newPassword, currentPassword } = body;
+
+    if (!currentPassword) {
+      return NextResponse.json(
+        { error: 'Please provide your current password.' },
+        { status: 400 }
+      );
+    }
 
     if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
       return NextResponse.json(
@@ -27,7 +36,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. If Supabase admin client is configured with service role
+    // 1. Verify current password with Supabase Auth
+    if (supabaseAnonKey) {
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+
+      const { error: signInError } = await authClient.auth.signInWithPassword({
+        email: caller.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        return NextResponse.json(
+          { error: 'Current password is incorrect. Please check your credentials.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 2. Update password in Supabase Auth via Admin client
     if (supabaseServiceKey) {
       const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
         auth: { persistSession: false, autoRefreshToken: false },
@@ -37,7 +65,7 @@ export async function POST(req: NextRequest) {
       const { data: userRec } = await adminClient
         .from('users')
         .select('id, auth_id, email, display_name')
-        .eq('id', tutor.userId)
+        .eq('id', caller.userId)
         .single();
 
       if (userRec?.auth_id) {
@@ -46,20 +74,24 @@ export async function POST(req: NextRequest) {
           { password: newPassword }
         );
         if (authErr) {
-          console.warn('[Supabase Auth Password Update]', authErr.message);
+          return NextResponse.json(
+            { error: authErr.message || 'Failed to update authentication credentials.' },
+            { status: 400 }
+          );
         }
       }
     }
 
-    // 2. Record security audit log
+    // 3. Record security audit log
+    const primaryRole = caller.roles[0] || (caller.isAdmin ? 'ADMIN' : 'STUDENT');
     await adminSupabase.from('audit_logs').insert({
-      actor_user_id: tutor.userId,
-      actor_name: tutor.displayName,
-      actor_role: 'TUTOR',
+      actor_user_id: caller.userId,
+      actor_name: caller.displayName,
+      actor_role: primaryRole,
       action: 'USER_PASSWORD_UPDATED',
       entity_type: 'USER_SECURITY',
-      entity_id: tutor.userId,
-      details: `User ${tutor.displayName} successfully updated their password via Profile Security.`,
+      entity_id: caller.userId,
+      details: `User ${caller.displayName} (${caller.email}) successfully updated their password.`,
     });
 
     return NextResponse.json({
@@ -68,10 +100,18 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[POST /api/user/password]', error);
+    console.error('[PASSWORD_UPDATE_ERROR]', error);
     return NextResponse.json(
       { error: error.message || 'Internal Server Error' },
       { status: error.statusCode || 500 }
     );
   }
+}
+
+export async function POST(req: NextRequest) {
+  return handlePasswordUpdate(req);
+}
+
+export async function PUT(req: NextRequest) {
+  return handlePasswordUpdate(req);
 }

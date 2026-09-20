@@ -44,16 +44,16 @@ BEGIN
             'displayName', v_user.display_name,
             'firstName', COALESCE(v_user.first_name, split_part(v_user.display_name, ' ', 1)),
             'lastName', COALESCE(v_user.last_name, substr(v_user.display_name, length(split_part(v_user.display_name, ' ', 1)) + 2)),
-            'avatarUrl', v_user.avatar_url,
-            'phone', COALESCE(v_user.phone, '+1 (555) 987-6543'),
+            'avatarUrl', COALESCE(v_user.avatar_url, ''),
+            'phone', COALESCE(v_user.phone, ''),
             'country', COALESCE(v_user.country, 'United States'),
-            'timezone', COALESCE(v_user.timezone, 'America/New_York'),
+            'timezone', COALESCE(v_user.timezone, 'UTC'),
             'preferredLanguage', COALESCE(v_user.preferred_language, 'English'),
             'status', v_user.status,
             'createdAt', v_user.created_at
         ),
         'learningPreferences', jsonb_build_object(
-            'targetExam', COALESCE(v_prof.target_exam, 'IELTS 7.5+ & Advanced Math'),
+            'targetExam', COALESCE(v_prof.target_exam, ''),
             'currentLevel', COALESCE(v_prof.current_level, 'Intermediate'),
             'weeklyStudyHoursTarget', COALESCE(v_prof.weekly_study_hours_target, 6),
             'homeworkPreference', COALESCE(v_prof.homework_preference, 'moderate'),
@@ -63,12 +63,12 @@ BEGIN
         'privacySettings', COALESCE(v_prof.privacy_settings, '{"showProfileInLeaderboards": true, "shareGoalsWithTutors": true}'::jsonb),
         'accountStatus', COALESCE(v_prof.account_status, 'ACTIVE'),
         'billingProfile', jsonb_build_object(
-            'billingName', COALESCE(v_prof.billing_name, v_user.display_name),
-            'billingEmail', COALESCE(v_prof.billing_email, v_user.email),
+            'billingName', COALESCE(v_prof.billing_name, v_user.display_name, ''),
+            'billingEmail', COALESCE(v_prof.billing_email, v_user.email, ''),
             'taxId', COALESCE(v_prof.tax_id, ''),
-            'addressLine1', COALESCE(v_prof.address_line1, '742 Evergreen Terrace'),
-            'city', COALESCE(v_prof.city, 'Springfield'),
-            'postalCode', COALESCE(v_prof.postal_code, '97477'),
+            'addressLine1', COALESCE(v_prof.address_line1, ''),
+            'city', COALESCE(v_prof.city, ''),
+            'postalCode', COALESCE(v_prof.postal_code, ''),
             'country', COALESCE(v_prof.billing_country, v_user.country, 'United States')
         )
     ) INTO result;
