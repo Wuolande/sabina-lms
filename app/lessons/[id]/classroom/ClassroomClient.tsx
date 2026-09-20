@@ -14,7 +14,6 @@ import {
   useRoomContext,
 } from "@livekit/components-react";
 import { Track, RoomEvent, ConnectionQuality } from "livekit-client";
-import { useConnectionQualityIndicator } from "@livekit/components-react";
 import {
   Mic,
   MicOff,
@@ -541,9 +540,28 @@ function ClassinClassroomStage({
   const remoteParticipant = participants.find((p) => !p.isLocal);
   const isRemoteConnected = !!remoteParticipant;
 
-  // ─── Network Quality (LiveKit ConnectionQuality per participant) ───
-  const { quality: localQuality } = useConnectionQualityIndicator({ participant: localParticipant ?? undefined });
-  const { quality: remoteQuality } = useConnectionQualityIndicator({ participant: remoteParticipant ?? undefined });
+  // ─── Network Quality (Safe LiveKit ConnectionQuality without crash) ───
+  const [localQuality, setLocalQuality] = React.useState<ConnectionQuality | undefined>(
+    localParticipant?.connectionQuality
+  );
+  const [remoteQuality, setRemoteQuality] = React.useState<ConnectionQuality | undefined>(
+    remoteParticipant?.connectionQuality
+  );
+
+  React.useEffect(() => {
+    if (!room) return;
+
+    const updateQualities = () => {
+      setLocalQuality(localParticipant?.connectionQuality);
+      setRemoteQuality(remoteParticipant?.connectionQuality);
+    };
+
+    updateQualities();
+    room.on(RoomEvent.ConnectionQualityChanged, updateQualities);
+    return () => {
+      room.off(RoomEvent.ConnectionQualityChanged, updateQualities);
+    };
+  }, [room, localParticipant, remoteParticipant]);
 
   const mapQuality = (q: ConnectionQuality | undefined): "excellent" | "good" | "poor" | "lost" | undefined => {
     if (q === ConnectionQuality.Excellent) return "excellent";
@@ -973,7 +991,21 @@ export default function ClassroomClientPage() {
   // ─── Initialise Lesson Details and LiveKit Session ───
   React.useEffect(() => {
     async function fetchLessonData(lessonId: string) {
-      // 1. Try student endpoint
+      // 1. Try unified classroom lesson endpoint (detects role automatically without 404)
+      try {
+        const res = await fetch(`/api/classroom/lesson/${lessonId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.currentUserRole) {
+            setCurrentUserRole(data.currentUserRole);
+          }
+          if (data.lesson) {
+            return data.lesson;
+          }
+        }
+      } catch {}
+
+      // 2. Try student endpoint fallback
       try {
         const res = await fetch(`/api/student/lessons/${lessonId}`);
         if (res.ok) {
@@ -983,7 +1015,7 @@ export default function ClassroomClientPage() {
         }
       } catch {}
 
-      // 2. Try tutor endpoint
+      // 3. Try tutor endpoint fallback
       try {
         const res = await fetch(`/api/tutor/lessons/${lessonId}`);
         if (res.ok) {
