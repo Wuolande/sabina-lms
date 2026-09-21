@@ -138,6 +138,7 @@ function ClassinClassroomStage({
   scheduledEnd,
   onTimerResync,
   connectionError,
+  onDismissConnectionError,
   mediaDeviceWarning,
 }: {
   lesson: Lesson360Aggregate;
@@ -157,6 +158,8 @@ function ClassinClassroomStage({
   onTimerResync?: (newSecondsRemaining: number) => void;
   /** Error from LiveKitRoom signaling/connection */
   connectionError?: string | null;
+  /** Dismiss callback for error toast */
+  onDismissConnectionError?: () => void;
   /** Media device access warning (camera/mic permission denied) */
   mediaDeviceWarning?: boolean;
 }) {
@@ -237,8 +240,13 @@ function ClassinClassroomStage({
   // Synced countdown timer state
   const [syncedTimer, setSyncedTimer] = React.useState<{ isRunning: boolean; seconds: number } | undefined>(undefined);
 
-  // Side Panel & Chat state
-  const [sidebarOpen, setSidebarOpen] = React.useState(true);
+  // Side Panel & Chat state (Open by default on desktop, closed on mobile)
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+      setSidebarOpen(true);
+    }
+  }, []);
   const [chatMessages, setChatMessages] = React.useState<
     Array<{ id: string; sender: string; senderRole?: "TUTOR" | "STUDENT" | "SYSTEM"; text: string; time: string }>
   >([
@@ -615,6 +623,8 @@ function ClassinClassroomStage({
         isTutor={isTutor}
         onExtendLesson={onExtendLesson}
         isExtending={isExtending}
+        onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+        sidebarOpen={sidebarOpen}
       />
 
       {/* ─── FLOATING MODERATION TOAST BANNER (Zero Chat Pollution) ─── */}
@@ -649,7 +659,9 @@ function ClassinClassroomStage({
       )}
 
       {/* ─── LIVEKIT CONNECTION DIAGNOSTIC BANNER ─── */}
-      {connectionError && (
+      {connectionError &&
+        !connectionError.includes("Cancelled publication") &&
+        !connectionError.includes("calling unpublish") && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-rose-950/95 border border-rose-700/80 text-white px-5 py-2.5 rounded-2xl shadow-2xl max-w-xl text-xs animate-in fade-in slide-in-from-top-2">
           <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
           <div className="flex-1 text-left">
@@ -660,6 +672,15 @@ function ClassinClassroomStage({
                 : connectionError}
             </p>
           </div>
+          {onDismissConnectionError && (
+            <button
+              onClick={onDismissConnectionError}
+              className="text-rose-300 hover:text-white transition p-1 rounded-lg hover:bg-rose-900/50 shrink-0"
+              title="Dismiss warning"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       )}
 
@@ -687,13 +708,13 @@ function ClassinClassroomStage({
         />
 
         {/* ─── STAGE CONTAINER ─── */}
-        <div className="flex-1 flex flex-col bg-slate-950 p-3 sm:p-4 overflow-hidden relative">
+        <div className="flex-1 flex flex-col bg-slate-950 p-1.5 sm:p-3 md:p-4 overflow-hidden relative">
           
           {/* LAYOUT 1: CLASSIN STAGE (Top Video Strip + Big Whiteboard) */}
           {layoutMode === "classin_stage" && (
-            <div className="flex-1 flex flex-col gap-3 overflow-hidden">
+            <div className="flex-1 flex flex-col gap-2 sm:gap-3 overflow-hidden">
               {/* Top Video Strip for Tutor & Student */}
-              <div className="grid grid-cols-2 gap-3 h-44 shrink-0">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 h-28 sm:h-36 md:h-44 shrink-0">
                 {/* Tutor Tile */}
                 <ParticipantVideoCard
                   displayName={isTutor ? `${tutorName} (You)` : tutorName}
@@ -808,42 +829,46 @@ function ClassinClassroomStage({
 
           {/* LAYOUT 3: VIDEO GRID (Full Video Conference Focus) */}
           {layoutMode === "grid" && (
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-2 overflow-hidden">
-              <ParticipantVideoCard
-                displayName={isTutor ? `${tutorName} (You)` : tutorName}
-                avatarUrl={lesson?.tutor?.avatarUrl}
-                role="TUTOR"
-                isLocal={isTutor}
-                isConnected={isTutor || isRemoteConnected}
-                isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
-                isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
-                onToggleMic={isTutor ? handleToggleMic : undefined}
-                onToggleCamera={isTutor ? handleToggleCamera : undefined}
-                className="w-full h-full rounded-3xl"
-                videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
-                connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
-              />
-              <ParticipantVideoCard
-                displayName={!isTutor ? `${studentName} (You)` : studentName}
-                avatarUrl={lesson?.student?.avatarUrl}
-                role="STUDENT"
-                isLocal={!isTutor}
-                isConnected={!isTutor || isRemoteConnected}
-                trophiesCount={studentTrophies}
-                isHandRaised={isHandRaised}
-                isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
-                isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
-                onToggleMic={!isTutor ? handleToggleMic : undefined}
-                onToggleCamera={!isTutor ? handleToggleCamera : undefined}
-                canModerate={isTutor}
-                isWhiteboardAuthorized={isWhiteboardAuthorized}
-                onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
-                onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
-                className="w-full h-full rounded-3xl"
-                onAwardTrophy={isTutor ? () => handleAwardTrophy("Great insight!") : undefined}
-                videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
-                connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
-              />
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4 p-1 sm:p-2 overflow-hidden h-full">
+              <div className="flex-1 min-h-0 h-full rounded-2xl sm:rounded-3xl overflow-hidden">
+                <ParticipantVideoCard
+                  displayName={isTutor ? `${tutorName} (You)` : tutorName}
+                  avatarUrl={lesson?.tutor?.avatarUrl}
+                  role="TUTOR"
+                  isLocal={isTutor}
+                  isConnected={isTutor || isRemoteConnected}
+                  isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
+                  isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
+                  onToggleMic={isTutor ? handleToggleMic : undefined}
+                  onToggleCamera={isTutor ? handleToggleCamera : undefined}
+                  className="w-full h-full rounded-2xl sm:rounded-3xl"
+                  videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                  connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
+                />
+              </div>
+              <div className="flex-1 min-h-0 h-full rounded-2xl sm:rounded-3xl overflow-hidden">
+                <ParticipantVideoCard
+                  displayName={!isTutor ? `${studentName} (You)` : studentName}
+                  avatarUrl={lesson?.student?.avatarUrl}
+                  role="STUDENT"
+                  isLocal={!isTutor}
+                  isConnected={!isTutor || isRemoteConnected}
+                  trophiesCount={studentTrophies}
+                  isHandRaised={isHandRaised}
+                  isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
+                  isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
+                  onToggleMic={!isTutor ? handleToggleMic : undefined}
+                  onToggleCamera={!isTutor ? handleToggleCamera : undefined}
+                  canModerate={isTutor}
+                  isWhiteboardAuthorized={isWhiteboardAuthorized}
+                  onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
+                  onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
+                  className="w-full h-full rounded-2xl sm:rounded-3xl"
+                  onAwardTrophy={isTutor ? () => handleAwardTrophy("Great insight!") : undefined}
+                  videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                  connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
+                />
+              </div>
             </div>
           )}
 
@@ -962,6 +987,15 @@ export default function ClassroomClientPage() {
   const [tokenError, setTokenError] = React.useState<string | null>(null);
   const [livekitConnectionError, setLivekitConnectionError] = React.useState<string | null>(null);
   const [mediaDeviceWarning, setMediaDeviceWarning] = React.useState(false);
+
+  // Auto-dismiss transient connection warnings after 6 seconds
+  React.useEffect(() => {
+    if (!livekitConnectionError) return;
+    const timer = setTimeout(() => {
+      setLivekitConnectionError(null);
+    }, 6000);
+    return () => clearTimeout(timer);
+  }, [livekitConnectionError]);
 
   // External provider fallback state
   const [joinUrl, setJoinUrl] = React.useState<string>("");
@@ -1390,8 +1424,18 @@ export default function ClassroomClientPage() {
             data-lk-theme="default"
             className="flex-1 flex flex-col overflow-hidden w-full h-full"
             onError={(err) => {
-              console.error("[LiveKitRoom error]", err);
-              setLivekitConnectionError(err.message || "Failed to establish real-time video connection");
+              console.warn("[LiveKitRoom error]", err);
+              const msg = err?.message || "";
+              // Ignore benign internal cancellations when tracks are unpublished or replaced
+              if (
+                msg.includes("Cancelled publication") ||
+                msg.includes("calling unpublish") ||
+                msg.includes("unpublish") ||
+                msg.includes("could not publish")
+              ) {
+                return;
+              }
+              setLivekitConnectionError(msg || "Failed to establish real-time video connection");
             }}
             onMediaDeviceFailure={() => {
               setMediaDeviceWarning(true);
@@ -1412,6 +1456,7 @@ export default function ClassroomClientPage() {
               scheduledEnd={lesson?.scheduledEnd}
               onTimerResync={(newRemaining) => setSecondsRemaining(newRemaining)}
               connectionError={livekitConnectionError}
+              onDismissConnectionError={() => setLivekitConnectionError(null)}
               mediaDeviceWarning={mediaDeviceWarning}
             />
           </LiveKitRoom>
