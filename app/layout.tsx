@@ -162,7 +162,7 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang="en" suppressHydrationWarning className={`h-full overflow-x-hidden max-w-[100vw] ${sans.variable} ${heading.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`h-full max-w-[100vw] ${sans.variable} ${heading.variable}`}>
       <head>
         {/* Dynamic brand CSS variables — server-rendered */}
         <style dangerouslySetInnerHTML={{ __html: cssVars }} />
@@ -182,7 +182,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
         />
       </head>
-      <body suppressHydrationWarning className="flex min-h-full w-full max-w-[100vw] overflow-x-hidden flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-100 selection:text-brand-900">
+      <body suppressHydrationWarning className="flex min-h-full w-full max-w-[100vw] overflow-x-clip flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-100 selection:text-brand-900">
         <ThemeSynchronizer initialPrimary={seo.primaryColor} initialSecondary={seo.secondaryColor} />
         <LogoProvider initialLogoUrl={seo.logoUrl}>
           <ModalProvider>
