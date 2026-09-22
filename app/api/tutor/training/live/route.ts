@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { apiErrorResponse } from '@/src/shared/api/apiError';
 import { trainingRepository } from '@/src/modules/training/repositories/trainingRepository';
 import { getTutorContext } from '@/src/shared/auth/authService';
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { apiErrorResponse } from '@/src/shared/api/apiError';
 import { getAdminSupabaseClient } from '@/src/shared/database/supabase';
 import { getTutorContext } from '@/src/shared/auth/authService';
 

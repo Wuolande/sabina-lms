@@ -22,7 +22,8 @@ export async function GET(req: NextRequest) {
     const student360 = await domainStudentService.getStudent360(student.userId);
     return NextResponse.json(student360.favoriteTutors);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const status = error?.statusCode ?? 500;
+    return NextResponse.json({ error: error.message }, { status });
   }
 }
 
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, isFavorited });
 
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const status = error?.statusCode ?? 500;
+    return NextResponse.json({ error: error.message }, { status });
   }
 }

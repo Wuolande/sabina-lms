@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { apiErrorResponse } from '@/src/shared/api/apiError';
 import { domainStudentService } from '@/src/modules/students/services/studentService';
 import { getStudentContext } from '@/src/shared/auth/authService';
 import { z } from 'zod';
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
     const student360 = await domainStudentService.getStudent360(student.userId);
     return NextResponse.json(student360.goals);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 

@@ -15,6 +15,11 @@
  * -----------------------------------------------------------------------
  */
 
+// 'server-only' prevents this module from being accidentally imported in client bundles.
+// If a Client Component imports this file (directly or transitively), Next.js will throw
+// a build error, which protects the service role key from leaking to the browser.
+import 'server-only';
+
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

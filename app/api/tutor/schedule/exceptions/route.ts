@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { apiErrorResponse } from '@/src/shared/api/apiError';
 import { domainLessonService } from '@/src/modules/lessons/services/lessonService';
 import { getTutorContext } from '@/src/shared/auth/authService';
 import { z } from 'zod';
@@ -26,7 +27,7 @@ export async function GET(req: NextRequest) {
     const schedule = await domainLessonService.getTutorSchedule360(tutor.tutorProfileId);
     return NextResponse.json(schedule.exceptions || []);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 

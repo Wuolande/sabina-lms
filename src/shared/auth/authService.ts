@@ -18,6 +18,15 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
+// Shared anon client singleton — reused across all auth operations
+// to avoid "Multiple GoTrueClient instances" browser warning.
+const _anonClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+});
+
 const adminSupabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
@@ -41,9 +50,7 @@ export interface AuthResult {
 }
 
 export async function signUp(payload: SignUpPayload): Promise<AuthResult> {
-  const client = createClient(supabaseUrl, supabaseAnonKey);
-
-  const { data, error } = await client.auth.signUp({
+  const { data, error } = await _anonClient.auth.signUp({
     email: payload.email.trim(),
     password: payload.password,
     options: {
@@ -62,9 +69,7 @@ export async function signUp(payload: SignUpPayload): Promise<AuthResult> {
 }
 
 export async function signIn(payload: SignInPayload): Promise<AuthResult> {
-  const client = createClient(supabaseUrl, supabaseAnonKey);
-
-  const { data, error } = await client.auth.signInWithPassword({
+  const { data, error } = await _anonClient.auth.signInWithPassword({
     email: payload.email.trim(),
     password: payload.password,
   });
@@ -77,13 +82,11 @@ export async function signIn(payload: SignInPayload): Promise<AuthResult> {
 }
 
 export async function signOut(): Promise<void> {
-  const client = createClient(supabaseUrl, supabaseAnonKey);
-  await client.auth.signOut();
+  await _anonClient.auth.signOut();
 }
 
 export async function requestPasswordReset(email: string): Promise<AuthResult> {
-  const client = createClient(supabaseUrl, supabaseAnonKey);
-  const { error } = await client.auth.resetPasswordForEmail(email.trim(), {
+  const { error } = await _anonClient.auth.resetPasswordForEmail(email.trim(), {
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password`,
   });
 
@@ -92,8 +95,7 @@ export async function requestPasswordReset(email: string): Promise<AuthResult> {
 }
 
 export async function updatePassword(newPassword: string): Promise<AuthResult> {
-  const client = createClient(supabaseUrl, supabaseAnonKey);
-  const { error } = await client.auth.updateUser({ password: newPassword });
+  const { error } = await _anonClient.auth.updateUser({ password: newPassword });
 
   if (error) return { success: false, error: error.message };
   return { success: true };

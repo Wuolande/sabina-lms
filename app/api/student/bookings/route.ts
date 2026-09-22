@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { apiErrorResponse } from '@/src/shared/api/apiError';
 import { domainBookingService } from '@/src/modules/bookings/services/bookingService';
 import { getStudentContext } from '@/src/shared/auth/authService';
 import { z } from 'zod';
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
     const result = await domainBookingService.listBookings({ studentId: student.userId });
     return NextResponse.json(result.data);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }
 
