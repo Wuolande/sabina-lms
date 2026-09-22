@@ -43,7 +43,7 @@ import { TutorCardSkeleton, SubjectCardSkeleton } from "@/components/ui/Skeleton
 import { tutorService } from "@/services/tutorService";
 import { TutorProfile, Subject } from "@/types";
 import { HomeBlogSection } from "@/components/home/HomeBlogSection";
-import { DEFAULT_HERO_IMAGE } from "@/src/modules/homepage/getHomepageData";
+import { DEFAULT_HERO_IMAGE } from "@/src/modules/homepage/constants";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 interface HomePageClientProps {

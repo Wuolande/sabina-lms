@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { adminSupabase } from '@/src/shared/database/supabase';
 import { getAdminContext } from '@/src/shared/auth/authService';
-import { DEFAULT_HERO_IMAGE } from '@/src/modules/homepage/getHomepageData';
+import { DEFAULT_HERO_IMAGE } from '@/src/modules/homepage/constants';
 
 const DEFAULT_HOMEPAGE_CMS = {
   heroSection: {

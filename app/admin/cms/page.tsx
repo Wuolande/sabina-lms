@@ -52,8 +52,7 @@ import { useLogo } from "@/components/ui/LogoContext";
 import { Logo } from "@/components/ui/Logo";
 import { adminService } from "@/services/adminService";
 import { RichTextEditor } from "@/components/cms/RichTextEditor";
-import { formatDate } from "@/lib/utils";
-import { DEFAULT_HERO_IMAGE } from "@/src/modules/homepage/getHomepageData";
+import { DEFAULT_HERO_IMAGE } from "@/src/modules/homepage/constants";
 
 function AdminCMSDashboardContent() {
   const router = useRouter();

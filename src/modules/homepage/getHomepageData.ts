@@ -1,8 +1,7 @@
 import { adminSupabase } from "@/src/shared/database/supabase";
 import { TutorProfile, Subject } from "@/types";
 
-export const DEFAULT_HERO_IMAGE =
-  "https://res.cloudinary.com/vtjhrq1w/image/upload/v1787809733/sabina/avatars/mf1o6onssnolztsrgdmt.png";
+export { DEFAULT_HERO_IMAGE } from "./constants";
 
 export interface HomepageServerData {
   cms: any | null;
