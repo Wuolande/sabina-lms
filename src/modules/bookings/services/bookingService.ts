@@ -44,11 +44,20 @@ export class BookingService {
     // Validate price based on tutor's hourly rate and possible trial discount
     const tutorProfile = await adminSupabase
       .from('tutor_profiles')
-      .select('hourly_rate, currency')
+      .select('hourly_rate, currency, verification_status, account_status')
       .eq('id', payload.tutorId)
       .single();
       
-    if (tutorProfile.data) {
+    if (!tutorProfile.data) {
+      throw new NotFoundError('Tutor Profile', payload.tutorId);
+    }
+
+    if (
+      tutorProfile.data.verification_status !== 'APPROVED' ||
+      tutorProfile.data.account_status !== 'ACTIVE'
+    ) {
+      throw new ValidationError('This tutor profile is currently pending verification or inactive and cannot accept bookings.');
+    }
       const baseRate = Number(tutorProfile.data.hourly_rate);
       // The platform standard is that the "base rate" covers a 50 minute lesson.
       // 25 mins = baseRate / 2
@@ -77,7 +86,6 @@ export class BookingService {
       // Always enforce server authoritative calculated price and currency
       payload.price = isTrial ? Number(trialDiscountedPrice.toFixed(2)) : Number(expectedPrice.toFixed(2));
       payload.currency = tutorProfile.data.currency || payload.currency || 'USD';
-    }
 
     let result;
     try {

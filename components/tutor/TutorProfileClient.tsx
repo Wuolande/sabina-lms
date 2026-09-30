@@ -310,6 +310,22 @@ export function TutorProfileClient({ initialTutor, slug }: TutorProfileClientPro
         </div>
       </div>
 
+      {tutor.verificationStatus !== "APPROVED" && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-amber-900 shadow-sm flex items-start gap-3.5">
+          <div className="p-2 rounded-xl bg-amber-100 text-amber-800 shrink-0 mt-0.5">
+            <Clock className="h-5 w-5" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-sm font-bold font-heading">
+              Tutor Profile Under Verification
+            </h2>
+            <p className="text-xs text-amber-800 leading-relaxed">
+              This educator profile is currently undergoing credential review and identity verification by the Sabina Academic Operations team. Direct lesson bookings are temporarily disabled until the profile is officially approved.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* ═══════════════════════════════════════════════════════════
             LEFT 2 COLS: Comprehensive Tutor LMS Profile Details
@@ -335,13 +351,21 @@ export function TutorProfileClient({ initialTutor, slug }: TutorProfileClientPro
                     {tutorDisplayName}
                   </h1>
 
-                  {tutor.verificationStatus === "APPROVED" && (
+                  {tutor.verificationStatus === "APPROVED" ? (
                     <span
                       title="Identity Verified • Degree Verified • Background Check Cleared"
                       className="inline-flex items-center gap-1 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/90 px-2.5 py-1 rounded-full"
                     >
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                       100% Verified
+                    </span>
+                  ) : (
+                    <span
+                      title="Credential audit and background check in progress"
+                      className="inline-flex items-center gap-1 text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200/90 px-2.5 py-1 rounded-full"
+                    >
+                      <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                      Under Verification
                     </span>
                   )}
 
@@ -854,11 +878,22 @@ export function TutorProfileClient({ initialTutor, slug }: TutorProfileClientPro
               <Button
                 variant="default"
                 size="default"
-                className="w-full sm:w-auto font-extrabold bg-brand hover:brightness-90 text-white rounded-xl shadow-xs"
-                onClick={() => setIsBookingOpen(true)}
+                disabled={tutor.verificationStatus !== "APPROVED"}
+                className={`w-full sm:w-auto font-extrabold ${
+                  tutor.verificationStatus === "APPROVED"
+                    ? "bg-brand hover:brightness-90 text-white cursor-pointer"
+                    : "bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300"
+                } rounded-xl shadow-xs`}
+                onClick={() => {
+                  if (tutor.verificationStatus === "APPROVED") {
+                    setIsBookingOpen(true);
+                  }
+                }}
                 rightIcon={<ArrowRight className="h-4 w-4" />}
               >
-                Book Selected Slot ({formatCurrency(tutorHourlyRate, tutorCurrency)})
+                {tutor.verificationStatus === "APPROVED"
+                  ? `Book Selected Slot (${formatCurrency(tutorHourlyRate, tutorCurrency)})`
+                  : "Booking Disabled (Under Verification)"}
               </Button>
             </div>
           </div>
@@ -1057,11 +1092,22 @@ export function TutorProfileClient({ initialTutor, slug }: TutorProfileClientPro
               <Button
                 variant="default"
                 size="lg"
-                className="w-full font-extrabold bg-brand hover:brightness-90 text-white shadow-card py-3.5 rounded-2xl cursor-pointer"
-                onClick={() => setIsBookingOpen(true)}
+                disabled={tutor.verificationStatus !== "APPROVED"}
+                className={`w-full font-extrabold ${
+                  tutor.verificationStatus === "APPROVED"
+                    ? "bg-brand hover:brightness-90 text-white cursor-pointer"
+                    : "bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300"
+                } shadow-card py-3.5 rounded-2xl`}
+                onClick={() => {
+                  if (tutor.verificationStatus === "APPROVED") {
+                    setIsBookingOpen(true);
+                  }
+                }}
                 leftIcon={<Calendar className="h-4 w-4" />}
               >
-                Book a Lesson
+                {tutor.verificationStatus === "APPROVED"
+                  ? "Book a Lesson"
+                  : "Booking Disabled (Under Review)"}
               </Button>
 
               <Link href={`/student/messages?tutor=${tutor.id}`} className="block">
@@ -1135,11 +1181,20 @@ export function TutorProfileClient({ initialTutor, slug }: TutorProfileClientPro
           <Button
             variant="default"
             size="default"
-            className="h-11 px-5 rounded-xl bg-brand hover:brightness-90 text-white font-extrabold text-xs shadow-sm flex items-center gap-1.5"
-            onClick={() => setIsBookingOpen(true)}
+            disabled={tutor.verificationStatus !== "APPROVED"}
+            className={`h-11 px-5 rounded-xl font-extrabold text-xs shadow-sm flex items-center gap-1.5 ${
+              tutor.verificationStatus === "APPROVED"
+                ? "bg-brand hover:brightness-90 text-white cursor-pointer"
+                : "bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300"
+            }`}
+            onClick={() => {
+              if (tutor.verificationStatus === "APPROVED") {
+                setIsBookingOpen(true);
+              }
+            }}
           >
             <Calendar className="h-4 w-4" />
-            <span>Book Lesson</span>
+            <span>{tutor.verificationStatus === "APPROVED" ? "Book Lesson" : "Under Review"}</span>
           </Button>
         </div>
       </div>

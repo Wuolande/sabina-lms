@@ -97,8 +97,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .from('tutor_profiles')
       .select('slug, updated_at')
       .is('deleted_at', null)
-      .eq('verification_status', 'verified')
-      .eq('account_status', 'active');
+      .in('verification_status', ['APPROVED', 'VERIFIED'])
+      .eq('account_status', 'ACTIVE');
 
     if (tutors && tutors.length > 0) {
       tutorRoutes = tutors
