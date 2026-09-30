@@ -35,6 +35,7 @@ interface TutorSidebarProps {
 export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
   const pathname = usePathname();
   const [tutorName, setTutorName] = React.useState<string>("Tutor");
+  const [verificationStatus, setVerificationStatus] = React.useState<string>("PENDING");
   const [monthlyEarnings, setMonthlyEarnings] = React.useState<number>(0);
 
   React.useEffect(() => {
@@ -42,6 +43,9 @@ export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
       .then((data) => {
         if (data?.user?.displayName) {
           setTutorName(data.user.displayName);
+        }
+        if (data?.verificationStatus) {
+          setVerificationStatus(data.verificationStatus);
         }
         if (data?.stats?.monthlyEarnings !== undefined) {
           setMonthlyEarnings(data.stats.monthlyEarnings);
@@ -108,7 +112,14 @@ export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-bold text-white leading-tight">Tutor Console</p>
-              <p className="text-[10px] text-slate-400 font-medium leading-tight truncate">{tutorName} · Approved</p>
+              <p className="text-[10px] text-slate-400 font-medium leading-tight truncate">
+                {tutorName} ·{" "}
+                {verificationStatus === "VERIFIED"
+                  ? "Approved"
+                  : verificationStatus === "REJECTED"
+                  ? "Action Required"
+                  : "Under Review"}
+              </p>
             </div>
           </div>
         </div>

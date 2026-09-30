@@ -335,6 +335,22 @@ export class TutorRepository {
     if (error) {
       throw new Error(`[TutorRepository.getDashboard360] ${error.message}`);
     }
+
+    if (data) {
+      const { data: prof } = await adminSupabase
+        .from('tutor_profiles')
+        .select('verification_status, account_status')
+        .eq('id', tutorProfileId)
+        .maybeSingle();
+
+      if (prof) {
+        data.verificationStatus = prof.verification_status;
+        if (data.stats) {
+          data.stats.verificationStatus = prof.verification_status;
+        }
+      }
+    }
+
     return data;
   }
 

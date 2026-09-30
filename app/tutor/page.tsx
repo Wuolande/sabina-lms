@@ -126,6 +126,35 @@ export default function TutorDashboardPage() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16">
+      {/* Verification Status Alert Banner */}
+      {dashboardData?.verificationStatus !== "VERIFIED" && (
+        <div className="rounded-3xl border border-amber-200/90 bg-amber-50/80 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="h-10 w-10 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0 text-amber-800 mt-0.5 sm:mt-0">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-amber-950">
+                  Application Under Verification
+                </h4>
+                <Badge variant="subtle" size="sm" className="bg-amber-200/70 text-amber-900 font-extrabold text-[10px]">
+                  Pending Review
+                </Badge>
+              </div>
+              <p className="text-xs text-amber-800/90 leading-relaxed max-w-3xl">
+                Your teaching credentials, academic qualifications, and video introduction have been submitted and are currently awaiting review by our academic compliance team. You can continue setting up your calendar, availability, and profile while verification is completed.
+              </p>
+            </div>
+          </div>
+          <Link href="/tutor/profile">
+            <Button variant="outline" size="sm" className="rounded-xl font-bold text-xs bg-white border-amber-200 text-amber-900 hover:bg-amber-100/50 shrink-0">
+              View Profile Submission
+            </Button>
+          </Link>
+        </div>
+      )}
+
       {/* 1. HERO GREETING & COMMAND BAR */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -141,10 +170,22 @@ export default function TutorDashboardPage() {
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                   Welcome back, {displayName} 👋
                 </h1>
-                <Badge variant="success" size="sm" className="gap-1 bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Verified Tutor
-                </Badge>
+                {dashboardData?.verificationStatus === "VERIFIED" ? (
+                  <Badge variant="success" size="sm" className="gap-1 bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Verified Tutor
+                  </Badge>
+                ) : dashboardData?.verificationStatus === "REJECTED" ? (
+                  <Badge variant="neutral" size="sm" className="gap-1 bg-rose-50 text-rose-700 border-rose-200 font-bold">
+                    <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
+                    Verification Rejected
+                  </Badge>
+                ) : (
+                  <Badge variant="neutral" size="sm" className="gap-1 bg-amber-50 text-amber-800 border-amber-200 font-bold">
+                    <Clock className="h-3.5 w-3.5 text-amber-600" />
+                    Under Verification
+                  </Badge>
+                )}
                 {stats.isSuperTutor && (
                   <Badge variant="neutral" size="sm" className="gap-1 bg-amber-50 text-amber-800 border-amber-200 font-bold">
                     <Sparkles className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />

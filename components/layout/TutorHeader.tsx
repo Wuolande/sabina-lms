@@ -20,6 +20,8 @@ import {
   Sparkles,
   Settings,
   Lock,
+  Clock,
+  AlertCircle,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Logo } from "@/components/ui/Logo";
@@ -167,15 +169,35 @@ export function TutorHeader({ onToggleSidebar }: TutorHeaderProps) {
           {isAccepting ? "Accepting Bookings" : "Paused"}
         </button>
 
-        {/* Verified Badge */}
-        <Badge
-          variant="success"
-          size="sm"
-          className="hidden md:inline-flex items-center gap-1 bg-emerald-950/80 text-emerald-300 border border-emerald-800/80"
-        >
-          <ShieldCheck className="h-3 w-3 text-emerald-400" />
-          Verified Tutor
-        </Badge>
+        {/* Dynamic Verification Badge */}
+        {profileData?.verificationStatus === "VERIFIED" ? (
+          <Badge
+            variant="success"
+            size="sm"
+            className="hidden md:inline-flex items-center gap-1 bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 font-bold"
+          >
+            <ShieldCheck className="h-3 w-3 text-emerald-400" />
+            Verified Tutor
+          </Badge>
+        ) : profileData?.verificationStatus === "REJECTED" ? (
+          <Badge
+            variant="neutral"
+            size="sm"
+            className="hidden md:inline-flex items-center gap-1 bg-rose-950/80 text-rose-300 border border-rose-800/80 font-bold"
+          >
+            <AlertCircle className="h-3 w-3 text-rose-400" />
+            Verification Rejected
+          </Badge>
+        ) : (
+          <Badge
+            variant="neutral"
+            size="sm"
+            className="hidden md:inline-flex items-center gap-1 bg-amber-950/80 text-amber-300 border border-amber-800/80 font-bold"
+          >
+            <Clock className="h-3 w-3 text-amber-400" />
+            Under Verification
+          </Badge>
+        )}
 
         {/* Messages Shortcut with Unread Badge */}
         <Link
