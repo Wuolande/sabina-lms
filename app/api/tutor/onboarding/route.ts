@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { extractAuthUser } from '@/src/shared/auth/authService';
 import { adminSupabase } from '@/src/shared/database/supabase';
 import { domainLessonService } from '@/src/modules/lessons/services/lessonService';
+import { getPlatformPolicies } from '@/src/shared/config/platformPolicies';
 import { z } from 'zod';
 
 const DAY_MAP: Record<string, number> = {
@@ -122,28 +123,72 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
-    // 1. Update public.users table with profile data
+    // Enforce dynamic platform rate limits
+    const policies = await getPlatformPolicies();
+    if (data.hourlyRate < policies.tutorMinHourlyRate || data.hourlyRate > policies.tutorMaxHourlyRate) {
+      return NextResponse.json(
+        {
+          error: `Hourly rate must be between $${policies.tutorMinHourlyRate} and $${policies.tutorMaxHourlyRate} USD/hr as configured by platform administration.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // 1. Resolve public.users record for the authenticated caller
     const parts = data.displayName.split(' ');
     const fName = ((data as any).firstName || parts[0] || 'Tutor').trim();
     const lName = ((data as any).lastName || parts.slice(1).join(' ') || 'Educator').trim();
 
+    let { data: publicUser } = await adminSupabase
+      .from('users')
+      .select('id, email, first_name, last_name, display_name')
+      .or(`id.eq.${user.id},auth_id.eq.${user.id},email.eq.${user.email}`)
+      .maybeSingle();
+
+    if (!publicUser) {
+      const { data: insertedUser, error: insertErr } = await adminSupabase
+        .from('users')
+        .insert({
+          id: user.id,
+          auth_id: user.id,
+          email: user.email,
+          first_name: fName,
+          last_name: lName,
+          display_name: data.displayName,
+          country: data.country,
+          timezone: data.timezone,
+          status: 'ACTIVE',
+        })
+        .select('id, email, first_name, last_name, display_name')
+        .single();
+
+      if (insertErr || !insertedUser) {
+        throw new Error(`Failed to initialize public user record: ${insertErr?.message}`);
+      }
+      publicUser = insertedUser;
+    }
+
+    const publicUserId = publicUser.id;
+
+    // Update public.users table with profile data
     const userUpdates: Record<string, any> = {
       first_name: fName,
       last_name: lName,
       display_name: data.displayName,
       country: data.country,
       timezone: data.timezone,
+      auth_id: user.id,
       updated_at: new Date().toISOString(),
     };
     if (data.phone) userUpdates.phone = data.phone;
     if (data.avatarUrl) userUpdates.avatar_url = data.avatarUrl;
 
-    await adminSupabase.from('users').update(userUpdates).eq('id', user.id);
+    await adminSupabase.from('users').update(userUpdates).eq('id', publicUserId);
 
     // Ensure user has TUTOR role assigned in user_roles
     try {
       await adminSupabase.from('user_roles').upsert({
-        user_id: user.id,
+        user_id: publicUserId,
         role_id: 'TUTOR',
       });
     } catch {
@@ -161,7 +206,7 @@ export async function POST(req: NextRequest) {
     const { data: existingApp } = await adminSupabase
       .from('tutor_applications')
       .select('id, status')
-      .eq('applicant_user_id', user.id)
+      .eq('applicant_user_id', publicUserId)
       .maybeSingle();
 
     let applicationId: string;
@@ -186,7 +231,7 @@ export async function POST(req: NextRequest) {
       const { data: newApp, error: appError } = await adminSupabase
         .from('tutor_applications')
         .insert({
-          applicant_user_id: user.id,
+          applicant_user_id: publicUserId,
           status: 'SUBMITTED',
           headline: data.headline,
           bio: combinedBio,
@@ -264,17 +309,16 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Save Application Languages
-    const langCodes = data.languages.map((l) => l.code.toLowerCase());
     const { data: dbLangs } = await adminSupabase
       .from('languages')
-      .select('id, code')
-      .in('code', langCodes);
+      .select('id, code, name');
 
-    const langMap = new Map((dbLangs || []).map((l: any) => [l.code.toLowerCase(), l.id]));
+    const langMapByCode = new Map((dbLangs || []).map((l: any) => [l.code.toLowerCase(), l.id]));
+    const langMapByName = new Map((dbLangs || []).map((l: any) => [l.name.toLowerCase(), l.id]));
 
     const appLangRows = data.languages
       .map((l) => {
-        const langId = langMap.get(l.code.toLowerCase());
+        const langId = langMapByCode.get(l.code.toLowerCase()) || langMapByName.get(l.name.toLowerCase());
         if (!langId) return null;
         let proficiency = 'PROFESSIONAL';
         const pUpper = l.proficiency.toUpperCase();
@@ -305,13 +349,13 @@ export async function POST(req: NextRequest) {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '') || 'tutor';
-    const tutorSlug = `${cleanName}-${user.id.slice(0, 8)}`;
+    const tutorSlug = `${cleanName}-${publicUserId.slice(0, 8)}`;
 
     const { data: tutorProfile, error: profErr } = await adminSupabase
       .from('tutor_profiles')
       .upsert(
         {
-          user_id: user.id,
+          user_id: publicUserId,
           application_id: applicationId,
           slug: tutorSlug,
           headline: data.headline,
@@ -367,7 +411,7 @@ export async function POST(req: NextRequest) {
     try {
       await adminSupabase.from('audit_logs').insert({
         id: `tutor-onboard-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        actor_user_id: user.id,
+        actor_user_id: publicUserId,
         actor_name: data.displayName,
         actor_role: 'TUTOR',
         action: 'TUTOR_APPLICATION_SUBMITTED',

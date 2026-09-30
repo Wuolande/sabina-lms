@@ -141,6 +141,11 @@ export default function TutorProfileSettingsPage() {
   const [currenciesList, setCurrenciesList] = React.useState<any[]>([]);
   const [languagesList, setLanguagesList] = React.useState<any[]>([]);
   const [subjectsList, setSubjectsList] = React.useState<any[]>([]);
+  const [platformPolicies, setPlatformPolicies] = React.useState({
+    tutorMinHourlyRate: 15,
+    tutorMaxHourlyRate: 250,
+    platformFeePercent: 18,
+  });
 
   const loadProfile = React.useCallback(async () => {
     setLoading(true);
@@ -153,6 +158,19 @@ export default function TutorProfileSettingsPage() {
         tutorService.getAllLanguages(),
         tutorService.getAllSubjects(),
       ]);
+
+      fetch('/api/policies')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((pol) => {
+          if (pol) {
+            setPlatformPolicies({
+              tutorMinHourlyRate: Number(pol.tutorMinHourlyRate) || 15,
+              tutorMaxHourlyRate: Number(pol.tutorMaxHourlyRate) || 250,
+              platformFeePercent: Number(pol.platformFeePercent) || 18,
+            });
+          }
+        })
+        .catch(() => {});
 
       if (cRes) setCountriesList(cRes);
       if (tzRes) setTimezonesList(tzRes);
@@ -548,11 +566,16 @@ export default function TutorProfileSettingsPage() {
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                   <Input
                     type="number"
+                    min={platformPolicies.tutorMinHourlyRate}
+                    max={platformPolicies.tutorMaxHourlyRate}
                     value={hourlyRate}
                     onChange={(e) => setHourlyRate(Number(e.target.value))}
                     className="pl-9 font-bold"
                   />
                 </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Allowed range: ${platformPolicies.tutorMinHourlyRate} - ${platformPolicies.tutorMaxHourlyRate} USD/hr • Platform processing fee: {platformPolicies.platformFeePercent}%.
+                </p>
               </div>
 
               <div className="sm:col-span-2">

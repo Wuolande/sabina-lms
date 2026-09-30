@@ -24,15 +24,26 @@ import {
   Camera,
   Users,
   Briefcase,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { Textarea } from "@/components/ui/Textarea";
 import { Avatar } from "@/components/ui/Avatar";
 import { Logo } from "@/components/ui/Logo";
 import { FileUploadWithLink } from "@/components/ui/FileUploadWithLink";
 import { Subject } from "@/types";
+import {
+  WORLD_COUNTRIES,
+  POPULAR_TIMEZONES,
+  detectUserTimezone,
+  getYearOptions,
+  STANDARD_LANGUAGES,
+  PROFICIENCY_LEVELS,
+} from "@/src/shared/data/geoData";
 
 const ONBOARDING_STEPS = [
   { id: 1, title: "About You", desc: "Identity & photo", icon: Users },
@@ -51,8 +62,52 @@ export default function TutorOnboardingPage() {
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [showLivePreview, setShowLivePreview] = React.useState(false);
   const [subjectsList, setSubjectsList] = React.useState<Subject[]>([]);
+  const [countriesList, setCountriesList] = React.useState<any[]>([]);
+  const [timezonesList, setTimezonesList] = React.useState<any[]>([]);
+  const [languagesList, setLanguagesList] = React.useState<any[]>([]);
+  const [platformPolicies, setPlatformPolicies] = React.useState({
+    platformFeePercent: 18,
+    tutorMinHourlyRate: 15,
+    tutorMaxHourlyRate: 250,
+    trialLessonDiscountPercent: 30,
+    instantBookingEnabled: true,
+  });
+  const yearOptions = React.useMemo(() => getYearOptions(), []);
 
   React.useEffect(() => {
+    fetch('/api/policies')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          const min = Number(data.tutorMinHourlyRate) || 15;
+          const max = Number(data.tutorMaxHourlyRate) || 250;
+          const fee = Number(data.platformFeePercent) || 18;
+          const trialDisc = Number(data.trialLessonDiscountPercent) || 30;
+          const instant = data.instantBookingEnabled ?? true;
+
+          setPlatformPolicies({
+            platformFeePercent: fee,
+            tutorMinHourlyRate: min,
+            tutorMaxHourlyRate: max,
+            trialLessonDiscountPercent: trialDisc,
+            instantBookingEnabled: instant,
+          });
+
+          setHourlyRate((prev) => {
+            if (prev < min) return min;
+            if (prev > max) return max;
+            return prev;
+          });
+
+          setTrialPrice((prev) => {
+            return Math.max(5, Math.round(35 * 0.5 * (1 - trialDisc / 100)));
+          });
+
+          setInstantBookingEnabled(instant);
+        }
+      })
+      .catch(() => {});
+
     fetch('/api/subjects')
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
@@ -60,6 +115,27 @@ export default function TutorOnboardingPage() {
           setSubjectsList(data);
           setPrimarySubjectId((prev) => prev || data[0].id);
         }
+      })
+      .catch(() => {});
+
+    fetch('/api/countries')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setCountriesList(data);
+      })
+      .catch(() => {});
+
+    fetch('/api/timezones')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setTimezonesList(data);
+      })
+      .catch(() => {});
+
+    fetch('/api/languages')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) setLanguagesList(data);
       })
       .catch(() => {});
 
@@ -77,6 +153,12 @@ export default function TutorOnboardingPage() {
               setFirstName(data.user.displayName);
             }
           }
+          if (data.user.country) {
+            setCountry(data.user.country);
+          }
+          if (data.user.timezone) {
+            setTimezone(data.user.timezone);
+          }
         }
       })
       .catch(() => {});
@@ -87,13 +169,7 @@ export default function TutorOnboardingPage() {
   const [lastName, setLastName] = React.useState("");
   const [displayName, setDisplayName] = React.useState("");
   const [country, setCountry] = React.useState("United Kingdom");
-  const [timezone, setTimezone] = React.useState(() => {
-    try {
-      return Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/London (GMT+1)";
-    } catch {
-      return "Europe/London (GMT+1)";
-    }
-  });
+  const [timezone, setTimezone] = React.useState(() => detectUserTimezone());
   const [phone, setPhone] = React.useState("");
   const [avatarPreview, setAvatarPreview] = React.useState("");
 
@@ -517,16 +593,44 @@ export default function TutorOnboardingPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Country of Residence
-                      </label>
-                      <Input value={country} onChange={(e) => setCountry(e.target.value)} />
+                      <SearchableSelect
+                        label="Country of Residence"
+                        placeholder="Select your country..."
+                        searchPlaceholder="Search 170+ countries..."
+                        value={country}
+                        onChange={setCountry}
+                        options={
+                          countriesList.length > 0
+                            ? countriesList.map((c) => ({
+                                value: c.name,
+                                label: c.name,
+                                sublabel: `${c.continent || ''} ${c.dial_code ? '• ' + c.dial_code : ''}`.trim(),
+                              }))
+                            : WORLD_COUNTRIES.map((c) => ({
+                                value: c.name,
+                                label: c.name,
+                                sublabel: `${c.continent} • ${c.dialCode}`,
+                              }))
+                        }
+                      />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                        Timezone
-                      </label>
-                      <Input value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+                      <SearchableSelect
+                        label="Timezone"
+                        placeholder="Select your timezone..."
+                        searchPlaceholder="Search timezone or city..."
+                        value={timezone}
+                        onChange={setTimezone}
+                        options={
+                          timezonesList.length > 0
+                            ? timezonesList.map((tz) => ({
+                                value: tz.identifier,
+                                label: tz.display_name || tz.identifier,
+                                sublabel: tz.utc_offset || '',
+                              }))
+                            : POPULAR_TIMEZONES
+                        }
+                      />
                     </div>
                   </div>
 
@@ -617,18 +721,102 @@ export default function TutorOnboardingPage() {
 
                   {/* Languages Spoken */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                      Languages You Can Teach In
-                    </label>
-                    <div className="space-y-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          Languages You Can Teach In
+                        </label>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Select the languages you are qualified to conduct lessons in and your proficiency level.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const available = (languagesList.length > 0 ? languagesList : STANDARD_LANGUAGES);
+                          const unused = available.find((a) => !selectedLanguages.some((sl) => sl.name === a.name)) || available[0];
+                          setSelectedLanguages((prev) => [
+                            ...prev,
+                            { code: unused.code, name: unused.name, proficiency: "C2 (Proficient)" },
+                          ]);
+                        }}
+                        className="rounded-xl text-xs font-bold text-brand-700 border-brand-200 hover:bg-brand-50 shrink-0 cursor-pointer"
+                        leftIcon={<Plus className="h-3.5 w-3.5" />}
+                      >
+                        Add Language
+                      </Button>
+                    </div>
+
+                    <div className="space-y-3">
                       {selectedLanguages.map((l, idx) => (
-                        <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200">
-                          <Globe className="h-4 w-4 text-brand-700" />
-                          <strong className="text-xs text-slate-900">{l.name}</strong>
-                          <span className="text-xs text-slate-400">•</span>
-                          <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                            {l.proficiency}
-                          </span>
+                        <div
+                          key={idx}
+                          className="p-3 sm:p-4 rounded-2xl bg-slate-50/70 border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center"
+                        >
+                          <div className="sm:col-span-6">
+                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 sm:hidden">
+                              Language
+                            </label>
+                            <SearchableSelect
+                              placeholder="Select language..."
+                              searchPlaceholder="Search 40+ languages..."
+                              value={l.name}
+                              onChange={(val) => {
+                                const newLangs = [...selectedLanguages];
+                                const found = (languagesList.length > 0 ? languagesList : STANDARD_LANGUAGES).find(
+                                  (item) => item.name === val || item.code === val
+                                );
+                                newLangs[idx].name = found?.name || val;
+                                newLangs[idx].code = found?.code || val.toLowerCase().slice(0, 2);
+                                setSelectedLanguages(newLangs);
+                              }}
+                              options={(languagesList.length > 0 ? languagesList : STANDARD_LANGUAGES).map((item) => ({
+                                value: item.name,
+                                label: item.name,
+                                sublabel: item.native_name || item.nativeName,
+                              }))}
+                              leftIcon={<Globe className="h-4 w-4 text-brand-700" />}
+                            />
+                          </div>
+
+                          <div className="sm:col-span-5">
+                            <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1 sm:hidden">
+                              Proficiency Level
+                            </label>
+                            <Select
+                              value={l.proficiency}
+                              onChange={(e) => {
+                                const newLangs = [...selectedLanguages];
+                                newLangs[idx].proficiency = e.target.value;
+                                setSelectedLanguages(newLangs);
+                              }}
+                            >
+                              {PROFICIENCY_LEVELS.map((prof) => (
+                                <option key={prof} value={prof}>
+                                  {prof}
+                                </option>
+                              ))}
+                            </Select>
+                          </div>
+
+                          <div className="sm:col-span-1 flex justify-end">
+                            {selectedLanguages.length > 1 ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedLanguages(selectedLanguages.filter((_, i) => i !== idx));
+                                }}
+                                className="p-2.5 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Remove language"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            ) : (
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-2">Primary</span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -735,17 +923,22 @@ export default function TutorOnboardingPage() {
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                              Graduation Year
-                            </label>
-                            <Input
+                            <Select
+                              label="Graduation Year"
                               value={deg.endYear}
                               onChange={(e) => {
                                 const newDegs = [...degrees];
                                 newDegs[index].endYear = e.target.value;
                                 setDegrees(newDegs);
                               }}
-                            />
+                            >
+                              <option value="">Select year...</option>
+                              {yearOptions.map((yr) => (
+                                <option key={yr} value={yr}>
+                                  {yr}
+                                </option>
+                              ))}
+                            </Select>
                           </div>
                         </div>
 
@@ -895,17 +1088,22 @@ export default function TutorOnboardingPage() {
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                              Year Issued
-                            </label>
-                            <Input
+                            <Select
+                              label="Year Issued"
                               value={cert.issueYear}
                               onChange={(e) => {
                                 const newC = [...certifications];
                                 newC[index].issueYear = e.target.value;
                                 setCertifications(newC);
                               }}
-                            />
+                            >
+                              <option value="">Select year...</option>
+                              {yearOptions.map((yr) => (
+                                <option key={yr} value={yr}>
+                                  {yr}
+                                </option>
+                              ))}
+                            </Select>
                           </div>
                         </div>
 
@@ -1025,30 +1223,41 @@ export default function TutorOnboardingPage() {
 
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                              Start Year
-                            </label>
-                            <Input
+                            <Select
+                              label="Start Year"
                               value={exp.startYear}
                               onChange={(e) => {
                                 const newE = [...experiences];
                                 newE[index].startYear = e.target.value;
                                 setExperiences(newE);
                               }}
-                            />
+                            >
+                              <option value="">Select start year...</option>
+                              {yearOptions.map((yr) => (
+                                <option key={yr} value={yr}>
+                                  {yr}
+                                </option>
+                              ))}
+                            </Select>
                           </div>
                           <div>
-                            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                              End Year
-                            </label>
-                            <Input
+                            <Select
+                              label="End Year"
                               value={exp.endYear}
                               onChange={(e) => {
                                 const newE = [...experiences];
                                 newE[index].endYear = e.target.value;
                                 setExperiences(newE);
                               }}
-                            />
+                            >
+                              <option value="">Select end year...</option>
+                              <option value="Present">Present (Current)</option>
+                              {yearOptions.map((yr) => (
+                                <option key={yr} value={yr}>
+                                  {yr}
+                                </option>
+                              ))}
+                            </Select>
                           </div>
                         </div>
 
@@ -1113,22 +1322,80 @@ export default function TutorOnboardingPage() {
                     </p>
                   </div>
 
-                  {/* Primary Subject */}
+                  {/* Primary Teaching Discipline */}
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                       Primary Teaching Discipline
                     </label>
-                    <select
+                    <SearchableSelect
+                      placeholder="Select primary teaching discipline..."
+                      searchPlaceholder="Search 50+ subjects (Math, English, Science, Coding...)"
                       value={primarySubjectId}
-                      onChange={(e) => setPrimarySubjectId(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-300 p-3.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-700 shadow-xs"
-                    >
-                      {subjectsList.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} ({s.category})
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(val) => setPrimarySubjectId(val)}
+                      options={subjectsList.map((s) => ({
+                        value: s.id,
+                        label: s.name,
+                        sublabel: s.category,
+                      }))}
+                      leftIcon={<BookOpen className="h-4 w-4 text-brand-700" />}
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      This will be your primary discipline shown prominently on your profile card and search results.
+                    </p>
+                  </div>
+
+                  {/* Secondary Disciplines & Additional Subjects */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Secondary Disciplines & Additional Subjects (Optional)
+                      </label>
+                      <span className="text-[11px] text-slate-400 font-mono">
+                        {secondarySubjectIds.length} added
+                      </span>
+                    </div>
+                    <SearchableSelect
+                      placeholder="Add another subject you are qualified to teach..."
+                      searchPlaceholder="Search additional subjects..."
+                      value=""
+                      onChange={(val) => {
+                        if (val && val !== primarySubjectId && !secondarySubjectIds.includes(val)) {
+                          setSecondarySubjectIds([...secondarySubjectIds, val]);
+                        }
+                      }}
+                      options={subjectsList
+                        .filter((s) => s.id !== primarySubjectId && !secondarySubjectIds.includes(s.id))
+                        .map((s) => ({
+                          value: s.id,
+                          label: s.name,
+                          sublabel: s.category,
+                        }))}
+                      leftIcon={<Plus className="h-4 w-4 text-slate-400" />}
+                    />
+
+                    {secondarySubjectIds.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {secondarySubjectIds.map((sid) => {
+                          const sub = subjectsList.find((s) => s.id === sid);
+                          return (
+                            <span
+                              key={sid}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-800"
+                            >
+                              <BookOpen className="h-3.5 w-3.5 text-brand-700" />
+                              {sub?.name || sid}
+                              <button
+                                type="button"
+                                onClick={() => setSecondarySubjectIds(secondarySubjectIds.filter((id) => id !== sid))}
+                                className="text-slate-400 hover:text-rose-600 ml-1 p-0.5"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* Hourly Rate Slider */}
@@ -1139,32 +1406,49 @@ export default function TutorOnboardingPage() {
                           Standard Hourly Rate (50-Min Lesson)
                         </span>
                         <p className="text-xs text-slate-500 mt-0.5">
-                          You keep 85% of your earnings after platform processing.
+                          You keep {(100 - platformPolicies.platformFeePercent).toFixed(0)}% of your earnings after platform processing ({platformPolicies.platformFeePercent}% platform fee).
                         </p>
                       </div>
-                      <div className="text-3xl font-black text-brand-700 font-heading">
-                        ${hourlyRate} <span className="text-xs font-semibold text-slate-500">USD/hr</span>
+                      <div className="text-right">
+                        <div className="text-3xl font-black text-brand-700 font-heading">
+                          ${hourlyRate} <span className="text-xs font-semibold text-slate-500">USD/hr</span>
+                        </div>
+                        <span className="text-[11px] font-semibold text-emerald-600 block">
+                          ~${(hourlyRate * (1 - platformPolicies.platformFeePercent / 100)).toFixed(2)} USD take-home
+                        </span>
                       </div>
                     </div>
 
                     <input
                       type="range"
-                      min="20"
-                      max="150"
+                      min={platformPolicies.tutorMinHourlyRate}
+                      max={platformPolicies.tutorMaxHourlyRate}
                       step="5"
                       value={hourlyRate}
                       onChange={(e) => {
                         const val = Number(e.target.value);
                         setHourlyRate(val);
-                        setTrialPrice(Math.round(val * 0.5));
+                        const disc = platformPolicies.trialLessonDiscountPercent || 30;
+                        setTrialPrice(Math.max(5, Math.round(val * 0.5 * (1 - disc / 100))));
                       }}
                       className="w-full accent-brand-700 cursor-pointer"
                     />
 
                     <div className="flex justify-between text-[11px] text-slate-400 font-bold">
-                      <span>$20/hr</span>
-                      <span>$65/hr (Recommended for Verified Instructors)</span>
-                      <span>$150/hr</span>
+                      <span>${platformPolicies.tutorMinHourlyRate}/hr (Platform Min)</span>
+                      <span>
+                        ${Math.min(
+                          platformPolicies.tutorMaxHourlyRate,
+                          Math.max(
+                            platformPolicies.tutorMinHourlyRate,
+                            Math.round(
+                              platformPolicies.tutorMinHourlyRate +
+                                (platformPolicies.tutorMaxHourlyRate - platformPolicies.tutorMinHourlyRate) * 0.25
+                            )
+                          )
+                        )}/hr (Recommended)
+                      </span>
+                      <span>${platformPolicies.tutorMaxHourlyRate}/hr (Platform Max)</span>
                     </div>
                   </div>
 
@@ -1173,14 +1457,14 @@ export default function TutorOnboardingPage() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <strong className="text-xs font-bold text-slate-900">
-                          Offer 50% Off 25-Min Trial Lessons
+                          Offer {platformPolicies.trialLessonDiscountPercent}% Off 25-Min Trial Lessons
                         </strong>
                         <Badge variant="subtle" size="sm" className="bg-emerald-100 text-emerald-800 font-bold text-[10px]">
                           Boosts Bookings 4x
                         </Badge>
                       </div>
                       <p className="text-xs text-slate-600">
-                        First-time students can book a 25-minute intro session for <strong>${trialPrice} USD</strong>.
+                        First-time students can book a 25-minute intro session for <strong>${trialPrice} USD</strong> (normally ${(hourlyRate * 0.5).toFixed(0)} USD).
                       </p>
                     </div>
                     <input
@@ -1429,7 +1713,7 @@ export default function TutorOnboardingPage() {
                           {headline}
                         </p>
                         <p className="text-[11px] text-slate-400">
-                          {country} • {timezone} • ${hourlyRate}/hr (${trialPrice} trial)
+                          {country} • {timezone} • ${hourlyRate}/hr {offerTrialDiscount ? `($${trialPrice} trial)` : ""}
                         </p>
                       </div>
                     </div>

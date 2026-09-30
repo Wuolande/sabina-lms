@@ -31,6 +31,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
 import { StatCard } from "@/components/ui/StatCard";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/Table";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { WORLD_COUNTRIES } from "@/src/shared/data/geoData";
 import { useModal } from "@/components/ui/modal-context";
 import { studentService } from "@/services/studentService";
 import { formatCurrency, formatDate, formatTime } from "@/lib/utils";
@@ -636,13 +638,17 @@ export default function StudentPaymentsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Country
-                </label>
-                <Input
+                <SearchableSelect
+                  label="Country"
+                  placeholder="Select country..."
+                  searchPlaceholder="Search 170+ countries..."
                   value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="e.g. United States"
+                  onChange={setCountry}
+                  options={WORLD_COUNTRIES.map((c) => ({
+                    value: c.name,
+                    label: c.name,
+                    sublabel: `${c.continent} • ${c.dialCode}`,
+                  }))}
                 />
               </div>
             </div>
