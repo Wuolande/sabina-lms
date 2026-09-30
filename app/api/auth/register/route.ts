@@ -11,8 +11,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { adminSupabase } from '@/src/shared/database/supabase';
 import { checkRateLimit } from '@/src/shared/security/rateLimiter';
 import { checkHoneypot } from '@/src/shared/security/honeypot';
@@ -100,35 +98,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 8. Sign Up via Supabase Auth (emailRedirectTo set to a dummy to suppress Supabase's own email)
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          },
-        },
-      }
-    );
+    // 8. Provision user in Supabase Auth via admin API
+    // Using admin.createUser prevents Supabase from sending its built-in generic confirmation email,
+    // ensuring ONLY our branded SMTP template with full name, 6-digit OTP, and live URL is dispatched.
+    const fName = (firstName || '').trim();
+    const lName = (lastName || '').trim();
+    const displayName = `${fName} ${lName}`.trim() || normalizedEmail.split('@')[0];
 
-    const displayName = `${firstName || ''} ${lastName || ''}`.trim() || normalizedEmail.split('@')[0];
-
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await adminSupabase.auth.admin.createUser({
       email: normalizedEmail,
       password,
-      options: {
-        data: {
-          display_name: displayName,
-          role: safeRole,
-        },
+      email_confirm: false,
+      user_metadata: {
+        first_name: fName,
+        last_name: lName,
+        display_name: displayName,
+        role: safeRole,
       },
     });
 
@@ -141,9 +126,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 9. Synchronize profile in public.users and public.user_roles tables atomically
-    const fName = (firstName || displayName.split(' ')[0] || normalizedEmail.split('@')[0]).trim();
-    const lName = (lastName || displayName.split(' ').slice(1).join(' ') || 'Member').trim();
-
     // The auth.users trigger provisions a public.users row; find it or fallback
     const { data: dbUser } = await adminSupabase
       .from('users')
