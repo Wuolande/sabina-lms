@@ -44,6 +44,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/auth') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/register') ||
+    pathname.startsWith('/verify-email') ||
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/api/media') ||
     pathname.startsWith('/api/homepage') ||
@@ -77,6 +78,19 @@ export async function middleware(request: NextRequest) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // 2b. Unconfirmed Email Guard
+  if (!user.email_confirmed_at) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Email confirmation required.' }, { status: 403 });
+    }
+    const verifyUrl = new URL('/verify-email', request.url);
+    if (user.email) {
+      verifyUrl.searchParams.set('email', user.email);
+    }
+    verifyUrl.searchParams.set('notice', 'unconfirmed');
+    return NextResponse.redirect(verifyUrl);
   }
 
   const role = user?.user_metadata?.role || 'STUDENT';

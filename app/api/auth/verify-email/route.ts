@@ -44,11 +44,25 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    const { data, error } = await supabase.auth.verifyOtp({
+    let { data, error } = await supabase.auth.verifyOtp({
       email: normalizedEmail,
       token: cleanToken,
       type: type as any,
     });
+
+    // Multi-type fallback: If user enters an OTP from a different email (signup vs magiclink resend)
+    if (error && (type === 'signup' || type === 'magiclink')) {
+      const altType = type === 'signup' ? 'magiclink' : 'signup';
+      const altRes = await supabase.auth.verifyOtp({
+        email: normalizedEmail,
+        token: cleanToken,
+        type: altType as any,
+      });
+      if (!altRes.error && altRes.data?.user) {
+        data = altRes.data;
+        error = null;
+      }
+    }
 
     if (error) {
       return NextResponse.json(
@@ -64,12 +78,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Activate the public user row if needed
+    // Activate the public user row and ensure auth email confirmation is marked
     try {
-      await adminSupabase
-        .from('users')
-        .update({ status: 'ACTIVE' })
-        .eq('auth_id', data.user.id);
+      await Promise.all([
+        adminSupabase
+          .from('users')
+          .update({ status: 'ACTIVE' })
+          .eq('auth_id', data.user.id),
+        adminSupabase.auth.admin.updateUserById(data.user.id, {
+          email_confirm: true,
+        }),
+      ]);
     } catch (dbErr: any) {
       console.warn('[verify-email user status update]', dbErr?.message);
     }

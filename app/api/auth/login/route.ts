@@ -15,6 +15,7 @@ import { cookies } from 'next/headers';
 import { checkRateLimit, resetRateLimit } from '@/src/shared/security/rateLimiter';
 import { checkHoneypot } from '@/src/shared/security/honeypot';
 import { verifyRecaptchaToken } from '@/src/shared/security/recaptchaService';
+import { adminSupabase } from '@/src/shared/database/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -100,7 +101,47 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }
 
-    // 6. Reset Rate Limiter on Successful Login
+    if (!data.user) {
+      return NextResponse.json({ error: 'Authentication failed.' }, { status: 401 });
+    }
+
+    // 6. Enforce Email Verification Requirement
+    // Cross-reference auth.users email_confirmed_at and public.users status
+    const { data: dbUser } = await adminSupabase
+      .from('users')
+      .select('status, roles:user_roles!user_roles_user_id_fkey(role_id)')
+      .eq('auth_id', data.user.id)
+      .maybeSingle();
+
+    const isConfirmed = !!data.user.email_confirmed_at;
+    const isPending = dbUser?.status === 'PENDING';
+
+    if (!isConfirmed || isPending) {
+      // Invalidate cookies immediately so unverified session is never stored
+      await supabase.auth.signOut();
+
+      const userRole = (data.user?.user_metadata?.role || 'STUDENT').toUpperCase();
+
+      return NextResponse.json(
+        {
+          requiresEmailConfirmation: true,
+          email: normalizedEmail,
+          role: userRole,
+          error: 'Please verify your email address before signing in.',
+        },
+        { status: 403 }
+      );
+    }
+
+    if (dbUser?.status === 'SUSPENDED') {
+      await supabase.auth.signOut();
+      return NextResponse.json(
+        { error: 'Your account has been suspended. Please contact platform support.' },
+        { status: 403 }
+      );
+    }
+
+    // 7. Reset Rate Limiter on Successful Login
     resetRateLimit(rateLimitIdentifier);
 
     return NextResponse.json({ success: true, user: data.user, session: data.session });

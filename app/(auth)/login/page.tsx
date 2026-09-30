@@ -41,6 +41,14 @@ function LoginPageContent() {
       });
       const data = await res.json();
 
+      if (data.requiresEmailConfirmation) {
+        const userRole = data.role || "STUDENT";
+        router.push(
+          `/verify-email?email=${encodeURIComponent(trimmedEmail)}&role=${encodeURIComponent(userRole)}&notice=unconfirmed`
+        );
+        return;
+      }
+
       if (!res.ok) {
         setErrorMsg(data.error || "Invalid login credentials");
         setIsLoading(false);

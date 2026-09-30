@@ -79,14 +79,8 @@ function RegisterContent() {
         return;
       }
 
-      // Transition to Step 2: 6-digit email confirmation code
-      setStep("confirm");
-      setResendCooldown(60);
-      setIsLoading(false);
-      // Auto-focus first digit box
-      setTimeout(() => {
-        otpInputsRef.current[0]?.focus();
-      }, 100);
+      // Navigate to dedicated verification portal
+      router.push(`/verify-email?email=${encodeURIComponent(email)}&role=${role}`);
     } catch {
       setErrorMsg("An unexpected error occurred. Please try again.");
       setIsLoading(false);

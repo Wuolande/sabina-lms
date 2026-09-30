@@ -152,6 +152,8 @@ export async function POST(request: NextRequest) {
 
     let publicUserId: string;
 
+    const initialStatus = data.user.email_confirmed_at ? 'ACTIVE' : 'PENDING';
+
     if (dbUser) {
       publicUserId = dbUser.id;
       await adminSupabase.from('users').update({
@@ -159,6 +161,7 @@ export async function POST(request: NextRequest) {
         last_name: lName,
         display_name: displayName,
         auth_id: data.user.id,
+        status: initialStatus,
       }).eq('id', publicUserId);
     } else {
       const { data: insertedUser } = await adminSupabase.from('users').insert({
@@ -168,6 +171,7 @@ export async function POST(request: NextRequest) {
         first_name: fName,
         last_name: lName,
         display_name: displayName,
+        status: initialStatus,
       }).select('id').single();
       publicUserId = insertedUser?.id || data.user.id;
     }
