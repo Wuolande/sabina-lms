@@ -135,10 +135,19 @@ const PACES = [
 ];
 
 // Budget per hour ranges
-const BUDGET_RANGES = [
-  { id: "budget", label: "$15 – $25/hr", desc: "Great value & rising tutors" },
-  { id: "standard", label: "$25 – $45/hr", desc: "Experienced certified educators", isPopular: true },
-  { id: "premium", label: "$45 – $75+/hr", desc: "Senior professors & master specialists" },
+export interface BudgetTier {
+  id: string;
+  label: string;
+  desc: string;
+  min: number;
+  max: number;
+  isPopular?: boolean;
+}
+
+const DEFAULT_BUDGET_RANGES: BudgetTier[] = [
+  { id: "budget", label: "$15 – $25/hr", desc: "Great value & rising tutors", min: 15, max: 25 },
+  { id: "standard", label: "$25 – $45/hr", desc: "Experienced certified educators", isPopular: true, min: 25, max: 45 },
+  { id: "premium", label: "$45 – $75+/hr", desc: "Senior professors & master specialists", min: 45, max: 200 },
 ];
 
 export default function StudentOnboardingPage() {
@@ -155,13 +164,58 @@ export default function StudentOnboardingPage() {
   const [selectedMotivation, setSelectedMotivation] = React.useState(MOTIVATIONS[0]);
   const [selectedLevel, setSelectedLevel] = React.useState(LEVELS[1]);
   const [selectedPace, setSelectedPace] = React.useState(PACES[1]);
-  const [selectedBudget, setSelectedBudget] = React.useState(BUDGET_RANGES[1]);
+  const [budgetRanges, setBudgetRanges] = React.useState<BudgetTier[]>(DEFAULT_BUDGET_RANGES);
+  const [selectedBudget, setSelectedBudget] = React.useState<BudgetTier>(DEFAULT_BUDGET_RANGES[1]);
   const [customGoal, setCustomGoal] = React.useState("");
 
   // Matched tutors state for step 5
   const [matchedTutors, setMatchedTutors] = React.useState<TutorProfile[]>([]);
   const [loadingTutors, setLoadingTutors] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+
+  // Sync budget tiers dynamically with live admin policies
+  React.useEffect(() => {
+    fetch("/api/policies")
+      .then((res) => res.json())
+      .then((policies) => {
+        if (policies && typeof policies.tutorMinHourlyRate === "number") {
+          const min = Math.max(5, Math.round(policies.tutorMinHourlyRate));
+          const max = Math.max(min + 30, Math.round(policies.tutorMaxHourlyRate || 150));
+
+          const mid1 = Math.round(min + (max - min) * 0.15);
+          const mid2 = Math.round(min + (max - min) * 0.4);
+
+          const dynamicTiers: BudgetTier[] = [
+            {
+              id: "budget",
+              label: `$${min} – $${mid1}/hr`,
+              desc: "Great value & rising tutors",
+              min,
+              max: mid1,
+            },
+            {
+              id: "standard",
+              label: `$${mid1} – $${mid2}/hr`,
+              desc: "Experienced certified educators",
+              isPopular: true,
+              min: mid1,
+              max: mid2,
+            },
+            {
+              id: "premium",
+              label: `$${mid2} – $${max}+/hr`,
+              desc: "Senior professors & master specialists",
+              min: mid2,
+              max,
+            },
+          ];
+
+          setBudgetRanges(dynamicTiers);
+          setSelectedBudget(dynamicTiers[1]);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Load subject taxonomy from database
   React.useEffect(() => {
@@ -184,13 +238,15 @@ export default function StudentOnboardingPage() {
     );
   }, [subjectsList, searchSubject]);
 
-  // When reaching step 5 (Smart Match Reveal), query real matching tutors
+  // When reaching step 5 (Smart Match Reveal), query real matching tutors using subject and budget
   React.useEffect(() => {
     if (step === 5 && selectedSubject) {
       setLoadingTutors(true);
       tutorService
         .getTutors({
           subject: selectedSubject.slug,
+          minPrice: selectedBudget.min,
+          maxPrice: selectedBudget.max,
           limit: 3,
         })
         .then((res) => {
@@ -203,7 +259,7 @@ export default function StudentOnboardingPage() {
           setLoadingTutors(false);
         });
     }
-  }, [step, selectedSubject]);
+  }, [step, selectedSubject, selectedBudget]);
 
   const handleFinishOnboarding = async (destination: "tutors" | "dashboard" = "dashboard") => {
     setSaving(true);
@@ -221,7 +277,11 @@ export default function StudentOnboardingPage() {
     } finally {
       setSaving(false);
       if (destination === "tutors" && selectedSubject) {
-        router.push(`/find-tutors?subject=${encodeURIComponent(selectedSubject.slug)}`);
+        const queryParams = new URLSearchParams();
+        queryParams.set("subject", selectedSubject.slug);
+        if (selectedBudget?.min !== undefined) queryParams.set("minPrice", String(selectedBudget.min));
+        if (selectedBudget?.max !== undefined) queryParams.set("maxPrice", String(selectedBudget.max));
+        router.push(`/find-tutors?${queryParams.toString()}`);
       } else {
         router.push("/student");
       }
@@ -553,7 +613,7 @@ export default function StudentOnboardingPage() {
                   Hourly Budget Preference
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {BUDGET_RANGES.map((b) => {
+                  {budgetRanges.map((b) => {
                     const isSelected = selectedBudget.id === b.id;
                     return (
                       <button

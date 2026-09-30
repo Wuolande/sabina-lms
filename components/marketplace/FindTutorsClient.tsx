@@ -73,7 +73,18 @@ export function FindTutorsClient({
   const [selectedSubject, setSelectedSubject] = React.useState<string>(
     searchParams.get("subject") || "all"
   );
-  const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>("all");
+  const [selectedPriceRange, setSelectedPriceRange] = React.useState<string>(() => {
+    const minParam = searchParams.get("minPrice");
+    const maxParam = searchParams.get("maxPrice");
+    if (!minParam && !maxParam) return "all";
+    const minVal = Number(minParam || 0);
+    const maxVal = Number(maxParam || 200);
+
+    const match = priceRanges.find(
+      (p) => p.value !== "all" && Math.abs(p.min - minVal) <= 10 && Math.abs(p.max - maxVal) <= 15
+    );
+    return match ? match.value : "all";
+  });
   const [selectedCountry, setSelectedCountry] = React.useState<string>(
     searchParams.get("country") || "all"
   );
@@ -114,6 +125,8 @@ export function FindTutorsClient({
     selectedSubjectGroup !== "all" ||
     selectedSubject !== "all" ||
     selectedPriceRange !== "all" ||
+    Boolean(searchParams.get("minPrice")) ||
+    Boolean(searchParams.get("maxPrice")) ||
     selectedCountry !== "all" ||
     keyword !== "" ||
     selectedLanguage !== "all";
@@ -123,6 +136,15 @@ export function FindTutorsClient({
     setIsLoading(true);
     try {
       const activeRange = priceRanges.find((p) => p.value === selectedPriceRange);
+      const urlMin = searchParams.get("minPrice") ? Number(searchParams.get("minPrice")) : undefined;
+      const urlMax = searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : undefined;
+
+      const minPrice = activeRange && activeRange.value !== "all" 
+        ? activeRange.min 
+        : (selectedPriceRange === "all" ? urlMin : undefined);
+      const maxPrice = activeRange && activeRange.value !== "all" 
+        ? activeRange.max 
+        : (selectedPriceRange === "all" ? urlMax : undefined);
 
       const res = await tutorService.getTutors({
         query: keyword || undefined,
@@ -130,8 +152,8 @@ export function FindTutorsClient({
         subject: selectedSubject !== "all" ? selectedSubject : undefined,
         country: selectedCountry !== "all" ? selectedCountry : undefined,
         language: selectedLanguage !== "all" ? selectedLanguage : undefined,
-        minPrice: activeRange && activeRange.value !== "all" ? activeRange.min : undefined,
-        maxPrice: activeRange && activeRange.value !== "all" ? activeRange.max : undefined,
+        minPrice,
+        maxPrice,
         sessionType: sessionType,
         sortBy,
         page,

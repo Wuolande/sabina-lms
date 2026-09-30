@@ -21,7 +21,29 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function FindTutorsPage() {
+interface FindTutorsPageProps {
+  searchParams?: Promise<{
+    subject?: string;
+    group?: string;
+    q?: string;
+    query?: string;
+    country?: string;
+    language?: string;
+    minPrice?: string;
+    maxPrice?: string;
+  }>;
+}
+
+export default async function FindTutorsPage({ searchParams }: FindTutorsPageProps) {
+  const resolvedParams = searchParams ? await searchParams : {};
+  const subject = resolvedParams.subject || null;
+  const category = resolvedParams.group || null;
+  const search = resolvedParams.q || resolvedParams.query || null;
+  const country = resolvedParams.country || null;
+  const language = resolvedParams.language || null;
+  const minPrice = resolvedParams.minPrice ? Number(resolvedParams.minPrice) : null;
+  const maxPrice = resolvedParams.maxPrice ? Number(resolvedParams.maxPrice) : null;
+
   let initialTutors: TutorProfile[] = [];
   let initialTotal = 0;
   let initialSubjects: Subject[] = [];
@@ -30,13 +52,13 @@ export default async function FindTutorsPage() {
   try {
     const [tutorsRes, subjectsRes, languagesRes] = await Promise.all([
       adminSupabase.rpc("get_marketplace_tutors", {
-        p_search: null,
-        p_category: null,
-        p_subject: null,
-        p_country: null,
-        p_language: null,
-        p_min_price: null,
-        p_max_price: null,
+        p_search: search,
+        p_category: category,
+        p_subject: subject,
+        p_country: country,
+        p_language: language,
+        p_min_price: minPrice,
+        p_max_price: maxPrice,
         p_rating: null,
         p_is_featured: null,
         p_is_super_tutor: null,
