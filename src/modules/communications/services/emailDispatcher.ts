@@ -215,13 +215,44 @@ export async function dispatchEmail(options: SendEmailOptions): Promise<EmailDis
         return { success: true, messageId: data.id, provider: 'mailgun' };
       }
 
+      case 'smtp': {
+        if (!config.smtpHost || !config.smtpUsername || !config.smtpPassword) {
+          throw new Error('SMTP configuration is incomplete. Please set Host, Username and Password in Email Provider settings.');
+        }
+
+        // Dynamic import to keep nodemailer server-only
+        const nodemailer = (await import('nodemailer')).default;
+
+        const transporter = nodemailer.createTransport({
+          host: config.smtpHost,
+          port: config.smtpPort || 587,
+          secure: config.smtpSecure || false,
+          auth: {
+            user: config.smtpUsername,
+            pass: config.smtpPassword,
+          },
+        });
+
+        const info = await transporter.sendMail({
+          from,
+          to: to.join(', '),
+          subject: options.subject,
+          html: options.html,
+          text: options.text,
+          replyTo: options.replyTo || config.replyToEmail,
+        });
+
+        return { success: true, messageId: info.messageId, provider: 'smtp' };
+      }
+
       default: {
-        // Mock / Development log dispatch
-        console.log(`[Email Dispatch Mock (${provider})] To: ${to.join(', ')} | From: "${from}" | Subject: "${options.subject}"`);
+        // Truly unknown provider — log and return mock for dev safety
+        console.warn(`[Email Dispatch] Unknown provider "${provider}". No email was sent.`);
         return {
-          success: true,
-          messageId: `mock-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          success: false,
+          messageId: undefined,
           provider,
+          error: `Unknown provider "${provider}". Configure a valid provider in Admin → Email Settings.`,
         };
       }
     }
