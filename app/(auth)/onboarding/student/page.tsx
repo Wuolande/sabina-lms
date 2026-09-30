@@ -678,20 +678,36 @@ export default function StudentOnboardingPage() {
              ══════════════════════════════════════════════════════════════ */}
           {step === 5 && (
             <div className="space-y-6 animate-fade-in">
-              {/* Success Banner */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center sm:text-left flex flex-col sm:flex-row items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shrink-0 shadow-xs">
-                  <Sparkles className="h-6 w-6" />
+              {/* Banner */}
+              {matchedTutors.length > 0 ? (
+                <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-center sm:text-left flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shrink-0 shadow-xs">
+                    <Sparkles className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h2 className="text-base sm:text-lg font-black text-emerald-950">
+                      We found your top tutor matches for {selectedSubject?.name}!
+                    </h2>
+                    <p className="text-xs text-emerald-800">
+                      Personalized for: <strong>{selectedMotivation.title}</strong> · {selectedLevel.title} · {selectedPace.sessions}
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-0.5">
-                  <h2 className="text-base sm:text-lg font-black text-emerald-950">
-                    We found your top tutor matches for {selectedSubject?.name}!
-                  </h2>
-                  <p className="text-xs text-emerald-800">
-                    Personalized for: <strong>{selectedMotivation.title}</strong> · {selectedLevel.title} · {selectedPace.sessions}
-                  </p>
+              ) : (
+                <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/80 border border-blue-200/90 text-center sm:text-left flex flex-col sm:flex-row items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#14209C] text-white shrink-0 shadow-xs">
+                    <Sparkles className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h2 className="text-base sm:text-lg font-black text-slate-900">
+                      Top Verified Matches for {selectedSubject?.name}
+                    </h2>
+                    <p className="text-xs text-slate-600">
+                      No active tutors are currently verified in the <strong>{selectedBudget.label}</strong> tier for this subject. You can broaden your search or explore all verified educators.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Matched Tutors List */}
               <div className="space-y-3">
@@ -708,9 +724,26 @@ export default function StudentOnboardingPage() {
                     <p>Finding available accredited tutors...</p>
                   </div>
                 ) : matchedTutors.length === 0 ? (
-                  <div className="p-6 rounded-2xl bg-slate-50 border border-slate-100 text-center text-xs text-slate-500">
-                    <p className="font-semibold text-slate-800">Great tutors are available!</p>
-                    <p className="mt-0.5">Browse all verified educators across 16+ academic disciplines.</p>
+                  <div className="p-8 rounded-2xl bg-white border border-slate-200/90 text-center space-y-3 shadow-xs">
+                    <div className="h-10 w-10 mx-auto rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                      <Sparkles className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-slate-900">No verified tutors match this exact filter</p>
+                      <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                        Tutors for {selectedSubject?.name} may be pending academic verification or offer rates outside {selectedBudget.label}. Try adjusting your preferences or explore all educators.
+                      </p>
+                    </div>
+                    <div className="pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setStep(4)}
+                        className="font-bold text-xs text-[#14209C] border-slate-200 hover:bg-slate-50"
+                      >
+                        Adjust Budget or Subject
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   matchedTutors.map((tut) => (
