@@ -35,8 +35,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { useModal } from "@/components/ui/modal-context";
 import { adminService } from "@/services/adminService";
-import { TutorApplication } from "@/src/modules/tutor-applications/domain/types";
+import { TutorApplication, ApplicationDocument } from "@/src/modules/tutor-applications/domain/types";
 import { formatDate } from "@/lib/utils";
+import { DocumentViewerModal } from "@/components/admin/DocumentViewerModal";
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 const TABS = [
@@ -136,6 +137,7 @@ export default function TutorApplicationInspectPage() {
   const [loading, setLoading] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState<TabId>("overview");
   const [actionLoading, setActionLoading] = React.useState(false);
+  const [selectedDocForViewer, setSelectedDocForViewer] = React.useState<ApplicationDocument | null>(null);
 
   const loadApplication = React.useCallback(async () => {
     setLoading(true);
@@ -587,72 +589,177 @@ export default function TutorApplicationInspectPage() {
               }
             >
               {app.documents.length === 0 ? (
-                <p className="text-xs text-slate-400 italic py-4 text-center">
-                  No verification documents uploaded for this application.
-                </p>
+                <div className="py-12 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto border border-amber-200">
+                    <ShieldAlert className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">No Documents Uploaded</p>
+                    <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                      The applicant has not submitted government identity or academic diploma documents yet.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRequestChanges}
+                    className="text-xs font-bold text-amber-700 border-amber-300 hover:bg-amber-50 rounded-xl"
+                  >
+                    Request Documents from Applicant
+                  </Button>
+                </div>
               ) : (
-                <div className="space-y-3">
-                  {app.documents.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 transition space-y-3"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-start gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-[#14209C] shrink-0">
-                            <FileText className="w-5 h-5" />
-                          </div>
-                          <div className="min-w-0">
-                            <h4 className="text-xs font-bold text-slate-900 truncate">{doc.title}</h4>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[10px] text-slate-400 font-mono">{doc.documentType}</span>
-                              <DocStatusBadge status={doc.verificationStatus} />
-                            </div>
-                            {doc.notes && (
-                              <p className="text-[11px] text-rose-600 mt-1 font-medium italic">
-                                Note: {doc.notes}
-                              </p>
-                            )}
+                <div className="space-y-6">
+                  {/* Category groups */}
+                  {[
+                    {
+                      category: "IDENTITY",
+                      title: "Government Identity Documents",
+                      icon: ShieldCheck,
+                      desc: "Passports, national ID cards, and driver's licenses for KYC verification.",
+                    },
+                    {
+                      category: "DEGREE_CERTIFICATE",
+                      title: "Academic Degrees & Diplomas",
+                      icon: GraduationCap,
+                      desc: "Undergraduate, Master's, or Ph.D. graduation diplomas and university transcripts.",
+                    },
+                    {
+                      category: "TEACHING_CREDENTIAL",
+                      title: "Teaching Accreditations & Certifications",
+                      icon: Award,
+                      desc: "Qualified Teacher Status, TEFL/CELTA, and state licensing credentials.",
+                    },
+                    {
+                      category: "OTHER",
+                      title: "Other Supporting Documents",
+                      icon: FileText,
+                      desc: "Curriculum Vitae, resumes, reference letters, and supplementary certificates.",
+                    },
+                  ].map(({ category, title, icon: CatIcon, desc }) => {
+                    const catDocs = app.documents.filter((d) =>
+                      category === "OTHER"
+                        ? !["IDENTITY", "DEGREE_CERTIFICATE", "TEACHING_CREDENTIAL"].includes(d.documentType)
+                        : d.documentType === category
+                    );
+
+                    if (catDocs.length === 0) return null;
+
+                    return (
+                      <div key={category} className="space-y-3">
+                        <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
+                          <CatIcon className="w-4 h-4 text-[#14209C]" />
+                          <div>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                              {title} ({catDocs.length})
+                            </h4>
+                            <p className="text-[10px] text-slate-400">{desc}</p>
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                          <a
-                            href={doc.fileUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                            View
-                          </a>
+                        <div className="grid grid-cols-1 gap-3">
+                          {catDocs.map((doc) => {
+                            const isPdf = doc.fileUrl.toLowerCase().endsWith(".pdf") || doc.fileUrl.includes(".pdf?");
+                            return (
+                              <div
+                                key={doc.id}
+                                className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-indigo-200 hover:shadow-xs transition space-y-3"
+                              >
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                  <div className="flex items-start gap-3 min-w-0">
+                                    <div
+                                      onClick={() => setSelectedDocForViewer(doc)}
+                                      className="w-12 h-12 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 flex items-center justify-center text-[#14209C] shrink-0 cursor-pointer transition relative group overflow-hidden"
+                                    >
+                                      {!isPdf ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                          src={doc.fileUrl}
+                                          alt={doc.title}
+                                          className="w-full h-full object-cover rounded-xl"
+                                        />
+                                      ) : (
+                                        <FileText className="w-6 h-6 text-indigo-700" />
+                                      )}
+                                      <div className="absolute inset-0 bg-indigo-950/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+                                        <Eye className="w-4 h-4 text-white" />
+                                      </div>
+                                    </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleVerifyDocument(doc.id, "VERIFIED")}
-                            disabled={actionLoading || doc.verificationStatus === "VERIFIED"}
-                            className="text-xs text-emerald-700 hover:bg-emerald-50 border-emerald-300 h-8"
-                          >
-                            <Check className="w-3.5 h-3.5 mr-1" />
-                            Verify
-                          </Button>
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <h4 className="text-xs font-bold text-slate-900 truncate">{doc.title}</h4>
+                                        <DocStatusBadge status={doc.verificationStatus} />
+                                      </div>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-[10px] text-slate-400 font-mono">
+                                          Format: {isPdf ? "PDF Document" : "Image / Scan"}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400">•</span>
+                                        <span className="text-[10px] text-slate-400 font-mono truncate max-w-[180px]">
+                                          {doc.fileUrl}
+                                        </span>
+                                      </div>
+                                      {doc.notes && (
+                                        <div className="mt-1.5 p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-medium">
+                                          <strong>Rejection Reason:</strong> {doc.notes}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
 
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleVerifyDocument(doc.id, "REJECTED")}
-                            disabled={actionLoading || doc.verificationStatus === "REJECTED"}
-                            className="text-xs text-rose-700 hover:bg-rose-50 border-rose-300 h-8"
-                          >
-                            <X className="w-3.5 h-3.5 mr-1" />
-                            Reject
-                          </Button>
+                                  {/* Action Buttons */}
+                                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() => setSelectedDocForViewer(doc)}
+                                      className="text-xs bg-[#14209C] hover:bg-[#0f1877] text-white h-8 px-3 rounded-lg shadow-xs"
+                                    >
+                                      <Eye className="w-3.5 h-3.5 mr-1" />
+                                      Inspect
+                                    </Button>
+
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleVerifyDocument(doc.id, "VERIFIED")}
+                                      disabled={actionLoading || doc.verificationStatus === "VERIFIED"}
+                                      className="text-xs text-emerald-700 hover:bg-emerald-50 border-emerald-300 h-8 px-2.5 rounded-lg"
+                                    >
+                                      <Check className="w-3.5 h-3.5 mr-1" />
+                                      Verify
+                                    </Button>
+
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleVerifyDocument(doc.id, "REJECTED")}
+                                      disabled={actionLoading || doc.verificationStatus === "REJECTED"}
+                                      className="text-xs text-rose-700 hover:bg-rose-50 border-rose-300 h-8 px-2.5 rounded-lg"
+                                    >
+                                      <X className="w-3.5 h-3.5 mr-1" />
+                                      Reject
+                                    </Button>
+
+                                    <a
+                                      href={doc.fileUrl}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      title="Open in new window"
+                                      className="p-2 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
+                                    >
+                                      <ExternalLink className="w-3.5 h-3.5" />
+                                    </a>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </SectionCard>
@@ -666,69 +773,147 @@ export default function TutorApplicationInspectPage() {
                   No academic qualifications entered.
                 </p>
               ) : (
-                <div className="space-y-3">
-                  {app.education.map((e) => (
-                    <div key={e.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h4 className="text-sm font-bold text-slate-900">{e.degree}</h4>
-                        <p className="text-xs text-slate-600 font-medium">{e.institution}</p>
-                        {e.fieldOfStudy && (
-                          <p className="text-[11px] text-slate-400 mt-0.5">Field of Study: {e.fieldOfStudy}</p>
-                        )}
-                        <p className="text-[11px] text-slate-400 mt-0.5">
-                          {e.startYear} — {e.endYear || "Present"}
-                        </p>
-                        {e.honors && (
-                          <span className="inline-block mt-1 px-2 py-0.5 rounded bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
-                            {e.honors}
-                          </span>
+                <div className="space-y-4">
+                  {app.education.map((e) => {
+                    const matchingDoc =
+                      app.documents.find(
+                        (d) =>
+                          d.documentType === "DEGREE_CERTIFICATE" &&
+                          (d.title.toLowerCase().includes(e.degree.toLowerCase()) ||
+                            d.title.toLowerCase().includes(e.institution.toLowerCase()))
+                      ) || app.documents.find((d) => d.documentType === "DEGREE_CERTIFICATE");
+
+                    return (
+                      <div
+                        key={e.id}
+                        className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <h4 className="text-sm font-bold text-slate-900">{e.degree}</h4>
+                            <p className="text-xs text-slate-600 font-semibold">{e.institution}</p>
+                            {e.fieldOfStudy && (
+                              <p className="text-[11px] text-slate-500 mt-0.5">Field of Study: {e.fieldOfStudy}</p>
+                            )}
+                            <p className="text-[11px] text-slate-400 mt-0.5">
+                              {e.startYear} — {e.endYear || "Present"}
+                            </p>
+                            {e.honors && (
+                              <span className="inline-block mt-1 px-2 py-0.5 rounded bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">
+                                {e.honors}
+                              </span>
+                            )}
+                          </div>
+                          {matchingDoc?.verificationStatus === "VERIFIED" || e.isVerified ? (
+                            <Badge variant="success" size="sm">
+                              <ShieldCheck className="w-3 h-3 mr-1" /> Degree Verified
+                            </Badge>
+                          ) : (
+                            <Badge variant="warning" size="sm">Unverified</Badge>
+                          )}
+                        </div>
+
+                        {/* Associated Diploma Document Preview Strip */}
+                        {matchingDoc ? (
+                          <div className="p-3 rounded-xl bg-white border border-indigo-100 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-700 shrink-0">
+                                <FileText className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-bold text-slate-800 truncate">{matchingDoc.title}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <DocStatusBadge status={matchingDoc.verificationStatus} />
+                                </div>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setSelectedDocForViewer(matchingDoc)}
+                              className="text-xs text-indigo-700 border-indigo-200 hover:bg-indigo-50 h-8 px-3 rounded-lg shrink-0 font-bold"
+                            >
+                              <Eye className="w-3.5 h-3.5 mr-1" /> Inspect Diploma
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-slate-400 italic bg-white/60 p-2.5 rounded-xl border border-slate-100">
+                            No diploma file attached for this degree entry.
+                          </div>
                         )}
                       </div>
-                      {e.isVerified ? (
-                        <Badge variant="success" size="sm">
-                          <ShieldCheck className="w-3 h-3 mr-1" /> Verified
-                        </Badge>
-                      ) : (
-                        <Badge variant="warning" size="sm">Unverified</Badge>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </SectionCard>
           )}
 
-          {/* Tab 4: Teaching Experience */}
+          {/* Tab 4: Teaching Experience & Certifications */}
           {activeTab === "experience" && (
-            <SectionCard title="Employment & Tutoring Experience" icon={Briefcase}>
-              {app.experience.length === 0 ? (
-                <p className="text-xs text-slate-400 italic py-4 text-center">
-                  No teaching experience records provided.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {app.experience.map((ex) => (
-                    <div key={ex.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-900">{ex.role}</h4>
-                          <p className="text-xs text-slate-600 font-semibold">{ex.organization}</p>
+            <div className="space-y-6">
+              {/* Teaching Accreditations Strip */}
+              {app.documents.some((d) => d.documentType === "TEACHING_CREDENTIAL") && (
+                <SectionCard title="Teaching Accreditations & Licenses" icon={Award}>
+                  <div className="space-y-3">
+                    {app.documents
+                      .filter((d) => d.documentType === "TEACHING_CREDENTIAL")
+                      .map((credDoc) => (
+                        <div
+                          key={credDoc.id}
+                          className="p-3.5 rounded-xl bg-amber-50/50 border border-amber-200 flex items-center justify-between gap-3"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Award className="w-5 h-5 text-amber-700 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-slate-900 truncate">{credDoc.title}</p>
+                              <DocStatusBadge status={credDoc.verificationStatus} />
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedDocForViewer(credDoc)}
+                            className="text-xs text-amber-900 border-amber-300 hover:bg-amber-100 h-8 px-3 rounded-lg shrink-0 font-bold"
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1" /> Inspect Credential
+                          </Button>
                         </div>
-                        <span className="px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 text-[10px] font-bold">
-                          {ex.startYear} — {ex.isCurrent ? "Present" : ex.endYear || "Present"}
-                        </span>
-                      </div>
-                      {ex.location && <p className="text-[11px] text-slate-400">{ex.location}</p>}
-                      {ex.description && (
-                        <p className="text-xs text-slate-600 leading-relaxed pt-1 whitespace-pre-line">
-                          {ex.description}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                      ))}
+                  </div>
+                </SectionCard>
               )}
-            </SectionCard>
+
+              <SectionCard title="Employment & Tutoring Experience" icon={Briefcase}>
+                {app.experience.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic py-4 text-center">
+                    No teaching experience records provided.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {app.experience.map((ex) => (
+                      <div key={ex.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900">{ex.role}</h4>
+                            <p className="text-xs text-slate-600 font-semibold">{ex.organization}</p>
+                          </div>
+                          <span className="px-2 py-0.5 rounded-lg bg-slate-200 text-slate-700 text-[10px] font-bold">
+                            {ex.startYear} — {ex.isCurrent ? "Present" : ex.endYear || "Present"}
+                          </span>
+                        </div>
+                        {ex.location && <p className="text-[11px] text-slate-400">{ex.location}</p>}
+                        {ex.description && (
+                          <p className="text-xs text-slate-600 leading-relaxed pt-1 whitespace-pre-line">
+                            {ex.description}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </SectionCard>
+            </div>
           )}
 
           {/* Tab 5: Subjects & Languages */}
@@ -950,6 +1135,22 @@ export default function TutorApplicationInspectPage() {
         </div>
 
       </div>
+
+      {/* ── Document Inspection High-Resolution Modal ── */}
+      <DocumentViewerModal
+        document={selectedDocForViewer}
+        isOpen={Boolean(selectedDocForViewer)}
+        onClose={() => setSelectedDocForViewer(null)}
+        onVerify={async (docId) => {
+          await handleVerifyDocument(docId, "VERIFIED");
+          setSelectedDocForViewer(null);
+        }}
+        onReject={async (docId) => {
+          await handleVerifyDocument(docId, "REJECTED");
+          setSelectedDocForViewer(null);
+        }}
+        isActionLoading={actionLoading}
+      />
     </div>
   );
 }

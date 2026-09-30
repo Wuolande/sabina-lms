@@ -158,9 +158,9 @@ export function ParticipantVideoCard({
       </div>
 
       {/* ─── BOTTOM CONTROLS & NAME BAR ─── */}
-      <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-800 text-white">
+      <div className="absolute bottom-1.5 sm:bottom-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-slate-800 text-white">
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-xs font-bold text-slate-200 truncate">{displayName}</span>
+          <span className="text-[11px] sm:text-xs font-bold text-slate-200 truncate">{displayName}</span>
           {/* Network signal quality indicator */}
           {connectionQuality && (
             <span
@@ -185,9 +185,9 @@ export function ParticipantVideoCard({
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* ─── LOCAL USER TOGGLES ─── */}
+          {/* ─── LOCAL USER TOGGLES (Desktop only; on mobile, MobileClassroomDock manages mic/cam) ─── */}
           {isLocal ? (
-            <>
+            <div className="hidden sm:flex items-center gap-1.5">
               {/* Mic Toggle Button */}
               <button
                 type="button"
@@ -215,7 +215,7 @@ export function ParticipantVideoCard({
               >
                 {isVideoOff ? <VideoOff className="h-3.5 w-3.5" /> : <VideoIcon className="h-3.5 w-3.5" />}
               </button>
-            </>
+            </div>
           ) : (
             // ─── REMOTE USER DISPLAY & TUTOR MODERATION CONTROLS ───
             <>

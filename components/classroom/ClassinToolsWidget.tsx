@@ -230,25 +230,6 @@ export function ClassinToolsWidget({
         {renderToolButtons()}
       </div>
 
-      {/* ─── MOBILE COLLAPSIBLE DOCK (Bottom-Left Non-Intrusive Floating Pill) ─── */}
-      <div className="md:hidden fixed left-2 bottom-18 z-30 flex flex-col items-start gap-1.5">
-        {isMobileOpen && (
-          <div className="flex items-center gap-1.5 bg-slate-900/95 backdrop-blur-md p-1.5 rounded-2xl border border-slate-700/80 shadow-2xl animate-in fade-in slide-in-from-bottom-2">
-            {renderToolButtons()}
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          title="Teaching Tools"
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 text-white text-[11px] font-bold shadow-lg"
-        >
-          <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
-          <span>Tools</span>
-          {isMobileOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
-        </button>
-      </div>
-
       {/* ─── FLOATING TIMER WIDGET (Centered on Mobile, Offset on Desktop) ─── */}
       {isTimerOpen && (
         <div className="fixed md:absolute inset-x-3 md:inset-x-auto md:left-20 top-20 z-40 w-auto md:w-72 max-w-sm mx-auto rounded-2xl bg-slate-900/98 backdrop-blur-md border border-slate-700/80 p-4 shadow-2xl animate-in fade-in zoom-in-95 text-white">

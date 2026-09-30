@@ -45,6 +45,10 @@ const OnboardingSchema = z.object({
     })
   ).min(1, 'At least one language is required'),
 
+  identityDocumentUrl: z.string().optional(),
+  identityDocumentType: z.string().optional().default('PASSPORT'),
+  identityDocumentName: z.string().optional(),
+
   degrees: z.array(
     z.object({
       id: z.string().optional(),
@@ -66,6 +70,8 @@ const OnboardingSchema = z.object({
       issuer: z.string().min(2),
       issueYear: z.string(),
       credentialId: z.string().optional(),
+      documentName: z.string().optional(),
+      documentUrl: z.string().optional(),
     })
   ).optional().default([]),
 
@@ -271,6 +277,62 @@ export async function POST(req: NextRequest) {
       await adminSupabase.from('tutor_application_education').insert(eduRows);
     }
 
+    // 3b. Save Verification Documents (Identity, Degrees, Certifications)
+    const docRows: Array<{
+      application_id: string;
+      document_type: string;
+      title: string;
+      file_url: string;
+      verification_status: string;
+    }> = [];
+
+    // Identity Document (Passport / National ID / Driver's License)
+    if (data.identityDocumentUrl) {
+      docRows.push({
+        application_id: applicationId,
+        document_type: 'IDENTITY',
+        title: `${data.identityDocumentType || 'Passport / National ID'}: ${data.identityDocumentName || 'Government ID Verification'}`,
+        file_url: data.identityDocumentUrl,
+        verification_status: 'PENDING',
+      });
+    }
+
+    // Academic Degree Diplomas
+    data.degrees.forEach((deg) => {
+      if (deg.documentUrl) {
+        docRows.push({
+          application_id: applicationId,
+          document_type: 'DEGREE_CERTIFICATE',
+          title: `Diploma: ${deg.degree} (${deg.institution})`,
+          file_url: deg.documentUrl,
+          verification_status: 'PENDING',
+        });
+      }
+    });
+
+    // Teaching Certifications & Licenses
+    data.certifications.forEach((cert) => {
+      if (cert.documentUrl) {
+        docRows.push({
+          application_id: applicationId,
+          document_type: 'TEACHING_CREDENTIAL',
+          title: `Credential: ${cert.title} (${cert.issuer})`,
+          file_url: cert.documentUrl,
+          verification_status: 'PENDING',
+        });
+      }
+    });
+
+    if (docRows.length > 0) {
+      // Clear out previous pending documents before updating with new uploads
+      await adminSupabase
+        .from('tutor_application_documents')
+        .delete()
+        .eq('application_id', applicationId);
+
+      await adminSupabase.from('tutor_application_documents').insert(docRows);
+    }
+
     // 4. Save Work Experiences
     if (data.experiences.length > 0) {
       await adminSupabase
@@ -393,6 +455,21 @@ export async function POST(req: NextRequest) {
       }));
       if (tutorLangRows.length > 0) {
         await adminSupabase.from('tutor_languages').insert(tutorLangRows);
+      }
+
+      // Sync tutor certifications
+      if (data.certifications.length > 0) {
+        await adminSupabase.from('tutor_certifications').delete().eq('tutor_id', tutorProfile.id);
+        const certRows = data.certifications.map((c) => ({
+          tutor_id: tutorProfile.id,
+          title: c.title,
+          issuer: c.issuer,
+          issue_year: parseInt(c.issueYear, 10) || new Date().getFullYear(),
+          credential_id: c.credentialId || null,
+          certificate_url: c.documentUrl || null,
+          is_verified: false,
+        }));
+        await adminSupabase.from('tutor_certifications').insert(certRows);
       }
 
       // Sync weekly availability

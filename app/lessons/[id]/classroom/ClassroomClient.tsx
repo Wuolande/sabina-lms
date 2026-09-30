@@ -52,6 +52,7 @@ import { ClassroomSidebar } from "@/components/classroom/ClassroomSidebar";
 import { CelebrationOverlay } from "@/components/classroom/CelebrationOverlay";
 import { DeviceSettingsModal } from "@/components/classroom/DeviceSettingsModal";
 import { PreClassWaitingRoom } from "@/components/classroom/PreClassWaitingRoom";
+import { MobileClassroomDock } from "@/components/classroom/MobileClassroomDock";
 
 // ─── Provider display metadata for non-livekit fallbacks ──────────────────────
 const PROVIDER_META: Record<
@@ -708,7 +709,7 @@ function ClassinClassroomStage({
         />
 
         {/* ─── STAGE CONTAINER ─── */}
-        <div className="flex-1 flex flex-col bg-slate-950 p-1.5 sm:p-3 md:p-4 overflow-hidden relative">
+        <div className="flex-1 flex flex-col bg-slate-950 p-1.5 sm:p-3 md:p-4 pb-20 md:pb-4 overflow-hidden relative">
           
           {/* LAYOUT 1: CLASSIN STAGE (Top Video Strip + Big Whiteboard) */}
           {layoutMode === "classin_stage" && (
@@ -956,6 +957,27 @@ function ClassinClassroomStage({
       <DeviceSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* ─── MOBILE FLOATING CONTROL DOCK (Google Meet / Zoom ergonomics) ─── */}
+      <MobileClassroomDock
+        isMicEnabled={isMicEnabled}
+        isCameraEnabled={isCameraEnabled}
+        onToggleMic={handleToggleMic}
+        onToggleCamera={handleToggleCamera}
+        layoutMode={layoutMode}
+        onChangeLayout={setLayoutMode}
+        hasScreenShare={Boolean(screenShareTrack || remoteScreenTrack)}
+        onToggleChat={() => setSidebarOpen(!sidebarOpen)}
+        unreadCount={chatMessages.length}
+        isChatOpen={sidebarOpen}
+        isTutor={isTutor}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onAwardTrophy={isTutor ? (msg) => handleAwardTrophy(msg) : undefined}
+        onRaiseHand={!isTutor ? handleRaiseHand : undefined}
+        isHandRaised={isHandRaised}
+        onEndLesson={onEndLesson}
+        endButtonLabel={endButtonLabel}
       />
 
       {/* Audio Rendering for LiveKit */}

@@ -661,12 +661,12 @@ export function InteractiveWhiteboard({
 
       {/* ─── CLASSIN-GRADE FLOATING BOTTOM TOOLBAR (2-TIER COMPACT DESIGN) ─── */}
       {!canDraw ? (
-        <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-slate-900/95 backdrop-blur-md px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-slate-300 text-[11px] sm:text-xs font-bold select-none max-w-[92vw] text-center">
+        <div className="absolute bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2 bg-slate-900/95 backdrop-blur-md px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-slate-300 text-[11px] sm:text-xs font-bold select-none max-w-[92vw] text-center">
           <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-400 shrink-0" />
           <span className="truncate">Whiteboard in View Mode • Awaiting Tutor Pen Authorization</span>
         </div>
       ) : (
-        <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1 sm:gap-1.5 bg-slate-900/95 backdrop-blur-md px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-white select-none max-w-[96vw] overflow-x-auto scrollbar-none">
+        <div className="absolute bottom-20 sm:bottom-3 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1 sm:gap-1.5 bg-slate-900/95 backdrop-blur-md px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl border border-slate-700/80 shadow-[0_10px_35px_rgba(0,0,0,0.5)] text-white select-none max-w-[96vw] overflow-x-auto scrollbar-none">
           
           {/* TIER 1: Tools, Shapes, Backgrounds & Canvas Actions */}
           <div className="flex items-center gap-1 overflow-x-auto max-w-full pb-0.5 scrollbar-none justify-start sm:justify-center">

@@ -88,7 +88,6 @@ export function ClassroomHeader({
   };
 
   const [isExtendMenuOpen, setIsExtendMenuOpen] = React.useState(false);
-  const [isMobileLayoutMenuOpen, setIsMobileLayoutMenuOpen] = React.useState(false);
 
   return (
     <header className="flex h-13 sm:h-14 w-full items-center justify-between border-b border-slate-800 bg-slate-900/95 px-2.5 sm:px-4 backdrop-blur-md shrink-0 select-none z-30 text-white">
@@ -180,68 +179,6 @@ export function ClassroomHeader({
           )}
         </div>
 
-        {/* Mobile Layout Switcher Dropdown */}
-        <div className="relative md:hidden">
-          <button
-            type="button"
-            onClick={() => setIsMobileLayoutMenuOpen(!isMobileLayoutMenuOpen)}
-            className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-slate-200 text-[11px] font-bold"
-          >
-            {layoutMode === "grid" ? (
-              <GridIcon className="h-3 w-3 text-indigo-400" />
-            ) : layoutMode === "split" ? (
-              <Columns className="h-3 w-3 text-indigo-400" />
-            ) : (
-              <Layout className="h-3 w-3 text-indigo-400" />
-            )}
-            <ChevronDown className="h-3 w-3 text-slate-400" />
-          </button>
-
-          {isMobileLayoutMenuOpen && (
-            <div className="absolute top-full mt-1 left-0 z-50 flex flex-col bg-slate-900 border border-slate-700 rounded-xl p-1 shadow-2xl min-w-[130px] animate-in fade-in zoom-in-95">
-              <button
-                type="button"
-                onClick={() => {
-                  onChangeLayout("classin_stage");
-                  setIsMobileLayoutMenuOpen(false);
-                }}
-                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-bold transition ${
-                  layoutMode === "classin_stage" ? "bg-indigo-600 text-white" : "text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <Layout className="h-3.5 w-3.5" />
-                <span>Stage (Board+Cam)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onChangeLayout("grid");
-                  setIsMobileLayoutMenuOpen(false);
-                }}
-                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-bold transition ${
-                  layoutMode === "grid" ? "bg-indigo-600 text-white" : "text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <GridIcon className="h-3.5 w-3.5" />
-                <span>Video Focus</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  onChangeLayout("split");
-                  setIsMobileLayoutMenuOpen(false);
-                }}
-                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-bold transition ${
-                  layoutMode === "split" ? "bg-indigo-600 text-white" : "text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <Columns className="h-3.5 w-3.5" />
-                <span>Split View</span>
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Live Lesson Countdown Timer (Visible on all devices!) */}
         <div className="flex items-center gap-1.5">
           <div
@@ -312,72 +249,90 @@ export function ClassroomHeader({
 
       {/* ─── RIGHT: Media Controls, Chat Toggle & End Call ─── */}
       <div className="flex items-center gap-1 sm:gap-1.5">
-        {/* Mic Toggle Button */}
-        {onToggleMic && (
-          <button
-            type="button"
-            onClick={onToggleMic}
-            title={isMicEnabled ? "Mute Microphone" : "Unmute Microphone"}
-            className={`flex items-center justify-center p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-bold transition ${
-              isMicEnabled
-                ? "bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700"
-                : "bg-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/30"
-            }`}
-          >
-            {isMicEnabled ? <Mic className="h-3.5 w-3.5 text-emerald-400" /> : <MicOff className="h-3.5 w-3.5" />}
-            <span className="hidden xl:inline text-[11px] ml-1">{isMicEnabled ? "Mute" : "Unmute"}</span>
-          </button>
-        )}
+        {/* Desktop-only Media & Call Action Buttons */}
+        <div className="hidden md:flex items-center gap-1.5">
+          {/* Mic Toggle Button */}
+          {onToggleMic && (
+            <button
+              type="button"
+              onClick={onToggleMic}
+              title={isMicEnabled ? "Mute Microphone" : "Unmute Microphone"}
+              className={`flex items-center justify-center px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                isMicEnabled
+                  ? "bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700"
+                  : "bg-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/30"
+              }`}
+            >
+              {isMicEnabled ? <Mic className="h-3.5 w-3.5 text-emerald-400" /> : <MicOff className="h-3.5 w-3.5" />}
+              <span className="hidden xl:inline text-[11px] ml-1">{isMicEnabled ? "Mute" : "Unmute"}</span>
+            </button>
+          )}
 
-        {/* Video Toggle Button */}
-        {onToggleCamera && (
-          <button
-            type="button"
-            onClick={onToggleCamera}
-            title={isCameraEnabled ? "Stop Camera" : "Start Camera"}
-            className={`flex items-center justify-center p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl text-xs font-bold transition ${
-              isCameraEnabled
-                ? "bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700"
-                : "bg-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/30"
-            }`}
-          >
-            {isCameraEnabled ? <VideoIcon className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5" />}
-            <span className="hidden xl:inline text-[11px] ml-1">{isCameraEnabled ? "Stop Cam" : "Start Cam"}</span>
-          </button>
-        )}
+          {/* Video Toggle Button */}
+          {onToggleCamera && (
+            <button
+              type="button"
+              onClick={onToggleCamera}
+              title={isCameraEnabled ? "Stop Camera" : "Start Camera"}
+              className={`flex items-center justify-center px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                isCameraEnabled
+                  ? "bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700"
+                  : "bg-rose-600 text-white hover:bg-rose-700 shadow-sm shadow-rose-600/30"
+              }`}
+            >
+              {isCameraEnabled ? <VideoIcon className="h-3.5 w-3.5 text-emerald-400" /> : <VideoOff className="h-3.5 w-3.5" />}
+              <span className="hidden xl:inline text-[11px] ml-1">{isCameraEnabled ? "Stop Cam" : "Start Cam"}</span>
+            </button>
+          )}
 
-        {/* Screen Share Button (Desktop Only) */}
-        {onToggleScreenShare && (
-          <button
-            type="button"
-            onClick={onToggleScreenShare}
-            title={isScreenSharing ? "Stop Sharing Screen" : "Share Your Screen"}
-            className={`hidden md:flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
-              isScreenSharing
-                ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
-                : "bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-700"
-            }`}
-          >
-            {isScreenSharing ? <MonitorOff className="h-3.5 w-3.5" /> : <MonitorUp className="h-3.5 w-3.5" />}
-            <span className="hidden xl:inline text-[11px]">{isScreenSharing ? "Stop Share" : "Share"}</span>
-          </button>
-        )}
+          {/* Screen Share Button (Desktop Only) */}
+          {onToggleScreenShare && (
+            <button
+              type="button"
+              onClick={onToggleScreenShare}
+              title={isScreenSharing ? "Stop Sharing Screen" : "Share Your Screen"}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                isScreenSharing
+                  ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
+                  : "bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-700"
+              }`}
+            >
+              {isScreenSharing ? <MonitorOff className="h-3.5 w-3.5" /> : <MonitorUp className="h-3.5 w-3.5" />}
+              <span className="hidden xl:inline text-[11px]">{isScreenSharing ? "Stop Share" : "Share"}</span>
+            </button>
+          )}
 
-        {/* Chat & Notes Sidebar Toggle (Mobile & Desktop) */}
-        {onToggleSidebar && (
-          <button
-            type="button"
-            onClick={onToggleSidebar}
-            title="Class Chat & Live Notes"
-            className={`flex items-center justify-center p-1.5 sm:p-2 rounded-xl transition border ${
-              sidebarOpen
-                ? "bg-indigo-600 text-white border-indigo-500 shadow-xs"
-                : "bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border-slate-700"
-            }`}
+          {/* Chat & Notes Sidebar Toggle (Desktop) */}
+          {onToggleSidebar && (
+            <button
+              type="button"
+              onClick={onToggleSidebar}
+              title="Class Chat & Live Notes"
+              className={`flex items-center justify-center p-2 rounded-xl transition border ${
+                sidebarOpen
+                  ? "bg-indigo-600 text-white border-indigo-500 shadow-xs"
+                  : "bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border-slate-700"
+              }`}
+            >
+              <MessageSquare className="h-4 w-4" />
+            </button>
+          )}
+
+          {/* End Class / Leave Room Button (Desktop) */}
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onEndLesson}
+            className={`${
+              endButtonLabel.includes("Leave")
+                ? "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-sm"
+                : "bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20"
+            } font-extrabold text-xs px-3 py-1.5 flex items-center gap-1`}
           >
-            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </button>
-        )}
+            <PhoneOff className="h-3.5 w-3.5" />
+            <span>{endButtonLabel}</span>
+          </Button>
+        </div>
 
         {/* Device Settings Button */}
         <button
@@ -388,21 +343,6 @@ export function ClassroomHeader({
         >
           <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </button>
-
-        {/* End Class / Leave Room Button */}
-        <Button
-          variant="default"
-          size="sm"
-          onClick={onEndLesson}
-          className={`${
-            endButtonLabel.includes("Leave")
-              ? "bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 shadow-sm"
-              : "bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20"
-          } font-extrabold text-xs px-2 sm:px-3 py-1 sm:py-1.5 flex items-center gap-1`}
-        >
-          <PhoneOff className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{endButtonLabel}</span>
-        </Button>
       </div>
     </header>
   );

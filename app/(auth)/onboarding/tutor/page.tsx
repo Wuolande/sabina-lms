@@ -182,7 +182,11 @@ export default function TutorOnboardingPage() {
     { code: "en", name: "English", proficiency: "Native / Bilingual" },
   ]);
 
-  // ── STEP 3: ACADEMIC DEGREES ──
+  // ── STEP 3: IDENTITY & ACADEMIC CREDENTIALS ──
+  const [identityDocumentUrl, setIdentityDocumentUrl] = React.useState("");
+  const [identityDocumentType, setIdentityDocumentType] = React.useState<"PASSPORT" | "NATIONAL_ID" | "DRIVERS_LICENSE">("PASSPORT");
+  const [identityDocumentName, setIdentityDocumentName] = React.useState("");
+
   const [degrees, setDegrees] = React.useState<Array<{
     id: string;
     degree: string;
@@ -191,7 +195,8 @@ export default function TutorOnboardingPage() {
     startYear: string;
     endYear: string;
     honors: string;
-    documentName: string;
+    documentName?: string;
+    documentUrl?: string;
   }>>([]);
 
   // ── STEP 4: CERTIFICATIONS & LICENSES ──
@@ -201,6 +206,8 @@ export default function TutorOnboardingPage() {
     issuer: string;
     issueYear: string;
     credentialId: string;
+    documentName?: string;
+    documentUrl?: string;
   }>>([]);
 
   // ── STEP 5: WORK EXPERIENCE ──
@@ -255,6 +262,7 @@ export default function TutorOnboardingPage() {
         endYear: "",
         honors: "",
         documentName: "",
+        documentUrl: "",
       },
     ]);
   };
@@ -272,6 +280,8 @@ export default function TutorOnboardingPage() {
         issuer: "",
         issueYear: new Date().getFullYear().toString(),
         credentialId: "",
+        documentName: "",
+        documentUrl: "",
       },
     ]);
   };
@@ -340,6 +350,9 @@ export default function TutorOnboardingPage() {
           bioExperience: bioExperience.trim() || undefined,
           bioStyle: bioStyle.trim() || undefined,
           languages: selectedLanguages,
+          identityDocumentUrl: identityDocumentUrl || undefined,
+          identityDocumentType,
+          identityDocumentName: identityDocumentName || undefined,
           degrees,
           certifications,
           experiences,
@@ -847,10 +860,76 @@ export default function TutorOnboardingPage() {
                       Step 3 of 9
                     </span>
                     <h2 className="text-2xl font-black text-slate-950 font-heading">
-                      Academic Degrees & Verified Diplomas
+                      Identity Verification & Academic Degrees
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-500">
-                      Add your undergraduate, master&apos;s, or doctoral credentials with diploma verification.
+                      Upload your official government identification and verified university diplomas.
+                    </p>
+                  </div>
+
+                  {/* ── Government Identity Verification Card ── */}
+                  <div className="p-5 rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-50/60 to-white space-y-4 shadow-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-600/10 flex items-center justify-center text-indigo-700">
+                          <ShieldCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900">Government Identity Document</h3>
+                          <p className="text-[11px] text-slate-500">
+                            Required for platform compliance, verified badge, and payout processing.
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="subtle" size="sm" className="bg-indigo-100 text-indigo-800 border-indigo-200">
+                        Confidential
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                          Document Type
+                        </label>
+                        <Select
+                          value={identityDocumentType}
+                          onChange={(e) => setIdentityDocumentType(e.target.value as any)}
+                        >
+                          <option value="PASSPORT">Passport (Recommended)</option>
+                          <option value="NATIONAL_ID">National ID Card</option>
+                          <option value="DRIVERS_LICENSE">Driver&apos;s License</option>
+                        </Select>
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <FileUploadWithLink
+                          label="Identity Document Scan / Photo"
+                          description="Color scan or clear photo of your ID (PDF, JPG, PNG). Max 10MB."
+                          type="document"
+                          value={identityDocumentUrl}
+                          onChange={(url, meta) => {
+                            setIdentityDocumentUrl(url);
+                            setIdentityDocumentName(meta?.fileName || `${identityDocumentType}_Document.pdf`);
+                          }}
+                          placeholder="https://... or click Upload Document"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1 text-[11px] text-slate-500">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>End-to-end encrypted. Restricted strictly to admin identity compliance verification.</span>
+                    </div>
+                  </div>
+
+                  {/* ── Academic Degrees Header ── */}
+                  <div className="pt-2">
+                    <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-700 mb-1 flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4 text-brand-700" />
+                      Academic Qualifications & Diplomas
+                    </h3>
+                    <p className="text-xs text-slate-500 mb-3">
+                      Add degrees and diplomas. Uploading transcripts or diploma certificates boosts student conversion.
                     </p>
                   </div>
 
@@ -963,10 +1042,10 @@ export default function TutorOnboardingPage() {
                             label="Diploma Scan / Transcript PDF"
                             description="Upload diploma PDF to Cloudinary or paste credential URL."
                             type="document"
-                            value={(deg as any).documentUrl || ""}
+                            value={deg.documentUrl || ""}
                             onChange={(url, meta) => {
                               const newDegs = [...degrees];
-                              (newDegs[index] as any).documentUrl = url;
+                              newDegs[index].documentUrl = url;
                               newDegs[index].documentName = meta?.fileName || "Uploaded_Diploma.pdf";
                               setDegrees(newDegs);
                             }}
@@ -1112,11 +1191,11 @@ export default function TutorOnboardingPage() {
                             label="Teaching License / Certificate PDF"
                             description="Upload TEFL/CELTA certificate to Cloudinary or paste credential URL."
                             type="document"
-                            value={(cert as any).documentUrl || ""}
+                            value={cert.documentUrl || ""}
                             onChange={(url, meta) => {
                               const newC = [...certifications];
-                              (newC[index] as any).documentUrl = url;
-                              (newC[index] as any).documentName = meta?.fileName || "Uploaded_Certificate.pdf";
+                              newC[index].documentUrl = url;
+                              newC[index].documentName = meta?.fileName || "Uploaded_Certificate.pdf";
                               setCertifications(newC);
                             }}
                           />
@@ -1718,14 +1797,20 @@ export default function TutorOnboardingPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                      <div className="p-3 rounded-2xl bg-white border border-slate-200">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase">Government ID</span>
+                        <strong className="block text-xs text-slate-900 mt-0.5 truncate">
+                          {identityDocumentUrl ? `${identityDocumentType}` : "Not Attached"}
+                        </strong>
+                      </div>
                       <div className="p-3 rounded-2xl bg-white border border-slate-200">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Degrees</span>
-                        <strong className="block text-xs text-slate-900 mt-0.5">{degrees.length} Verified Degrees</strong>
+                        <strong className="block text-xs text-slate-900 mt-0.5">{degrees.length} Degrees</strong>
                       </div>
                       <div className="p-3 rounded-2xl bg-white border border-slate-200">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Licenses</span>
-                        <strong className="block text-xs text-slate-900 mt-0.5">{certifications.length} Certifications</strong>
+                        <strong className="block text-xs text-slate-900 mt-0.5">{certifications.length} Credentials</strong>
                       </div>
                       <div className="p-3 rounded-2xl bg-white border border-slate-200">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Experience</span>
