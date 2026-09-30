@@ -14,6 +14,7 @@ import { adminSupabase } from '@/src/shared/database/supabase';
 import { verifyRecaptchaToken } from '@/src/shared/security/recaptchaService';
 import { dispatchEmail, getEmailProviderConfig } from '@/src/modules/communications/services/emailDispatcher';
 import { renderBrandedEmailHtml } from '@/src/modules/communications/templates/emailTemplates';
+import { getAppOrigin } from '@/src/shared/utils/appUrl';
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     if (userCheck) {
       // 4. Generate password reset link via Supabase admin API
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://sabina.education').replace(/\/$/, '');
+      const appUrl = getAppOrigin(req);
       const { data: linkData, error: linkErr } = await adminSupabase.auth.admin.generateLink({
         type: 'recovery',
         email: normalizedEmail,

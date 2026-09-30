@@ -1,9 +1,9 @@
 /**
  * API Route: POST /api/auth/resend-code
  * -----------------------------------------------------------------------
- * Resends email confirmation OTP via the platform's SMTP dispatcher.
- * Uses Supabase admin generateLink() to get a fresh OTP, then sends a
- * branded confirmation email — completely bypassing Supabase's emailer.
+ * Resends 6-digit email confirmation OTP via the platform's SMTP dispatcher.
+ * Saves the 6-digit OTP directly to users.confirmation_token and dispatches
+ * a branded email with dynamic origin URL.
  * -----------------------------------------------------------------------
  */
 
@@ -12,6 +12,7 @@ import { adminSupabase } from '@/src/shared/database/supabase';
 import { checkRateLimit } from '@/src/shared/security/rateLimiter';
 import { dispatchEmail, getEmailProviderConfig } from '@/src/modules/communications/services/emailDispatcher';
 import { renderBrandedEmailHtml } from '@/src/modules/communications/templates/emailTemplates';
+import { getAppOrigin } from '@/src/shared/utils/appUrl';
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,49 +50,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a fresh OTP via Supabase admin API and send via our SMTP dispatcher.
-    // We use 'magiclink' type because 'signup' requires the original password which
-    // is unavailable in the resend flow. The OTP it generates is valid for verifyOtp.
-    const { data: linkData, error: linkErr } = await adminSupabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: normalizedEmail,
-    });
+    // Generate a fresh exact 6-digit numeric OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    if (linkErr || !linkData?.properties?.email_otp) {
-      // Fallback: try Supabase's own resend (may still use Supabase emailer)
-      const { error: resendErr } = await adminSupabase.auth.resend({
-        type: type as any,
-        email: normalizedEmail,
-      });
+    // Store in public.users record
+    const { data: userRow, error: updateErr } = await adminSupabase
+      .from('users')
+      .update({
+        confirmation_token: otp,
+        confirmation_sent_at: new Date().toISOString(),
+      })
+      .eq('email', normalizedEmail)
+      .select('display_name')
+      .maybeSingle();
 
-      if (resendErr) {
-        return NextResponse.json(
-          { error: resendErr.message || 'Failed to resend confirmation code.' },
-          { status: 400 }
-        );
-      }
-
-      return NextResponse.json({
-        success: true,
-        message: 'New confirmation code sent to your email address.',
-      });
+    if (updateErr) {
+      console.warn('[resend-code update users error]', updateErr.message);
     }
 
-    // Get user display name if available
-    let displayName = normalizedEmail.split('@')[0];
-    try {
-      const { data: userRow } = await adminSupabase
-        .from('users')
-        .select('display_name')
-        .eq('email', normalizedEmail)
-        .maybeSingle();
-      if (userRow?.display_name) displayName = userRow.display_name;
-    } catch {}
-
-    const otp = linkData.properties.email_otp;
-    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://sabina.education').replace(/\/$/, '');
-    // Use 'magiclink' type in the verify URL since we generated a magiclink OTP
-    const verifyLink = `${appUrl}/verify-email?email=${encodeURIComponent(normalizedEmail)}&token=${otp}&type=magiclink`;
+    const displayName = userRow?.display_name || normalizedEmail.split('@')[0];
+    const appUrl = getAppOrigin(request);
+    const verifyLink = `${appUrl}/verify-email?email=${encodeURIComponent(normalizedEmail)}&token=${otp}&type=${type}`;
 
     // Fetch theme
     let primaryColor = '#14209C';
@@ -121,7 +100,7 @@ export async function POST(request: NextRequest) {
       <p style="text-align:center;margin:0 0 24px 0;">
         <a href="${verifyLink}" style="display:inline-block;background:#14209C;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">Confirm Email Address</a>
       </p>
-      <p style="color:#94a3b8;font-size:12px;margin:0;">If you did not create a Sabina LMS account, you can safely ignore this email.</p>
+      <p style="color:#94a3b8;font-size:12px;margin:0;">If you did not request this, you can safely ignore this email.</p>
     `;
 
     await dispatchEmail({

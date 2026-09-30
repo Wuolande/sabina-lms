@@ -18,6 +18,7 @@ import { checkRateLimit } from '@/src/shared/security/rateLimiter';
 import { checkHoneypot } from '@/src/shared/security/honeypot';
 import { isDisposableEmail } from '@/src/shared/security/disposableEmailBlocker';
 import { verifyRecaptchaToken } from '@/src/shared/security/recaptchaService';
+import { getAppOrigin } from '@/src/shared/utils/appUrl';
 
 const ALLOWED_PUBLIC_ROLES = new Set(['STUDENT', 'TUTOR']);
 
@@ -218,60 +219,57 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 10. If email confirmation is required, send branded OTP via our SMTP dispatcher
-    //     (suppresses Supabase's default plain-text confirmation email)
+    // 10. If email confirmation is required, generate a 6-digit OTP and send via our SMTP dispatcher
     if (!data.user.email_confirmed_at) {
       try {
-        // Generate a fresh signup OTP link via admin API — this gives us the 6-digit token
-        const { data: linkData, error: linkErr } = await adminSupabase.auth.admin.generateLink({
-          type: 'signup',
-          email: normalizedEmail,
-          password,
+        // Generate an exact 6-digit numeric confirmation code
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Store OTP in public.users record
+        await adminSupabase.from('users').update({
+          confirmation_token: otp,
+          confirmation_sent_at: new Date().toISOString(),
+        }).eq('id', publicUserId);
+
+        const appUrl = getAppOrigin(request);
+        const verifyLink = `${appUrl}/verify-email?email=${encodeURIComponent(normalizedEmail)}&token=${otp}&type=signup`;
+
+        const { dispatchEmail, getEmailProviderConfig } = await import('@/src/modules/communications/services/emailDispatcher');
+        const { renderBrandedEmailHtml } = await import('@/src/modules/communications/templates/emailTemplates');
+
+        const emailConfig = await getEmailProviderConfig();
+        let primaryColor = '#14209C';
+        let logoUrl = '';
+        try {
+          const { data: themeData } = await adminSupabase.from('platform_theme').select('primary_color, logo_url').eq('id', 'default').single();
+          if (themeData?.primary_color) primaryColor = themeData.primary_color;
+          if (themeData?.logo_url) logoUrl = themeData.logo_url;
+        } catch {}
+
+        const bodyHtml = `
+          <h2 style="margin:0 0 16px 0;font-size:22px;font-weight:800;color:#1e293b;">Confirm your email address</h2>
+          <p style="color:#475569;margin:0 0 24px 0;font-size:15px;line-height:1.6;">
+            Hello <strong>${displayName}</strong>, thank you for joining Sabina LMS! Please enter the 6-digit code below to activate your account.
+          </p>
+          <div style="background:#f0f9ff;border:2px solid #bae6fd;border-radius:12px;padding:24px;text-align:center;margin:0 0 24px 0;">
+            <p style="margin:0 0 8px 0;font-size:13px;color:#0369a1;font-weight:600;letter-spacing:0.05em;">YOUR CONFIRMATION CODE</p>
+            <p style="margin:0;font-size:40px;font-weight:900;letter-spacing:10px;color:#0c4a6e;font-family:monospace;">${otp}</p>
+            <p style="margin:8px 0 0 0;font-size:12px;color:#64748b;">Valid for 24 hours · One-time use only</p>
+          </div>
+          <p style="text-align:center;margin:0 0 24px 0;">
+            <a href="${verifyLink}" style="display:inline-block;background:#14209C;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">Confirm Email Address</a>
+          </p>
+          <p style="color:#94a3b8;font-size:12px;margin:0;">If you did not create a Sabina LMS account, you can safely ignore this email.</p>
+        `;
+
+        await dispatchEmail({
+          to: normalizedEmail,
+          subject: '✉️ Confirm your Sabina LMS account',
+          html: renderBrandedEmailHtml({ title: 'Confirm your Sabina LMS account', bodyHtml, logoUrl, primaryColor }),
+          fromName: emailConfig.fromName,
+          fromEmail: emailConfig.fromEmail,
         });
-
-        if (!linkErr && linkData?.properties?.email_otp) {
-          const otp = linkData.properties.email_otp;
-          const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://sabina.education').replace(/\/$/, '');
-          const verifyLink = `${appUrl}/verify-email?email=${encodeURIComponent(normalizedEmail)}&token=${otp}&type=signup`;
-
-          const { dispatchEmail, getEmailProviderConfig } = await import('@/src/modules/communications/services/emailDispatcher');
-          const { renderBrandedEmailHtml } = await import('@/src/modules/communications/templates/emailTemplates');
-
-          const emailConfig = await getEmailProviderConfig();
-          let primaryColor = '#14209C';
-          let logoUrl = '';
-          try {
-            const { data: themeData } = await adminSupabase.from('platform_theme').select('primary_color, logo_url').eq('id', 'default').single();
-            if (themeData?.primary_color) primaryColor = themeData.primary_color;
-            if (themeData?.logo_url) logoUrl = themeData.logo_url;
-          } catch {}
-
-          const bodyHtml = `
-            <h2 style="margin:0 0 16px 0;font-size:22px;font-weight:800;color:#1e293b;">Confirm your email address</h2>
-            <p style="color:#475569;margin:0 0 24px 0;font-size:15px;line-height:1.6;">
-              Hello <strong>${displayName}</strong>, thank you for joining Sabina LMS! Please enter the 6-digit code below to activate your account.
-            </p>
-            <div style="background:#f0f9ff;border:2px solid #bae6fd;border-radius:12px;padding:24px;text-align:center;margin:0 0 24px 0;">
-              <p style="margin:0 0 8px 0;font-size:13px;color:#0369a1;font-weight:600;letter-spacing:0.05em;">YOUR CONFIRMATION CODE</p>
-              <p style="margin:0;font-size:40px;font-weight:900;letter-spacing:10px;color:#0c4a6e;font-family:monospace;">${otp}</p>
-              <p style="margin:8px 0 0 0;font-size:12px;color:#64748b;">Valid for 24 hours · One-time use only</p>
-            </div>
-            <p style="text-align:center;margin:0 0 24px 0;">
-              <a href="${verifyLink}" style="display:inline-block;background:#14209C;color:#ffffff;font-weight:700;font-size:15px;padding:14px 32px;border-radius:10px;text-decoration:none;">Confirm Email Address</a>
-            </p>
-            <p style="color:#94a3b8;font-size:12px;margin:0;">If you did not create a Sabina LMS account, you can safely ignore this email.</p>
-          `;
-
-          await dispatchEmail({
-            to: normalizedEmail,
-            subject: '✉️ Confirm your Sabina LMS account',
-            html: renderBrandedEmailHtml({ title: 'Confirm your Sabina LMS account', bodyHtml, logoUrl, primaryColor }),
-            fromName: emailConfig.fromName,
-            fromEmail: emailConfig.fromEmail,
-          });
-        }
       } catch (emailErr: any) {
-        // Non-blocking: user can still resend code via /api/auth/resend-code
         console.warn('[Register OTP email error]', emailErr?.message);
       }
     }
