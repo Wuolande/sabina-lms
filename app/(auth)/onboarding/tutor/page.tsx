@@ -25,6 +25,8 @@ import {
   Users,
   Briefcase,
   X,
+  ChevronDown,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -60,8 +62,13 @@ const ONBOARDING_STEPS = [
 export default function TutorOnboardingPage() {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [isSubmitted, setIsSubmitted] = React.useState(false);
-  const [showLivePreview, setShowLivePreview] = React.useState(false);
+  const [showStepsDrawer, setShowStepsDrawer] = React.useState(false);
   const [subjectsList, setSubjectsList] = React.useState<Subject[]>([]);
+
+  // Smooth scroll to top whenever the step changes (crucial for mobile ergonomics)
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentStep]);
   const [countriesList, setCountriesList] = React.useState<any[]>([]);
   const [timezonesList, setTimezonesList] = React.useState<any[]>([]);
   const [languagesList, setLanguagesList] = React.useState<any[]>([]);
@@ -393,19 +400,11 @@ export default function TutorOnboardingPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-xs font-bold text-slate-500 hidden md:inline">
-              Step {currentStep} of {ONBOARDING_STEPS.length} ({completionPercentage}%)
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg font-mono">
+              Step {currentStep}/9 ({completionPercentage}%)
             </span>
-            <button
-              type="button"
-              onClick={() => setShowLivePreview(!showLivePreview)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs transition-colors"
-            >
-              <Eye className="h-3.5 w-3.5 text-brand-700" />
-              {showLivePreview ? "Hide Preview" : "Live Preview"}
-            </button>
-            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg flex items-center gap-1">
+            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-2.5 py-1 rounded-lg hidden xs:flex items-center gap-1">
               <Check className="h-3 w-3" /> Draft Saved
             </span>
           </div>
@@ -413,9 +412,9 @@ export default function TutorOnboardingPage() {
       </header>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8">
         {/* Progress Bar Strip */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <div className="h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
             <div
               className="h-full bg-brand-700 transition-all duration-300"
@@ -469,90 +468,223 @@ export default function TutorOnboardingPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div>
             {/* ═══════════════════════════════════════════════════════════
-                LEFT COLUMN: Interactive Step Stepper
+                MOBILE STEP TRACKER & JUMPER (Visible on < lg screens)
             ═══════════════════════════════════════════════════════════ */}
-            <aside className="lg:col-span-4 rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-2 sticky top-24">
-              <div className="pb-3 border-b border-slate-100 mb-2">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider font-heading">
-                  Application Steps
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Complete all 9 sections to submit for verification
-                </p>
+            <div className="lg:hidden mb-6 bg-white rounded-3xl border border-slate-200/90 p-4 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="min-w-0 pr-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-brand-700 bg-brand-50 px-2 py-0.5 rounded-md">
+                      Step {currentStep} of 9
+                    </span>
+                    <span className="text-xs font-bold text-slate-900 truncate">
+                      {ONBOARDING_STEPS[currentStep - 1]?.title}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                    {ONBOARDING_STEPS[currentStep - 1]?.desc}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowStepsDrawer(!showStepsDrawer)}
+                  className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors"
+                >
+                  <Layers className="h-3.5 w-3.5 text-brand-700" />
+                  <span>Steps</span>
+                  <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${showStepsDrawer ? "rotate-180" : ""}`} />
+                </button>
               </div>
 
-              <div className="space-y-1">
+              {/* Horizontal quick-jump step pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar scroll-smooth">
                 {ONBOARDING_STEPS.map((s) => {
-                  const Icon = s.icon;
                   const isActive = currentStep === s.id;
                   const isCompleted = currentStep > s.id;
-
                   return (
                     <button
                       key={s.id}
                       type="button"
-                      onClick={() => setCurrentStep(s.id)}
-                      className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all ${
+                      onClick={() => {
+                        setCurrentStep(s.id);
+                        setShowStepsDrawer(false);
+                      }}
+                      className={`shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                         isActive
-                          ? "bg-slate-950 text-white font-bold shadow-xs"
+                          ? "bg-slate-950 text-white shadow-xs"
                           : isCompleted
-                          ? "bg-emerald-50/70 text-slate-800 hover:bg-emerald-50 border border-emerald-100"
-                          : "hover:bg-slate-50 text-slate-600"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`flex h-8 w-8 items-center justify-center rounded-xl shrink-0 ${
-                            isActive
-                              ? "bg-white/20 text-white"
-                              : isCompleted
-                              ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-500"
-                          }`}
-                        >
-                          {isCompleted ? <Check className="h-4 w-4 stroke-[3]" /> : <Icon className="h-4 w-4" />}
-                        </div>
-                        <div className="min-w-0">
-                          <p className={`text-xs font-bold truncate ${isActive ? "text-white" : "text-slate-900"}`}>
-                            {s.id}. {s.title}
-                          </p>
-                          <p className={`text-[11px] truncate ${isActive ? "text-slate-300" : "text-slate-400"}`}>
-                            {s.desc}
-                          </p>
-                        </div>
-                      </div>
-
-                      {isCompleted && !isActive && (
-                        <Badge variant="subtle" size="sm" className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
-                          Done
-                        </Badge>
+                      {isCompleted ? (
+                        <Check className="h-3 w-3 stroke-[3]" />
+                      ) : (
+                        <span>{s.id}</span>
                       )}
+                      <span className="truncate max-w-[85px]">{s.title.split(" ")[0]}</span>
                     </button>
                   );
                 })}
               </div>
 
-              <div className="pt-3 border-t border-slate-100">
-                <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900 space-y-1">
-                  <span className="font-bold flex items-center gap-1">
-                    <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                    Pro Tip for Higher Earnings
-                  </span>
-                  <p className="text-amber-800 leading-relaxed">
-                    Tutors with verified degrees and intro videos charge up to <strong>\$75–\$120/hr</strong> on average.
+              {/* Expandable Step Sheet / Drawer on Mobile */}
+              {showStepsDrawer && (
+                <div className="pt-3 border-t border-slate-100 space-y-1.5 animate-fade-in">
+                  <div className="flex items-center justify-between pb-1">
+                    <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Select Step to Jump
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowStepsDrawer(false)}
+                      className="text-xs text-slate-400 hover:text-slate-600 font-bold p-1"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1 max-h-80 overflow-y-auto pr-1">
+                    {ONBOARDING_STEPS.map((s) => {
+                      const Icon = s.icon;
+                      const isActive = currentStep === s.id;
+                      const isCompleted = currentStep > s.id;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          onClick={() => {
+                            setCurrentStep(s.id);
+                            setShowStepsDrawer(false);
+                          }}
+                          className={`w-full flex items-center justify-between p-2.5 rounded-2xl text-left transition-all ${
+                            isActive
+                              ? "bg-slate-950 text-white font-bold"
+                              : isCompleted
+                              ? "bg-emerald-50/70 text-slate-800 hover:bg-emerald-50 border border-emerald-100"
+                              : "hover:bg-slate-50 text-slate-600"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className={`flex h-7 w-7 items-center justify-center rounded-lg shrink-0 ${
+                                isActive
+                                  ? "bg-white/20 text-white"
+                                  : isCompleted
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-slate-100 text-slate-500"
+                              }`}
+                            >
+                              {isCompleted ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : <Icon className="h-3.5 w-3.5" />}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={`text-xs font-bold truncate ${isActive ? "text-white" : "text-slate-900"}`}>
+                                {s.id}. {s.title}
+                              </p>
+                              <p className={`text-[10px] truncate ${isActive ? "text-slate-300" : "text-slate-400"}`}>
+                                {s.desc}
+                              </p>
+                            </div>
+                          </div>
+                          {isCompleted && !isActive && (
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100/60 px-2 py-0.5 rounded-md">
+                              Done
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* ═══════════════════════════════════════════════════════════
+                  LEFT COLUMN: Interactive Step Stepper (Desktop Only)
+              ═══════════════════════════════════════════════════════════ */}
+              <aside className="hidden lg:block lg:col-span-4 rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xs space-y-2 sticky top-24">
+                <div className="pb-3 border-b border-slate-100 mb-2">
+                  <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider font-heading">
+                    Application Steps
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Complete all 9 sections to submit for verification
                   </p>
                 </div>
-              </div>
-            </aside>
 
-            {/* ═══════════════════════════════════════════════════════════
-                CENTER COLUMN: Active Step Form Canvas
-            ═══════════════════════════════════════════════════════════ */}
-            <div className="lg:col-span-8 rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-10 shadow-xs space-y-8">
-              {/* ── STEP 1: ABOUT YOU ── */}
-              {currentStep === 1 && (
+                <div className="space-y-1">
+                  {ONBOARDING_STEPS.map((s) => {
+                    const Icon = s.icon;
+                    const isActive = currentStep === s.id;
+                    const isCompleted = currentStep > s.id;
+
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setCurrentStep(s.id)}
+                        className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all ${
+                          isActive
+                            ? "bg-slate-950 text-white font-bold shadow-xs"
+                            : isCompleted
+                            ? "bg-emerald-50/70 text-slate-800 hover:bg-emerald-50 border border-emerald-100"
+                            : "hover:bg-slate-50 text-slate-600"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={`flex h-8 w-8 items-center justify-center rounded-xl shrink-0 ${
+                              isActive
+                                ? "bg-white/20 text-white"
+                                : isCompleted
+                                ? "bg-emerald-600 text-white"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {isCompleted ? <Check className="h-4 w-4 stroke-[3]" /> : <Icon className="h-4 w-4" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className={`text-xs font-bold truncate ${isActive ? "text-white" : "text-slate-900"}`}>
+                              {s.id}. {s.title}
+                            </p>
+                            <p className={`text-[11px] truncate ${isActive ? "text-slate-300" : "text-slate-400"}`}>
+                              {s.desc}
+                            </p>
+                          </div>
+                        </div>
+
+                        {isCompleted && !isActive && (
+                          <Badge variant="subtle" size="sm" className="bg-emerald-100 text-emerald-800 border-none font-bold text-[10px]">
+                            Done
+                          </Badge>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-3 border-t border-slate-100">
+                  <div className="p-3 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-[11px] text-amber-900 space-y-1">
+                    <span className="font-bold flex items-center gap-1">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-600" />
+                      Pro Tip for Higher Earnings
+                    </span>
+                    <p className="text-amber-800 leading-relaxed">
+                      Tutors with verified degrees and intro videos charge up to <strong>\$75–\$120/hr</strong> on average.
+                    </p>
+                  </div>
+                </div>
+              </aside>
+
+              {/* ═══════════════════════════════════════════════════════════
+                  CENTER COLUMN: Active Step Form Canvas
+              ═══════════════════════════════════════════════════════════ */}
+              <div className="lg:col-span-8 rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-10 shadow-xs space-y-8">
+                {/* ── STEP 1: ABOUT YOU ── */}
+                {currentStep === 1 && (
                 <div className="space-y-6 animate-fade-in">
                   <div className="space-y-1 pb-4 border-b border-slate-100">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-brand-700">
@@ -651,7 +783,7 @@ export default function TutorOnboardingPage() {
                     <Button
                       variant="default"
                       size="lg"
-                      className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
+                      className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
                       onClick={() => setCurrentStep(2)}
                       rightIcon={<ArrowRight className="h-4 w-4" />}
                     >
@@ -835,14 +967,14 @@ export default function TutorOnboardingPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <Button variant="outline" className="rounded-xl font-bold" onClick={() => setCurrentStep(1)}>
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                    <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold" onClick={() => setCurrentStep(1)}>
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                     <Button
                       variant="default"
                       size="lg"
-                      className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
+                      className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
                       onClick={() => setCurrentStep(3)}
                       rightIcon={<ArrowRight className="h-4 w-4" />}
                     >
@@ -1066,14 +1198,14 @@ export default function TutorOnboardingPage() {
                     </Button>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <Button variant="outline" className="rounded-xl font-bold" onClick={() => setCurrentStep(2)}>
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                    <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold" onClick={() => setCurrentStep(2)}>
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                     <Button
                       variant="default"
                       size="lg"
-                      className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
+                      className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
                       onClick={() => setCurrentStep(4)}
                       rightIcon={<ArrowRight className="h-4 w-4" />}
                     >
@@ -1215,14 +1347,14 @@ export default function TutorOnboardingPage() {
                     </Button>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <Button variant="outline" className="rounded-xl font-bold" onClick={() => setCurrentStep(3)}>
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                    <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold" onClick={() => setCurrentStep(3)}>
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                     <Button
                       variant="default"
                       size="lg"
-                      className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
+                      className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
                       onClick={() => setCurrentStep(5)}
                       rightIcon={<ArrowRight className="h-4 w-4" />}
                     >
@@ -1369,14 +1501,14 @@ export default function TutorOnboardingPage() {
                     </Button>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <Button variant="outline" className="rounded-xl font-bold" onClick={() => setCurrentStep(4)}>
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                    <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold" onClick={() => setCurrentStep(4)}>
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                     <Button
                       variant="default"
                       size="lg"
-                      className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
+                      className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
                       onClick={() => setCurrentStep(6)}
                       rightIcon={<ArrowRight className="h-4 w-4" />}
                     >
@@ -1478,8 +1610,8 @@ export default function TutorOnboardingPage() {
                   </div>
 
                   {/* Hourly Rate Slider */}
-                  <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-4">
-                    <div className="flex justify-between items-center">
+                  <div className="p-4 sm:p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                       <div>
                         <span className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                           Standard Hourly Rate (50-Min Lesson)
@@ -1488,8 +1620,8 @@ export default function TutorOnboardingPage() {
                           You keep {(100 - platformPolicies.platformFeePercent).toFixed(0)}% of your earnings after platform processing ({platformPolicies.platformFeePercent}% platform fee).
                         </p>
                       </div>
-                      <div className="text-right">
-                        <div className="text-3xl font-black text-brand-700 font-heading">
+                      <div className="text-left sm:text-right shrink-0">
+                        <div className="text-2xl sm:text-3xl font-black text-brand-700 font-heading">
                           ${hourlyRate} <span className="text-xs font-semibold text-slate-500">USD/hr</span>
                         </div>
                         <span className="text-[11px] font-semibold text-emerald-600 block">
@@ -1514,9 +1646,10 @@ export default function TutorOnboardingPage() {
                     />
 
                     <div className="flex justify-between text-[11px] text-slate-400 font-bold">
-                      <span>${platformPolicies.tutorMinHourlyRate}/hr (Platform Min)</span>
+                      <span>Min: ${platformPolicies.tutorMinHourlyRate}/hr</span>
                       <span>
-                        ${Math.min(
+                        Rec: $
+                        {Math.min(
                           platformPolicies.tutorMaxHourlyRate,
                           Math.max(
                             platformPolicies.tutorMinHourlyRate,
@@ -1525,9 +1658,10 @@ export default function TutorOnboardingPage() {
                                 (platformPolicies.tutorMaxHourlyRate - platformPolicies.tutorMinHourlyRate) * 0.25
                             )
                           )
-                        )}/hr (Recommended)
+                        )}
+                        /hr
                       </span>
-                      <span>${platformPolicies.tutorMaxHourlyRate}/hr (Platform Max)</span>
+                      <span>Max: ${platformPolicies.tutorMaxHourlyRate}/hr</span>
                     </div>
                   </div>
 
@@ -1586,14 +1720,14 @@ export default function TutorOnboardingPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <Button variant="outline" className="rounded-xl font-bold" onClick={() => setCurrentStep(5)}>
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                    <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold" onClick={() => setCurrentStep(5)}>
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                     <Button
                       variant="default"
                       size="lg"
-                      className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
+                      className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
                       onClick={() => setCurrentStep(7)}
                       rightIcon={<ArrowRight className="h-4 w-4" />}
                     >
@@ -1622,30 +1756,37 @@ export default function TutorOnboardingPage() {
                     {schedule.map((item, idx) => (
                       <div
                         key={item.day}
-                        className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all ${
+                        className={`flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border transition-all gap-3 ${
                           item.active
                             ? "border-slate-200/90 bg-slate-50"
                             : "border-slate-100 bg-slate-50/40 opacity-60"
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            checked={item.active}
-                            onChange={(e) => {
-                              const newS = [...schedule];
-                              newS[idx].active = e.target.checked;
-                              setSchedule(newS);
-                            }}
-                            className="h-4 w-4 rounded-md accent-brand-700 cursor-pointer"
-                          />
-                          <span className="text-xs font-bold text-slate-900 w-24">
-                            {item.day}
-                          </span>
+                        <div className="flex items-center justify-between sm:justify-start gap-3">
+                          <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={item.active}
+                              onChange={(e) => {
+                                const newS = [...schedule];
+                                newS[idx].active = e.target.checked;
+                                setSchedule(newS);
+                              }}
+                              className="h-4 w-4 rounded-md accent-brand-700 cursor-pointer"
+                            />
+                            <span className="text-xs font-bold text-slate-900 w-24">
+                              {item.day}
+                            </span>
+                          </label>
+                          {!item.active && (
+                            <span className="text-xs font-semibold text-slate-400 sm:hidden">
+                              Day Off
+                            </span>
+                          )}
                         </div>
 
                         {item.active ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 pl-7 sm:pl-0 w-full sm:w-auto">
                             <input
                               type="time"
                               value={item.start}
@@ -1654,9 +1795,9 @@ export default function TutorOnboardingPage() {
                                 newS[idx].start = e.target.value;
                                 setSchedule(newS);
                               }}
-                              className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono font-bold text-slate-800"
+                              className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono font-bold text-slate-800"
                             />
-                            <span className="text-xs text-slate-400">to</span>
+                            <span className="text-xs text-slate-400 shrink-0">to</span>
                             <input
                               type="time"
                               value={item.end}
@@ -1665,11 +1806,11 @@ export default function TutorOnboardingPage() {
                                 newS[idx].end = e.target.value;
                                 setSchedule(newS);
                               }}
-                              className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono font-bold text-slate-800"
+                              className="flex-1 sm:flex-none rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-mono font-bold text-slate-800"
                             />
                           </div>
                         ) : (
-                          <span className="text-xs font-semibold text-slate-400 pr-4">
+                          <span className="text-xs font-semibold text-slate-400 hidden sm:inline-block pr-4">
                             Day Off
                           </span>
                         )}
@@ -1677,14 +1818,14 @@ export default function TutorOnboardingPage() {
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <Button variant="outline" className="rounded-xl font-bold" onClick={() => setCurrentStep(6)}>
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                    <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold" onClick={() => setCurrentStep(6)}>
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                     <Button
                       variant="default"
                       size="lg"
-                      className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
+                      className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
                       onClick={() => setCurrentStep(8)}
                       rightIcon={<ArrowRight className="h-4 w-4" />}
                     >
@@ -1742,14 +1883,14 @@ export default function TutorOnboardingPage() {
                     </ul>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <Button variant="outline" className="rounded-xl font-bold" onClick={() => setCurrentStep(7)}>
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                    <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold" onClick={() => setCurrentStep(7)}>
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                     <Button
                       variant="default"
                       size="lg"
-                      className="font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
+                      className="w-full sm:w-auto font-extrabold bg-slate-950 hover:bg-slate-800 text-white rounded-xl shadow-xs px-8"
                       onClick={() => setCurrentStep(9)}
                       rightIcon={<ArrowRight className="h-4 w-4" />}
                     >
@@ -1775,7 +1916,7 @@ export default function TutorOnboardingPage() {
                   </div>
 
                   {/* Summary Card */}
-                  <div className="p-6 rounded-3xl border border-slate-200/90 bg-slate-50/50 space-y-4 shadow-xs">
+                  <div className="p-4 sm:p-6 rounded-3xl border border-slate-200/90 bg-slate-50/50 space-y-4 shadow-xs">
                     <div className="flex items-start gap-4">
                       <Avatar
                         src={avatarPreview}
@@ -1784,11 +1925,11 @@ export default function TutorOnboardingPage() {
                         statusIndicator="online"
                         superTutor={true}
                       />
-                      <div className="space-y-1">
-                        <h3 className="text-lg font-black text-slate-900 font-heading">
+                      <div className="space-y-1 min-w-0">
+                        <h3 className="text-lg font-black text-slate-900 font-heading truncate">
                           {displayName}
                         </h3>
-                        <p className="text-xs font-semibold text-slate-600">
+                        <p className="text-xs font-semibold text-slate-600 line-clamp-2">
                           {headline}
                         </p>
                         <p className="text-[11px] text-slate-400">
@@ -1854,8 +1995,8 @@ export default function TutorOnboardingPage() {
                     </label>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <Button variant="outline" className="rounded-xl font-bold" onClick={() => setCurrentStep(8)}>
+                  <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                    <Button variant="outline" className="w-full sm:w-auto rounded-xl font-bold" onClick={() => setCurrentStep(8)}>
                       <ArrowLeft className="h-4 w-4 mr-1" /> Back
                     </Button>
                     <Button
@@ -1863,19 +2004,20 @@ export default function TutorOnboardingPage() {
                       size="lg"
                       isLoading={isSubmitting}
                       disabled={isSubmitting || !agreedToQualityCheck || !agreedToTerms}
-                      className="font-extrabold bg-[#0B1E8A] hover:bg-[#081566] text-white rounded-2xl shadow-card px-10 py-3.5 disabled:opacity-60"
+                      className="w-full sm:w-auto font-extrabold bg-[#0B1E8A] hover:bg-[#081566] text-white rounded-2xl shadow-card px-6 sm:px-10 py-3.5 disabled:opacity-60 text-xs sm:text-sm"
                       onClick={handleSubmit}
                       rightIcon={<ShieldCheck className="h-5 w-5 text-[#F9C31C]" />}
                     >
-                      {isSubmitting ? "Submitting Application..." : "Submit Tutor Application for Verification"}
+                      {isSubmitting ? "Submitting Application..." : "Submit Application for Verification"}
                     </Button>
                   </div>
                 </div>
               )}
             </div>
           </div>
-        )}
-      </main>
-    </div>
-  );
+        </div>
+      )}
+    </main>
+  </div>
+);
 }

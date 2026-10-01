@@ -261,6 +261,11 @@ export default function StudentOnboardingPage() {
     }
   }, [step, selectedSubject, selectedBudget]);
 
+  // Smooth scroll to top when step transitions (crucial for mobile screens)
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step]);
+
   const handleFinishOnboarding = async (destination: "tutors" | "dashboard" = "dashboard") => {
     setSaving(true);
     const primaryGoalTitle = customGoal.trim() || `${selectedMotivation.title} in ${selectedSubject?.name || "General Studies"}`;
@@ -291,8 +296,8 @@ export default function StudentOnboardingPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between text-slate-900">
       {/* ── Top Header Navigation Bar ── */}
-      <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 px-3.5 sm:px-8 py-3.5 flex items-center justify-between">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Logo size="default" href="/" />
           <div className="hidden sm:flex items-center gap-1.5 pl-4 border-l border-slate-200 text-xs font-semibold text-slate-500">
             <span>Student Onboarding</span>
@@ -300,13 +305,13 @@ export default function StudentOnboardingPage() {
         </div>
 
         {/* Progress Dots / Bar */}
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden xs:block">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="text-right">
             <span className="text-xs font-bold text-slate-700 font-mono">
-              Step {step} of {totalSteps}
+              Step {step}/{totalSteps}
             </span>
           </div>
-          <div className="w-24 sm:w-36 h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div className="w-16 xs:w-24 sm:w-36 h-2 rounded-full bg-slate-100 overflow-hidden">
             <div
               className="h-full bg-[#14209C] rounded-full transition-all duration-300 ease-out"
               style={{ width: `${(step / totalSteps) * 100}%` }}
@@ -315,16 +320,16 @@ export default function StudentOnboardingPage() {
           <button
             type="button"
             onClick={() => handleFinishOnboarding("dashboard")}
-            className="text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors ml-2"
+            className="text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors ml-1 sm:ml-2 whitespace-nowrap"
           >
-            Skip for now
+            Skip
           </button>
         </div>
       </header>
 
       {/* ── Main Content Container ── */}
-      <main className="flex-1 flex flex-col justify-center max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12">
-        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-10 shadow-card transition-all">
+      <main className="flex-1 flex flex-col justify-center max-w-3xl mx-auto w-full px-3.5 sm:px-6 py-4 sm:py-12">
+        <div className="rounded-3xl border border-slate-200/90 bg-white p-4 sm:p-10 shadow-card transition-all">
           
           {/* ══════════════════════════════════════════════════════════════
               STEP 1: SUBJECT DISCOVERY
@@ -356,7 +361,7 @@ export default function StudentOnboardingPage() {
               </div>
 
               {/* Subjects Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
                 {filteredSubjects.length === 0 ? (
                   <div className="col-span-full py-10 text-center text-xs text-slate-400">
                     No subjects found matching &quot;{searchSubject}&quot;.
@@ -386,7 +391,7 @@ export default function StudentOnboardingPage() {
                 )}
               </div>
 
-              <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pt-4 border-t border-slate-100">
                 <span className="text-xs text-slate-400 font-medium">
                   Selected: <strong className="text-slate-800">{selectedSubject?.name || "None"}</strong>
                 </span>
@@ -395,7 +400,7 @@ export default function StudentOnboardingPage() {
                   size="lg"
                   disabled={!selectedSubject}
                   onClick={() => setStep(2)}
-                  className="font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center gap-2 shadow-xs"
+                  className="w-full sm:w-auto font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center justify-center gap-2 shadow-xs"
                 >
                   <span>Continue</span>
                   <ArrowRight className="h-4 w-4" />
@@ -452,12 +457,12 @@ export default function StudentOnboardingPage() {
                 })}
               </div>
 
-              <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
                 <Button
                   variant="outline"
                   size="lg"
                   onClick={() => setStep(1)}
-                  className="font-semibold text-slate-600 flex items-center gap-1.5"
+                  className="w-full sm:w-auto font-semibold text-slate-600 flex items-center justify-center gap-1.5"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   <span>Back</span>
@@ -466,7 +471,7 @@ export default function StudentOnboardingPage() {
                   variant="default"
                   size="lg"
                   onClick={() => setStep(3)}
-                  className="font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center gap-2 shadow-xs"
+                  className="w-full sm:w-auto font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center justify-center gap-2 shadow-xs"
                 >
                   <span>Continue</span>
                   <ArrowRight className="h-4 w-4" />
@@ -530,12 +535,12 @@ export default function StudentOnboardingPage() {
                 })}
               </div>
 
-              <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
                 <Button
                   variant="outline"
                   size="lg"
                   onClick={() => setStep(2)}
-                  className="font-semibold text-slate-600 flex items-center gap-1.5"
+                  className="w-full sm:w-auto font-semibold text-slate-600 flex items-center justify-center gap-1.5"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   <span>Back</span>
@@ -544,7 +549,7 @@ export default function StudentOnboardingPage() {
                   variant="default"
                   size="lg"
                   onClick={() => setStep(4)}
-                  className="font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center gap-2 shadow-xs"
+                  className="w-full sm:w-auto font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center justify-center gap-2 shadow-xs"
                 >
                   <span>Continue</span>
                   <ArrowRight className="h-4 w-4" />
@@ -650,12 +655,12 @@ export default function StudentOnboardingPage() {
                 />
               </div>
 
-              <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
                 <Button
                   variant="outline"
                   size="lg"
                   onClick={() => setStep(3)}
-                  className="font-semibold text-slate-600 flex items-center gap-1.5"
+                  className="w-full sm:w-auto font-semibold text-slate-600 flex items-center justify-center gap-1.5"
                 >
                   <ArrowLeft className="h-4 w-4" />
                   <span>Back</span>
@@ -664,7 +669,7 @@ export default function StudentOnboardingPage() {
                   variant="default"
                   size="lg"
                   onClick={() => setStep(5)}
-                  className="font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center gap-2 shadow-xs"
+                  className="w-full sm:w-auto font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center justify-center gap-2 shadow-xs"
                 >
                   <span>See Matched Tutors</span>
                   <Sparkles className="h-4 w-4" />
@@ -803,7 +808,7 @@ export default function StudentOnboardingPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
                 <Button
                   variant="outline"
                   size="lg"
@@ -814,13 +819,13 @@ export default function StudentOnboardingPage() {
                   <span>Adjust Preferences</span>
                 </Button>
 
-                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="lg"
                     isLoading={saving}
                     onClick={() => handleFinishOnboarding("tutors")}
-                    className="w-full sm:w-auto font-bold border-[#14209C] text-[#14209C] hover:bg-[#14209C]/5"
+                    className="w-full sm:w-auto font-bold border-[#14209C] text-[#14209C] hover:bg-[#14209C]/5 text-xs sm:text-sm"
                   >
                     Explore All {selectedSubject?.name} Tutors
                   </Button>
@@ -829,7 +834,7 @@ export default function StudentOnboardingPage() {
                     size="lg"
                     isLoading={saving}
                     onClick={() => handleFinishOnboarding("dashboard")}
-                    className="w-full sm:w-auto font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center justify-center gap-2 shadow-xs"
+                    className="w-full sm:w-auto font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center justify-center gap-2 shadow-xs text-xs sm:text-sm"
                   >
                     <span>Launch My Dashboard</span>
                     <ArrowRight className="h-4 w-4" />
