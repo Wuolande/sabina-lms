@@ -114,7 +114,7 @@ export function TutorSidebar({ isOpen, onClose }: TutorSidebarProps) {
               <p className="text-xs font-bold text-white leading-tight">Tutor Console</p>
               <p className="text-[10px] text-slate-400 font-medium leading-tight truncate">
                 {tutorName} ·{" "}
-                {verificationStatus === "VERIFIED"
+                {verificationStatus === "VERIFIED" || verificationStatus === "APPROVED"
                   ? "Approved"
                   : verificationStatus === "REJECTED"
                   ? "Action Required"

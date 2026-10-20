@@ -65,6 +65,9 @@ export default function TutorDashboardPage() {
   const displayName = user.displayName || "Tutor";
   const headline = dashboardData?.headline || "Verified Educator & Academic Coach";
   const slug = dashboardData?.slug || "";
+  const isVerified =
+    dashboardData?.verificationStatus === "VERIFIED" ||
+    dashboardData?.verificationStatus === "APPROVED";
 
   // Filter lessons for today
   const todayLessons = React.useMemo(() => {
@@ -127,7 +130,7 @@ export default function TutorDashboardPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-16">
       {/* Verification Status Alert Banner */}
-      {dashboardData?.verificationStatus !== "VERIFIED" && (
+      {!isVerified && (
         <div className="rounded-3xl border border-amber-200/90 bg-amber-50/80 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="h-10 w-10 rounded-2xl bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0 text-amber-800 mt-0.5 sm:mt-0">
@@ -170,7 +173,7 @@ export default function TutorDashboardPage() {
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                   Welcome back, {displayName} 👋
                 </h1>
-                {dashboardData?.verificationStatus === "VERIFIED" ? (
+                {isVerified ? (
                   <Badge variant="success" size="sm" className="gap-1 bg-emerald-50 text-emerald-700 border-emerald-200 font-bold">
                     <ShieldCheck className="h-3.5 w-3.5" />
                     Verified Tutor

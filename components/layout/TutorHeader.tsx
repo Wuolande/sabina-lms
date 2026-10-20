@@ -170,7 +170,7 @@ export function TutorHeader({ onToggleSidebar }: TutorHeaderProps) {
         </button>
 
         {/* Dynamic Verification Badge */}
-        {profileData?.verificationStatus === "VERIFIED" ? (
+        {profileData?.verificationStatus === "VERIFIED" || profileData?.verificationStatus === "APPROVED" ? (
           <Badge
             variant="success"
             size="sm"

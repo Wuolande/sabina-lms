@@ -53,7 +53,7 @@ export class BookingService {
     }
 
     if (
-      tutorProfile.data.verification_status !== 'APPROVED' ||
+      !['APPROVED', 'VERIFIED'].includes(tutorProfile.data.verification_status) ||
       tutorProfile.data.account_status !== 'ACTIVE'
     ) {
       throw new ValidationError('This tutor profile is currently pending verification or inactive and cannot accept bookings.');

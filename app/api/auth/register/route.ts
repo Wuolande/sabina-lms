@@ -169,17 +169,51 @@ export async function POST(request: NextRequest) {
       console.warn('[Register user_roles error]', rErr?.message);
     }
 
-    // If Tutor, seed empty tutor_profiles row with valid slug
+    // If Tutor, create initial tutor application and seed tutor_profiles row with valid slug
     if (safeRole === 'TUTOR') {
       try {
+        let applicationId: string | null = null;
+        const { data: existingApp } = await adminSupabase
+          .from('tutor_applications')
+          .select('id')
+          .eq('applicant_user_id', publicUserId)
+          .maybeSingle();
+
+        if (existingApp?.id) {
+          applicationId = existingApp.id;
+        } else {
+          const { data: newApp, error: appErr } = await adminSupabase
+            .from('tutor_applications')
+            .insert({
+              applicant_user_id: publicUserId,
+              status: 'SUBMITTED',
+              headline: 'Instructor at Sabina LMS',
+              bio: '',
+              hourly_rate: 25.0,
+              currency: 'USD',
+              years_experience: 1,
+              submitted_at: new Date().toISOString(),
+            })
+            .select('id')
+            .single();
+
+          if (!appErr && newApp?.id) {
+            applicationId = newApp.id;
+          } else if (appErr) {
+            console.warn('[Register tutor_application seed notice]', appErr.message);
+          }
+        }
+
         const cleanName = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'tutor';
         const tutorSlug = `${cleanName}-${publicUserId.slice(0, 8)}`;
         await adminSupabase.from('tutor_profiles').upsert({
           user_id: publicUserId,
+          application_id: applicationId,
           slug: tutorSlug,
           bio: '',
           headline: 'Instructor at Sabina LMS',
           hourly_rate: 25.0,
+          currency: 'USD',
           verification_status: 'PENDING',
           account_status: 'ACTIVE',
         }, { onConflict: 'user_id' });
