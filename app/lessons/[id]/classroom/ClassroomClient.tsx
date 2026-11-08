@@ -363,16 +363,19 @@ function ClassinClassroomStage({
     async (payload: Record<string, any>) => {
       if (!lesson?.id) return;
       try {
-        await fetch(`/api/classroom/lesson/${lesson.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        await fetch(
+          `/api/classroom/lesson/${lesson.id}?testRole=${encodeURIComponent(currentUserRole)}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...payload, testRole: currentUserRole }),
+          }
+        );
       } catch (err) {
         console.warn("[Classroom] Persist patch warning:", err);
       }
     },
-    [lesson?.id]
+    [lesson?.id, currentUserRole]
   );
 
   // ─── Broadcast Helper over LiveKit Data Channel ───
@@ -592,9 +595,14 @@ function ClassinClassroomStage({
     if (!lesson?.id) return;
     const pollInterval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/classroom/lesson/${lesson.id}?syncOnly=1`, {
-          cache: "no-store",
-        });
+        const res = await fetch(
+          `/api/classroom/lesson/${lesson.id}?syncOnly=1&testRole=${encodeURIComponent(
+            currentUserRole
+          )}`,
+          {
+            cache: "no-store",
+          }
+        );
         if (!res.ok) return;
         const data = await res.json();
 
@@ -1510,6 +1518,7 @@ export default function ClassroomClientPage() {
 
   // Waiting Room state
   const [bypassedWaitingRoom, setBypassedWaitingRoom] = React.useState(false);
+  const [isSandboxMode, setIsSandboxMode] = React.useState(false);
 
   // Lesson Countdown Timer
   const [secondsRemaining, setSecondsRemaining] = React.useState(50 * 60);
@@ -1521,13 +1530,42 @@ export default function ClassroomClientPage() {
 
   // ─── Initialise Lesson Details and LiveKit Session ───
   React.useEffect(() => {
+    const urlParams =
+      typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const rawTestRole = urlParams?.get("testRole")?.toUpperCase();
+    const isTestId =
+      id === "test-classroom" ||
+      id === "sandbox" ||
+      id === "00000000-0000-4000-8000-000000007e57";
+    const resolvedTestRole: "TUTOR" | "STUDENT" | null =
+      rawTestRole === "TUTOR"
+        ? "TUTOR"
+        : rawTestRole === "STUDENT"
+        ? "STUDENT"
+        : isTestId
+        ? "TUTOR"
+        : null;
+
+    if (resolvedTestRole) {
+      setIsSandboxMode(true);
+      setBypassedWaitingRoom(true);
+      setCurrentUserRole(resolvedTestRole);
+    }
+
     async function fetchLessonData(lessonId: string) {
       // 1. Try unified classroom lesson endpoint
       try {
-        const res = await fetch(`/api/classroom/lesson/${lessonId}`, { cache: "no-store" });
+        const querySuffix = resolvedTestRole
+          ? `?testRole=${encodeURIComponent(resolvedTestRole)}`
+          : "";
+        const res = await fetch(`/api/classroom/lesson/${lessonId}${querySuffix}`, {
+          cache: "no-store",
+        });
         if (res.ok) {
           const data = await res.json();
-          if (data.currentUserRole) {
+          if (resolvedTestRole) {
+            setCurrentUserRole(resolvedTestRole);
+          } else if (data.currentUserRole) {
             setCurrentUserRole(data.currentUserRole);
           }
           if (data.whiteboardState) {
@@ -1618,17 +1656,24 @@ export default function ClassroomClientPage() {
 
           const roomName = les.videoRoomId || `room-${les.id}`;
           const username =
-            les.student?.displayName || les.tutor?.displayName || "Participant";
+            resolvedTestRole === "TUTOR"
+              ? les.tutor?.displayName || "Alex Rivera (Tutor)"
+              : resolvedTestRole === "STUDENT"
+              ? les.student?.displayName || "Anne Ouma (Student)"
+              : les.student?.displayName || les.tutor?.displayName || "Participant";
           const topic = `${les.subject?.name || "Live Class"} with ${
             les.tutor?.displayName || "Educator"
           }`;
 
           if (provider === "livekit") {
             const defaultLivekitUrl = providerConfig?.livekitUrl || "wss://demo.livekit.cloud";
+            const roleQuery = resolvedTestRole
+              ? `&testRole=${encodeURIComponent(resolvedTestRole)}`
+              : "";
             const tokenRes = await fetch(
               `/api/livekit/token?room=${encodeURIComponent(roomName)}&username=${encodeURIComponent(
                 username
-              )}`
+              )}${roleQuery}`
             );
             if (tokenRes.ok) {
               const data = await tokenRes.json();
@@ -1919,8 +1964,49 @@ export default function ClassroomClientPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-slate-950 text-white overflow-hidden select-none">
+      {/* ─── SANDBOX TEST MODE QUICK BAR ─── */}
+      {isSandboxMode && (
+        <div className="flex items-center justify-between gap-2 bg-indigo-950/90 border-b border-indigo-500/40 px-3 py-1 text-[11px] text-indigo-200 shrink-0 z-40">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="px-2 py-0.5 rounded-full bg-indigo-600 text-white font-black text-[10px] uppercase tracking-wider shrink-0">
+              🧪 Sandbox Mode
+            </span>
+            <span className="truncate font-semibold">
+              Viewing as{" "}
+              <strong className={isTutor ? "text-indigo-300" : "text-emerald-300"}>
+                {currentUserRole} ({currentUserName})
+              </strong>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <a
+              href={`/lessons/${id}/classroom?testRole=${isTutor ? "STUDENT" : "TUTOR"}`}
+              target="_blank"
+              rel="noreferrer"
+              className="px-2.5 py-0.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] transition"
+              title="Open the other participant role in a new tab"
+            >
+              + Open {isTutor ? "Student" : "Tutor"} Tab
+            </a>
+            <a
+              href={`/lessons/${id}/classroom?testRole=${isTutor ? "STUDENT" : "TUTOR"}`}
+              className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-[10px] transition hidden sm:inline-block"
+            >
+              Switch to {isTutor ? "Student" : "Tutor"}
+            </a>
+            <Link
+              href="/classroom-test"
+              className="px-2 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-bold text-[10px] transition"
+            >
+              Test Hub
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* ─── PRE-CLASS PREVIEW BANNER ─── */}
-      {preClassPhase && lesson?.scheduledStart && (
+      {!isSandboxMode && preClassPhase && lesson?.scheduledStart && (
         <div className="flex items-center justify-center gap-2 bg-amber-500/20 border-b border-amber-500/40 px-3 py-1 text-[11px] font-bold text-amber-300 backdrop-blur-sm shrink-0">
           <Clock className="w-3.5 h-3.5 shrink-0" />
           <span className="truncate">

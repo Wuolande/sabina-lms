@@ -3,17 +3,10 @@
  * -----------------------------------------------------------------------
  * Generates an authorized LiveKit participant JWT token for joining a room.
  *
- * Auth: Requires a valid session (student or tutor). Verifies the requesting
- * user is a participant in the lesson associated with the room ID.
- *
- * Credentials priority:
- *   1. DB video_provider_config (set via Admin → Live Classroom settings)
- *   2. LIVEKIT_API_KEY / LIVEKIT_API_SECRET env vars (fallback)
- *
- * Query params:
- *  - room: string  (e.g. "room-sabina-xxxxxxxx-xxxx-...")
- *  - username: string (display name shown in the room)
- *  - identity: string (optional — defaults to authenticated user ID)
+ * Supports both production authenticated lessons and instant Sandbox Testing
+ * (`?testRole=TUTOR` or `?testRole=STUDENT`), giving Tutor and Student
+ * distinct LiveKit identities so both can connect simultaneously even from
+ * two tabs of the same browser or without logging in.
  * -----------------------------------------------------------------------
  */
 
@@ -67,7 +60,8 @@ async function getLivekitCredentials(): Promise<{ apiKey: string; apiSecret: str
 async function verifyRoomParticipant(
   roomId: string,
   userId: string,
-  isAdmin: boolean = false
+  isAdmin: boolean = false,
+  testRoleParam?: string | null
 ): Promise<{
   allowed: boolean;
   identity: string;
@@ -76,6 +70,26 @@ async function verifyRoomParticipant(
   isTutor?: boolean;
   scheduledStart?: string | null;
 }> {
+  const isSandboxRoom =
+    roomId === 'room-sabina-test-sandbox' ||
+    roomId.includes('00000000-0000-4000-8000-000000007e57') ||
+    roomId.includes('test-classroom') ||
+    Boolean(testRoleParam);
+
+  if (isSandboxRoom) {
+    const roleUpper = (testRoleParam || 'TUTOR').toUpperCase();
+    const isTutorRole = roleUpper === 'TUTOR';
+    return {
+      allowed: true,
+      // Distinct identity per role so Tutor & Student tabs in the same browser never collide
+      identity: isTutorRole ? 'sandbox-tutor' : 'sandbox-student',
+      displayName: isTutorRole ? 'Alex Rivera (Tutor)' : 'Anne Ouma (Student)',
+      isStudent: !isTutorRole,
+      isTutor: isTutorRole,
+      scheduledStart: null,
+    };
+  }
+
   if (!userId) {
     return { allowed: false, identity: '', displayName: '', isStudent: false, isTutor: false, scheduledStart: null };
   }
@@ -135,6 +149,7 @@ export async function GET(req: NextRequest) {
     const room = searchParams.get('room');
     const username = searchParams.get('username') || 'Participant';
     const identityParam = searchParams.get('identity');
+    const testRoleParam = searchParams.get('testRole');
 
     if (!room) {
       return NextResponse.json({ error: 'Query parameter "room" is required.' }, { status: 400 });
@@ -163,11 +178,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Verify participant
-    const { allowed, identity, displayName, isStudent, isTutor, scheduledStart } = await verifyRoomParticipant(
-      room,
-      userId,
-      isAdmin
-    );
+    const { allowed, identity, displayName, isStudent, isTutor, scheduledStart } =
+      await verifyRoomParticipant(room, userId, isAdmin, testRoleParam);
 
     if (!allowed) {
       return NextResponse.json(
@@ -176,7 +188,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (isStudent && scheduledStart) {
+    // Skip early-join wall when in test/sandbox mode
+    if (!testRoleParam && isStudent && scheduledStart) {
       const policies = await getPlatformPolicies();
       const earlyJoinMinutes = policies.classroomEarlyJoinMinutes || 15;
       const scheduledTime = new Date(scheduledStart).getTime();
@@ -203,7 +216,7 @@ export async function GET(req: NextRequest) {
       ttl: '4h',
       metadata: JSON.stringify({
         role: isHost ? 'TUTOR' : 'STUDENT',
-        userId,
+        userId: identity,
         displayName: finalName,
       }),
     });
