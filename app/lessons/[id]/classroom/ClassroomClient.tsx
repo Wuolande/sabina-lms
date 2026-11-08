@@ -24,6 +24,12 @@ import {
   Monitor,
   WifiOff,
   Layout,
+  GripHorizontal,
+  GripVertical,
+  ChevronUp,
+  ChevronDown,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
@@ -220,6 +226,148 @@ function ClassinClassroomStage({
   // Stage Layout mode
   const [layoutMode, setLayoutMode] = React.useState<StageLayoutMode>("classin_stage");
 
+  // ─── Resizable Classroom Section States ───
+  // 1. Top Video Strip height (px) in ClassIn Stage & ScreenShare modes
+  const [videoStripHeight, setVideoStripHeight] = React.useState<number>(152);
+  const [isVideoStripCollapsed, setIsVideoStripCollapsed] = React.useState<boolean>(false);
+  // 2. Horizontal split (%) between Tutor & Student cards inside Top Video Strip
+  const [topVideoSplitPct, setTopVideoSplitPct] = React.useState<number>(50);
+  // 3. Dual Stage ("split") Left Video Column width (%) vs Right Whiteboard
+  const [splitLeftWidthPct, setSplitLeftWidthPct] = React.useState<number>(38);
+  // 4. Dual Stage ("split") Tutor vs Student vertical height split (%)
+  const [splitTutorHeightPct, setSplitTutorHeightPct] = React.useState<number>(50);
+  // 5. Video Grid ("grid") Tutor vs Student split (%)
+  const [gridSplitPct, setGridSplitPct] = React.useState<number>(50);
+
+  const stageContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const topStripRef = React.useRef<HTMLDivElement | null>(null);
+  const splitLeftColRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Set responsive initial height for mobile vs desktop
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
+      setVideoStripHeight(116);
+    }
+  }, []);
+
+  // Drag Handler 1: Resize Top Video Strip Height vs Bottom Whiteboard
+  const handleStartResizeStripHeight = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startH = isVideoStripCollapsed ? 80 : videoStripHeight;
+    if (isVideoStripCollapsed) setIsVideoStripCollapsed(false);
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const deltaY = moveEvent.clientY - startY;
+      const maxH = Math.min(520, Math.floor((window.innerHeight - 140) * 0.65));
+      const nextH = Math.max(84, Math.min(maxH, startH + deltaY));
+      setVideoStripHeight(nextH);
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // Drag Handler 2: Resize Tutor vs Student Width inside Top Video Strip
+  const handleStartResizeTopVideoSplit = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const container = topStripRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const relX = moveEvent.clientX - rect.left;
+      const pct = (relX / Math.max(1, rect.width)) * 100;
+      setTopVideoSplitPct(Math.max(20, Math.min(80, pct)));
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // Drag Handler 3: Resize Left Video Stack Width vs Right Whiteboard in Dual Stage ("split")
+  const handleStartResizeSplitLeftWidth = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const container = stageContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const relX = moveEvent.clientX - rect.left;
+      const pct = (relX / Math.max(1, rect.width)) * 100;
+      setSplitLeftWidthPct(Math.max(20, Math.min(72, pct)));
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // Drag Handler 4: Resize Tutor vs Student Height inside Left Video Column in Dual Stage ("split")
+  const handleStartResizeSplitTutorHeight = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const container = splitLeftColRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const relY = moveEvent.clientY - rect.top;
+      const pct = (relY / Math.max(1, rect.height)) * 100;
+      setSplitTutorHeightPct(Math.max(20, Math.min(80, pct)));
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // Drag Handler 5: Resize Tutor vs Student in Video Grid ("grid")
+  const handleStartResizeGridSplit = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const container = stageContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const isDesktopRow = window.innerWidth >= 768;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      if (isDesktopRow) {
+        const relX = moveEvent.clientX - rect.left;
+        const pct = (relX / Math.max(1, rect.width)) * 100;
+        setGridSplitPct(Math.max(20, Math.min(80, pct)));
+      } else {
+        const relY = moveEvent.clientY - rect.top;
+        const pct = (relY / Math.max(1, rect.height)) * 100;
+        setGridSplitPct(Math.max(20, Math.min(80, pct)));
+      }
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
   // ─── Whiteboard Real-Time Sync State ───
   const [wbStrokes, setWbStrokes] = React.useState<StrokeElement[]>(
     Array.isArray(initialWhiteboardState?.strokes) ? initialWhiteboardState.strokes : []
@@ -304,25 +452,85 @@ function ClassinClassroomStage({
   // Device settings modal
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
-  // ─── Local Webcam & Mic Hardware Stream ───
+  // ─── Resilient Local Webcam & Mic Hardware Stream (Audio/Video Fallback Safe) ───
   React.useEffect(() => {
     let activeStream: MediaStream | null = null;
-    navigator.mediaDevices
-      ?.getUserMedia({ video: true, audio: true })
-      .then((stream) => {
+    let cancelled = false;
+
+    async function acquireMedia() {
+      if (!navigator.mediaDevices?.getUserMedia) return;
+
+      // 1. Try combined video + audio first
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         activeStream = stream;
         setLocalMediaStream(stream);
-      })
-      .catch((err) => {
-        console.warn("[Classroom] Local media fallback access:", err);
-      });
+        setIsMicEnabled(stream.getAudioTracks().length > 0);
+        setIsCameraEnabled(stream.getVideoTracks().length > 0);
+        return;
+      } catch {
+        // Fallback if webcam is missing/busy or only mic is allowed
+      }
+
+      // 2. Try audio-only (Microphone)
+      try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (cancelled) {
+          audioStream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        activeStream = audioStream;
+        setLocalMediaStream(audioStream);
+        setIsMicEnabled(true);
+        setIsCameraEnabled(false);
+        return;
+      } catch {}
+
+      // 3. Try video-only (Camera)
+      try {
+        const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        if (cancelled) {
+          videoStream.getTracks().forEach((t) => t.stop());
+          return;
+        }
+        activeStream = videoStream;
+        setLocalMediaStream(videoStream);
+        setIsMicEnabled(false);
+        setIsCameraEnabled(true);
+      } catch (err) {
+        console.warn("[Classroom] Media devices unavailable:", err);
+      }
+    }
+
+    acquireMedia();
 
     return () => {
+      cancelled = true;
       if (activeStream) {
         activeStream.getTracks().forEach((t) => t.stop());
       }
     };
   }, []);
+
+  // Publish available local tracks to LiveKit room once connected without throwing false errors
+  React.useEffect(() => {
+    if (!room || !localParticipant || !localMediaStream) return;
+    if (room.state !== "connected") return;
+
+    const hasAudio = localMediaStream.getAudioTracks().length > 0;
+    const hasVideo = localMediaStream.getVideoTracks().length > 0;
+
+    if (hasAudio && isMicEnabled) {
+      localParticipant.setMicrophoneEnabled(true).catch(() => {});
+    }
+    if (hasVideo && isCameraEnabled) {
+      localParticipant.setCameraEnabled(true).catch(() => {});
+    }
+  }, [room, localParticipant, localMediaStream, isMicEnabled, isCameraEnabled]);
 
   // ─── Critical Camera & Microphone Hardware Release Cleanup on Unmount ───
   const cleanupAllMedia = React.useCallback(() => {
@@ -1083,11 +1291,16 @@ function ClassinClassroomStage({
         </div>
       )}
 
-      {/* ─── LIVEKIT CONNECTION DIAGNOSTIC BANNER ─── */}
+      {/* ─── LIVEKIT CONNECTION DIAGNOSTIC BANNER (Only for genuine server errors, never device permission prompts) ─── */}
       {connectionError &&
         !connectionError.includes("Cancelled publication") &&
-        !connectionError.includes("calling unpublish") && (
-          <div className="absolute top-15 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-rose-950/95 border border-rose-700/80 text-white px-5 py-2.5 rounded-2xl shadow-2xl max-w-xl text-xs animate-in fade-in slide-in-from-top-2">
+        !connectionError.includes("calling unpublish") &&
+        !connectionError.toLowerCase().includes("permission") &&
+        !connectionError.toLowerCase().includes("dismissed") &&
+        !connectionError.toLowerCase().includes("notallowed") &&
+        !connectionError.toLowerCase().includes("notfound") &&
+        !connectionError.toLowerCase().includes("device") && (
+          <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-rose-950/95 border border-rose-700/80 text-white px-5 py-2.5 rounded-2xl shadow-2xl max-w-xl text-xs animate-in fade-in slide-in-from-top-2">
             <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
             <div className="flex-1 text-left">
               <p className="font-bold text-rose-200">Video Server Connection Warning</p>
@@ -1108,16 +1321,6 @@ function ClassinClassroomStage({
             )}
           </div>
         )}
-
-      {/* ─── MEDIA DEVICE PERMISSION WARNING ─── */}
-      {mediaDeviceWarning && (
-        <div className="absolute top-26 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 bg-amber-950/95 border border-amber-700/80 text-white px-4 py-2 rounded-2xl shadow-2xl text-xs animate-in fade-in">
-          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-          <span className="text-amber-200 text-[11px]">
-            Camera or Microphone access was denied. Please allow permissions in your browser address bar.
-          </span>
-        </div>
-      )}
 
       {/* ─── MAIN STAGE VIEWPORT + DOCKED LEFT RAIL + SIDEBAR ─── */}
       <div className="flex flex-1 overflow-hidden relative min-h-0">
@@ -1140,51 +1343,170 @@ function ClassinClassroomStage({
           onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
         />
 
-        {/* ─── STAGE CONTAINER (Strictly 1 active layout at a time!) ─── */}
-        <div className="flex-1 flex flex-col bg-slate-950 p-1.5 sm:p-2.5 md:p-3 pb-16 md:pb-3 overflow-hidden relative min-w-0 min-h-0">
-          {/* LAYOUT 1: CLASSIN STAGE (Compact Top Video Strip + Full Interactive Whiteboard) */}
+        {/* ─── STAGE CONTAINER (All sections smoothly resizable!) ─── */}
+        <div
+          ref={stageContainerRef}
+          className="flex-1 flex flex-col bg-slate-950 p-1.5 sm:p-2.5 md:p-3 pb-16 md:pb-3 overflow-hidden relative min-w-0 min-h-0"
+        >
+          {/* LAYOUT 1: CLASSIN STAGE (Resizable Top Video Strip + Resizable Whiteboard) */}
           {layoutMode === "classin_stage" && (
-            <div className="flex-1 flex flex-col gap-2 sm:gap-2.5 overflow-hidden min-h-0">
-              {/* Top Video Strip for Tutor & Student */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 h-24 sm:h-32 md:h-36 shrink-0">
-                <ParticipantVideoCard
-                  displayName={isTutor ? `${tutorName} (You)` : tutorName}
-                  avatarUrl={lesson?.tutor?.avatarUrl}
-                  role="TUTOR"
-                  isLocal={isTutor}
-                  isConnected={isTutor || isRemoteConnected}
-                  isSpeaking={false}
-                  isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
-                  isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
-                  onToggleMic={isTutor ? handleToggleMic : undefined}
-                  onToggleCamera={isTutor ? handleToggleCamera : undefined}
-                  videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
-                  connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
-                  compact={true}
-                />
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+              {/* Top Video Strip for Tutor & Student (Resizable Height & Width Split) */}
+              {!isVideoStripCollapsed && (
+                <div
+                  ref={topStripRef}
+                  style={{ height: `${videoStripHeight}px` }}
+                  className="flex items-stretch w-full shrink-0 min-h-[84px]"
+                >
+                  {/* Tutor Video Section */}
+                  <div
+                    style={{ width: `${topVideoSplitPct}%` }}
+                    className="h-full min-w-[120px] pr-1"
+                  >
+                    <ParticipantVideoCard
+                      displayName={isTutor ? `${tutorName} (You)` : tutorName}
+                      avatarUrl={lesson?.tutor?.avatarUrl}
+                      role="TUTOR"
+                      isLocal={isTutor}
+                      isConnected={isTutor || isRemoteConnected}
+                      isSpeaking={false}
+                      isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
+                      isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
+                      onToggleMic={isTutor ? handleToggleMic : undefined}
+                      onToggleCamera={isTutor ? handleToggleCamera : undefined}
+                      videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                      connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
+                      compact={videoStripHeight < 170}
+                      className="w-full h-full"
+                    />
+                  </div>
 
-                <ParticipantVideoCard
-                  displayName={!isTutor ? `${studentName} (You)` : studentName}
-                  avatarUrl={lesson?.student?.avatarUrl}
-                  role="STUDENT"
-                  isLocal={!isTutor}
-                  isConnected={!isTutor || isRemoteConnected}
-                  isSpeaking={false}
-                  isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
-                  isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
-                  trophiesCount={studentTrophies}
-                  isHandRaised={isHandRaised}
-                  onToggleMic={!isTutor ? handleToggleMic : undefined}
-                  onToggleCamera={!isTutor ? handleToggleCamera : undefined}
-                  canModerate={isTutor}
-                  isWhiteboardAuthorized={isWhiteboardAuthorized}
-                  onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
-                  onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
-                  onAwardTrophy={isTutor ? () => handleAwardTrophy("Great job!") : undefined}
-                  videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
-                  connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
-                  compact={true}
-                />
+                  {/* Vertical Drag Handle Between Tutor & Student Cards */}
+                  <div
+                    onPointerDown={handleStartResizeTopVideoSplit}
+                    onDoubleClick={() => setTopVideoSplitPct(50)}
+                    title="Drag left or right to resize Tutor vs. Student video width (double-click to reset 50/50)"
+                    className="w-2.5 shrink-0 flex items-center justify-center cursor-col-resize group touch-none select-none"
+                  >
+                    <div className="w-1 h-8 rounded-full bg-slate-800 group-hover:bg-indigo-400 transition" />
+                  </div>
+
+                  {/* Student Video Section */}
+                  <div
+                    style={{ width: `${100 - topVideoSplitPct}%` }}
+                    className="h-full min-w-[120px] pl-1"
+                  >
+                    <ParticipantVideoCard
+                      displayName={!isTutor ? `${studentName} (You)` : studentName}
+                      avatarUrl={lesson?.student?.avatarUrl}
+                      role="STUDENT"
+                      isLocal={!isTutor}
+                      isConnected={!isTutor || isRemoteConnected}
+                      isSpeaking={false}
+                      isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
+                      isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
+                      trophiesCount={studentTrophies}
+                      isHandRaised={isHandRaised}
+                      onToggleMic={!isTutor ? handleToggleMic : undefined}
+                      onToggleCamera={!isTutor ? handleToggleCamera : undefined}
+                      canModerate={isTutor}
+                      isWhiteboardAuthorized={isWhiteboardAuthorized}
+                      onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
+                      onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
+                      onAwardTrophy={isTutor ? () => handleAwardTrophy("Great job!") : undefined}
+                      videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                      connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
+                      compact={videoStripHeight < 170}
+                      className="w-full h-full"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Horizontal Drag Resizer Bar Between Video Strip & Whiteboard */}
+              <div
+                onPointerDown={handleStartResizeStripHeight}
+                onDoubleClick={() => {
+                  setIsVideoStripCollapsed(false);
+                  setVideoStripHeight(152);
+                  setTopVideoSplitPct(50);
+                }}
+                title="Drag up or down to resize Video Strip vs. Whiteboard (double-click to reset)"
+                className="h-4 my-0.5 shrink-0 flex items-center justify-between px-2 cursor-row-resize group touch-none select-none rounded-lg hover:bg-slate-900/80 transition"
+              >
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 group-hover:text-slate-300">
+                  <span className="hidden sm:inline">Drag bar to resize sections</span>
+                </div>
+
+                {/* Center Drag Grip Pill */}
+                <div className="flex items-center justify-center">
+                  <div className="w-12 h-1.5 rounded-full bg-slate-800 group-hover:bg-indigo-400 transition flex items-center justify-center" />
+                </div>
+
+                {/* Quick Preset Size Pills */}
+                <div
+                  className="flex items-center gap-1"
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setIsVideoStripCollapsed(!isVideoStripCollapsed)}
+                    className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-400 hover:text-white border border-slate-800 transition flex items-center gap-1"
+                    title={isVideoStripCollapsed ? "Show Video Strip" : "Maximize Whiteboard (Hide Videos)"}
+                  >
+                    {isVideoStripCollapsed ? (
+                      <>
+                        <ChevronDown className="w-3 h-3 text-indigo-400" />
+                        <span>Show Videos</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronUp className="w-3 h-3" />
+                        <span className="hidden xs:inline">Max Board</span>
+                      </>
+                    )}
+                  </button>
+                  {!isVideoStripCollapsed && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setVideoStripHeight(112)}
+                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition hidden sm:inline-block ${
+                          videoStripHeight <= 120
+                            ? "bg-indigo-600/30 text-indigo-300 border-indigo-500/40"
+                            : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                        }`}
+                        title="Compact Video Strip"
+                      >
+                        S
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVideoStripHeight(160)}
+                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition hidden sm:inline-block ${
+                          videoStripHeight > 120 && videoStripHeight < 220
+                            ? "bg-indigo-600/30 text-indigo-300 border-indigo-500/40"
+                            : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                        }`}
+                        title="Medium Video Strip"
+                      >
+                        M
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVideoStripHeight(260)}
+                        className={`px-1.5 py-0.5 rounded text-[9px] font-bold border transition hidden sm:inline-block ${
+                          videoStripHeight >= 220
+                            ? "bg-indigo-600/30 text-indigo-300 border-indigo-500/40"
+                            : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                        }`}
+                        title="Large Video Strip"
+                      >
+                        L
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
               {/* Interactive Multi-Tool Whiteboard */}
@@ -1211,50 +1533,102 @@ function ClassinClassroomStage({
             </div>
           )}
 
-          {/* LAYOUT 2: DUAL STAGE (Split View: Videos + Whiteboard) */}
+          {/* LAYOUT 2: DUAL STAGE (Resizable Left Video Stack + Resizable Right Whiteboard) */}
           {layoutMode === "split" && (
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-2.5 sm:gap-3 overflow-hidden min-h-0">
-              {/* Left: Video Cards Stack */}
-              <div className="lg:col-span-5 grid grid-cols-2 lg:grid-cols-1 lg:grid-rows-2 gap-2.5 h-32 sm:h-40 lg:h-full min-h-0 shrink-0">
-                <ParticipantVideoCard
-                  displayName={isTutor ? `${tutorName} (You)` : tutorName}
-                  avatarUrl={lesson?.tutor?.avatarUrl}
-                  role="TUTOR"
-                  isLocal={isTutor}
-                  isConnected={isTutor || isRemoteConnected}
-                  isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
-                  isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
-                  onToggleMic={isTutor ? handleToggleMic : undefined}
-                  onToggleCamera={isTutor ? handleToggleCamera : undefined}
-                  className="w-full h-full"
-                  videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
-                  connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
-                />
-                <ParticipantVideoCard
-                  displayName={!isTutor ? `${studentName} (You)` : studentName}
-                  avatarUrl={lesson?.student?.avatarUrl}
-                  role="STUDENT"
-                  isLocal={!isTutor}
-                  isConnected={!isTutor || isRemoteConnected}
-                  trophiesCount={studentTrophies}
-                  isHandRaised={isHandRaised}
-                  isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
-                  isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
-                  onToggleMic={!isTutor ? handleToggleMic : undefined}
-                  onToggleCamera={!isTutor ? handleToggleCamera : undefined}
-                  canModerate={isTutor}
-                  isWhiteboardAuthorized={isWhiteboardAuthorized}
-                  onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
-                  onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
-                  className="w-full h-full"
-                  onAwardTrophy={isTutor ? () => handleAwardTrophy("Excellent answer!") : undefined}
-                  videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
-                  connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
-                />
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
+              {/* Left: Video Cards Stack (Resizable Width & Internal Height Split) */}
+              <div
+                ref={splitLeftColRef}
+                style={{
+                  width:
+                    typeof window !== "undefined" && window.innerWidth >= 1024
+                      ? `${splitLeftWidthPct}%`
+                      : "100%",
+                }}
+                className="flex flex-row lg:flex-col h-36 sm:h-44 lg:h-full min-h-0 shrink-0 gap-2 lg:gap-0"
+              >
+                {/* Tutor Video Card */}
+                <div
+                  style={{
+                    height:
+                      typeof window !== "undefined" && window.innerWidth >= 1024
+                        ? `${splitTutorHeightPct}%`
+                        : "100%",
+                  }}
+                  className="flex-1 lg:flex-none min-h-[90px] w-full"
+                >
+                  <ParticipantVideoCard
+                    displayName={isTutor ? `${tutorName} (You)` : tutorName}
+                    avatarUrl={lesson?.tutor?.avatarUrl}
+                    role="TUTOR"
+                    isLocal={isTutor}
+                    isConnected={isTutor || isRemoteConnected}
+                    isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
+                    isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
+                    onToggleMic={isTutor ? handleToggleMic : undefined}
+                    onToggleCamera={isTutor ? handleToggleCamera : undefined}
+                    className="w-full h-full"
+                    videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                    connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
+                  />
+                </div>
+
+                {/* Horizontal Drag Resizer Between Tutor & Student Videos (Desktop Dual Stage) */}
+                <div
+                  onPointerDown={handleStartResizeSplitTutorHeight}
+                  onDoubleClick={() => setSplitTutorHeightPct(50)}
+                  title="Drag up or down to resize Tutor vs. Student video height (double-click to reset)"
+                  className="hidden lg:flex h-3 w-full items-center justify-center cursor-row-resize group touch-none select-none shrink-0"
+                >
+                  <div className="w-10 h-1 rounded-full bg-slate-800 group-hover:bg-indigo-400 transition" />
+                </div>
+
+                {/* Student Video Card */}
+                <div
+                  style={{
+                    height:
+                      typeof window !== "undefined" && window.innerWidth >= 1024
+                        ? `${100 - splitTutorHeightPct}%`
+                        : "100%",
+                  }}
+                  className="flex-1 lg:flex-none min-h-[90px] w-full"
+                >
+                  <ParticipantVideoCard
+                    displayName={!isTutor ? `${studentName} (You)` : studentName}
+                    avatarUrl={lesson?.student?.avatarUrl}
+                    role="STUDENT"
+                    isLocal={!isTutor}
+                    isConnected={!isTutor || isRemoteConnected}
+                    trophiesCount={studentTrophies}
+                    isHandRaised={isHandRaised}
+                    isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
+                    isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
+                    onToggleMic={!isTutor ? handleToggleMic : undefined}
+                    onToggleCamera={!isTutor ? handleToggleCamera : undefined}
+                    canModerate={isTutor}
+                    isWhiteboardAuthorized={isWhiteboardAuthorized}
+                    onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
+                    onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
+                    className="w-full h-full"
+                    onAwardTrophy={isTutor ? () => handleAwardTrophy("Excellent answer!") : undefined}
+                    videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                    connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
+                  />
+                </div>
+              </div>
+
+              {/* Vertical Drag Resizer Between Video Column & Whiteboard */}
+              <div
+                onPointerDown={handleStartResizeSplitLeftWidth}
+                onDoubleClick={() => setSplitLeftWidthPct(38)}
+                title="Drag left or right to resize Video Column vs. Whiteboard (double-click to reset)"
+                className="hidden lg:flex w-3.5 h-full items-center justify-center cursor-col-resize group touch-none select-none shrink-0"
+              >
+                <div className="w-1 h-12 rounded-full bg-slate-800 group-hover:bg-indigo-400 transition" />
               </div>
 
               {/* Right: Whiteboard */}
-              <div className="lg:col-span-7 flex-1 min-h-0 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 bg-white shadow-2xl flex flex-col">
+              <div className="flex-1 min-h-0 mt-2 lg:mt-0 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 bg-white shadow-2xl flex flex-col">
                 <InteractiveWhiteboard
                   isTutor={isTutor}
                   isAuthorized={isWhiteboardAuthorized}
@@ -1277,10 +1651,15 @@ function ClassinClassroomStage({
             </div>
           )}
 
-          {/* LAYOUT 3: VIDEO GRID (Full Video Conference Focus) */}
+          {/* LAYOUT 3: VIDEO GRID (Resizable Tutor vs. Student Video Conference Focus) */}
           {layoutMode === "grid" && (
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2.5 sm:gap-4 p-0.5 sm:p-1 overflow-hidden h-full min-h-0">
-              <div className="flex-1 min-h-0 h-full rounded-2xl sm:rounded-3xl overflow-hidden">
+            <div className="flex-1 flex flex-col md:flex-row p-0.5 sm:p-1 overflow-hidden h-full min-h-0">
+              <div
+                style={{
+                  flexBasis: `${gridSplitPct}%`,
+                }}
+                className="min-h-[120px] min-w-[160px] h-full rounded-2xl sm:rounded-3xl overflow-hidden"
+              >
                 <ParticipantVideoCard
                   displayName={isTutor ? `${tutorName} (You)` : tutorName}
                   avatarUrl={lesson?.tutor?.avatarUrl}
@@ -1296,7 +1675,23 @@ function ClassinClassroomStage({
                   connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
                 />
               </div>
-              <div className="flex-1 min-h-0 h-full rounded-2xl sm:rounded-3xl overflow-hidden">
+
+              {/* Resizable Divider Between Tutor & Student Videos */}
+              <div
+                onPointerDown={handleStartResizeGridSplit}
+                onDoubleClick={() => setGridSplitPct(50)}
+                title="Drag to resize Tutor vs. Student video size (double-click to reset 50/50)"
+                className="h-3 md:h-full w-full md:w-3.5 flex items-center justify-center cursor-row-resize md:cursor-col-resize group touch-none select-none shrink-0"
+              >
+                <div className="w-10 h-1 md:w-1 md:h-12 rounded-full bg-slate-800 group-hover:bg-indigo-400 transition" />
+              </div>
+
+              <div
+                style={{
+                  flexBasis: `${100 - gridSplitPct}%`,
+                }}
+                className="min-h-[120px] min-w-[160px] h-full rounded-2xl sm:rounded-3xl overflow-hidden"
+              >
                 <ParticipantVideoCard
                   displayName={!isTutor ? `${studentName} (You)` : studentName}
                   avatarUrl={lesson?.student?.avatarUrl}
@@ -1322,46 +1717,88 @@ function ClassinClassroomStage({
             </div>
           )}
 
-          {/* LAYOUT 4: SCREEN SHARE PRESENTATION (Strictly only when layoutMode === "screenshare") */}
+          {/* LAYOUT 4: SCREEN SHARE PRESENTATION (Resizable Top Video Strip + Screen Presentation) */}
           {layoutMode === "screenshare" && (
-            <div className="flex-1 flex flex-col gap-2 sm:gap-2.5 overflow-hidden min-h-0">
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
               {/* Top Mini Video Strip */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 h-24 sm:h-30 shrink-0">
-                <ParticipantVideoCard
-                  displayName={isTutor ? `${tutorName} (You)` : tutorName}
-                  avatarUrl={lesson?.tutor?.avatarUrl}
-                  role="TUTOR"
-                  isLocal={isTutor}
-                  isConnected={isTutor || isRemoteConnected}
-                  isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
-                  isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
-                  onToggleMic={isTutor ? handleToggleMic : undefined}
-                  onToggleCamera={isTutor ? handleToggleCamera : undefined}
-                  videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
-                  connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
-                  compact={true}
-                />
-                <ParticipantVideoCard
-                  displayName={!isTutor ? `${studentName} (You)` : studentName}
-                  avatarUrl={lesson?.student?.avatarUrl}
-                  role="STUDENT"
-                  isLocal={!isTutor}
-                  isConnected={!isTutor || isRemoteConnected}
-                  trophiesCount={studentTrophies}
-                  isHandRaised={isHandRaised}
-                  isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
-                  isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
-                  onToggleMic={!isTutor ? handleToggleMic : undefined}
-                  onToggleCamera={!isTutor ? handleToggleCamera : undefined}
-                  canModerate={isTutor}
-                  isWhiteboardAuthorized={isWhiteboardAuthorized}
-                  onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
-                  onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
-                  onAwardTrophy={isTutor ? () => handleAwardTrophy("Great job!") : undefined}
-                  videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
-                  connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
-                  compact={true}
-                />
+              {!isVideoStripCollapsed && (
+                <div
+                  ref={topStripRef}
+                  style={{ height: `${videoStripHeight}px` }}
+                  className="flex items-stretch w-full shrink-0 min-h-[84px]"
+                >
+                  <div style={{ width: `${topVideoSplitPct}%` }} className="h-full pr-1">
+                    <ParticipantVideoCard
+                      displayName={isTutor ? `${tutorName} (You)` : tutorName}
+                      avatarUrl={lesson?.tutor?.avatarUrl}
+                      role="TUTOR"
+                      isLocal={isTutor}
+                      isConnected={isTutor || isRemoteConnected}
+                      isMuted={isTutor ? !isMicEnabled : !isRemoteConnected}
+                      isVideoOff={isTutor ? !isCameraEnabled : !isRemoteConnected}
+                      onToggleMic={isTutor ? handleToggleMic : undefined}
+                      onToggleCamera={isTutor ? handleToggleCamera : undefined}
+                      videoElement={isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                      connectionQuality={isTutor ? localConnectionQuality : remoteConnectionQuality}
+                      compact={videoStripHeight < 170}
+                      className="w-full h-full"
+                    />
+                  </div>
+
+                  <div
+                    onPointerDown={handleStartResizeTopVideoSplit}
+                    onDoubleClick={() => setTopVideoSplitPct(50)}
+                    className="w-2.5 shrink-0 flex items-center justify-center cursor-col-resize group touch-none select-none"
+                  >
+                    <div className="w-1 h-8 rounded-full bg-slate-800 group-hover:bg-indigo-400 transition" />
+                  </div>
+
+                  <div style={{ width: `${100 - topVideoSplitPct}%` }} className="h-full pl-1">
+                    <ParticipantVideoCard
+                      displayName={!isTutor ? `${studentName} (You)` : studentName}
+                      avatarUrl={lesson?.student?.avatarUrl}
+                      role="STUDENT"
+                      isLocal={!isTutor}
+                      isConnected={!isTutor || isRemoteConnected}
+                      trophiesCount={studentTrophies}
+                      isHandRaised={isHandRaised}
+                      isMuted={!isTutor ? !isMicEnabled : !isRemoteConnected}
+                      isVideoOff={!isTutor ? !isCameraEnabled : !isRemoteConnected}
+                      onToggleMic={!isTutor ? handleToggleMic : undefined}
+                      onToggleCamera={!isTutor ? handleToggleCamera : undefined}
+                      canModerate={isTutor}
+                      isWhiteboardAuthorized={isWhiteboardAuthorized}
+                      onToggleWhiteboardAuth={isTutor ? handleToggleWhiteboardAuth : undefined}
+                      onRemoteMuteStudent={isTutor ? handleRemoteMuteStudent : undefined}
+                      onAwardTrophy={isTutor ? () => handleAwardTrophy("Great job!") : undefined}
+                      videoElement={!isTutor ? renderLocalVideo() : renderRemoteVideo()}
+                      connectionQuality={!isTutor ? localConnectionQuality : remoteConnectionQuality}
+                      compact={videoStripHeight < 170}
+                      className="w-full h-full"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Horizontal Drag Resizer Bar */}
+              <div
+                onPointerDown={handleStartResizeStripHeight}
+                onDoubleClick={() => {
+                  setIsVideoStripCollapsed(false);
+                  setVideoStripHeight(140);
+                }}
+                className="h-4 my-0.5 shrink-0 flex items-center justify-between px-2 cursor-row-resize group touch-none select-none rounded-lg hover:bg-slate-900/80 transition"
+              >
+                <span className="text-[10px] text-slate-500 hidden sm:inline">Drag to resize</span>
+                <div className="w-12 h-1.5 rounded-full bg-slate-800 group-hover:bg-indigo-400 transition" />
+                <button
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={() => setIsVideoStripCollapsed(!isVideoStripCollapsed)}
+                  className="px-2 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-[10px] font-bold text-slate-400 hover:text-white border border-slate-800 transition"
+                >
+                  {isVideoStripCollapsed ? "Show Videos" : "Max Screen"}
+                </button>
               </div>
 
               {/* Main Presentation Screen */}
@@ -2024,8 +2461,8 @@ export default function ClassroomClientPage() {
       {activeProvider === "livekit" ? (
         livekitToken && livekitUrl ? (
           <LiveKitRoom
-            video={true}
-            audio={true}
+            video={false}
+            audio={false}
             token={livekitToken}
             serverUrl={livekitUrl}
             data-lk-theme="default"
@@ -2033,18 +2470,23 @@ export default function ClassroomClientPage() {
             onError={(err) => {
               console.warn("[LiveKitRoom error]", err);
               const msg = err?.message || "";
+              const lower = msg.toLowerCase();
               if (
                 msg.includes("Cancelled publication") ||
                 msg.includes("calling unpublish") ||
                 msg.includes("unpublish") ||
-                msg.includes("could not publish")
+                msg.includes("could not publish") ||
+                lower.includes("permission") ||
+                lower.includes("dismissed") ||
+                lower.includes("denied") ||
+                lower.includes("notallowed") ||
+                lower.includes("notfound") ||
+                lower.includes("notreadable") ||
+                lower.includes("device")
               ) {
                 return;
               }
               setLivekitConnectionError(msg || "Failed to establish real-time video connection");
-            }}
-            onMediaDeviceFailure={() => {
-              setMediaDeviceWarning(true);
             }}
           >
             <ClassinClassroomStage

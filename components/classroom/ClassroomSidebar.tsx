@@ -18,6 +18,9 @@ import {
   Save,
   Sparkles,
   ExternalLink,
+  Maximize2,
+  Minimize2,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -98,6 +101,34 @@ export function ClassroomSidebar({
   const [linkTitle, setLinkTitle] = React.useState("");
   const [linkUrl, setLinkUrl] = React.useState("");
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  // Resizable Sidebar Width (Desktop)
+  const [sidebarWidth, setSidebarWidth] = React.useState<number>(352);
+  const [isDraggingWidth, setIsDraggingWidth] = React.useState(false);
+
+  const handleResizePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingWidth(true);
+    const startX = e.clientX;
+    const startW = sidebarWidth;
+
+    const onMove = (moveEvent: PointerEvent) => {
+      // Moving pointer left increases right-docked sidebar width
+      const deltaX = startX - moveEvent.clientX;
+      const maxW = Math.min(680, Math.floor(window.innerWidth * 0.55));
+      const nextW = Math.max(260, Math.min(maxW, startW + deltaX));
+      setSidebarWidth(nextW);
+    };
+
+    const onUp = () => {
+      setIsDraggingWidth(false);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
 
   const messagesEndRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -244,11 +275,34 @@ export function ClassroomSidebar({
         onClick={onToggle}
       />
 
-      {/* Sidebar Drawer Container (Overlay on Mobile, Docked on Desktop) */}
-      <aside className="fixed lg:relative inset-y-0 right-0 z-50 w-[92vw] max-w-sm sm:w-88 border-l border-slate-800 bg-slate-900/98 flex flex-col shrink-0 text-white select-none shadow-2xl animate-in slide-in-from-right duration-200">
+      {/* Sidebar Drawer Container (Overlay on Mobile, Docked & Resizable on Desktop) */}
+      <aside
+        style={{
+          width: typeof window !== "undefined" && window.innerWidth >= 1024 ? `${sidebarWidth}px` : undefined,
+        }}
+        className="fixed lg:relative inset-y-0 right-0 z-50 w-[92vw] max-w-sm lg:max-w-none border-l border-slate-800 bg-slate-900/98 flex flex-col shrink-0 text-white select-none shadow-2xl animate-in slide-in-from-right duration-200"
+      >
+        {/* Left Drag Resize Handle (Desktop) */}
+        <div
+          onPointerDown={handleResizePointerDown}
+          onDoubleClick={() => setSidebarWidth(352)}
+          title="Drag left or right to resize panel (double-click to reset)"
+          className={`hidden lg:flex items-center justify-center absolute -left-2 inset-y-0 w-3.5 cursor-col-resize z-30 group transition ${
+            isDraggingWidth ? "bg-indigo-500/30" : "hover:bg-indigo-500/20"
+          }`}
+        >
+          <div
+            className={`w-1 h-12 rounded-full flex items-center justify-center transition ${
+              isDraggingWidth
+                ? "bg-indigo-400 scale-y-125"
+                : "bg-slate-700 group-hover:bg-indigo-400"
+            }`}
+          />
+        </div>
+
         {/* Header Tabs */}
         <div className="flex items-center justify-between border-b border-slate-800 px-2.5 pt-2 shrink-0">
-          <div className="flex flex-1">
+          <div className="flex flex-1 min-w-0">
             {[
               { id: "chat", label: "Class Chat", icon: MessageSquare, count: messages.length > 1 ? messages.length - 1 : 0 },
               { id: "notes", label: "Live Notes", icon: FileText, dot: Boolean(notesContent && notesContent.trim().length > 0) },
@@ -258,7 +312,7 @@ export function ClassroomSidebar({
                 key={id}
                 type="button"
                 onClick={() => setActiveTab(id as "chat" | "notes" | "files")}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold border-b-2 transition relative ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold border-b-2 transition relative min-w-0 ${
                   activeTab === id
                     ? "border-indigo-500 text-white"
                     : "border-transparent text-slate-400 hover:text-slate-200"
@@ -267,7 +321,7 @@ export function ClassroomSidebar({
                 <Icon className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">{label}</span>
                 {typeof count === "number" && count > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-slate-800 text-[9px] text-indigo-300 font-extrabold">
+                  <span className="px-1.5 py-0.2 rounded-full bg-slate-800 text-[9px] text-indigo-300 font-extrabold shrink-0">
                     {count}
                   </span>
                 )}
@@ -278,14 +332,25 @@ export function ClassroomSidebar({
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={onToggle}
-            title="Close Panel"
-            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 ml-1 transition"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-0.5 ml-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setSidebarWidth((w) => (w > 420 ? 352 : 520))}
+              title={sidebarWidth > 420 ? "Restore Standard Width" : "Expand Panel Width"}
+              className="hidden lg:flex p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            >
+              {sidebarWidth > 420 ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={onToggle}
+              title="Close Panel"
+              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         {/* Tab Contents */}

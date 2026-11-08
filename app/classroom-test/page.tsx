@@ -27,6 +27,32 @@ export default function ClassroomTestHubPage() {
   const [isResetting, setIsResetting] = React.useState(false);
   const [resetSuccess, setResetSuccess] = React.useState(false);
   const [splitPreviewActive, setSplitPreviewActive] = React.useState(false);
+  const [simulatorSplitPct, setSimulatorSplitPct] = React.useState<number>(50);
+  const [isDraggingSimSplit, setIsDraggingSimSplit] = React.useState(false);
+  const simulatorContainerRef = React.useRef<HTMLDivElement | null>(null);
+
+  const handleStartSimResize = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDraggingSimSplit(true);
+    const container = simulatorContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+
+    const onMove = (moveEvent: PointerEvent) => {
+      const relX = moveEvent.clientX - rect.left;
+      const pct = (relX / Math.max(1, rect.width)) * 100;
+      setSimulatorSplitPct(Math.max(20, Math.min(80, pct)));
+    };
+
+    const onUp = () => {
+      setIsDraggingSimSplit(false);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -113,10 +139,16 @@ export default function ClassroomTestHubPage() {
         </div>
       </header>
 
-      {/* Split Screen Dual Simulator Mode */}
+      {/* Split Screen Dual Simulator Mode (Resizable Left/Right Panes) */}
       {splitPreviewActive ? (
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-2 p-2 bg-slate-950 min-h-[calc(100vh-76px)]">
-          <div className="flex flex-col rounded-2xl overflow-hidden border border-indigo-500/40 bg-slate-900">
+        <div
+          ref={simulatorContainerRef}
+          className="flex-1 flex flex-col lg:flex-row p-2 bg-slate-950 min-h-[calc(100vh-76px)] select-none"
+        >
+          <div
+            style={{ width: `${simulatorSplitPct}%` }}
+            className="flex flex-col rounded-2xl overflow-hidden border border-indigo-500/40 bg-slate-900 min-w-[260px] flex-1 lg:flex-none"
+          >
             <div className="bg-indigo-950/80 px-3 py-1.5 text-xs font-bold text-indigo-200 flex items-center justify-between border-b border-indigo-500/30">
               <span>👨‍🏫 Left Screen: TUTOR VIEW (Alex Rivera)</span>
               <Link
@@ -130,12 +162,33 @@ export default function ClassroomTestHubPage() {
             </div>
             <iframe
               src={tutorPath}
-              className="w-full flex-1 min-h-[600px] border-0"
+              className={`w-full flex-1 min-h-[600px] border-0 ${
+                isDraggingSimSplit ? "pointer-events-none" : ""
+              }`}
               allow="camera; microphone; display-capture; clipboard-write"
             />
           </div>
 
-          <div className="flex flex-col rounded-2xl overflow-hidden border border-emerald-500/40 bg-slate-900">
+          {/* Draggable Vertical Splitter Between Tutor & Student Simulator */}
+          <div
+            onPointerDown={handleStartSimResize}
+            onDoubleClick={() => setSimulatorSplitPct(50)}
+            title="Drag left or right to resize Tutor vs. Student simulator panes (double-click to reset 50/50)"
+            className="hidden lg:flex w-4 items-center justify-center cursor-col-resize group touch-none shrink-0"
+          >
+            <div
+              className={`w-1.5 h-16 rounded-full transition ${
+                isDraggingSimSplit
+                  ? "bg-indigo-400 scale-y-110"
+                  : "bg-slate-700 group-hover:bg-indigo-400"
+              }`}
+            />
+          </div>
+
+          <div
+            style={{ width: `${100 - simulatorSplitPct}%` }}
+            className="flex flex-col rounded-2xl overflow-hidden border border-emerald-500/40 bg-slate-900 min-w-[260px] flex-1 lg:flex-none mt-2 lg:mt-0"
+          >
             <div className="bg-emerald-950/80 px-3 py-1.5 text-xs font-bold text-emerald-200 flex items-center justify-between border-b border-emerald-500/30">
               <span>🎓 Right Screen: STUDENT VIEW (Anne Ouma)</span>
               <Link
@@ -149,7 +202,9 @@ export default function ClassroomTestHubPage() {
             </div>
             <iframe
               src={studentPath}
-              className="w-full flex-1 min-h-[600px] border-0"
+              className={`w-full flex-1 min-h-[600px] border-0 ${
+                isDraggingSimSplit ? "pointer-events-none" : ""
+              }`}
               allow="camera; microphone; display-capture; clipboard-write"
             />
           </div>
