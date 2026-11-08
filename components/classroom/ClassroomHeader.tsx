@@ -16,7 +16,7 @@ import {
   Video as VideoIcon,
   VideoOff,
   MessageSquare,
-  ChevronDown,
+  FileText,
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -40,6 +40,7 @@ interface ClassroomHeaderProps {
   isMicEnabled?: boolean;
   isCameraEnabled?: boolean;
   isScreenSharing?: boolean;
+  hasActiveScreenShare?: boolean;
   onToggleMic?: () => void;
   onToggleCamera?: () => void;
   onToggleScreenShare?: () => void;
@@ -47,8 +48,9 @@ interface ClassroomHeaderProps {
   isTutor?: boolean;
   onExtendLesson?: (minutes: number) => void;
   isExtending?: boolean;
-  // Mobile sidebar integration
+  // Sidebar integration
   onToggleSidebar?: () => void;
+  onOpenNotes?: () => void;
   sidebarOpen?: boolean;
 }
 
@@ -67,6 +69,7 @@ export function ClassroomHeader({
   isMicEnabled = true,
   isCameraEnabled = true,
   isScreenSharing = false,
+  hasActiveScreenShare = false,
   onToggleMic,
   onToggleCamera,
   onToggleScreenShare,
@@ -74,6 +77,7 @@ export function ClassroomHeader({
   onExtendLesson,
   isExtending = false,
   onToggleSidebar,
+  onOpenNotes,
   sidebarOpen = false,
 }: ClassroomHeaderProps) {
   const isOvertime = secondsRemaining <= 0;
@@ -90,12 +94,12 @@ export function ClassroomHeader({
   const [isExtendMenuOpen, setIsExtendMenuOpen] = React.useState(false);
 
   return (
-    <header className="flex h-13 sm:h-14 w-full items-center justify-between border-b border-slate-800 bg-slate-900/95 px-2.5 sm:px-4 backdrop-blur-md shrink-0 select-none z-30 text-white">
+    <header className="flex h-12 sm:h-14 w-full items-center justify-between border-b border-slate-800 bg-slate-900/95 px-2.5 sm:px-4 backdrop-blur-md shrink-0 select-none z-30 text-white gap-2">
       {/* ─── LEFT: Lesson Title & Tutor/Student Info ─── */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <span className="font-heading font-black text-xs sm:text-sm text-white tracking-tight truncate max-w-[120px] sm:max-w-[200px] md:max-w-xs">
+            <span className="font-heading font-black text-xs sm:text-sm text-white tracking-tight truncate max-w-[130px] sm:max-w-[200px] lg:max-w-xs">
               {lessonTitle}
             </span>
             <Badge
@@ -103,27 +107,27 @@ export function ClassroomHeader({
               size="sm"
               className={
                 isTrial
-                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30 text-[9px] sm:text-[10px] font-bold px-1.5 py-0"
-                  : "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 text-[9px] sm:text-[10px] font-bold px-1.5 py-0"
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30 text-[9px] sm:text-[10px] font-bold px-1.5 py-0 shrink-0"
+                  : "bg-indigo-500/20 text-indigo-300 border-indigo-500/30 text-[9px] sm:text-[10px] font-bold px-1.5 py-0 shrink-0"
               }
             >
               {isTrial ? `🎁 ${durationMinutes}m` : `${durationMinutes}m`}
             </Badge>
           </div>
-          <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium truncate max-w-[120px] sm:max-w-none hidden xs:inline">
+          <span className="text-[10px] text-slate-400 font-medium truncate hidden sm:inline">
             {tutorName} {studentName ? `• ${studentName}` : ""}
           </span>
         </div>
       </div>
 
-      {/* ─── CENTER: Layout Switcher & Class Countdown (Always Visible!) ─── */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      {/* ─── CENTER: Layout Switcher & Class Countdown ─── */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         {/* Desktop Layout Mode Switcher */}
-        <div className="hidden md:flex items-center bg-slate-950/80 rounded-xl p-0.5 border border-slate-800 text-slate-400">
+        <div className="hidden md:flex items-center bg-slate-950/90 rounded-xl p-0.5 border border-slate-800 text-slate-400">
           <button
             type="button"
             onClick={() => onChangeLayout("classin_stage")}
-            title="ClassIn Stage (Top Videos + Wide Board)"
+            title="ClassIn Stage (Top Videos + Wide Whiteboard)"
             className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
               layoutMode === "classin_stage"
                 ? "bg-indigo-600 text-white shadow-xs"
@@ -162,24 +166,24 @@ export function ClassroomHeader({
             <span className="text-[11px]">Video Grid</span>
           </button>
 
-          {isScreenSharing && (
+          {(isScreenSharing || hasActiveScreenShare) && (
             <button
               type="button"
               onClick={() => onChangeLayout("screenshare")}
               title="Screen Share Presentation"
               className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition ${
                 layoutMode === "screenshare"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "hover:text-white hover:bg-slate-800"
+                  ? "bg-sky-600 text-white shadow-xs"
+                  : "text-sky-400 hover:text-white hover:bg-slate-800"
               }`}
             >
-              <Monitor className="h-3.5 w-3.5 text-sky-400" />
+              <Monitor className="h-3.5 w-3.5" />
               <span className="text-[11px]">Screen Share</span>
             </button>
           )}
         </div>
 
-        {/* Live Lesson Countdown Timer (Visible on all devices!) */}
+        {/* Live Lesson Countdown Timer */}
         <div className="flex items-center gap-1.5">
           <div
             className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 border transition ${
@@ -204,7 +208,6 @@ export function ClassroomHeader({
             />
             <span className="font-mono text-[11px] sm:text-xs font-bold tracking-wider">
               {formatTimer(secondsRemaining)}
-              {isOvertime && <span className="text-[9px] font-extrabold uppercase ml-1 hidden xs:inline">Overtime</span>}
             </span>
           </div>
 
@@ -216,13 +219,13 @@ export function ClassroomHeader({
                 onClick={() => setIsExtendMenuOpen(!isExtendMenuOpen)}
                 disabled={isExtending}
                 title="Extend lesson duration"
-                className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/40 transition"
+                className="flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/40 transition"
               >
                 <span>{isExtending ? "..." : "+Ext"}</span>
               </button>
 
               {isExtendMenuOpen && (
-                <div className="absolute top-full mt-1.5 left-0 z-50 flex flex-col bg-slate-900 border border-slate-700 rounded-xl p-1 shadow-2xl min-w-[120px] animate-in fade-in zoom-in-95">
+                <div className="absolute top-full mt-1.5 right-0 sm:left-0 z-50 flex flex-col bg-slate-900 border border-slate-700 rounded-xl p-1 shadow-2xl min-w-[130px] animate-in fade-in zoom-in-95">
                   <div className="px-2 py-1 text-[10px] font-bold text-slate-400 border-b border-slate-800">
                     Add Class Time:
                   </div>
@@ -247,8 +250,8 @@ export function ClassroomHeader({
         </div>
       </div>
 
-      {/* ─── RIGHT: Media Controls, Chat Toggle & End Call ─── */}
-      <div className="flex items-center gap-1 sm:gap-1.5">
+      {/* ─── RIGHT: Media Controls, Live Notes, Chat Toggle & End Call ─── */}
+      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
         {/* Desktop-only Media & Call Action Buttons */}
         <div className="hidden md:flex items-center gap-1.5">
           {/* Mic Toggle Button */}
@@ -302,12 +305,25 @@ export function ClassroomHeader({
             </button>
           )}
 
+          {/* Quick Open Live Notes Button (Desktop) */}
+          {onOpenNotes && (
+            <button
+              type="button"
+              onClick={onOpenNotes}
+              title="Open Shared Live Notes"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-emerald-300 hover:text-white hover:bg-slate-700 border border-slate-700 transition"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span className="hidden lg:inline text-[11px]">Notes</span>
+            </button>
+          )}
+
           {/* Chat & Notes Sidebar Toggle (Desktop) */}
           {onToggleSidebar && (
             <button
               type="button"
               onClick={onToggleSidebar}
-              title="Class Chat & Live Notes"
+              title="Class Chat, Live Notes & Files"
               className={`flex items-center justify-center p-2 rounded-xl transition border ${
                 sidebarOpen
                   ? "bg-indigo-600 text-white border-indigo-500 shadow-xs"

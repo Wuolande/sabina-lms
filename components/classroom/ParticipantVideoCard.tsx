@@ -8,10 +8,7 @@ import {
   VideoOff,
   Trophy,
   Hand,
-  Sparkles,
-  ShieldCheck,
   Pencil,
-  Lock,
   WifiOff,
   Wifi,
 } from "lucide-react";
@@ -40,6 +37,8 @@ interface ParticipantVideoCardProps {
   onToggleWhiteboardAuth?: () => void;
   onRemoteMuteStudent?: () => void;
   className?: string;
+  /** Compact mode for top video strip so avatar & bars never overlap */
+  compact?: boolean;
   /** Connection quality: 'excellent' | 'good' | 'poor' | 'lost' | undefined */
   connectionQuality?: "excellent" | "good" | "poor" | "lost";
 }
@@ -64,6 +63,7 @@ export function ParticipantVideoCard({
   onToggleWhiteboardAuth,
   onRemoteMuteStudent,
   className = "",
+  compact = false,
   connectionQuality,
 }: ParticipantVideoCardProps) {
   return (
@@ -80,12 +80,16 @@ export function ParticipantVideoCard({
       {!isVideoOff && isConnected && videoElement ? (
         <div className="w-full h-full object-cover">{videoElement}</div>
       ) : (
-        <div className="flex flex-col items-center justify-center p-4 text-center space-y-2">
+        <div
+          className={`flex flex-col items-center justify-center text-center ${
+            compact ? "pb-3 pt-1" : "p-4 space-y-2"
+          }`}
+        >
           <div className="relative">
             <Avatar
               src={avatarUrl}
               fallbackName={displayName}
-              size="lg"
+              size={compact ? "md" : "lg"}
               className={
                 isSpeaking
                   ? "ring-4 ring-emerald-500 animate-pulse"
@@ -100,23 +104,25 @@ export function ParticipantVideoCard({
               </span>
             )}
           </div>
-          <div className="space-y-0.5">
-            <p className="text-xs font-bold text-white truncate max-w-[150px]">{displayName}</p>
-            {!isConnected && !isLocal && (
-              <p className="text-[10px] text-slate-500 font-medium">Waiting to connect...</p>
-            )}
-          </div>
+          {!compact && (
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-white truncate max-w-[160px]">{displayName}</p>
+              {!isConnected && !isLocal && (
+                <p className="text-[10px] text-slate-500 font-medium">Waiting to connect...</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
       {/* ─── TOP STATUS BADGES ─── */}
-      <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+      <div className="absolute top-1.5 sm:top-2 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between gap-1 pointer-events-none z-10">
         {/* Role Badge */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 min-w-0">
           <Badge
             variant="subtle"
             size="sm"
-            className={`text-[10px] font-black uppercase tracking-wider py-0.5 px-2 ${
+            className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider py-0.5 px-1.5 sm:px-2 shrink-0 ${
               role === "TUTOR"
                 ? "bg-indigo-600/90 text-white border-indigo-500"
                 : "bg-emerald-600/90 text-white border-emerald-500"
@@ -126,42 +132,43 @@ export function ParticipantVideoCard({
           </Badge>
 
           {isLocal && (
-            <span className="text-[10px] font-bold text-slate-300 bg-slate-800/80 px-1.5 py-0.5 rounded border border-slate-700">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 bg-slate-800/85 px-1.5 py-0.5 rounded border border-slate-700 shrink-0">
               You
             </span>
           )}
 
           {!isLocal && !isConnected && (
-            <span className="text-[10px] font-bold text-slate-400 bg-slate-900/90 px-2 py-0.5 rounded-full border border-slate-700 flex items-center gap-1">
-              <WifiOff className="w-3 h-3 text-slate-500" />
-              Offline
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 bg-slate-900/90 px-1.5 py-0.5 rounded-full border border-slate-700 flex items-center gap-1 shrink-0">
+              <WifiOff className="w-2.5 h-2.5 text-slate-500" />
+              <span className="hidden sm:inline">Waiting</span>
             </span>
           )}
         </div>
 
         {/* Trophy / Praise Badge / Raised Hand */}
-        <div className="flex items-center gap-1.5 pointer-events-auto">
+        <div className="flex items-center gap-1 pointer-events-auto shrink-0">
           {trophiesCount > 0 && (
-            <div className="flex items-center gap-1 bg-amber-500/20 border border-amber-400/60 px-2 py-0.5 rounded-full text-amber-300 text-[10px] font-black shadow-xs">
+            <div className="flex items-center gap-0.5 bg-amber-500/20 border border-amber-400/60 px-1.5 sm:px-2 py-0.5 rounded-full text-amber-300 text-[9px] sm:text-[10px] font-black shadow-xs">
               <span>🏆</span>
               <span>x{trophiesCount}</span>
             </div>
           )}
 
           {isHandRaised && (
-            <div className="flex items-center gap-1 bg-amber-500 text-slate-950 px-2 py-0.5 rounded-full text-[10px] font-black animate-bounce shadow-md">
-              <Hand className="h-3 w-3 fill-slate-950" />
-              <span>Hand Raised</span>
+            <div className="flex items-center gap-1 bg-amber-500 text-slate-950 px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black animate-bounce shadow-md">
+              <Hand className="h-2.5 w-2.5 sm:h-3 sm:w-3 fill-slate-950" />
+              <span className="hidden xs:inline">Hand Raised</span>
             </div>
           )}
         </div>
       </div>
 
       {/* ─── BOTTOM CONTROLS & NAME BAR ─── */}
-      <div className="absolute bottom-1.5 sm:bottom-2.5 left-1.5 sm:left-2.5 right-1.5 sm:right-2.5 flex items-center justify-between bg-slate-950/85 backdrop-blur-md px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl border border-slate-800 text-white">
+      <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 right-1 sm:right-2 flex items-center justify-between gap-1 bg-slate-950/85 backdrop-blur-md px-2 sm:px-2.5 py-1 rounded-xl border border-slate-800/90 text-white z-10">
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-[11px] sm:text-xs font-bold text-slate-200 truncate">{displayName}</span>
-          {/* Network signal quality indicator */}
+          <span className="text-[10px] sm:text-xs font-bold text-slate-200 truncate">
+            {displayName}
+          </span>
           {connectionQuality && (
             <span
               title={`Connection: ${connectionQuality}`}
@@ -184,42 +191,37 @@ export function ParticipantVideoCard({
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
-          {/* ─── LOCAL USER TOGGLES (Desktop only; on mobile, MobileClassroomDock manages mic/cam) ─── */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           {isLocal ? (
-            <div className="hidden sm:flex items-center gap-1.5">
-              {/* Mic Toggle Button */}
+            <div className="hidden sm:flex items-center gap-1">
               <button
                 type="button"
                 onClick={onToggleMic}
                 title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
-                className={`p-1.5 rounded-lg transition ${
+                className={`p-1 sm:p-1.5 rounded-lg transition ${
                   isMuted
                     ? "bg-rose-600 text-white hover:bg-rose-700"
                     : "bg-emerald-600/30 text-emerald-300 hover:bg-emerald-600/50 border border-emerald-500/40"
                 }`}
               >
-                {isMuted ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                {isMuted ? <MicOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <Mic className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               </button>
 
-              {/* Video Toggle Button */}
               <button
                 type="button"
                 onClick={onToggleCamera}
                 title={isVideoOff ? "Turn On Camera" : "Turn Off Camera"}
-                className={`p-1.5 rounded-lg transition ${
+                className={`p-1 sm:p-1.5 rounded-lg transition ${
                   isVideoOff
                     ? "bg-rose-600 text-white hover:bg-rose-700"
                     : "bg-emerald-600/30 text-emerald-300 hover:bg-emerald-600/50 border border-emerald-500/40"
                 }`}
               >
-                {isVideoOff ? <VideoOff className="h-3.5 w-3.5" /> : <VideoIcon className="h-3.5 w-3.5" />}
+                {isVideoOff ? <VideoOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <VideoIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               </button>
             </div>
           ) : (
-            // ─── REMOTE USER DISPLAY & TUTOR MODERATION CONTROLS ───
             <>
-              {/* Remote Mic Indicator */}
               <div
                 className={`p-1 rounded-md ${
                   !isConnected
@@ -230,12 +232,11 @@ export function ParticipantVideoCard({
                 }`}
                 title={!isConnected ? "Offline" : isMuted ? "Muted" : "Active"}
               >
-                {isMuted || !isConnected ? <MicOff className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+                {isMuted || !isConnected ? <MicOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <Mic className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               </div>
 
-              {/* Remote Video Indicator */}
               <div
-                className={`p-1 rounded-md ${
+                className={`hidden xs:block p-1 rounded-md ${
                   !isConnected
                     ? "bg-slate-800 text-slate-500"
                     : isVideoOff
@@ -244,27 +245,25 @@ export function ParticipantVideoCard({
                 }`}
                 title={!isConnected ? "Offline" : isVideoOff ? "Camera Off" : "Camera On"}
               >
-                {isVideoOff || !isConnected ? <VideoOff className="h-3.5 w-3.5" /> : <VideoIcon className="h-3.5 w-3.5" />}
+                {isVideoOff || !isConnected ? <VideoOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> : <VideoIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />}
               </div>
 
-              {/* ─── TUTOR MODERATION BUTTONS (When Tutor views Student) ─── */}
-              {canModerate && isConnected && (
+              {/* ─── TUTOR MODERATION BUTTONS (Always available when Tutor views Student card) ─── */}
+              {canModerate && (
                 <>
                   <div className="h-3 w-px bg-slate-700 mx-0.5" />
 
-                  {/* Remote Mute Student */}
-                  {onRemoteMuteStudent && (
+                  {onRemoteMuteStudent && isConnected && (
                     <button
                       type="button"
                       onClick={onRemoteMuteStudent}
                       title="Mute Student Microphone"
-                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-rose-300 border border-slate-700 transition"
+                      className="p-1 sm:p-1.5 rounded-lg bg-slate-800 hover:bg-rose-900/60 text-slate-300 hover:text-rose-300 border border-slate-700 transition"
                     >
-                      <MicOff className="h-3.5 w-3.5" />
+                      <MicOff className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     </button>
                   )}
 
-                  {/* ClassIn Whiteboard Pen Authorize / Lock */}
                   {onToggleWhiteboardAuth && (
                     <button
                       type="button"
@@ -274,25 +273,24 @@ export function ParticipantVideoCard({
                           ? "Student Pen Authorized (Click to Lock)"
                           : "Authorize Student to Draw on Whiteboard"
                       }
-                      className={`p-1.5 rounded-lg border transition ${
+                      className={`p-1 sm:p-1.5 rounded-lg border transition ${
                         isWhiteboardAuthorized
                           ? "bg-indigo-600 text-white border-indigo-500 shadow-xs"
                           : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
                       }`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     </button>
                   )}
 
-                  {/* Award Trophy */}
                   {onAwardTrophy && (
                     <button
                       type="button"
                       onClick={onAwardTrophy}
                       title="Award Trophy (+1 🏆)"
-                      className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/40 border border-amber-500/30 transition"
+                      className="p-1 sm:p-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/40 border border-amber-500/30 transition"
                     >
-                      <Trophy className="h-3.5 w-3.5 fill-amber-300" />
+                      <Trophy className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-amber-300" />
                     </button>
                   )}
                 </>

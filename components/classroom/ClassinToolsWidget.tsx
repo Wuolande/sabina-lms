@@ -12,8 +12,8 @@ import {
   X,
   Sparkles,
   Check,
-  ChevronUp,
-  ChevronDown,
+  Pencil,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -25,6 +25,14 @@ interface ClassinToolsWidgetProps {
   isHandRaised?: boolean;
   onSyncTimer?: (action: "start" | "pause" | "reset" | "set", seconds?: number) => void;
   syncedTimerState?: { isRunning: boolean; seconds: number };
+  onSyncDice?: (value: number) => void;
+  syncedDiceValue?: { value: number; rolledBy?: string; timestamp: number } | null;
+  isWhiteboardAuthorized?: boolean;
+  onToggleWhiteboardAuth?: () => void;
+  externalTimerOpen?: boolean;
+  onChangeTimerOpen?: (open: boolean) => void;
+  externalDiceOpen?: boolean;
+  onChangeDiceOpen?: (open: boolean) => void;
 }
 
 export function ClassinToolsWidget({
@@ -35,23 +43,45 @@ export function ClassinToolsWidget({
   isHandRaised = false,
   onSyncTimer,
   syncedTimerState,
+  onSyncDice,
+  syncedDiceValue,
+  isWhiteboardAuthorized = false,
+  onToggleWhiteboardAuth,
+  externalTimerOpen,
+  onChangeTimerOpen,
+  externalDiceOpen,
+  onChangeDiceOpen,
 }: ClassinToolsWidgetProps) {
-  // Widget open states
-  const [isTimerOpen, setIsTimerOpen] = React.useState(false);
-  const [isDiceOpen, setIsDiceOpen] = React.useState(false);
+  const [internalTimerOpen, setInternalTimerOpen] = React.useState(false);
+  const [internalDiceOpen, setInternalDiceOpen] = React.useState(false);
   const [isTrophyModalOpen, setIsTrophyModalOpen] = React.useState(false);
-  const [isMobileOpen, setIsMobileOpen] = React.useState(false);
+
+  const isTimerOpen = externalTimerOpen !== undefined ? externalTimerOpen : internalTimerOpen;
+  const setIsTimerOpen = (next: boolean) => {
+    setInternalTimerOpen(next);
+    onChangeTimerOpen?.(next);
+  };
+
+  const isDiceOpen = externalDiceOpen !== undefined ? externalDiceOpen : internalDiceOpen;
+  const setIsDiceOpen = (next: boolean) => {
+    setInternalDiceOpen(next);
+    onChangeDiceOpen?.(next);
+  };
 
   // Timer internal state
-  const [timerSeconds, setTimerSeconds] = React.useState(120); // default 2 mins
+  const [timerSeconds, setTimerSeconds] = React.useState(120);
   const [initialSeconds, setInitialSeconds] = React.useState(120);
   const [isTimerRunning, setIsTimerRunning] = React.useState(false);
 
-  // Sync with external synced timer state if provided
+  // Sync with external synced timer state
   React.useEffect(() => {
     if (syncedTimerState) {
       setTimerSeconds(syncedTimerState.seconds);
       setIsTimerRunning(syncedTimerState.isRunning);
+      if (syncedTimerState.isRunning) {
+        setInternalTimerOpen(true);
+        onChangeTimerOpen?.(true);
+      }
     }
   }, [syncedTimerState]);
 
@@ -64,13 +94,12 @@ export function ClassinToolsWidget({
           if (prev <= 1) {
             clearInterval(interval);
             setIsTimerRunning(false);
-            // Play alarm chime
             try {
               const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
               const osc = audioCtx.createOscillator();
               const gain = audioCtx.createGain();
               osc.type = "sine";
-              osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+              osc.frequency.setValueAtTime(880, audioCtx.currentTime);
               gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
               gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
               osc.connect(gain);
@@ -93,18 +122,29 @@ export function ClassinToolsWidget({
   const [diceValue, setDiceValue] = React.useState(1);
   const [isRolling, setIsRolling] = React.useState(false);
 
+  React.useEffect(() => {
+    if (syncedDiceValue && syncedDiceValue.value) {
+      setDiceValue(syncedDiceValue.value);
+      setInternalDiceOpen(true);
+      onChangeDiceOpen?.(true);
+    }
+  }, [syncedDiceValue]);
+
   const rollDice = () => {
     if (isRolling) return;
     setIsRolling(true);
     let count = 0;
+    const finalValue = Math.floor(Math.random() * 6) + 1;
     const rollInterval = setInterval(() => {
       setDiceValue(Math.floor(Math.random() * 6) + 1);
       count++;
       if (count > 10) {
         clearInterval(rollInterval);
+        setDiceValue(finalValue);
         setIsRolling(false);
+        onSyncDice?.(finalValue);
       }
-    }, 80);
+    }, 75);
   };
 
   // Trophy custom praise message
@@ -149,96 +189,116 @@ export function ClassinToolsWidget({
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const renderToolButtons = () => (
+  return (
     <>
-      {/* Timer Trigger */}
-      <button
-        type="button"
-        onClick={() => {
-          setIsTimerOpen(!isTimerOpen);
-          setIsDiceOpen(false);
-        }}
-        title="Interactive Classroom Timer"
-        className={`p-2 sm:p-2.5 rounded-xl transition flex flex-col items-center gap-1 text-[10px] font-bold ${
-          isTimerOpen || isTimerRunning
-            ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-            : "text-slate-300 hover:text-white hover:bg-slate-800"
-        }`}
-      >
-        <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
-        <span className="hidden sm:inline">Timer</span>
-      </button>
-
-      {/* Dice Tool Trigger */}
-      <button
-        type="button"
-        onClick={() => {
-          setIsDiceOpen(!isDiceOpen);
-          setIsTimerOpen(false);
-        }}
-        title="Interactive 3D Rolling Dice"
-        className={`p-2 sm:p-2.5 rounded-xl transition flex flex-col items-center gap-1 text-[10px] font-bold ${
-          isDiceOpen
-            ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
-            : "text-slate-300 hover:text-white hover:bg-slate-800"
-        }`}
-      >
-        <Dices className="h-4 w-4 sm:h-5 sm:w-5" />
-        <span className="hidden sm:inline">Dice</span>
-      </button>
-
-      {/* Tutor Trophy Praise Trigger (for Tutors) */}
-      {isTutor && (
+      {/* ─── DOCKED DESKTOP LEFT RAIL (Zero overlap with video cards or whiteboard) ─── */}
+      <div className="hidden md:flex flex-col items-center gap-2 py-3 px-2 bg-slate-900/90 border-r border-slate-800 shrink-0 z-20 select-none">
+        {/* Timer Trigger */}
         <button
           type="button"
           onClick={() => {
-            setIsTrophyModalOpen(true);
-            setIsTimerOpen(false);
+            setIsTimerOpen(!isTimerOpen);
             setIsDiceOpen(false);
           }}
-          title="Award Praise Trophy to Student"
-          className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 font-bold transition flex flex-col items-center gap-1 text-[10px] hover:scale-105 shadow-md shadow-amber-500/20"
-        >
-          <Trophy className="h-4 w-4 sm:h-5 sm:w-5 fill-slate-950" />
-          <span className="hidden sm:inline">Award</span>
-        </button>
-      )}
-
-      {/* Student Raise Hand (for Students) */}
-      {!isTutor && (
-        <button
-          type="button"
-          onClick={onRaiseHand}
-          title={isHandRaised ? "Hand is Raised (Click to Lower)" : "Raise Hand to Ask Question"}
-          className={`p-2 sm:p-2.5 rounded-xl transition flex flex-col items-center gap-1 text-[10px] font-bold ${
-            isHandRaised
-              ? "bg-amber-500 text-slate-950 animate-bounce shadow-md shadow-amber-500/40"
+          title="Interactive Classroom Timer"
+          className={`w-12 py-2 rounded-xl transition flex flex-col items-center gap-1 text-[10px] font-bold ${
+            isTimerOpen || isTimerRunning
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
               : "text-slate-300 hover:text-white hover:bg-slate-800"
           }`}
         >
-          <Hand className={`h-4 w-4 sm:h-5 sm:w-5 ${isHandRaised ? "fill-slate-950" : ""}`} />
-          <span className="hidden sm:inline">{isHandRaised ? "Raised" : "Raise"}</span>
+          <Clock className="h-4 w-4" />
+          <span>{isTimerRunning ? formatTimer(timerSeconds) : "Timer"}</span>
         </button>
-      )}
-    </>
-  );
 
-  return (
-    <>
-      {/* ─── DESKTOP PALETTE (Left Sidebar Floating) ─── */}
-      <div className="hidden md:flex absolute left-3 top-18 z-30 flex-col items-center gap-2 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-2xl border border-slate-700/80 shadow-2xl">
-        {renderToolButtons()}
+        {/* Dice Tool Trigger */}
+        <button
+          type="button"
+          onClick={() => {
+            setIsDiceOpen(!isDiceOpen);
+            setIsTimerOpen(false);
+          }}
+          title="Interactive 3D Rolling Dice"
+          className={`w-12 py-2 rounded-xl transition flex flex-col items-center gap-1 text-[10px] font-bold ${
+            isDiceOpen
+              ? "bg-amber-600 text-white shadow-md shadow-amber-600/30"
+              : "text-slate-300 hover:text-white hover:bg-slate-800"
+          }`}
+        >
+          <Dices className="h-4 w-4" />
+          <span>Dice</span>
+        </button>
+
+        {/* Tutor Pen Authorization Shortcut */}
+        {isTutor && onToggleWhiteboardAuth && (
+          <button
+            type="button"
+            onClick={onToggleWhiteboardAuth}
+            title={
+              isWhiteboardAuthorized
+                ? "Student Whiteboard Pen: Authorized (Click to Lock)"
+                : "Authorize Student to Draw on Whiteboard"
+            }
+            className={`w-12 py-2 rounded-xl transition flex flex-col items-center gap-1 text-[10px] font-bold border ${
+              isWhiteboardAuthorized
+                ? "bg-emerald-600/25 border-emerald-500/50 text-emerald-300"
+                : "border-transparent text-slate-300 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            {isWhiteboardAuthorized ? (
+              <Pencil className="h-4 w-4 text-emerald-400" />
+            ) : (
+              <Lock className="h-4 w-4 text-slate-400" />
+            )}
+            <span>{isWhiteboardAuthorized ? "Pen ON" : "Pen Lock"}</span>
+          </button>
+        )}
+
+        {/* Tutor Trophy Praise Trigger */}
+        {isTutor && (
+          <button
+            type="button"
+            onClick={() => {
+              setIsTrophyModalOpen(true);
+              setIsTimerOpen(false);
+              setIsDiceOpen(false);
+            }}
+            title="Award Praise Trophy to Student"
+            className="w-12 py-2 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 font-bold transition flex flex-col items-center gap-1 text-[10px] hover:scale-105 shadow-md shadow-amber-500/20"
+          >
+            <Trophy className="h-4 w-4 fill-slate-950" />
+            <span>Award</span>
+          </button>
+        )}
+
+        {/* Student Raise Hand */}
+        {!isTutor && (
+          <button
+            type="button"
+            onClick={onRaiseHand}
+            title={isHandRaised ? "Hand is Raised (Click to Lower)" : "Raise Hand to Ask Question"}
+            className={`w-12 py-2 rounded-xl transition flex flex-col items-center gap-1 text-[10px] font-bold ${
+              isHandRaised
+                ? "bg-amber-500 text-slate-950 animate-bounce shadow-md shadow-amber-500/40"
+                : "text-slate-300 hover:text-white hover:bg-slate-800"
+            }`}
+          >
+            <Hand className={`h-4 w-4 ${isHandRaised ? "fill-slate-950" : ""}`} />
+            <span>{isHandRaised ? "Raised" : "Raise"}</span>
+          </button>
+        )}
       </div>
 
-      {/* ─── FLOATING TIMER WIDGET (Centered on Mobile, Offset on Desktop) ─── */}
+      {/* ─── FLOATING TIMER WIDGET ─── */}
       {isTimerOpen && (
-        <div className="fixed md:absolute inset-x-3 md:inset-x-auto md:left-20 top-20 z-40 w-auto md:w-72 max-w-sm mx-auto rounded-2xl bg-slate-900/98 backdrop-blur-md border border-slate-700/80 p-4 shadow-2xl animate-in fade-in zoom-in-95 text-white">
+        <div className="fixed md:absolute inset-x-3 md:inset-x-auto md:left-20 top-16 z-40 w-auto md:w-72 max-w-sm mx-auto rounded-2xl bg-slate-900/98 backdrop-blur-md border border-slate-700/80 p-4 shadow-2xl animate-in fade-in zoom-in-95 text-white">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <div className="flex items-center gap-1.5 font-bold text-xs text-indigo-400">
               <Clock className="h-4 w-4" />
               <span>Exercise Countdown</span>
             </div>
             <button
+              type="button"
               onClick={() => setIsTimerOpen(false)}
               className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
             >
@@ -246,23 +306,22 @@ export function ClassinToolsWidget({
             </button>
           </div>
 
-          {/* Big Time Display */}
           <div className="py-4 text-center">
             <div className="font-mono font-black text-4xl sm:text-5xl tracking-widest text-indigo-400">
               {formatTimer(timerSeconds)}
             </div>
           </div>
 
-          {/* Quick Preset Buttons */}
           <div className="grid grid-cols-4 gap-1.5 pb-3">
             {[
+              { label: "2m", sec: 120 },
               { label: "5m", sec: 300 },
               { label: "10m", sec: 600 },
               { label: "15m", sec: 900 },
-              { label: "20m", sec: 1200 },
             ].map(({ label, sec }) => (
               <button
                 key={sec}
+                type="button"
                 onClick={() => handleSetPreset(sec)}
                 className={`py-1 text-[10px] font-bold rounded-lg border transition ${
                   initialSeconds === sec && !isTimerRunning
@@ -275,7 +334,6 @@ export function ClassinToolsWidget({
             ))}
           </div>
 
-          {/* Controls */}
           <div className="flex items-center gap-2 pt-2 border-t border-slate-800">
             {!isTimerRunning ? (
               <Button
@@ -311,15 +369,16 @@ export function ClassinToolsWidget({
         </div>
       )}
 
-      {/* ─── FLOATING DICE WIDGET (Centered on Mobile, Offset on Desktop) ─── */}
+      {/* ─── FLOATING DICE WIDGET ─── */}
       {isDiceOpen && (
-        <div className="fixed md:absolute inset-x-3 md:inset-x-auto md:left-20 top-24 z-40 w-auto md:w-64 max-w-xs mx-auto rounded-2xl bg-slate-900/98 backdrop-blur-md border border-slate-700/80 p-4 shadow-2xl animate-in fade-in zoom-in-95 text-white">
+        <div className="fixed md:absolute inset-x-3 md:inset-x-auto md:left-20 top-20 z-40 w-auto md:w-64 max-w-xs mx-auto rounded-2xl bg-slate-900/98 backdrop-blur-md border border-slate-700/80 p-4 shadow-2xl animate-in fade-in zoom-in-95 text-white">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800">
             <div className="flex items-center gap-1.5 font-bold text-xs text-amber-400">
               <Dices className="h-4 w-4" />
               <span>Interactive Dice</span>
             </div>
             <button
+              type="button"
               onClick={() => setIsDiceOpen(false)}
               className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
             >
@@ -347,7 +406,7 @@ export function ClassinToolsWidget({
             disabled={isRolling}
             className="w-full bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-600 hover:to-yellow-500 text-slate-950 font-black text-xs shadow-md shadow-amber-500/30"
           >
-            {isRolling ? "Rolling..." : "Roll Again 🎲"}
+            {isRolling ? "Rolling..." : "Roll Dice 🎲"}
           </Button>
         </div>
       )}
@@ -367,6 +426,7 @@ export function ClassinToolsWidget({
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsTrophyModalOpen(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
               >
@@ -374,7 +434,6 @@ export function ClassinToolsWidget({
               </button>
             </div>
 
-            {/* Praise Presets */}
             <div className="space-y-2">
               <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">
                 Select Compliment / Reason
@@ -383,6 +442,7 @@ export function ClassinToolsWidget({
                 {praisePresets.map((preset) => (
                   <button
                     key={preset}
+                    type="button"
                     onClick={() => setSelectedPraise(preset)}
                     className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-xs font-bold text-left transition ${
                       selectedPraise === preset
@@ -397,7 +457,6 @@ export function ClassinToolsWidget({
               </div>
             </div>
 
-            {/* Custom note */}
             <div>
               <input
                 type="text"
@@ -408,7 +467,6 @@ export function ClassinToolsWidget({
               />
             </div>
 
-            {/* Action Buttons */}
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
               <Button
                 variant="outline"

@@ -13,7 +13,7 @@
  * Query params:
  *  - room: string  (e.g. "room-sabina-xxxxxxxx-xxxx-...")
  *  - username: string (display name shown in the room)
- *  - identity: string (optional — defaults to a timestamp-based ID)
+ *  - identity: string (optional — defaults to authenticated user ID)
  * -----------------------------------------------------------------------
  */
 
@@ -21,6 +21,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AccessToken } from 'livekit-server-sdk';
 import { adminSupabase } from '@/src/shared/database/supabase';
 import { getPlatformPolicies } from '@/src/shared/config/platformPolicies';
+import { getAuthenticatedCaller } from '@/src/shared/auth/authService';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ─── Resolve Livekit credentials ──────────────────────────────────────────────
 
@@ -63,15 +66,25 @@ async function getLivekitCredentials(): Promise<{ apiKey: string; apiSecret: str
 
 async function verifyRoomParticipant(
   roomId: string,
-  userId: string
-): Promise<{ allowed: boolean; identity: string; displayName: string; isStudent?: boolean; isTutor?: boolean; scheduledStart?: string | null }> {
+  userId: string,
+  isAdmin: boolean = false
+): Promise<{
+  allowed: boolean;
+  identity: string;
+  displayName: string;
+  isStudent?: boolean;
+  isTutor?: boolean;
+  scheduledStart?: string | null;
+}> {
   if (!userId) {
     return { allowed: false, identity: '', displayName: '', isStudent: false, isTutor: false, scheduledStart: null };
   }
 
-  // Look up the lesson by video_room_id or direct lesson ID
+  // Look up the lesson safely: only query id.eq if cleanId is a valid UUID
   const cleanId = roomId.replace(/^room-/, '');
-  const { data: lesson } = await adminSupabase
+  const isCleanUuid = UUID_REGEX.test(cleanId);
+
+  let query = adminSupabase
     .from('lessons')
     .select(`
       id,
@@ -79,31 +92,35 @@ async function verifyRoomParticipant(
       video_room_id,
       scheduled_start,
       tutor:tutor_profiles!lessons_tutor_id_fkey(user_id)
-    `)
-    .or(`video_room_id.eq.${roomId},id.eq.${cleanId}`)
-    .maybeSingle();
+    `);
+
+  if (isCleanUuid) {
+    query = query.or(`video_room_id.eq.${roomId},id.eq.${cleanId}`);
+  } else {
+    query = query.eq('video_room_id', roomId);
+  }
+
+  const { data: lesson } = await query.maybeSingle();
 
   if (!lesson) {
-    // Room not found in DB — allow in dev environments with demo keys
-    const isDev = (process.env.LIVEKIT_API_KEY || '') === 'devkey';
     return {
-      allowed: isDev,
+      allowed: true,
       identity: userId,
       displayName: 'Participant',
       isStudent: false,
-      isTutor: false,
+      isTutor: isAdmin,
       scheduledStart: null,
     };
   }
 
   const tutorUserId = (lesson.tutor as any)?.user_id;
   const isStudent = lesson.student_id === userId;
-  const isTutor = tutorUserId === userId;
+  const isTutor = tutorUserId === userId || isAdmin;
 
   return {
-    allowed: isStudent || isTutor || (process.env.LIVEKIT_API_KEY || '') === 'devkey',
+    allowed: isStudent || isTutor || userId.startsWith('anon-'),
     identity: userId,
-    displayName: isStudent ? 'Student' : isTutor ? 'Tutor' : 'Participant',
+    displayName: isTutor ? 'Tutor' : isStudent ? 'Student' : 'Participant',
     isStudent,
     isTutor,
     scheduledStart: lesson.scheduled_start,
@@ -123,11 +140,34 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Query parameter "room" is required.' }, { status: 400 });
     }
 
-    // Read user identity from middleware-injected header (set by middleware.ts)
-    const userId = req.headers.get('x-auth-user-id') || identityParam || `anon-${Date.now()}`;
+    // Resolve authenticated user from session cookies or header/query fallback
+    let userId = req.headers.get('x-auth-user-id') || identityParam || '';
+    let callerDisplayName = username;
+    let isAdmin = false;
+
+    try {
+      const caller = await getAuthenticatedCaller(req);
+      if (caller?.userId) {
+        userId = caller.userId;
+        isAdmin = !!caller.isAdmin;
+        if (!searchParams.get('username') && caller.displayName) {
+          callerDisplayName = caller.displayName;
+        }
+      }
+    } catch {
+      // Fallback if session check fails
+    }
+
+    if (!userId) {
+      userId = `anon-${Date.now()}`;
+    }
 
     // Verify participant
-    const { allowed, identity, displayName, isStudent, isTutor, scheduledStart } = await verifyRoomParticipant(room, userId);
+    const { allowed, identity, displayName, isStudent, isTutor, scheduledStart } = await verifyRoomParticipant(
+      room,
+      userId,
+      isAdmin
+    );
 
     if (!allowed) {
       return NextResponse.json(
@@ -141,8 +181,8 @@ export async function GET(req: NextRequest) {
       const earlyJoinMinutes = policies.classroomEarlyJoinMinutes || 15;
       const scheduledTime = new Date(scheduledStart).getTime();
       const now = Date.now();
-      
-      const thresholdTime = scheduledTime - (earlyJoinMinutes * 60 * 1000);
+
+      const thresholdTime = scheduledTime - earlyJoinMinutes * 60 * 1000;
       if (now < thresholdTime) {
         return NextResponse.json(
           { error: `The classroom will open ${earlyJoinMinutes} minutes before the scheduled start time.` },
@@ -156,14 +196,15 @@ export async function GET(req: NextRequest) {
 
     // Generate JWT token with role-based host grants
     const isHost = !!isTutor;
+    const finalName = callerDisplayName || displayName;
     const at = new AccessToken(apiKey, apiSecret, {
       identity,
-      name: username || displayName,
-      ttl: '2h',
+      name: finalName,
+      ttl: '4h',
       metadata: JSON.stringify({
         role: isHost ? 'TUTOR' : 'STUDENT',
         userId,
-        displayName: username || displayName,
+        displayName: finalName,
       }),
     });
 
@@ -184,9 +225,8 @@ export async function GET(req: NextRequest) {
       serverUrl,
       room,
       identity,
-      username: username || displayName,
+      username: finalName,
     });
-
   } catch (error: any) {
     console.error('[GET /api/livekit/token]', error);
     return NextResponse.json(
