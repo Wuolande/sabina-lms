@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { Newspaper } from "lucide-react";
-import { getPayloadClient } from "@/cms/auth/session";
-import { blogCategories, listPosts } from "@/cms/content/server";
+import { blogCategories, listPosts, maybePayload } from "@/cms/content/server";
 import { FeaturedPost, PostCardView } from "@/components/content/PostCards";
 
 export const revalidate = 60;
 
 export default async function BlogPage({ searchParams }: { searchParams: Promise<{ category?: string; page?: string }> }) {
   const q = await searchParams;
-  const payload = await getPayloadClient();
+  const payload = await maybePayload();
   const page = Math.max(1, Number(q.page) || 1);
-  const [{ posts, pages }, categories] = await Promise.all([listPosts(payload, { category: q.category, page, limit: 13 }), blogCategories(payload)]);
+  const [{ posts, pages }, categories] = payload
+    ? await Promise.all([listPosts(payload, { category: q.category, page, limit: 13 }), blogCategories(payload)])
+    : [{ posts: [], pages: 1 }, [] as { name: string; slug: string }[]];
   const showFeatured = page === 1 && !q.category && posts.length > 0;
   const featured = showFeatured ? (posts.find((p) => p.featured) ?? posts[0]!) : null;
   const rest = featured ? posts.filter((p) => p.id !== featured.id) : posts;

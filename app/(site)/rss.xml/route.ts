@@ -1,5 +1,4 @@
-import { getPayloadClient } from "@/cms/auth/session";
-import { listPosts, siteSeo } from "@/cms/content/server";
+import { listPosts, maybePayload, siteSeo, type PostCard } from "@/cms/content/server";
 
 export const revalidate = 600;
 
@@ -8,7 +7,8 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 /** RSS feed of the latest published blog posts (also served at /feed.xml). */
 export async function GET() {
   const base = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
-  const [seo, { posts }] = await Promise.all([siteSeo(), getPayloadClient().then((p) => listPosts(p, { limit: 50 }))]);
+  const payload = await maybePayload();
+  const [seo, { posts }] = await Promise.all([siteSeo(), payload ? listPosts(payload, { limit: 50 }) : Promise.resolve({ posts: [] as PostCard[] })]);
   const items = posts
     .map(
       (p) => `<item><title>${esc(p.title)}</title><link>${base}/blog/${p.slug}</link><guid isPermaLink="true">${base}/blog/${p.slug}</guid><pubDate>${new Date(p.publishedAt).toUTCString()}</pubDate><description>${esc(p.excerpt)}</description>${p.category ? `<category>${esc(p.category.name)}</category>` : ""}</item>`,

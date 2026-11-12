@@ -2,8 +2,7 @@
  * Site-wide SEO from Payload (admin → Settings → Site settings → Search and sharing).
  * Kept with the old shape so the root layout keeps working.
  */
-import { getPayloadClient } from "@/cms/auth/session";
-import { mediaUrl, siteSeo } from "@/cms/content/server";
+import { maybePayload, mediaUrl, siteSeo } from "@/cms/content/server";
 
 export interface PlatformSeoConfig {
   primaryColor: string;
@@ -23,8 +22,8 @@ export interface PlatformSeoConfig {
 
 export async function getPlatformSeo(): Promise<PlatformSeoConfig> {
   const seo = await siteSeo();
-  const payload = await getPayloadClient();
-  const g = (await payload.findGlobal({ slug: "site-settings", depth: 1, overrideAccess: true }).catch(() => null)) as { brand?: { logo?: unknown; icon?: unknown; colours?: { primary?: string; accent?: string } } } | null;
+  const payload = await maybePayload();
+  const g = (payload ? await payload.findGlobal({ slug: "site-settings", depth: 1, overrideAccess: true }).catch(() => null) : null) as { brand?: { logo?: unknown; icon?: unknown; colours?: { primary?: string; accent?: string } } } | null;
   return {
     primaryColor: g?.brand?.colours?.primary || "#14209C",
     secondaryColor: g?.brand?.colours?.accent || "#F9C31C",

@@ -5,11 +5,22 @@ import type { BlogCategory, HomePage, Media, Page, Post, User } from "@/payload-
 import { getPayloadClient } from "../auth/session";
 import { getPolicies } from "../tutors/server";
 import { DEFAULT_PAGES, HOME_DEFAULTS } from "./defaults";
+import { PLATFORM_DEFAULTS } from "../globals/PlatformSettings";
 
 /* ------------------------------------------------------------------ rules in copy */
 
-export async function contentRules(payload: Payload) {
-  const p = await getPolicies(payload);
+/** Payload, or null when it can't start (e.g. during a build without database access). */
+export async function maybePayload(): Promise<Payload | null> {
+  try {
+    return await getPayloadClient();
+  } catch (err) {
+    console.warn("[content] Payload unavailable, using default content:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+export async function contentRules(payload: Payload | null) {
+  const p = payload ? await getPolicies(payload) : (PLATFORM_DEFAULTS as typeof PLATFORM_DEFAULTS & Record<string, unknown>);
   return {
     cancelHours: Number(p.cancellationRefundHours),
     trialMinutes: Number(p.trialLessonMinutes),
@@ -42,14 +53,16 @@ const counter = (c: Partial<Counter> | null | undefined, d: Counter) => {
 };
 
 /** Homepage content in the shape the homepage component reads, with defaults and live numbers. */
-export async function homeContent(payload: Payload) {
-  const [g, rules] = await Promise.all([payload.findGlobal({ slug: "home-page", depth: 1, overrideAccess: true }).catch(() => null) as Promise<HomePage | null>, contentRules(payload)]);
+export async function homeContent(payload: Payload | null) {
+  const [g, rules] = await Promise.all([(payload ? payload.findGlobal({ slug: "home-page", depth: 1, overrideAccess: true }).catch(() => null) : Promise.resolve(null)) as Promise<HomePage | null>, contentRules(payload)]);
   const D = fill(HOME_DEFAULTS, rules);
   const h: NonNullable<HomePage["hero"]> = g?.hero ?? {};
   const s: NonNullable<HomePage["stats"]> = g?.stats ?? {};
   const x: NonNullable<HomePage["sections"]> = g?.sections ?? {};
 
-  const reviews = await payload.find({ collection: "reviews", where: { status: { equals: "published" } }, limit: 5000, pagination: false, depth: 0, select: { rating: true }, overrideAccess: true });
+  const reviews = payload
+    ? await payload.find({ collection: "reviews", where: { status: { equals: "published" } }, limit: 5000, pagination: false, depth: 0, select: { rating: true }, overrideAccess: true }).catch(() => ({ docs: [] as { rating?: number | null }[] }))
+    : { docs: [] as { rating?: number | null }[] };
   const n = reviews.docs.length;
   const avg = n ? reviews.docs.reduce((t, r) => t + (r.rating ?? 0), 0) / n : 0;
 
@@ -59,7 +72,7 @@ export async function homeContent(payload: Payload) {
     stat3: counter(s.stat3 as Counter, D.stats.stat3 as Counter),
     stat4: counter(s.stat4 as Counter, D.stats.stat4 as Counter),
   };
-  if (s.live) {
+  if (s.live && payload) {
     const [tutors, students, lessons] = await Promise.all([
       payload.count({ collection: "tutor-profiles", where: { status: { equals: "approved" } }, overrideAccess: true }),
       payload.count({ collection: "users", where: { role: { equals: "student" } }, overrideAccess: true }),
@@ -118,7 +131,14 @@ export async function homeContent(payload: Payload) {
 
 /** A published page. The standard pages (about, pricing, legal) are created from defaults on first visit. */
 export const pageBySlug = cache(async (slug: string) => {
-  const payload = await getPayloadClient();
+  const payload = await maybePayload();
+  if (!payload) {
+    // No database (e.g. a build without access): show the standard page's default text.
+    const d = DEFAULT_PAGES[slug];
+    if (!d) return null;
+    const now = new Date().toISOString();
+    return fill({ id: 0, slug, title: d.title, intro: d.intro, kind: d.kind, status: "published", body: d.body, updatedAt: now, createdAt: now } as unknown as Page, await contentRules(null));
+  }
   let page = (await payload.find({ collection: "pages", where: { slug: { equals: slug } }, limit: 1, depth: 1, overrideAccess: true })).docs[0] as Page | undefined;
   if (!page && DEFAULT_PAGES[slug]) {
     const d = DEFAULT_PAGES[slug]!;
@@ -166,7 +186,8 @@ export async function blogCategories(payload: Payload) {
 }
 
 export const postBySlug = cache(async (slug: string) => {
-  const payload = await getPayloadClient();
+  const payload = await maybePayload();
+  if (!payload) return null;
   const p = (await payload.find({ collection: "posts", where: { and: [live(), { slug: { equals: slug } }] }, limit: 1, depth: 1, overrideAccess: true })).docs[0];
   if (!p) return null;
   const cat = p.category && typeof p.category === "object" ? p.category.id : null;
@@ -177,8 +198,8 @@ export const postBySlug = cache(async (slug: string) => {
 /* ------------------------------------------------------------------ SEO */
 
 export const siteSeo = cache(async () => {
-  const payload = await getPayloadClient();
-  const g = await payload.findGlobal({ slug: "site-settings", depth: 1, overrideAccess: true }).catch(() => null);
+  const payload = await maybePayload();
+  const g = payload && await payload.findGlobal({ slug: "site-settings", depth: 1, overrideAccess: true }).catch(() => null);
   const seo = (g as { seo?: Record<string, unknown> } | null)?.seo ?? {};
   return {
     name: (g as { platformName?: string } | null)?.platformName || "Sabina Education",

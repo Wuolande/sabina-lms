@@ -1,6 +1,5 @@
 import { Subject } from "@/types";
-import { getPayloadClient } from "@/cms/auth/session";
-import { homeContent, listPosts, type PostCard } from "@/cms/content/server";
+import { homeContent, listPosts, maybePayload, type PostCard } from "@/cms/content/server";
 import { searchTutors, subjectsWithCounts, type PublicTutor } from "@/cms/marketplace/public";
 
 export { DEFAULT_HERO_IMAGE } from "./constants";
@@ -15,11 +14,12 @@ export interface HomepageServerData {
 
 /** Everything the homepage shows, from Payload: editable copy, featured tutors, subjects, latest posts. */
 export async function getHomepageServerData(): Promise<HomepageServerData> {
-  const payload = await getPayloadClient();
+  const payload = await maybePayload();
+  if (!payload) return { cms: await homeContent(null), featuredTutors: [], currency: "USD", popularSubjects: [], posts: [] };
   const [cms, featured, popularSubjects, posts] = await Promise.all([
     homeContent(payload).catch((err) => {
       payload.logger.error({ err }, "[home] content failed");
-      return null;
+      return homeContent(null);
     }),
     searchTutors(payload, { sort: "recommended" })
       .then((r) => ({ tutors: r.tutors.slice(0, 4), currency: r.policies.currency }))
