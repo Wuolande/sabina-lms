@@ -1,59 +1,11 @@
-/**
- * API Route: GET /api/auth/session
- * -----------------------------------------------------------------------
- * Enterprise Session Inspection & Health Check.
- * Returns authenticated identity, roles, and validity status.
- * -----------------------------------------------------------------------
- */
+import { NextResponse, type NextRequest } from "next/server";
+import { getPayloadClient, homeFor } from "@/cms/auth/session";
+import { publicUser } from "@/cms/auth/http";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getAdminContext, getStudentContext, getTutorContext } from '@/src/shared/auth/authService';
-
+/** GET /api/auth/session: who is signed in. */
 export async function GET(req: NextRequest) {
-  try {
-    const roleParam = req.nextUrl.searchParams.get('role');
-
-    if (roleParam === 'ADMIN') {
-      const admin = await getAdminContext(req);
-      return NextResponse.json({
-        authenticated: true,
-        user: {
-          id: admin.id,
-          email: admin.email,
-          displayName: admin.displayName,
-          roles: admin.roles,
-        },
-      });
-    }
-
-    if (roleParam === 'TUTOR') {
-      const tutor = await getTutorContext(req);
-      return NextResponse.json({
-        authenticated: !!tutor.userId,
-        user: {
-          id: tutor.userId,
-          tutorProfileId: tutor.tutorProfileId,
-          displayName: tutor.displayName,
-          role: 'TUTOR',
-        },
-      });
-    }
-
-    // Default to student
-    const student = await getStudentContext(req);
-    return NextResponse.json({
-      authenticated: !!student.userId,
-      user: {
-        id: student.userId,
-        email: student.email,
-        displayName: student.displayName,
-        role: 'STUDENT',
-      },
-    });
-  } catch (error: any) {
-    return NextResponse.json(
-      { authenticated: false, error: error.message || 'Unauthorized' },
-      { status: 401 }
-    );
-  }
+  const payload = await getPayloadClient();
+  const { user } = await payload.auth({ headers: req.headers });
+  if (!user) return NextResponse.json({ authenticated: false }, { status: 401 });
+  return NextResponse.json({ authenticated: true, user: publicUser(user), home: homeFor((user as { role?: string }).role) });
 }

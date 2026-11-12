@@ -1,38 +1,16 @@
-"use client";
+import type { ReactNode } from "react";
+import { requireUser } from "@/cms/auth/session";
+import { toPortalUser } from "@/cms/auth/portal";
+import { PortalShell } from "@/components/portal/PortalShell";
 
-import * as React from "react";
-import { TutorSidebar } from "@/components/layout/TutorSidebar";
-import { TutorHeader } from "@/components/layout/TutorHeader";
-import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
-import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
+export const dynamic = "force-dynamic";
 
-export default function TutorPortalLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [sidebarOpen, setSidebarOpen] = React.useState(false);
-
+/** Tutor portal: signed-in tutors only (everyone else is sent to their own home). */
+export default async function TutorPortalLayout({ children }: { children: ReactNode }) {
+  const user = await requireUser(["tutor"], "/tutor");
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
-      <ImpersonationBanner />
-      <div className="flex flex-1 lg:overflow-hidden">
-        <TutorSidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-
-        <div className="flex flex-1 flex-col min-w-0">
-          <TutorHeader onToggleSidebar={() => setSidebarOpen(true)} />
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 pb-20 lg:pb-8">
-            {children}
-          </main>
-          <MobileBottomNav
-            role="tutor"
-            onOpenMenu={() => setSidebarOpen(true)}
-          />
-        </div>
-      </div>
-    </div>
+    <PortalShell user={await toPortalUser(user)} role="tutor">
+      {children}
+    </PortalShell>
   );
 }

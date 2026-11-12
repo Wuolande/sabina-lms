@@ -1,41 +1,20 @@
-/**
- * API Route: POST /api/auth/logout
- * -----------------------------------------------------------------------
- * Enterprise Logout Handler:
- * Terminates the authenticated Supabase session, expires cookies,
- * and clears server-side authentication state.
- * -----------------------------------------------------------------------
- */
+import { NextResponse, type NextRequest } from "next/server";
+import { createLocalReq, logoutOperation } from "payload";
+import { getPayloadClient } from "@/cms/auth/session";
+import { clearSessionCookie } from "@/cms/auth/http";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-
-export async function POST(request: NextRequest) {
+/** POST /api/auth/logout: end this session on the server and clear the cookie. */
+export async function POST(req: NextRequest) {
+  const payload = await getPayloadClient();
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          },
-        },
-      }
-    );
-
-    await supabase.auth.signOut();
-
-    return NextResponse.json({ success: true, message: 'Logged out successfully.' });
-  } catch (err: any) {
-    console.error('[POST /api/auth/logout]', err);
-    return NextResponse.json({ error: err.message || 'Logout failed' }, { status: 500 });
+    const { user } = await payload.auth({ headers: req.headers });
+    if (user) {
+      const localReq = await createLocalReq({ user }, payload);
+      localReq.headers = req.headers;
+      await logoutOperation({ collection: payload.collections.users, req: localReq });
+    }
+  } catch {
+    /* already signed out */
   }
+  return clearSessionCookie(NextResponse.json({ success: true }), payload);
 }

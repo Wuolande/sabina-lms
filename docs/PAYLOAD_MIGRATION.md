@@ -96,12 +96,38 @@ in the admin to upload and preview.
   as collections land, ⌘K palette, "New" menu, notifications, dark mode, custom login, dashboard.
 - Initial migration (creates the `payload` schema), tested on an empty database.
 
+## Phase 1: done
+
+- One account system on Payload for staff, tutors and students. Supabase Auth is no longer used.
+- Email confirmation (branded email with a one-click link), password reset (one-hour link, signs
+  the person in), lockout after 5 failed sign-ins, honeypot and per-IP rate limits on every form.
+- `/api/auth/*` rebuilt on Payload: login, register, logout (ends the server-side session),
+  session, verify-email, resend-code, forgot-password, reset-password.
+- `proxy.ts` checks the Payload session token for `/student`, `/tutor` and their APIs;
+  pages and APIs re-check the session through Payload.
+- Redesigned sign-in, sign-up (learn/teach), check-your-inbox, forgot and reset screens.
+- New student and tutor portal shell: sidebar, account menu, phone bottom bar, drawer.
+  Sections not rebuilt yet show a "being rebuilt, returns in phase N" panel.
+- Student and tutor home pages with a set-up checklist; account settings (photo, name, phone,
+  country, time zone, password, sign out) on Payload.
+- Browser tests: `tests/e2e/phase1-accounts.spec.ts` (desktop and phone).
+
+Not yet moved: the onboarding screens (`/onboarding/*`, phase 2), the public tutor marketplace
+(phase 2), and the legacy admin at `/admin-legacy`, which no longer has a sign-in and is removed in phase 8.
+
 ### Running locally
 
 ```bash
 cp .env.example .env.local   # fill DATABASE_URI and PAYLOAD_SECRET at minimum
 npm install
 npm run dev                  # http://localhost:3000/admin creates the first admin
+```
+
+Browser tests (with the app running, and `AUTH_RATE_LIMIT=off` in `.env.local` so repeated
+sign-ups aren't blocked; that switch is ignored in production):
+
+```bash
+npm run test:e2e
 ```
 
 Useful scripts: `npm run generate:types`, `npm run generate:importmap` (after adding admin

@@ -1,154 +1,66 @@
-import { createServerClient } from '@supabase/ssr';
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from "next/server";
+import { COOKIE, readToken } from "@/cms/auth/token";
+
+/**
+ * Route guard for the student and tutor portals and their APIs.
+ *
+ * This is an optimistic check (token signature, expiry and role). Every page and API route still
+ * authenticates through Payload, which also validates the server-side session.
+ * The Payload admin (/admin) and Payload's REST API protect themselves.
+ */
+const STAFF = new Set(["admin", "manager", "finance", "support", "editor"]);
+
+const AREAS: { prefix: string; roles: Set<string> }[] = [
+  { prefix: "/student", roles: new Set(["student", ...STAFF]) },
+  { prefix: "/tutor", roles: new Set(["tutor", ...STAFF]) },
+  { prefix: "/api/student", roles: new Set(["student", ...STAFF]) },
+  { prefix: "/api/tutor", roles: new Set(["tutor", ...STAFF]) },
+  { prefix: "/api/upload", roles: new Set(["student", "tutor", ...STAFF]) },
+  { prefix: "/admin-legacy", roles: STAFF },
+  { prefix: "/api/admin", roles: STAFF },
+];
+
+const homeFor = (role?: string) => (role === "tutor" ? "/tutor" : role === "student" ? "/student" : role && STAFF.has(role) ? "/admin" : "/login");
 
 export async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
+  const { pathname, search } = request.nextUrl;
+  const area = AREAS.find((a) => pathname === a.prefix || pathname.startsWith(`${a.prefix}/`));
+  if (!area) return NextResponse.next();
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({
-            request,
-          });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
+  const isApi = pathname.startsWith("/api/");
+  const claims = await readToken(request.cookies.get(COOKIE)?.value);
 
-  // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
-  // issues with cross-browser cookies, so just do it here.
-  const {
-    data: { user },
-    error: authError
-  } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
-  console.log(`[Middleware] Path: ${pathname} | User ID: ${user?.id} | Auth Error: ${authError?.message}`);
-
-  // 1. Public Routes bypass check completely
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/register') ||
-    pathname.startsWith('/verify-email') ||
-    pathname.startsWith('/forgot-password') ||
-    pathname.startsWith('/api/secure-media') ||
-    pathname.startsWith('/api/homepage') ||
-    pathname.startsWith('/api/blogs') ||
-    pathname.startsWith('/api/tutors') ||
-    pathname.startsWith('/blog') ||
-    pathname.startsWith('/tutors') ||
-    pathname.startsWith('/tutor/training/certificates') ||
-    pathname === '/' ||
-    pathname.startsWith('/find-tutors') ||
-    pathname.startsWith('/subjects') ||
-    pathname.startsWith('/how-it-works') ||
-    pathname.startsWith('/become-a-tutor') ||
-    pathname.startsWith('/pricing') ||
-    pathname.startsWith('/contact') ||
-    pathname.startsWith('/about') ||
-    pathname.startsWith('/terms') ||
-    pathname.startsWith('/privacy') ||
-    pathname.startsWith('/cookies') ||
-    pathname.startsWith('/refund-policy') ||
-    pathname.startsWith('/pages')
-  ) {
-    return supabaseResponse;
+  if (!claims) {
+    if (isApi) return NextResponse.json({ error: "Please sign in." }, { status: 401 });
+    const login = new URL("/login", request.url);
+    login.searchParams.set("redirect", `${pathname}${search}`);
+    return NextResponse.redirect(login);
   }
 
-  // 2. Unauthenticated Guard
-  if (!user) {
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Unauthorized: Authentication required.' }, { status: 401 });
-    }
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+  if (claims.status && claims.status !== "active") {
+    if (isApi) return NextResponse.json({ error: "This account is not active." }, { status: 403 });
+    return NextResponse.redirect(new URL("/login?error=inactive", request.url));
   }
 
-  // 2b. Unconfirmed Email Guard
-  if (!user.email_confirmed_at) {
-    if (pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Email confirmation required.' }, { status: 403 });
-    }
-    const verifyUrl = new URL('/verify-email', request.url);
-    if (user.email) {
-      verifyUrl.searchParams.set('email', user.email);
-    }
-    verifyUrl.searchParams.set('notice', 'unconfirmed');
-    return NextResponse.redirect(verifyUrl);
+  if (!area.roles.has(String(claims.role))) {
+    if (isApi) return NextResponse.json({ error: "You don't have access to this." }, { status: 403 });
+    return NextResponse.redirect(new URL(homeFor(claims.role), request.url));
   }
 
-  const role = user?.user_metadata?.role || 'STUDENT';
-
-  // 3. Role-Based Route Validation
-  if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-    // Admin has access to all portals and APIs
-    supabaseResponse.headers.set('X-Auth-User-Id', user.id);
-    supabaseResponse.headers.set('X-User-Role', role);
-    return supabaseResponse;
-  }
-
-  if (role === 'TUTOR') {
-    if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
-      if (pathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'Forbidden: Admin privilege required.' }, { status: 403 });
-      }
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('error', 'Admin access required');
-      return NextResponse.redirect(loginUrl);
-    }
-    supabaseResponse.headers.set('X-Auth-User-Id', user.id);
-    supabaseResponse.headers.set('X-User-Role', 'TUTOR');
-    return supabaseResponse;
-  }
-
-  if (role === 'STUDENT') {
-    if (
-      pathname.startsWith('/admin') ||
-      pathname.startsWith('/tutor') ||
-      pathname.startsWith('/api/admin') ||
-      pathname.startsWith('/api/tutor')
-    ) {
-      if (pathname.startsWith('/api/')) {
-        return NextResponse.json({ error: 'Forbidden: Insufficient privileges.' }, { status: 403 });
-      }
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('error', 'Higher privilege required');
-      return NextResponse.redirect(loginUrl);
-    }
-    supabaseResponse.headers.set('X-Auth-User-Id', user.id);
-    supabaseResponse.headers.set('X-User-Role', 'STUDENT');
-    return supabaseResponse;
-  }
-
-  // Fallback
-  supabaseResponse.headers.set('X-Auth-User-Id', user.id);
-  return supabaseResponse;
+  const res = NextResponse.next();
+  res.headers.set("X-Auth-User-Id", String(claims.id));
+  res.headers.set("X-User-Role", String(claims.role));
+  return res;
 }
 
 export const config = {
   matcher: [
-    '/admin-legacy/:path*',
-    '/tutor/:path*',
-    '/student/:path*',
-    '/api/admin/:path*',
-    '/api/tutor/:path*',
-    '/api/student/:path*',
-    '/api/upload/:path*',
+    "/student/:path*",
+    "/tutor/:path*",
+    "/admin-legacy/:path*",
+    "/api/student/:path*",
+    "/api/tutor/:path*",
+    "/api/admin/:path*",
+    "/api/upload/:path*",
   ],
 };

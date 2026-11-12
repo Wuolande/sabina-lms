@@ -1,152 +1,36 @@
-/**
- * API Route: POST /api/auth/login
- * -----------------------------------------------------------------------
- * Enterprise Login Handler:
- * - Anti-Brute-Force Rate Limiting (5 attempts / 5 mins + 15 min lockout)
- * - Rate limit reset upon successful credentials verification
- * - Honeypot Anti-Bot Shield
- * - Server-Side Google reCAPTCHA Verification
- * -----------------------------------------------------------------------
- */
+import { NextResponse, type NextRequest } from "next/server";
+import { getPayloadClient, homeFor } from "@/cms/auth/session";
+import { fail, guard, normEmail, publicUser, withSessionCookie } from "@/cms/auth/http";
+import { resetRateLimit } from "@/src/shared/security/rateLimiter";
+import { clientIp } from "@/cms/auth/http";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { checkRateLimit, resetRateLimit } from '@/src/shared/security/rateLimiter';
-import { checkHoneypot } from '@/src/shared/security/honeypot';
-import { verifyRecaptchaToken } from '@/src/shared/security/recaptchaService';
-import { adminSupabase } from '@/src/shared/database/supabase';
+/** POST /api/auth/login: sign in a student, tutor or staff member and set the session cookie. */
+export async function POST(req: NextRequest) {
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const email = normEmail(body.email);
+  const password = typeof body.password === "string" ? body.password : "";
+  if (!email || !password) return fail("Enter your email and password.");
 
-export async function POST(request: NextRequest) {
+  const blocked = guard(req, body, `login_${email}`, { maxAttempts: 8, windowMs: 5 * 60_000, lockoutDurationMs: 15 * 60_000 });
+  if (blocked) return blocked;
+
+  const payload = await getPayloadClient();
   try {
-    // 1. Client IP Extraction
-    const ip =
-      request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
-      request.headers.get('x-real-ip') ||
-      '127.0.0.1';
-
-    const body = await request.json().catch(() => ({}));
-    const { email, password, recaptchaToken } = body;
-
-    // 2. Honeypot Anti-Bot Trap
-    const honeypot = checkHoneypot(body);
-    if (honeypot.isBot) {
-      return NextResponse.json(
-        { error: 'Automated login rejected. Bot activity detected.' },
-        { status: 400 }
-      );
+    const result = await payload.login({ collection: "users", data: { email, password } });
+    if (!result.token || !result.user) return fail("Sign-in didn't work. Please try again.", 401);
+    resetRateLimit(`login_${email}_${clientIp(req)}`);
+    const user = result.user;
+    const res = NextResponse.json({ success: true, user: publicUser(user), redirectTo: homeFor(user.role) });
+    return withSessionCookie(res, payload, result.token);
+  } catch (err) {
+    const e = err as { name?: string; message?: string; status?: number };
+    if (e.name === "UnverifiedEmail") {
+      return fail("Please confirm your email address before signing in.", 403, { requiresEmailConfirmation: true, email });
     }
-
-    if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
-      return NextResponse.json(
-        { error: 'Email and password are required.' },
-        { status: 400 }
-      );
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const rateLimitIdentifier = `login_${ip}_${normalizedEmail}`;
-
-    // 3. Anti-Brute-Force Rate Limiter (Max 5 attempts before 15 min lockout)
-    const rateLimit = checkRateLimit(rateLimitIdentifier, {
-      maxAttempts: 5,
-      windowMs: 5 * 60 * 1000,
-      lockoutDurationMs: 15 * 60 * 1000,
-    });
-
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        {
-          error: `Too many failed login attempts. Access is locked for ${rateLimit.retryAfterSeconds} seconds for your security.`,
-          retryAfterSeconds: rateLimit.retryAfterSeconds,
-        },
-        { status: 429 }
-      );
-    }
-
-    // 4. reCAPTCHA Verification
-    const recaptchaResult = await verifyRecaptchaToken(recaptchaToken, 'login', ip);
-    if (!recaptchaResult.success) {
-      return NextResponse.json(
-        { error: recaptchaResult.error || 'Anti-bot verification failed.' },
-        { status: 400 }
-      );
-    }
-
-    // 5. Supabase Password Authentication
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          },
-        },
-      }
-    );
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: normalizedEmail,
-      password,
-    });
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
-    }
-
-    if (!data.user) {
-      return NextResponse.json({ error: 'Authentication failed.' }, { status: 401 });
-    }
-
-    // 6. Enforce Email Verification Requirement
-    // Cross-reference auth.users email_confirmed_at and public.users status
-    const { data: dbUser } = await adminSupabase
-      .from('users')
-      .select('status, roles:user_roles!user_roles_user_id_fkey(role_id)')
-      .eq('auth_id', data.user.id)
-      .maybeSingle();
-
-    const isConfirmed = !!data.user.email_confirmed_at;
-    const isPending = dbUser?.status === 'PENDING';
-
-    if (!isConfirmed || isPending) {
-      // Invalidate cookies immediately so unverified session is never stored
-      await supabase.auth.signOut();
-
-      const userRole = (data.user?.user_metadata?.role || 'STUDENT').toUpperCase();
-
-      return NextResponse.json(
-        {
-          requiresEmailConfirmation: true,
-          email: normalizedEmail,
-          role: userRole,
-          error: 'Please verify your email address before signing in.',
-        },
-        { status: 403 }
-      );
-    }
-
-    if (dbUser?.status === 'SUSPENDED') {
-      await supabase.auth.signOut();
-      return NextResponse.json(
-        { error: 'Your account has been suspended. Please contact platform support.' },
-        { status: 403 }
-      );
-    }
-
-    // 7. Reset Rate Limiter on Successful Login
-    resetRateLimit(rateLimitIdentifier);
-
-    return NextResponse.json({ success: true, user: data.user, session: data.session });
-  } catch (err: any) {
-    console.error('[POST /api/auth/login]', err);
-    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+    if (e.name === "LockedAuth") return fail("Too many failed attempts. This account is locked for 15 minutes.", 423);
+    if (e.status === 403) return fail(e.message || "This account is not active.", 403);
+    if (e.name === "AuthenticationError" || e.status === 401) return fail("That email and password don't match.", 401);
+    payload.logger.error({ err }, "[auth/login]");
+    return fail("Something went wrong. Please try again.", 500);
   }
 }

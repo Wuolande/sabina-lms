@@ -33,3 +33,7 @@ next-env.d.ts
 
 # payload local uploads (development without R2)
 /media
+
+# playwright
+/test-results
+/playwright-report

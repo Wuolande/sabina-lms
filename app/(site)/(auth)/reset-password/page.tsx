@@ -1,185 +1,89 @@
 "use client";
-
-import * as React from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, CheckCircle2, ArrowLeft, AlertCircle, KeyRound } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Logo } from "@/components/ui/Logo";
-import { PasswordStrengthMeter, PasswordConfirmationFeedback } from "@/components/ui/PasswordStrengthMeter";
+import { useSearchParams } from "next/navigation";
+import { LockKeyhole } from "lucide-react";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { Alert, PasswordChecklist, PasswordInput, SubmitButton, passwordOk, postJSON } from "@/components/auth/fields";
 
-function ResetPasswordContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const tokenParam = searchParams.get("token") || searchParams.get("access_token") || "";
-  const codeParam = searchParams.get("code") || "";
+function Reset() {
+  const params = useSearchParams();
+  const token = params.get("token") ?? "";
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [expired, setExpired] = useState(false);
 
-  const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [token, setToken] = React.useState(tokenParam);
-  const [code, setCode] = React.useState(codeParam);
-  const [loading, setLoading] = React.useState(false);
-  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState(false);
-
-  // Check URL hash if tokens are in anchor fragment (#access_token=...)
-  React.useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash) {
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const hashToken = hashParams.get("access_token") || hashParams.get("token");
-      if (hashToken) setToken(hashToken);
-    }
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setErrorMsg(null);
-
-    if (password.length < 8) {
-      setErrorMsg("Password must be at least 8 characters long.");
+    setError(null);
+    if (!passwordOk(password)) return setError("Choose a password with 8+ characters, including a letter and a number.");
+    if (password !== confirm) return setError("The two passwords don't match.");
+    setBusy(true);
+    const { ok, data } = await postJSON<{ redirectTo?: string; code?: string }>("/api/auth/reset-password", { token, password });
+    if (ok) {
+      window.location.assign(data.redirectTo ?? "/student");
       return;
     }
+    setExpired(data.code === "INVALID_TOKEN");
+    setError(data.error ?? "Something went wrong. Please try again.");
+    setBusy(false);
+  }
 
-    if (password !== confirmPassword) {
-      setErrorMsg("Passwords do not match. Please re-enter.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          password,
-          accessToken: token || undefined,
-          code: code || undefined,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to reset password.");
-      }
-
-      setSuccess(true);
-      setTimeout(() => {
-        router.push("/login?message=Password+updated+successfully");
-      }, 2500);
-    } catch (err: any) {
-      setErrorMsg(err.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!token)
+    return (
+      <div className="space-y-5">
+        <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900">This link is incomplete</h1>
+        <p className="text-slate-600">Open the link from the email again, or ask for a new one.</p>
+        <Link href="/forgot-password" className="inline-flex h-12 w-full items-center justify-center rounded-xl bg-brand-700 font-semibold text-white hover:bg-brand-800">
+          Get a new link
+        </Link>
+      </div>
+    );
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-slate-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="mb-5 flex justify-center">
-          <Logo size="lg" href="/" />
-        </div>
-        <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-          Set New Password
-        </h2>
-        <p className="text-xs text-slate-500 mt-1">
-          Create a secure password for your Sabina LMS account
-        </p>
+    <div className="space-y-7">
+      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-700">
+        <LockKeyhole size={26} />
+      </span>
+      <div className="space-y-2">
+        <h1 className="font-heading text-3xl font-bold tracking-tight text-slate-900">Choose a new password</h1>
+        <p className="text-slate-600">You&apos;ll be signed in straight after.</p>
       </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-card space-y-6">
-          {errorMsg && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
-              <AlertCircle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">Password Requirement</p>
-                <p className="mt-0.5 text-rose-700">{errorMsg}</p>
-              </div>
-            </div>
-          )}
-
-          {success ? (
-            <div className="text-center py-4 space-y-4">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 animate-bounce">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-              <h3 className="text-lg font-bold text-slate-900">Password Updated!</h3>
-              <p className="text-xs text-slate-500">
-                Your account password has been updated securely. Redirecting to sign in...
-              </p>
-              <Link href="/login" className="block pt-2">
-                <Button variant="default" size="sm" className="w-full font-bold bg-[#14209C]">
-                  Continue to Sign In
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  New Password
-                </label>
-                <Input
-                  type="password"
-                  required
-                  placeholder="At least 8 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  leftIcon={<Lock className="h-4 w-4" />}
-                />
-                <PasswordStrengthMeter password={password} />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Confirm New Password
-                </label>
-                <Input
-                  type="password"
-                  required
-                  placeholder="Re-enter your new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  leftIcon={<Lock className="h-4 w-4" />}
-                />
-                <PasswordConfirmationFeedback password={password} confirmPassword={confirmPassword} />
-              </div>
-
-              <Button
-                type="submit"
-                variant="default"
-                size="lg"
-                isLoading={loading}
-                disabled={loading || password.length < 8 || password !== confirmPassword}
-                className="w-full font-bold bg-[#14209C] hover:bg-[#0e176b] text-white flex items-center justify-center gap-2"
-              >
-                <KeyRound className="h-4 w-4" />
-                <span>Save New Password</span>
-              </Button>
-
-              <div className="pt-2 text-center">
-                <Link
-                  href="/login"
-                  className="text-xs font-semibold text-slate-500 hover:text-brand-700 flex items-center justify-center gap-1"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" /> Back to Sign In
+      <form onSubmit={submit} className="space-y-5" noValidate>
+        <div className="space-y-2.5">
+          <PasswordInput label="New password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} autoFocus />
+          <PasswordChecklist value={password} />
+        </div>
+        <PasswordInput label="Repeat new password" autoComplete="new-password" required value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+        {error && (
+          <Alert>
+            {error}
+            {expired && (
+              <>
+                {" "}
+                <Link href="/forgot-password" className="font-semibold underline">
+                  Get a new link
                 </Link>
-              </div>
-            </form>
-          )}
-        </div>
-      </div>
+              </>
+            )}
+          </Alert>
+        )}
+        <SubmitButton busy={busy} busyText="Saving…">
+          Save and sign in
+        </SubmitButton>
+      </form>
     </div>
   );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center text-xs text-slate-500">Loading...</div>}>
-      <ResetPasswordContent />
-    </React.Suspense>
+    <AuthShell>
+      <Suspense>
+        <Reset />
+      </Suspense>
+    </AuthShell>
   );
 }

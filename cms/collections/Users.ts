@@ -1,5 +1,6 @@
 import { APIError, type CollectionConfig } from "payload";
 import { ALL_ROLES, hasRole, isAdmin, isAdminField, isStaffUser } from "../access";
+import { resetPasswordHTML, resetPasswordSubject, verifyEmailHTML, verifyEmailSubject } from "../email/auth";
 
 const ROLE_LABELS: Record<(typeof ALL_ROLES)[number], string> = {
   admin: "Admin: everything, including users and platform settings",
@@ -23,6 +24,13 @@ export const Users: CollectionConfig = {
     maxLoginAttempts: 5,
     lockTime: 15 * 60 * 1000,
     cookies: { sameSite: "Lax", secure: process.env.NODE_ENV === "production" },
+    // New accounts confirm their email before they can sign in (staff-created accounts are pre-verified).
+    verify: { generateEmailHTML: verifyEmailHTML, generateEmailSubject: verifyEmailSubject },
+    forgotPassword: {
+      expiration: 60 * 60 * 1000,
+      generateEmailHTML: resetPasswordHTML,
+      generateEmailSubject: resetPasswordSubject,
+    },
   },
   admin: {
     useAsTitle: "name",
@@ -62,13 +70,22 @@ export const Users: CollectionConfig = {
         const last = String(data.lastName ?? originalDoc?.lastName ?? "").trim();
         if (first || last) data.name = [first, last].filter(Boolean).join(" ");
 
+        // Only staff may mark an account as verified.
+        if (!isStaffUser(req.user) && operation === "update") delete data._verified;
+
         if (operation === "create") {
           const existing = await req.payload.count({ collection: "users", overrideAccess: true });
           if (existing.totalDocs === 0) {
-            // The very first account is always an admin.
+            // The very first account is always an admin, and verified.
             data.role = "admin";
-          } else if (!hasRole(req, "admin")) {
-            // Anyone who isn't an admin can only create tutor or student accounts.
+            data._verified = true;
+          } else if (isStaffUser(req.user)) {
+            // Accounts created by staff in the admin don't need to confirm their email.
+            data._verified = true;
+            if (!hasRole(req, "admin") && !["tutor", "student"].includes(String(data.role))) data.role = "student";
+          } else {
+            data._verified = false;
+            // Public sign-up can only create tutor or student accounts.
             data.role = data.role === "tutor" ? "tutor" : "student";
           }
         }
