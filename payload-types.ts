@@ -76,6 +76,11 @@ export interface Config {
     payments: Payment;
     payouts: Payout;
     'payout-methods': PayoutMethod;
+    conversations: Conversation;
+    messages: Message;
+    notifications: Notification;
+    'email-templates': EmailTemplate;
+    'email-log': EmailLog;
     subjects: Subject;
     languages: Language;
     media: Media;
@@ -96,6 +101,11 @@ export interface Config {
     payments: PaymentsSelect<false> | PaymentsSelect<true>;
     payouts: PayoutsSelect<false> | PayoutsSelect<true>;
     'payout-methods': PayoutMethodsSelect<false> | PayoutMethodsSelect<true>;
+    conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    messages: MessagesSelect<false> | MessagesSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    'email-templates': EmailTemplatesSelect<false> | EmailTemplatesSelect<true>;
+    'email-log': EmailLogSelect<false> | EmailLogSelect<true>;
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
     languages: LanguagesSelect<false> | LanguagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -169,6 +179,13 @@ export interface User {
    */
   timezone?: string | null;
   lastLoginAt?: string | null;
+  /**
+   * Booking, payment and account emails are always sent.
+   */
+  emailPrefs?: {
+    messages?: boolean | null;
+    reminders?: boolean | null;
+  };
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -533,6 +550,14 @@ export interface Booking {
   holdUntil?: string | null;
   refundedAmount?: number | null;
   respondedAt?: string | null;
+  /**
+   * Day-before reminder sent.
+   */
+  remindedDayAt?: string | null;
+  /**
+   * Hour-before reminder sent.
+   */
+  remindedHourAt?: string | null;
   studentJoinedAt?: string | null;
   tutorJoinedAt?: string | null;
   completedAt?: string | null;
@@ -689,6 +714,122 @@ export interface PayoutMethod {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversations".
+ */
+export interface Conversation {
+  id: number;
+  title?: string | null;
+  student: number | User;
+  tutorUser: number | User;
+  tutor: number | TutorProfile;
+  lastMessageAt?: string | null;
+  lastPreview?: string | null;
+  lastSender?: (number | null) | User;
+  messageCount?: number | null;
+  studentReadAt?: string | null;
+  tutorReadAt?: string | null;
+  /**
+   * A message here may share contact details. Untick once checked.
+   */
+  flagged?: boolean | null;
+  lastEmailedAt?: string | null;
+  /**
+   * Stops both people from sending new messages.
+   */
+  closed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "messages".
+ */
+export interface Message {
+  id: number;
+  conversation: number | Conversation;
+  sender: number | User;
+  body: string;
+  /**
+   * Why this message was flagged for review.
+   */
+  flag?: string | null;
+  /**
+   * Hide this message from both people.
+   */
+  hidden?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  user: number | User;
+  kind?: string | null;
+  title: string;
+  body?: string | null;
+  href?: string | null;
+  readAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Every email Sabina sends. Turn one off, or add a note that appears above its button.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-templates".
+ */
+export interface EmailTemplate {
+  id: number;
+  key:
+    | 'booking_confirmed_student'
+    | 'booking_confirmed_tutor'
+    | 'booking_requested_student'
+    | 'booking_requested_tutor'
+    | 'request_accepted'
+    | 'request_declined'
+    | 'lesson_cancelled'
+    | 'lesson_reminder_day'
+    | 'lesson_reminder_hour'
+    | 'new_message'
+    | 'review_received'
+    | 'payment_receipt'
+    | 'refund_issued'
+    | 'payout_requested'
+    | 'payout_sent'
+    | 'application_received'
+    | 'application_approved'
+    | 'application_changes'
+    | 'application_rejected';
+  name: string;
+  audience?: string | null;
+  description?: string | null;
+  enabled?: boolean | null;
+  /**
+   * Optional. Plain text shown above the button, e.g. a holiday notice. Leave a blank line between paragraphs.
+   */
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-log".
+ */
+export interface EmailLog {
+  id: number;
+  to: string;
+  subject: string;
+  template?: string | null;
+  status: 'sent' | 'failed' | 'off' | 'no_smtp';
+  error?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -746,6 +887,26 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'payout-methods';
         value: number | PayoutMethod;
+      } | null)
+    | ({
+        relationTo: 'conversations';
+        value: number | Conversation;
+      } | null)
+    | ({
+        relationTo: 'messages';
+        value: number | Message;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'email-templates';
+        value: number | EmailTemplate;
+      } | null)
+    | ({
+        relationTo: 'email-log';
+        value: number | EmailLog;
       } | null)
     | ({
         relationTo: 'subjects';
@@ -820,6 +981,12 @@ export interface UsersSelect<T extends boolean = true> {
   country?: T;
   timezone?: T;
   lastLoginAt?: T;
+  emailPrefs?:
+    | T
+    | {
+        messages?: T;
+        reminders?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1015,6 +1182,8 @@ export interface BookingsSelect<T extends boolean = true> {
   holdUntil?: T;
   refundedAmount?: T;
   respondedAt?: T;
+  remindedDayAt?: T;
+  remindedHourAt?: T;
   studentJoinedAt?: T;
   tutorJoinedAt?: T;
   completedAt?: T;
@@ -1128,6 +1297,81 @@ export interface PayoutMethodsSelect<T extends boolean = true> {
   swift?: T;
   paypalEmail?: T;
   summary?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversations_select".
+ */
+export interface ConversationsSelect<T extends boolean = true> {
+  title?: T;
+  student?: T;
+  tutorUser?: T;
+  tutor?: T;
+  lastMessageAt?: T;
+  lastPreview?: T;
+  lastSender?: T;
+  messageCount?: T;
+  studentReadAt?: T;
+  tutorReadAt?: T;
+  flagged?: T;
+  lastEmailedAt?: T;
+  closed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "messages_select".
+ */
+export interface MessagesSelect<T extends boolean = true> {
+  conversation?: T;
+  sender?: T;
+  body?: T;
+  flag?: T;
+  hidden?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  user?: T;
+  kind?: T;
+  title?: T;
+  body?: T;
+  href?: T;
+  readAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-templates_select".
+ */
+export interface EmailTemplatesSelect<T extends boolean = true> {
+  key?: T;
+  name?: T;
+  audience?: T;
+  description?: T;
+  enabled?: T;
+  note?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-log_select".
+ */
+export interface EmailLogSelect<T extends boolean = true> {
+  to?: T;
+  subject?: T;
+  template?: T;
+  status?: T;
+  error?: T;
   updatedAt?: T;
   createdAt?: T;
 }

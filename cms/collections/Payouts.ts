@@ -32,7 +32,8 @@ export const Payouts: CollectionConfig = {
         const { payoutSent } = await import("../email/payments");
         const u = await req.payload.findByID({ collection: "users", id: typeof doc.tutorUser === "object" ? doc.tutorUser.id : doc.tutorUser, depth: 0, overrideAccess: true });
         const mail = payoutSent(u, { amount: doc.amount, currency: doc.currency, reference: doc.reference, transferRef: doc.transferRef });
-        await req.payload.sendEmail({ to: u.email, subject: mail.subject, html: mail.html }).catch((err: unknown) => req.payload.logger.error({ err }, "[payouts] email failed"));
+        const { deliver } = await import("../notify/server");
+        await deliver(req.payload, u, mail);
       },
     ],
   },

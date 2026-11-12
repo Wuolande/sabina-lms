@@ -4,6 +4,7 @@ import * as migration_20261112_101517_tutors_catalogue from './20261112_101517_t
 import * as migration_20261112_140156_scheduling_bookings from './20261112_140156_scheduling_bookings';
 import * as migration_20261112_144837_payments_payouts from './20261112_144837_payments_payouts';
 import * as migration_20261112_153439_classroom_reviews from './20261112_153439_classroom_reviews';
+import * as migration_20261112_170454_messaging_notifications from './20261112_170454_messaging_notifications';
 
 export const migrations = [
   {
@@ -34,6 +35,11 @@ export const migrations = [
   {
     up: migration_20261112_153439_classroom_reviews.up,
     down: migration_20261112_153439_classroom_reviews.down,
-    name: '20261112_153439_classroom_reviews'
+    name: '20261112_153439_classroom_reviews',
+  },
+  {
+    up: migration_20261112_170454_messaging_notifications.up,
+    down: migration_20261112_170454_messaging_notifications.down,
+    name: '20261112_170454_messaging_notifications'
   },
 ];

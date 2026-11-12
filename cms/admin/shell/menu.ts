@@ -10,7 +10,7 @@ export type MenuItem = {
   label: string;
   icon: string;
   href?: string;
-  badge?: "applications" | "disputes" | "reviews";
+  badge?: "applications" | "disputes" | "reviews" | "flagged";
   adminOnly?: boolean;
 };
 export type MenuSection = { title?: string; collapsible?: boolean; items: MenuItem[] };
@@ -72,8 +72,10 @@ export const MENU: MenuSection[] = [
     collapsible: true,
     items: [
       { kind: "collection", slug: "conversations", label: "Conversations", icon: "MessagesSquare" },
+      { kind: "view", slug: "flagged-conversations", label: "Flagged for review", icon: "ShieldAlert", badge: "flagged", href: "/admin/collections/conversations?where[flagged][equals]=true" },
+      { kind: "collection", slug: "messages", label: "All messages", icon: "MessageSquare" },
       { kind: "collection", slug: "notifications", label: "Notifications", icon: "Bell" },
-      { kind: "collection", slug: "email-templates", label: "Email templates", icon: "Mail" },
+      { kind: "collection", slug: "email-templates", label: "Emails", icon: "Mail" },
       { kind: "collection", slug: "email-log", label: "Email log", icon: "MailCheck" },
     ],
   },

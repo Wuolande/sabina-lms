@@ -137,7 +137,7 @@ export async function submitReview(payload: Payload, user: User, id: number, rat
   if (!(r >= 1 && r <= 5)) throw new BookingError("Choose 1 to 5 stars.");
   const exists = await payload.count({ collection: "reviews", where: { booking: { equals: b.id } }, overrideAccess: true });
   if (exists.totalDocs) throw new BookingError("You've already reviewed this lesson.", 409);
-  return payload.create({
+  const review = await payload.create({
     collection: "reviews",
     data: {
       rating: r,
@@ -151,6 +151,42 @@ export async function submitReview(payload: Payload, user: User, id: number, rat
     },
     overrideAccess: true,
   });
+  const tutorUser = await payload.findByID({ collection: "users", id: idOf(b.tutorUser)!, depth: 0, overrideAccess: true }).catch(() => null);
+  if (tutorUser) {
+    const [{ deliver }, { reviewReceived }, { personOf }] = await Promise.all([import("../notify/server"), import("../email/notices"), import("../scheduling/server")]);
+    void deliver(payload, tutorUser, reviewReceived(personOf(tutorUser), review.studentName ?? "A student", r, review.comment ?? ""));
+  }
+  return review;
+}
+
+/** Day-before and hour-before reminders for confirmed lessons. Each is claimed before sending, so it goes once. */
+export async function sendReminders(payload: Payload) {
+  const now = Date.now();
+  const iso = (ms: number) => new Date(ms).toISOString();
+  const jobs = [
+    { field: "remindedDayAt" as const, soon: false, from: now + 20 * 3600_000, to: now + 25 * 3600_000 },
+    { field: "remindedHourAt" as const, soon: true, from: now, to: now + 70 * 60_000 },
+  ];
+  const { mailContext, personOf } = await import("../scheduling/server");
+  const [{ deliver }, { lessonReminder }] = await Promise.all([import("../notify/server"), import("../email/notices")]);
+  for (const j of jobs) {
+    const claimed = await payload.update({
+      collection: "bookings",
+      where: { and: [{ status: { equals: "confirmed" } }, { startsAt: { greater_than: iso(j.from) } }, { startsAt: { less_than_equal: iso(j.to) } }, { [j.field]: { exists: false } }] },
+      data: { [j.field]: iso(now) },
+      overrideAccess: true,
+      depth: 0,
+      limit: 100,
+    });
+    for (const b of claimed.docs) {
+      // Just booked: the confirmation email already covers it.
+      if (Date.parse(b.createdAt) > now - (j.soon ? 15 : 120) * 60_000) continue;
+      const ctx = await mailContext(payload, b);
+      const lesson = { ...ctx.lesson, id: b.id };
+      await deliver(payload, ctx.student, lessonReminder(lesson, personOf(ctx.student), "student", j.soon));
+      await deliver(payload, ctx.tutorUser, lessonReminder(lesson, personOf(ctx.tutorUser), "tutor", j.soon));
+    }
+  }
 }
 
 export async function replyToReview(payload: Payload, user: User, reviewId: number, reply: string) {
@@ -257,6 +293,7 @@ export async function lessonDetail(payload: Payload, user: User, id: number) {
     joinClosesAt: new Date(w.closes).toISOString(),
     classroom: b.status === "confirmed" && now <= w.closes,
     other: role === "student" ? { name: tutor?.displayName ?? "Tutor", avatar: media(tutor?.photo), href: tutor?.slug ? `/tutors/${tutor.slug}` : null } : { name: `${student?.firstName ?? "Student"}${student?.lastName ? ` ${student.lastName.charAt(0)}.` : ""}`, avatar: media(student?.avatar), href: null },
+    messageHref: role === "student" ? `/student/messages?tutor=${tutor?.id}` : `/tutor/messages?student=${student?.id}`,
     me: { name: role === "tutor" ? (tutor?.displayName ?? "You") : `${user.firstName ?? "You"}`, avatar: media(role === "tutor" ? tutor?.photo : user.avatar) },
     note: b.studentNote ?? null,
     tutorNotes: b.tutorNotes ?? null,

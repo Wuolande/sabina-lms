@@ -48,7 +48,8 @@ export const reviewEndpoint: Endpoint = {
     const mail =
       rule.to === "approved" ? applicationApproved(user, String(updated.slug)) : rule.to === "changes_requested" ? changesRequested(user, notes) : rule.to === "rejected" ? applicationRejected(user, notes) : null;
     if (mail && user?.email) {
-      await req.payload.sendEmail({ to: user.email, subject: mail.subject, html: mail.html }).catch((err: unknown) => req.payload.logger.error({ err }, "[tutor review] email failed"));
+      const { deliver } = await import("../notify/server");
+      await deliver(req.payload, user as never, mail);
     }
     return Response.json({ success: true, status: updated.status });
   },

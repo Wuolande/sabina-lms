@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     },
   });
   const mail = applicationReceived(user);
-  await payload.sendEmail({ to: user.email, subject: mail.subject, html: mail.html }).catch((err: unknown) => payload.logger.error({ err }, "[tutor/submit] email failed"));
+  const { deliver } = await import("@/cms/notify/server");
+  await deliver(payload, user, mail);
   return NextResponse.json({ application: serializeApplication(updated), ...checkApplication(updated, user) });
 }

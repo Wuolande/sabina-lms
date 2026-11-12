@@ -241,3 +241,27 @@ npm run test:e2e
 
 Useful scripts: `npm run generate:types`, `npm run generate:importmap` (after adding admin
 components), `npm run migrate:create <name>` (after schema changes, before committing).
+
+## Phase 6: done
+
+Messaging, notifications and emails.
+
+- **Messages** (`cms/messages/server.ts`, `/api/messages`, `/student|tutor/messages`): one conversation per
+  student–tutor pair. Students can write to any approved tutor (from the profile, "Send a message"); tutors
+  can write to students who have booked them or written first. Two-pane inbox on desktop, list → thread on
+  phones; new messages arrive by polling (4s in an open thread, 15s for the list). 20 messages a minute max.
+- **Contact details** (email, phone, WhatsApp/Telegram/…) are allowed but flag the conversation for staff
+  (admin → Communication → Flagged for review, with a badge) and show the sender a short note about
+  staying on Sabina. Staff can hide a message or close a conversation.
+- **Notifications** (`cms/notify/server.ts`): every transactional email also creates an in-app
+  notification (title = email heading, text = preheader, link = button). Bell + unread badges in the portal,
+  refreshed every 30s. `/student|tutor/notifications` lists them with "Mark all as read" and email settings
+  (new messages, lesson reminders; booking/payment/account emails always go).
+- **Emails**: `deliver()` sends and logs every email (admin → Email log: sent / failed / turned off / not
+  configured). Admin → Emails lists each one; staff can switch it off or add a note above its button.
+  Message emails go at most once per conversation every 30 minutes unless the person has caught up.
+- **Reminders**: the day before (20–25h ahead) and about an hour before each confirmed lesson, sent once.
+- **Jobs**: housekeeping still runs when lists load, and now also from `/api/cron/housekeeping`
+  (`vercel.json`: every 10 minutes; set `CRON_SECRET`). Vercel Hobby only runs crons daily: on Hobby, use an
+  external pinger (e.g. cron-job.org) with the same header.
+- Migration: `20261112_170454_messaging_notifications`. Test: `tests/e2e/phase6-messaging.spec.ts`.

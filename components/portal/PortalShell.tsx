@@ -2,7 +2,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, LogOut, Menu, Search, Settings, Sparkles, X } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, Search, Settings, Sparkles, X } from "lucide-react";
 import { SabinaLogo } from "@/components/brand/SabinaMark";
 import { NAV, PHASE_NAMES, isActive, itemFor, type PortalRole } from "./nav";
 import { NavIcon } from "./icons";
@@ -33,6 +33,39 @@ export function UserAvatar({ user, size = 36 }: { user: PortalUser; size?: numbe
   );
 }
 
+type Badges = { messages: number; notifications: number };
+const BadgeContext = createContext<Badges>({ messages: 0, notifications: 0 });
+const badgeFor = (href: string, b: Badges) => (href.endsWith("/messages") ? b.messages : href.endsWith("/notifications") ? b.notifications : 0);
+
+/** Unread counts, refreshed every 30s, on navigation, and when a page fires `sabina:badges`. */
+function useBadges(path: string): Badges {
+  const [b, setB] = useState<Badges>({ messages: 0, notifications: 0 });
+  useEffect(() => {
+    let stop = false;
+    const load = () =>
+      fetch("/api/notifications?counts=1", { credentials: "include", cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => !stop && d && setB({ messages: d.messages ?? 0, notifications: d.notifications ?? 0 }))
+        .catch(() => undefined);
+    void load();
+    const t = setInterval(() => document.visibilityState === "visible" && load(), 30_000);
+    window.addEventListener("sabina:badges", load);
+    return () => {
+      stop = true;
+      clearInterval(t);
+      window.removeEventListener("sabina:badges", load);
+    };
+  }, [path]);
+  return b;
+}
+
+const Count = ({ n, active }: { n: number; active?: boolean }) =>
+  n > 0 ? (
+    <span className={`min-w-[20px] rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold leading-4 ${active ? "bg-white text-brand-700" : "bg-brand-600 text-white"}`} aria-label={`${n} unread`}>
+      {n > 99 ? "99+" : n}
+    </span>
+  ) : null;
+
 async function signOut() {
   await fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => undefined);
   window.location.assign("/login");
@@ -40,6 +73,7 @@ async function signOut() {
 
 function SidebarNav({ role, onNavigate }: { role: PortalRole; onNavigate?: () => void }) {
   const path = usePathname() ?? "";
+  const badges = useContext(BadgeContext);
   return (
     <nav aria-label="Portal" className="space-y-1">
       {NAV[role].map((item) => {
@@ -56,6 +90,7 @@ function SidebarNav({ role, onNavigate }: { role: PortalRole; onNavigate?: () =>
           >
             <NavIcon name={item.icon} className={active ? "text-white" : "text-slate-400 group-hover:text-slate-600"} />
             <span className="flex-1 truncate">{item.label}</span>
+            <Count n={badgeFor(item.href, badges)} active={active} />
             {item.phase ? (
               <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide ${active ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"}`}>Soon</span>
             ) : null}
@@ -146,9 +181,11 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
   }, [drawer]);
 
   const primary = NAV[role].filter((i) => i.primary);
+  const badges = useBadges(path);
 
   return (
     <PortalUserContext.Provider value={user}>
+      <BadgeContext.Provider value={badges}>
       <div className="min-h-dvh bg-[#F6F7FB]">
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r border-slate-200/70 bg-white lg:flex">
@@ -207,6 +244,14 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
             </div>
             <h2 className="hidden font-heading text-lg font-semibold text-slate-900 lg:block">{current?.label ?? ""}</h2>
             <div className="ml-auto flex items-center gap-2">
+              <Link
+                href={`/${role}/notifications`}
+                aria-label={badges.notifications ? `Notifications, ${badges.notifications} unread` : "Notifications"}
+                className="relative grid h-10 w-10 place-items-center rounded-full text-slate-600 transition hover:bg-slate-100"
+              >
+                <Bell size={20} />
+                {badges.notifications > 0 && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />}
+              </Link>
               <AccountMenu user={user} role={role} />
             </div>
           </header>
@@ -223,8 +268,13 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
               const active = isActive(path, item);
               return (
                 <li key={item.href}>
-                  <Link href={item.href} aria-current={active ? "page" : undefined} className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${active ? "text-brand-700" : "text-slate-500"}`}>
-                    <NavIcon name={item.icon} size={21} />
+                  <Link href={item.href} aria-current={active ? "page" : undefined} className={`relative flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${active ? "text-brand-700" : "text-slate-500"}`}>
+                    <span className="relative">
+                      <NavIcon name={item.icon} size={21} />
+                      {badgeFor(item.href, badges) > 0 && (
+                        <span className="absolute -right-2.5 -top-1.5 min-w-[18px] rounded-full bg-red-500 px-1 text-center text-[10px] font-bold leading-[18px] text-white ring-2 ring-white">{badgeFor(item.href, badges)}</span>
+                      )}
+                    </span>
                     {item.short ?? item.label}
                   </Link>
                 </li>
@@ -239,6 +289,7 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
           </ul>
         </nav>
       </div>
+      </BadgeContext.Provider>
     </PortalUserContext.Provider>
   );
 }

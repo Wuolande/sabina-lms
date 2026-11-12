@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, CalendarClock, ChevronRight, Flag, Loader2, NotebookPen, Receipt, Star, Video } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronRight, Flag, Loader2, MessageSquare, NotebookPen, Receipt, Star, Video } from "lucide-react";
 import type { LessonDetailView } from "@/cms/lessons/server";
 import { PersonAvatar, StatusPill } from "@/components/scheduling/LessonCard";
 import { fmtDay, fmtRange, fmtTime } from "@/lib/time";
@@ -217,7 +217,10 @@ export function LessonDetail({ l, tz }: { l: LessonDetailView; tz: string }) {
               <span className="font-semibold text-slate-900">{l.other.name}</span>
             )}
           </p>
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Link href={l.messageHref} className="inline-flex h-7 items-center gap-1.5 rounded-full bg-brand-50 px-3 text-[13px] font-semibold text-brand-700 hover:bg-brand-100">
+              <MessageSquare size={14} /> Message {first}
+            </Link>
             <StatusPill lesson={{ status: l.status, phase: l.status === "confirmed" && Date.parse(l.endsAt) < (now ?? 0) ? "finished" : "upcoming" } as never} role={l.role} />
           </div>
         </div>

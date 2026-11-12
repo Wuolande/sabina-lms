@@ -147,5 +147,15 @@ export const Users: CollectionConfig = {
     },
     { name: "timezone", type: "text", defaultValue: "UTC", admin: { description: "IANA time zone, e.g. Africa/Nairobi. Lesson times are shown in this zone." } },
     { name: "lastLoginAt", type: "date", admin: { readOnly: true, position: "sidebar" } },
+    {
+      name: "emailPrefs",
+      type: "group",
+      label: "Email preferences",
+      admin: { description: "Booking, payment and account emails are always sent." },
+      fields: [
+        { name: "messages", type: "checkbox", defaultValue: true, label: "New messages" },
+        { name: "reminders", type: "checkbox", defaultValue: true, label: "Lesson reminders" },
+      ],
+    },
   ],
 };

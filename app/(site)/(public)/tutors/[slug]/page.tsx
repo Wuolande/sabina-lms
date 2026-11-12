@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Award, BadgeCheck, Briefcase, CalendarClock, Clock, Globe2, GraduationCap, Languages, MessageCircle, ShieldCheck, Star, Zap } from "lucide-react";
+import { ArrowLeft, Award, BadgeCheck, Briefcase, CalendarClock, Clock, Globe2, GraduationCap, Languages, MessageCircle, MessageSquare, ShieldCheck, Star, Zap } from "lucide-react";
 import { getPayloadClient } from "@/cms/auth/session";
 import { getTutorBySlug } from "@/cms/marketplace/public";
 import { publicReviews } from "@/cms/lessons/server";
@@ -88,6 +88,14 @@ export default async function TutorProfilePage({ params }: Props) {
         {t.trialPrice != null && (
           <Link href={`/tutors/${t.slug}/book?type=trial`} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-50 font-semibold text-emerald-800 ring-1 ring-emerald-200 transition hover:bg-emerald-100">
             Book a trial lesson
+          </Link>
+        )}
+        {canSave && (
+          <Link
+            href={viewer.signedIn ? `/student/messages?tutor=${t.id}` : `/login?redirect=${encodeURIComponent(`/student/messages?tutor=${t.id}`)}`}
+            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+          >
+            <MessageSquare size={18} /> Send a message
           </Link>
         )}
         {canSave && <SaveTutorButton tutorId={t.id} initialSaved={viewer.saved.has(t.id)} signedIn={viewer.signedIn} variant="full" />}

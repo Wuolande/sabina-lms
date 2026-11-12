@@ -1,4 +1,5 @@
-import { Users } from "lucide-react";
+import Link from "next/link";
+import { MessageSquare, Users } from "lucide-react";
 import { getPayloadClient, requireUser } from "@/cms/auth/session";
 import { tutorStudents } from "@/cms/lessons/server";
 import { PersonAvatar } from "@/components/scheduling/LessonCard";
@@ -21,10 +22,13 @@ export default async function StudentsPage() {
             <li key={s.id} className="rounded-3xl bg-white p-5 ring-1 ring-slate-200/70">
               <div className="flex items-center gap-3">
                 <PersonAvatar name={s.name} src={s.avatar} size={48} />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-slate-900">{s.name}</p>
                   <p className="truncate text-sm text-slate-500">{s.subjects.join(", ") || "No subject yet"}</p>
                 </div>
+                <Link href={`/tutor/messages?student=${s.id}`} aria-label={`Message ${s.name}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-700 hover:bg-brand-100">
+                  <MessageSquare size={18} />
+                </Link>
               </div>
               <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
                 <div className="rounded-2xl bg-slate-50 p-2.5">

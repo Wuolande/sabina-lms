@@ -113,9 +113,9 @@ export async function settlePayment(payload: Payload, reference: string, outcome
   }
   const ctx = await mailContext(payload, result.b);
   const mails = result.b.status === "confirmed" ? bookedConfirmed(ctx.lesson, personOf(ctx.student), personOf(ctx.tutorUser)) : bookingRequested(ctx.lesson, personOf(ctx.student), personOf(ctx.tutorUser));
-  void send(payload, ctx.student.email, mails.student);
-  void send(payload, ctx.tutorUser.email, mails.tutor);
-  void send(payload, ctx.student.email, paymentReceipt(personOf(ctx.student), { reference: paid.reference, amount: paid.amount, currency: paid.currency, lesson: ctx.lesson, paymentId: paid.id }));
+  void send(payload, ctx.student, mails.student);
+  void send(payload, ctx.tutorUser, mails.tutor);
+  void send(payload, ctx.student, paymentReceipt(personOf(ctx.student), { reference: paid.reference, amount: paid.amount, currency: paid.currency, lesson: ctx.lesson, paymentId: paid.id }));
   return paid;
 }
 
@@ -157,7 +157,7 @@ export async function refundBooking(payload: Payload, bookingId: number, percent
     const total = round2((b.refundedAmount ?? 0) + done);
     await payload.update({ collection: "bookings", id: b.id, data: { refundedAmount: total, paymentStatus: total >= paidTotal ? "refunded" : "partially_refunded" }, overrideAccess: true });
     const student = await payload.findByID({ collection: "users", id: idOf(b.student)!, depth: 0, overrideAccess: true });
-    void send(payload, student.email, refundIssued(personOf(student), { amount: done, currency: b.currency, bookingRef: b.reference ?? "", reason }));
+    void send(payload, student, refundIssued(personOf(student), { amount: done, currency: b.currency, bookingRef: b.reference ?? "", reason }));
   }
   return done;
 }
@@ -260,7 +260,7 @@ export async function requestPayout(payload: Payload, user: User): Promise<Payou
       data: { reference: ref("OUT"), status: "requested", amount, currency: e.currency, tutorUser: user.id, destination: { method: m.method, details }, bookings: rows.map((r) => r.bookingId) },
       overrideAccess: true,
     });
-    void send(payload, user.email, payoutRequested(personOf(user), { amount, currency: e.currency, reference: payout.reference, to: summarize(m) }));
+    void send(payload, user, payoutRequested(personOf(user), { amount, currency: e.currency, reference: payout.reference, to: summarize(m) }));
     return payout;
   });
 }

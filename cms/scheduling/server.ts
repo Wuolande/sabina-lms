@@ -5,6 +5,7 @@ import type { Booking, Media, Schedule, Subject, TutorProfile, User } from "@/pa
 import { safeTz } from "@/lib/time";
 import { HOLDING, type BookingStatus } from "../collections/Bookings";
 import { bookedConfirmed, bookingRequested, lessonCancelled, requestAccepted, requestDeclined, type MailLesson, type MailPerson } from "../email/booking";
+import type { Mail } from "../email/layout";
 import { getPolicies } from "../tutors/server";
 import { computeSlots, withinHours, type WeeklyRange } from "./slots";
 
@@ -123,7 +124,7 @@ export async function withLocks<T>(payload: Payload, keys: [number, number][], f
 /* ------------------------------------------------------------------ mail */
 
 export const personOf = (u: User): MailPerson => ({ email: u.email, firstName: u.firstName, timezone: u.timezone });
-const shortName = (u: Pick<User, "firstName" | "lastName" | "name" | "email">) => (u.firstName ? `${u.firstName}${u.lastName ? ` ${u.lastName.charAt(0)}.` : ""}` : (u.name ?? u.email.split("@")[0]));
+export const shortName = (u: Pick<User, "firstName" | "lastName" | "name" | "email">) => (u.firstName ? `${u.firstName}${u.lastName ? ` ${u.lastName.charAt(0)}.` : ""}` : (u.name ?? u.email.split("@")[0]));
 
 export async function mailContext(payload: Payload, b: Booking) {
   const [student, tutorUser, tutor, subject] = await Promise.all([
@@ -136,8 +137,10 @@ export async function mailContext(payload: Payload, b: Booking) {
   return { student, tutorUser, lesson };
 }
 
-export function send(payload: Payload, to: string, mail: { subject: string; html: string }) {
-  return payload.sendEmail({ to, subject: mail.subject, html: mail.html }).catch((err: unknown) => payload.logger.error({ err }, "[bookings] email failed"));
+/** Email + in-app notification (when `to` is a user). Never throws. */
+export async function send(payload: Payload, to: User | string, mail: Mail) {
+  const { deliver } = await import("../notify/server");
+  return deliver(payload, to, mail);
 }
 
 /* ------------------------------------------------------------------ create */
@@ -270,10 +273,10 @@ export async function actOnBooking(payload: Payload, user: User, id: number, act
 
   if (wasUnpaid) return updated;
   const ctx = await mailContext(payload, updated);
-  if (action === "accept") void send(payload, ctx.student.email, requestAccepted(ctx.lesson, personOf(ctx.student)));
-  else if (action === "decline") void send(payload, ctx.student.email, requestDeclined(ctx.lesson, personOf(ctx.student)));
-  else if (isStudent) void send(payload, ctx.tutorUser.email, lessonCancelled(ctx.lesson, personOf(ctx.tutorUser), ctx.lesson.studentName, Boolean(updated.lateCancellation)));
-  else void send(payload, ctx.student.email, lessonCancelled(ctx.lesson, personOf(ctx.student), ctx.lesson.tutorName));
+  if (action === "accept") void send(payload, ctx.student, requestAccepted(ctx.lesson, personOf(ctx.student)));
+  else if (action === "decline") void send(payload, ctx.student, requestDeclined(ctx.lesson, personOf(ctx.student)));
+  else if (isStudent) void send(payload, ctx.tutorUser, lessonCancelled(ctx.lesson, personOf(ctx.tutorUser), ctx.lesson.studentName, Boolean(updated.lateCancellation)));
+  else void send(payload, ctx.student, lessonCancelled(ctx.lesson, personOf(ctx.student), ctx.lesson.tutorName));
   return updated;
 }
 
@@ -301,13 +304,14 @@ export async function expireStale(payload: Payload) {
     const { refundBooking } = await import("../payments/server");
     for (const b of lapsed.docs) await refundBooking(payload, b.id, 100, "Request expired").catch((err) => payload.logger.error({ err }, "[bookings] refund failed"));
   }
-  const { settleAttendance } = await import("../lessons/server");
+  const { settleAttendance, sendReminders } = await import("../lessons/server");
   await settleAttendance(payload);
+  await sendReminders(payload).catch((err) => payload.logger.error({ err }, "[reminders] failed"));
 }
 
 /* ------------------------------------------------------------------ views */
 
-const mediaUrl = (m: unknown) => (m && typeof m === "object" ? ((m as Media).sizes?.thumb?.url ?? (m as Media).url ?? null) : null);
+export const mediaUrl = (m: unknown) => (m && typeof m === "object" ? ((m as Media).sizes?.thumb?.url ?? (m as Media).url ?? null) : null);
 
 export type LessonView = {
   id: number;

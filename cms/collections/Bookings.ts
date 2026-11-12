@@ -92,6 +92,8 @@ export const Bookings: CollectionConfig = {
     { name: "holdUntil", type: "date", admin: { readOnly: true, position: "sidebar", description: "Unpaid bookings release the time after this." } },
     { name: "refundedAmount", type: "number", defaultValue: 0, admin: { readOnly: true, position: "sidebar" } },
     { name: "respondedAt", type: "date", admin: { readOnly: true, position: "sidebar" } },
+    { name: "remindedDayAt", type: "date", admin: { readOnly: true, position: "sidebar", description: "Day-before reminder sent." } },
+    { name: "remindedHourAt", type: "date", admin: { readOnly: true, position: "sidebar", description: "Hour-before reminder sent." } },
     {
       type: "collapsible",
       label: "Classroom & attendance",

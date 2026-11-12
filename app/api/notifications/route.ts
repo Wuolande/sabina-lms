@@ -1,33 +1,21 @@
-/**
- * API Route: GET /api/notifications
- * -----------------------------------------------------------------------
- * Returns notifications and unread count for authenticated user.
- * -----------------------------------------------------------------------
- */
+import { NextResponse, type NextRequest } from "next/server";
+import { withUser } from "@/cms/auth/api";
+import { badgeCounts, listNotifications, markRead } from "@/cms/notify/server";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { domainNotificationService } from '@/src/modules/notifications/services/notificationService';
-import { getStudentContext, getTutorContext } from '@/src/shared/auth/authService';
+const noStore = { headers: { "Cache-Control": "no-store" } };
 
-export async function GET(req: NextRequest) {
-  try {
-    let userId: string;
-    try {
-      const student = await getStudentContext(req);
-      userId = student.userId;
-    } catch {
-      const tutor = await getTutorContext(req);
-      userId = tutor.userId;
-    }
+/** GET: notifications + badge counts. GET ?counts=1: only the counts (polled by the portal). */
+export const GET = (req: NextRequest) =>
+  withUser(req, "notifications", async (payload, user) => {
+    const counts = await badgeCounts(payload, user);
+    if (req.nextUrl.searchParams.get("counts")) return NextResponse.json(counts, noStore);
+    return NextResponse.json({ ...counts, notifications: await listNotifications(payload, user) }, noStore);
+  });
 
-    const data = await domainNotificationService.getUserNotifications(userId);
-    return NextResponse.json(data);
-
-  } catch (error: any) {
-    console.error('[GET /api/notifications]', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: error.statusCode || 500 }
-    );
-  }
-}
+/** POST { ids: number[] } or { all: true }: mark as read. */
+export const POST = (req: NextRequest) =>
+  withUser(req, "notifications", async (payload, user) => {
+    const b = (await req.json().catch(() => ({}))) as { ids?: number[]; all?: boolean };
+    await markRead(payload, user, b.all ? "all" : (b.ids ?? []).map(Number).filter(Boolean));
+    return NextResponse.json({ success: true });
+  });
