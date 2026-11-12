@@ -46,9 +46,10 @@ test("student: sign up, confirm, sign in, portal, settings, password change", as
   await page.goto("/tutor");
   await page.waitForURL("**/student");
 
-  // Sections not rebuilt yet show the "being rebuilt" panel, not a broken page.
+  // Messages (phase 6): a new student sees an empty inbox with a way to find a tutor.
   await page.goto("/student/messages");
-  await expect(page.getByRole("heading", { name: "Messages is being rebuilt" })).toBeVisible();
+  await expect(page.getByText("No messages yet")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Find a tutor" }).last()).toBeVisible();
   // Lessons are live since phase 3: an empty list with a way to book.
   await page.goto("/student/lessons");
   await expect(page.getByRole("heading", { name: "No upcoming lessons" })).toBeVisible();
