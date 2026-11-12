@@ -1,0 +1,39 @@
+/* =========================================================================
+   Sabina-specific admin styles, layered on the shared tokens.
+   ========================================================================= */
+
+/* Login screen: brand gradient panel behind the form. */
+.template-minimal {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, color-mix(in srgb, var(--brand-primary-light, #2A4ED6) 18%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, color-mix(in srgb, var(--brand-accent, #F9C31C) 16%, transparent), transparent 60%),
+    var(--ep-canvas);
+}
+
+/* Role chips in the users list and the sidebar footer. */
+.sb-role { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: var(--ep-text-xs, 12px); font-weight: 600; background: var(--ep-neutral-soft); color: var(--ep-neutral-ink); }
+.sb-role--admin { background: var(--ep-accent-soft); color: var(--ep-accent-ink); }
+.sb-role--tutor { background: var(--ep-warning-soft); color: var(--ep-warning-ink); }
+.sb-role--student { background: var(--ep-info-soft); color: var(--ep-info-ink); }
+
+/* Dashboard hero: gold accent line under the greeting. */
+.sb-hero__title::after { content: ""; display: block; width: 44px; height: 4px; margin-top: 10px; border-radius: 4px; background: var(--brand-accent, #F9C31C); }
+
+/* Roadmap card on the dashboard. */
+.sb-roadmap { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.sb-roadmap li { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border-radius: var(--ep-radius-md, 10px); background: var(--ep-surface-2); }
+.sb-roadmap b { display: block; font-weight: 600; color: var(--ep-ink); }
+.sb-roadmap small { color: var(--ep-muted); }
+.sb-roadmap .sb-step { flex-shrink: 0; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--ep-surface-3); color: var(--ep-ink-2); }
+.sb-roadmap .is-done .sb-step { background: var(--ep-success); color: #fff; }
+.sb-roadmap .is-now .sb-step { background: var(--ep-accent-fill); color: #fff; }
+
+/* Quick actions list on the dashboard. */
+.ep-quick { display: grid; gap: 8px; }
+.ep-quick__item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--ep-radius-md, 10px); color: var(--ep-ink); text-decoration: none; font-weight: 500; transition: background 140ms ease; }
+.ep-quick__item:hover { background: var(--ep-surface-2); }
+
+/* Hero card in brand blue with a gold glow. */
+.ep-hero { background: linear-gradient(150deg, var(--brand-primary, #14209C) 0%, var(--brand-primary-dark, #0B123E) 100%); }
+.ep-hero::before { background: radial-gradient(circle, color-mix(in srgb, var(--brand-accent, #F9C31C) 40%, transparent), transparent 65%); }
+html[data-theme="dark"] .ep-hero { background: linear-gradient(150deg, #1B2A9E 0%, #0B123E 100%); }

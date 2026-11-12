@@ -28,3 +28,8 @@
 next-env.d.ts
 
 .vercel
+
+!.env.example
+
+# payload local uploads (development without R2)
+/media

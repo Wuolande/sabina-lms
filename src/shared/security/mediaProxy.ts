@@ -6,7 +6,7 @@
  *
  * Example:
  * Input:  https://res.cloudinary.com/demo/image/upload/v1234/sabina/avatars/john.png
- * Output: /api/media/m_7f9c2d1b8e4a305e92ac4f?v=1
+ * Output: /api/secure-media/m_7f9c2d1b8e4a305e92ac4f?v=1
  *
  * Security Benefits:
  * 1. Zero leakage of Cloudinary account name, upload presets, or asset folder paths.
@@ -105,14 +105,14 @@ export function maskMediaUrl(
   options?: { mime?: string; fileName?: string }
 ): string {
   if (!url) return '';
-  if (url.startsWith('/api/media/') || url.startsWith('/images/') || url.startsWith('data:')) {
+  if (url.startsWith('/api/secure-media/') || url.startsWith('/images/') || url.startsWith('data:')) {
     return url;
   }
 
   // If it's a Cloudinary or remote HTTPS asset, mask it
   if (url.startsWith('http://') || url.startsWith('https://')) {
     const token = generateMediaToken(url, options);
-    return `/api/media/${token}`;
+    return `/api/secure-media/${token}`;
   }
 
   return url;

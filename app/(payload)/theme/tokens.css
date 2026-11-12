@@ -1,0 +1,194 @@
+/* =========================================================================
+   Sabina admin design tokens (Module 1)
+   One source of truth for colour, type, spacing, radius, elevation and motion.
+   Light + dark. Payload's own variables are mapped onto these in base.css.
+   ========================================================================= */
+:root, html[data-theme="light"] {
+  color-scheme: light;
+
+  /* Surfaces: modern calm workspace */
+  --ep-canvas: #F8F9FB;
+  --ep-surface: #FFFFFF;
+  --ep-surface-2: #F1F3F7;
+  --ep-surface-3: #E6E8ED;
+  --ep-surface-inverse: #0B0B0E;
+
+  /* Text & Ink */
+  --ep-ink: #0F172A;
+  --ep-ink-2: #334155;
+  --ep-muted: #64748B;
+  --ep-subtle: #94A3B8;
+  --ep-on-inverse: #FFFFFF;
+
+  /* Borders & Dividers */
+  --ep-line: #E2E8F0;
+  --ep-line-strong: #CBD5E1;
+  --ep-line-subtle: #F1F5F9;
+
+  /* Brand + Semantics */
+  --ep-accent: #14209C;
+  --ep-accent-hover: #0B123E;
+  --ep-accent-fill: #14209C;
+  --ep-accent-fill-hover: #0B123E;
+  --ep-accent-soft: #EEF1FC;
+  --ep-accent-ink: #0B123E;
+
+  --ep-alert: #EF4444;
+  --ep-alert-soft: #FEE2E2;
+  --ep-alert-ink: #B91C1C;
+
+  --ep-success: #10B981;
+  --ep-success-soft: #D1FAE5;
+  --ep-success-ink: #047857;
+
+  --ep-warning: #F59E0B;
+  --ep-warning-soft: #FEF3C7;
+  --ep-warning-ink: #B45309;
+
+  --ep-info: #0284C7;
+  --ep-info-soft: #E0F2FE;
+  --ep-info-ink: #0369A1;
+
+  --ep-neutral-soft: #F1F5F9;
+  --ep-neutral-ink: #475569;
+
+  /* Dataviz charts */
+  --ep-chart-new: #EF4444;
+  --ep-chart-progress: #14209C;
+  --ep-chart-done: #10B981;
+  --ep-chart-single: #14209C;
+  --ep-chart-track: #E2E8F0;
+
+  /* Elevation: layered multi-stage shadows with subtle ambient border */
+  --ep-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(15, 23, 42, 0.04);
+  --ep-shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.04);
+  --ep-shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.05);
+  --ep-focus: 0 0 0 3px rgba(20, 32, 156, 0.28);
+  --ep-focus-ring: 0 0 0 2px var(--ep-surface), 0 0 0 4px var(--ep-accent);
+
+  /* Glassmorphism */
+  --ep-glass-bg: rgba(255, 255, 255, 0.85);
+  --ep-glass-border: rgba(226, 232, 240, 0.8);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces: deep obsidian palette */
+  --ep-canvas: #09090B;
+  --ep-surface: #121215;
+  --ep-surface-2: #1A1A1F;
+  --ep-surface-3: #222228;
+  --ep-surface-inverse: #F8F9FA;
+
+  /* Text & Ink */
+  --ep-ink: #F4F4F6;
+  --ep-ink-2: #D1D1D8;
+  --ep-muted: #9494A0;
+  --ep-subtle: #71717A;
+  --ep-on-inverse: #09090B;
+
+  /* Borders & Dividers */
+  --ep-line: rgba(255, 255, 255, 0.08);
+  --ep-line-strong: rgba(255, 255, 255, 0.14);
+  --ep-line-subtle: rgba(255, 255, 255, 0.04);
+
+  /* Brand + Semantics */
+  --ep-accent: #7B95F0;
+  --ep-accent-hover: #8FD47F;
+  --ep-accent-fill: #14209C;
+  --ep-accent-fill-hover: #0B123E;
+  --ep-accent-soft: rgba(116, 195, 101, 0.15);
+  --ep-accent-ink: #9EDB8F;
+
+  --ep-alert: #F87171;
+  --ep-alert-soft: rgba(239, 68, 68, 0.16);
+  --ep-alert-ink: #FCA5A5;
+
+  --ep-success: #34D399;
+  --ep-success-soft: rgba(16, 185, 129, 0.16);
+  --ep-success-ink: #6EE7B7;
+
+  --ep-warning: #FBBF24;
+  --ep-warning-soft: rgba(245, 158, 11, 0.16);
+  --ep-warning-ink: #FCD34D;
+
+  --ep-info: #38BDF8;
+  --ep-info-soft: rgba(2, 132, 199, 0.16);
+  --ep-info-ink: #7DD3FC;
+
+  --ep-neutral-soft: rgba(255, 255, 255, 0.07);
+  --ep-neutral-ink: #D1D1D8;
+
+  /* Dataviz charts */
+  --ep-chart-new: #F87171;
+  --ep-chart-progress: #7B95F0;
+  --ep-chart-done: #34D399;
+  --ep-chart-single: #7B95F0;
+  --ep-chart-track: rgba(255, 255, 255, 0.08);
+
+  /* Elevation */
+  --ep-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --ep-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --ep-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.10);
+  --ep-focus: 0 0 0 3px rgba(116, 195, 101, 0.35);
+  --ep-focus-ring: 0 0 0 2px var(--ep-surface), 0 0 0 4px var(--ep-accent);
+
+  /* Glassmorphism */
+  --ep-glass-bg: rgba(18, 18, 21, 0.85);
+  --ep-glass-border: rgba(255, 255, 255, 0.09);
+}
+
+:root {
+  /* Typography */
+  --ep-font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --ep-font-display: "Outfit", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --ep-text-xs: 12px;
+  --ep-text-sm: 13px;
+  --ep-text-md: 14.5px;
+  --ep-text-lg: 16.5px;
+  --ep-title-sm: 19px;
+  --ep-title-md: 23px;
+  --ep-title-lg: 28px;
+  --ep-title-xl: 34px;
+  --ep-num-lg: 32px;
+
+  /* Spacing Grid (4px base) */
+  --ep-1: 4px;
+  --ep-2: 8px;
+  --ep-3: 12px;
+  --ep-4: 16px;
+  --ep-5: 20px;
+  --ep-6: 24px;
+  --ep-8: 32px;
+  --ep-10: 40px;
+  --ep-12: 48px;
+
+  /* Radius */
+  --ep-r-xs: 6px;
+  --ep-r-sm: 8px;
+  --ep-r-md: 12px;
+  --ep-r-lg: 16px;
+  --ep-r-xl: 22px;
+  --ep-r-pill: 9999px;
+
+  /* Motion & Spring curves */
+  --ep-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ep-fast: 130ms;
+  --ep-base: 220ms;
+  --ep-slow: 380ms;
+
+  /* Ergonomics & Touch */
+  --ep-touch-min: 44px;
+  --ep-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ep-safe-top: env(safe-area-inset-top, 0px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ep-fast: 0ms;
+    --ep-base: 0ms;
+    --ep-slow: 0ms;
+  }
+}

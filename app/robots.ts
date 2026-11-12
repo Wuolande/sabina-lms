@@ -40,7 +40,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         disallow: [
           '/student/',
           '/tutor/',
-          '/admin/',
+          '/admin', '/admin-legacy',
           '/api/',
           '/auth/',
           '/lessons/*/classroom',
@@ -53,7 +53,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         disallow: [
           '/student/',
           '/tutor/',
-          '/admin/',
+          '/admin', '/admin-legacy',
           '/api/',
           '/auth/',
           '/lessons/*/classroom',
@@ -65,7 +65,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
         disallow: [
           '/student/',
           '/tutor/',
-          '/admin/',
+          '/admin', '/admin-legacy',
           '/api/',
           '/auth/',
           '/lessons/*/classroom',

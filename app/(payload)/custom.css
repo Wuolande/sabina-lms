@@ -1,0 +1,13 @@
+/* Sabina admin theme entry: fonts -> tokens -> Payload mapping -> components -> screens */
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+@import "./theme/tokens.css";
+@import "./theme/base.css";
+@import "./theme/components.css";
+@import "./theme/shell.css";
+@import "./theme/dashboard.css";
+@import "./theme/screens.css";
+@import "./theme/sabina.css";
+
+/* Header breadcrumb home icon: fit the Sabina mark. */
+.step-nav__home { width: 26px; height: 26px; flex-shrink: 0; overflow: visible; }
+.step-nav__home svg, .step-nav__home img { display: block; width: 26px; height: 26px; }

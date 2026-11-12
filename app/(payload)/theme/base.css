@@ -1,0 +1,296 @@
+/* =========================================================================
+   Payload mapping: every built-in admin screen inherits the Sabina tokens.
+   ========================================================================= */
+:root, html[data-theme="light"] {
+  /* Apple / Linear neutral grey scale */
+  --color-base-0: #FFFFFF;
+  --color-base-50: #F8F9FB;
+  --color-base-100: #F1F3F7;
+  --color-base-150: #E6E8ED;
+  --color-base-200: #E2E8F0;
+  --color-base-250: #CBD5E1;
+  --color-base-300: #94A3B8;
+  --color-base-350: #64748B;
+  --color-base-400: #475569;
+  --color-base-450: #334155;
+  --color-base-500: #1E293B;
+  --color-base-550: #0F172A;
+  --color-base-600: #0F172A;
+  --color-base-650: #0B0B0E;
+  --color-base-700: #08080A;
+  --color-base-750: #050507;
+  --color-base-800: #040405;
+  --color-base-850: #030304;
+  --color-base-900: #020203;
+  --color-base-950: #010101;
+  --color-base-1000: #000000;
+}
+
+html[data-theme="dark"] {
+  /* Obsidian scale for dark mode */
+  --color-base-0: #09090B;
+  --color-base-50: #121215;
+  --color-base-100: #1A1A1F;
+  --color-base-150: #222228;
+  --color-base-200: #2D2D35;
+  --color-base-250: #3A3A44;
+  --color-base-300: #4E4E5A;
+  --color-base-350: #71717A;
+  --color-base-400: #9494A0;
+  --color-base-450: #B4B4BE;
+  --color-base-500: #D1D1D8;
+  --color-base-550: #E2E2E8;
+  --color-base-600: #EEEEF2;
+  --color-base-650: #F4F4F6;
+  --color-base-700: #F8F9FA;
+  --color-base-750: #FAFAFC;
+  --color-base-800: #FCFCFD;
+  --color-base-850: #FEFEFE;
+  --color-base-900: #FFFFFF;
+  --color-base-950: #FFFFFF;
+  --color-base-1000: #FFFFFF;
+}
+
+:root, html[data-theme="light"], html[data-theme="dark"] {
+  --theme-bg: var(--ep-canvas);
+  --theme-input-bg: var(--ep-surface);
+  --theme-border-color: var(--ep-line);
+  --font-body: var(--ep-font);
+  --style-radius-s: var(--ep-r-sm);
+  --style-radius-m: var(--ep-r-md);
+  --style-radius-l: var(--ep-r-lg);
+  accent-color: var(--ep-accent);
+}
+
+html, body, .payload__app {
+  font-family: var(--ep-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+  background: var(--ep-canvas);
+  color: var(--ep-ink);
+}
+
+/* Headings */
+h1, h2, h3, h4, .render-title {
+  font-family: var(--ep-font-display);
+  letter-spacing: -0.026em;
+  color: var(--ep-ink);
+  font-weight: 650;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--ep-accent) 26%, transparent);
+  color: inherit;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ep-focus) !important;
+  border-radius: var(--ep-r-sm);
+}
+
+a {
+  color: inherit;
+}
+
+/* Sleek modern scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ep-line-strong) transparent;
+}
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ep-line-strong);
+  border-radius: var(--ep-r-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ep-muted);
+}
+
+/* Buttons: modern pill actions */
+.btn {
+  border-radius: var(--ep-r-pill) !important;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-size: var(--ep-text-sm) !important;
+  min-height: 38px;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 16px !important;
+  transition: all var(--ep-fast) var(--ep-ease);
+  cursor: pointer;
+}
+.btn:active:not(.btn--disabled) {
+  transform: scale(0.97);
+}
+.btn--style-primary {
+  background: var(--ep-ink) !important;
+  color: var(--ep-on-inverse) !important;
+  border: 1px solid var(--ep-ink) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) !important;
+}
+.btn--style-primary:hover:not(.btn--disabled) {
+  background: color-mix(in oklab, var(--ep-ink) 88%, var(--ep-canvas)) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18) !important;
+}
+.btn--style-secondary {
+  background: var(--ep-surface) !important;
+  color: var(--ep-ink) !important;
+  border: 1px solid var(--ep-line-strong) !important;
+  box-shadow: var(--ep-shadow-sm) !important;
+}
+.btn--style-secondary:hover:not(.btn--disabled) {
+  background: var(--ep-surface-2) !important;
+  border-color: var(--ep-subtle) !important;
+}
+.btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed !important;
+}
+
+/* Inputs & Form Controls */
+.field-type input:not([type="checkbox"]):not([type="radio"]):not(.rs__input):not([class*="rs__"]),
+.field-type textarea,
+.react-select .rs__control,
+.search-filter input {
+  border-radius: var(--ep-r-sm) !important;
+  border: 1px solid var(--ep-line-strong) !important;
+  background: var(--ep-surface) !important;
+  color: var(--ep-ink) !important;
+  font-size: var(--ep-text-md) !important;
+  min-height: 40px;
+  padding: 8px 12px !important;
+  box-sizing: border-box !important;
+  transition: border-color var(--ep-fast) ease, box-shadow var(--ep-fast) ease;
+}
+.field-type .input-wrapper {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+}
+.react-select input,
+.react-select .rs__input,
+.rs__input-container input,
+.rs__input {
+  all: unset !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+  height: 24px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  display: inline-block !important;
+}
+.field-type input:hover,
+.field-type textarea:hover,
+.react-select .rs__control:hover {
+  border-color: var(--ep-subtle) !important;
+}
+.field-type input:focus,
+.field-type textarea:focus,
+.react-select .rs__control--is-focused {
+  border-color: var(--ep-accent) !important;
+  box-shadow: var(--ep-focus) !important;
+  outline: none !important;
+}
+.field-label {
+  font-weight: 600;
+  color: var(--ep-ink-2);
+  font-size: var(--ep-text-sm);
+  margin-bottom: 6px !important;
+}
+.field-description {
+  color: var(--ep-muted);
+  font-size: var(--ep-text-xs);
+  margin-top: 5px;
+  line-height: 1.45;
+}
+
+/* Cards (Payload dashboard & relation cards) */
+.card {
+  background: var(--ep-surface) !important;
+  border: 1px solid var(--ep-line) !important;
+  border-radius: var(--ep-r-lg) !important;
+  box-shadow: var(--ep-shadow-sm) !important;
+  transition: box-shadow var(--ep-base) var(--ep-ease), transform var(--ep-base) var(--ep-ease), border-color var(--ep-base) ease;
+}
+.card--has-onclick:hover {
+  box-shadow: var(--ep-shadow-md) !important;
+  border-color: var(--ep-line-strong) !important;
+  transform: translateY(-1.5px);
+}
+
+/* Tables (collection lists) */
+.table {
+  border-radius: var(--ep-r-lg);
+  overflow: hidden;
+  background: var(--ep-surface);
+  border: 1px solid var(--ep-line);
+  box-shadow: var(--ep-shadow-sm);
+}
+.table table {
+  border-collapse: collapse;
+}
+.table thead th {
+  background: var(--ep-surface-2);
+  color: var(--ep-muted);
+  font-size: var(--ep-text-xs);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--ep-line);
+  height: 42px;
+  padding: 0 16px;
+}
+.table tbody tr {
+  transition: background-color var(--ep-fast) ease;
+}
+.table tbody tr:hover {
+  background: var(--ep-surface-2);
+}
+.table td {
+  border-bottom: 1px solid var(--ep-line);
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Pills */
+.pill {
+  border-radius: var(--ep-r-pill) !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+/* Tabs styling is managed cleanly as an underline rail in screens.css */
+
+/* Collapsibles & array rows */
+.collapsible, .array-field__row {
+  border-radius: var(--ep-r-md) !important;
+  border: 1px solid var(--ep-line) !important;
+  background: var(--ep-surface);
+}
+.collapsible__toggle-wrap {
+  border-radius: var(--ep-r-md) var(--ep-r-md) 0 0;
+}
+.field-type.group-field {
+  border-radius: var(--ep-r-lg) !important;
+}

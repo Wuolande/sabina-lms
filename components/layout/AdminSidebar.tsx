@@ -13,21 +13,21 @@ import { Logo } from "@/components/ui/Logo";
 import { adminService } from "@/services/adminService";
 
 const staticLinks = [
-  { href: "/admin",                label: "Overview",           icon: LayoutDashboard, exact: true },
-  { href: "/admin/blogs",          label: "Blog & Articles",    icon: Newspaper },
-  { href: "/admin/cms",            label: "CMS",                icon: LayoutTemplate },
-  { href: "/admin/training",       label: "Tutor Academy",      icon: BookOpen },
-  { href: "/admin/emails",         label: "Email Broadcasts",   icon: Mail },
-  { href: "/admin/tutors/pending", label: "Tutor Applications", icon: UserCheck, isPendingTutors: true },
-  { href: "/admin/tutors",         label: "Manage Tutors",      icon: GraduationCap },
-  { href: "/admin/users",          label: "Users & Students",   icon: Users },
-  { href: "/admin/bookings",       label: "Bookings & Lessons", icon: Calendar },
-  { href: "/admin/payments",       label: "Payments",           icon: CreditCard },
-  { href: "/admin/payouts",        label: "Tutor Payouts",      icon: DollarSign },
-  { href: "/admin/reviews",        label: "Review Moderation",  icon: Star },
-  { href: "/admin/reports",        label: "Analytics",          icon: BarChart3 },
-  { href: "/admin/audit-logs",     label: "Audit Logs",         icon: FileText },
-  { href: "/admin/settings",       label: "Taxonomy & Settings",icon: Settings },
+  { href: "/admin-legacy",                label: "Overview",           icon: LayoutDashboard, exact: true },
+  { href: "/admin-legacy/blogs",          label: "Blog & Articles",    icon: Newspaper },
+  { href: "/admin-legacy/cms",            label: "CMS",                icon: LayoutTemplate },
+  { href: "/admin-legacy/training",       label: "Tutor Academy",      icon: BookOpen },
+  { href: "/admin-legacy/emails",         label: "Email Broadcasts",   icon: Mail },
+  { href: "/admin-legacy/tutors/pending", label: "Tutor Applications", icon: UserCheck, isPendingTutors: true },
+  { href: "/admin-legacy/tutors",         label: "Manage Tutors",      icon: GraduationCap },
+  { href: "/admin-legacy/users",          label: "Users & Students",   icon: Users },
+  { href: "/admin-legacy/bookings",       label: "Bookings & Lessons", icon: Calendar },
+  { href: "/admin-legacy/payments",       label: "Payments",           icon: CreditCard },
+  { href: "/admin-legacy/payouts",        label: "Tutor Payouts",      icon: DollarSign },
+  { href: "/admin-legacy/reviews",        label: "Review Moderation",  icon: Star },
+  { href: "/admin-legacy/reports",        label: "Analytics",          icon: BarChart3 },
+  { href: "/admin-legacy/audit-logs",     label: "Audit Logs",         icon: FileText },
+  { href: "/admin-legacy/settings",       label: "Taxonomy & Settings",icon: Settings },
 ];
 
 interface AdminSidebarProps {
@@ -91,7 +91,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         {/* Header */}
         <div className="flex h-16 shrink-0 items-center justify-between px-5 border-b border-slate-800">
           <div className="flex items-center gap-2 min-w-0">
-            <Logo size="sm" variant="dark" href="/admin" />
+            <Logo size="sm" variant="dark" href="/admin-legacy" />
             <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-accent/20 text-accent border border-accent/30 shrink-0">
               Admin
             </span>

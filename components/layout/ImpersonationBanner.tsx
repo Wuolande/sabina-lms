@@ -29,7 +29,7 @@ export function ImpersonationBanner() {
       await fetch("/api/admin/impersonate", { method: "DELETE" });
       // Clear local state and redirect to admin users list
       setIsImpersonating(false);
-      router.push("/admin/users");
+      router.push("/admin-legacy/users");
       router.refresh();
     } catch (err) {
       console.error("Failed to revert impersonation", err);

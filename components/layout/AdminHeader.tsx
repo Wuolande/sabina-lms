@@ -28,7 +28,7 @@ export function AdminHeader({ onToggleSidebar }: AdminHeaderProps) {
         </button>
 
         <div className="lg:hidden flex items-center">
-          <Logo size="sm" href="/admin" />
+          <Logo size="sm" href="/admin-legacy" />
         </div>
 
         <div className="hidden sm:flex items-center gap-2">
