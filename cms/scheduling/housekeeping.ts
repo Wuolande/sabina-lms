@@ -26,6 +26,8 @@ export async function runHousekeeping(payload: Payload, source: JobSource = "tra
   try {
     const { expireStale } = await import("./server");
     await expireStale(payload);
+    const { moveLegacyPhotos } = await import("../media/legacy-photos");
+    await moveLegacyPhotos(payload).catch((err) => payload.logger.error({ err }, "[housekeeping] legacy photos"));
     run = { at: new Date().toISOString(), source, ok: true, ms: Date.now() - started };
   } catch (err) {
     payload.logger.error({ err }, "[housekeeping] failed");
