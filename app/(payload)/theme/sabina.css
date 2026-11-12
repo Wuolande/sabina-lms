@@ -65,3 +65,20 @@ html[data-theme="dark"] .ep-hero { background: linear-gradient(150deg, #1B2A9E 0
 .sb-attn b { min-width: 28px; padding: 2px 9px; border-radius: 999px; text-align: center; font-variant-numeric: tabular-nums; background: var(--theme-elevation-100, #eef0f4); color: var(--theme-elevation-600, #64748b); }
 .sb-attn .is-due b { background: var(--brand-primary, #14209c); color: #fff; }
 .sb-attn__clear { margin: 0; padding: 8px 2px; color: var(--theme-elevation-600, #64748b); }
+
+/* Scheduled jobs */
+.sb-jobs { display: grid; gap: var(--ep-4, 16px); max-width: 860px; }
+.sb-jobs__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 4px 0 0; }
+@media (max-width: 720px) { .sb-jobs__stats { grid-template-columns: minmax(0, 1fr); } }
+.sb-jobs__stats dt { font-size: 12px; color: var(--theme-elevation-600, #64748b); }
+.sb-jobs__stats dd { margin: 2px 0 0; font-weight: 600; }
+.sb-jobs__stats .is-ok { color: #059669; }
+.sb-jobs__stats .is-bad { color: #dc2626; }
+.sb-jobs__steps { margin: 8px 0 0; padding-left: 1.2em; line-height: 1.7; }
+.sb-jobs__steps code, .sb-field__value { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+.sb-jobs__note { margin: 12px 0 0; font-size: 13px; color: var(--theme-elevation-600, #64748b); }
+.sb-jobs__error { margin: 12px 0 0; color: #dc2626; font-size: 14px; }
+.sb-field { margin-top: 12px; }
+.sb-field__label { display: block; font-size: 12px; color: var(--theme-elevation-600, #64748b); margin-bottom: 4px; }
+.sb-field__row { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.sb-field__value { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; padding: 8px 10px; border-radius: 10px; background: var(--theme-elevation-50, #f8fafc); border: 1px solid var(--theme-elevation-100, #eef0f4); }

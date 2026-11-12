@@ -261,9 +261,14 @@ Messaging, notifications and emails.
   configured). Admin → Emails lists each one; staff can switch it off or add a note above its button.
   Message emails go at most once per conversation every 30 minutes unless the person has caught up.
 - **Reminders**: the day before (20–25h ahead) and about an hour before each confirmed lesson, sent once.
-- **Jobs**: housekeeping still runs when lists load, and now also from `/api/cron/housekeeping`
-  (`vercel.json`: every 10 minutes; set `CRON_SECRET`). Vercel Hobby only runs crons daily: on Hobby, use an
-  external pinger (e.g. cron-job.org) with the same header.
+- **Jobs**: housekeeping (expiries, attendance, reminders) runs in three ways: when lesson lists load; in the
+  background of portal traffic, at most every 5 minutes per server (`cms/scheduling/housekeeping.ts`); and from
+  `/api/cron/housekeeping`, which Vercel calls once a day (`vercel.json`, Hobby-plan compatible; set
+  `CRON_SECRET`). For exact timing, set up any external scheduler in **Admin → Settings → Scheduled jobs**: it shows the
+  address, lets an admin create or replace the key (or uses `CRON_SECRET` when set), has **Run now**, shows the last
+  run and whether your scheduler is calling, and has step-by-step cron-job.org instructions. Schedulers send
+  `Authorization: Bearer <key>`, or call `…/api/cron/housekeeping?key=<key>` if they can't add headers.
+  Test: `tests/e2e/jobs.spec.ts`.
 - Migration: `20261112_170454_messaging_notifications`. Test: `tests/e2e/phase6-messaging.spec.ts`.
 
 ## Phase 7: done

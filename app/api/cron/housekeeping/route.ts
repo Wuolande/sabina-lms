@@ -1,18 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getPayloadClient } from "@/cms/auth/session";
 import { fail } from "@/cms/auth/http";
-import { expireStale } from "@/cms/scheduling/server";
+import { cronAuthorized, runHousekeeping } from "@/cms/scheduling/housekeeping";
+
+export const maxDuration = 60;
 
 /**
  * Scheduled housekeeping: expire unpaid holds and unanswered requests, settle attendance, send
- * lesson reminders. Call every 5–15 minutes with `Authorization: Bearer $CRON_SECRET`
- * (Vercel Cron sends this header automatically when CRON_SECRET is set).
+ * lesson reminders. Set up an external scheduler in Admin → Scheduled jobs. Authenticate with
+ * `Authorization: Bearer <key>` (Vercel Cron does this with CRON_SECRET) or `?key=<key>`.
  */
-export async function GET(req: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  if (!secret || req.headers.get("authorization") !== `Bearer ${secret}`) return fail("Not allowed.", 401);
+async function handle(req: NextRequest) {
   const payload = await getPayloadClient();
-  const started = Date.now();
-  await expireStale(payload);
-  return NextResponse.json({ ok: true, ms: Date.now() - started });
+  if (!(await cronAuthorized(payload, req.headers.get("authorization"), req.nextUrl.searchParams.get("key")))) return fail("Not allowed.", 401);
+  const run = await runHousekeeping(payload, "cron");
+  return NextResponse.json(run, { status: run?.ok ? 200 : 500, headers: { "Cache-Control": "no-store" } });
 }
+export const GET = handle;
+export const POST = handle;

@@ -95,6 +95,7 @@ export const MENU: MenuSection[] = [
     collapsible: true,
     items: [
       { kind: "global", slug: "site-settings", label: "Site settings", icon: "Settings" },
+      { kind: "view", slug: "jobs", label: "Scheduled jobs", icon: "Clock", href: "/admin/jobs", adminOnly: true },
       { kind: "global", slug: "seo-settings", label: "SEO", icon: "Search", adminOnly: true },
       { kind: "global", slug: "platform-settings", label: "Fees & policies", icon: "Percent", adminOnly: true },
       { kind: "global", slug: "payment-settings", label: "Payment gateways", icon: "Plug", adminOnly: true },
