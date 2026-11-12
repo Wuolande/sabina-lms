@@ -26,9 +26,10 @@ export const MENU: MenuSection[] = [
     collapsible: true,
     items: [
       { kind: "collection", slug: "users", label: "All users", icon: "Users" },
-      { kind: "collection", slug: "tutor-applications", label: "Tutor applications", icon: "ClipboardList", badge: "applications" },
+      { kind: "view", slug: "tutor-applications", label: "Tutor applications", icon: "ClipboardList", badge: "applications", href: "/admin/collections/tutor-profiles?where[status][equals]=submitted" },
       { kind: "collection", slug: "tutor-profiles", label: "Tutors", icon: "GraduationCap" },
       { kind: "collection", slug: "student-profiles", label: "Students", icon: "UsersRound" },
+      { kind: "collection", slug: "private-files", label: "Private documents", icon: "ShieldAlert" },
     ],
   },
   {
@@ -101,7 +102,7 @@ export const MENU: MenuSection[] = [
   },
 ];
 
-export const hrefOf = (i: MenuItem) => i.href ?? `/admin/${i.kind === "collection" ? "collections" : "globals"}/${i.slug}`;
+export const hrefOf = (i: MenuItem): string => i.href ?? `/admin/${i.kind === "collection" ? "collections" : "globals"}/${i.slug}`;
 
 const HIDDEN = ["payload-preferences", "payload-locked-documents", "payload-migrations", "payload-kv", "payload-folders", "payload-jobs"];
 

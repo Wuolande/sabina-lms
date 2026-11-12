@@ -37,3 +37,15 @@
 .ep-hero { background: linear-gradient(150deg, var(--brand-primary, #14209C) 0%, var(--brand-primary-dark, #0B123E) 100%); }
 .ep-hero::before { background: radial-gradient(circle, color-mix(in srgb, var(--brand-accent, #F9C31C) 40%, transparent), transparent 65%); }
 html[data-theme="dark"] .ep-hero { background: linear-gradient(150deg, #1B2A9E 0%, #0B123E 100%); }
+
+/* Tutor review actions (tutor page header). */
+.sb-review { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-right: 8px; }
+.sb-review__danger { color: var(--ep-alert-ink) !important; }
+.sb-review__err { color: var(--ep-alert-ink); font-size: 13px; }
+.sb-review__modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(4px); }
+.sb-review__box { width: min(520px, 100%); background: var(--ep-surface); border-radius: 18px; padding: 24px; box-shadow: var(--ep-shadow-lg); display: grid; gap: 12px; }
+.sb-review__box h3 { margin: 0; font-size: 18px; }
+.sb-review__box p { margin: 0; color: var(--ep-muted); font-size: 14px; }
+.sb-review__box textarea { width: 100%; border-radius: 12px; border: 1px solid var(--ep-line-strong); padding: 12px; font: inherit; background: var(--ep-surface); color: var(--ep-ink); resize: vertical; }
+.sb-review__row { display: flex; justify-content: flex-end; gap: 8px; }
+.ep-btn--danger { background: var(--ep-alert) !important; color: #fff !important; border-color: transparent !important; }

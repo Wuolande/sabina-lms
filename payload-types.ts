@@ -68,7 +68,12 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    'tutor-profiles': TutorProfile;
+    'student-profiles': StudentProfile;
+    subjects: Subject;
+    languages: Language;
     media: Media;
+    'private-files': PrivateFile;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -77,7 +82,12 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    'tutor-profiles': TutorProfilesSelect<false> | TutorProfilesSelect<true>;
+    'student-profiles': StudentProfilesSelect<false> | StudentProfilesSelect<true>;
+    subjects: SubjectsSelect<false> | SubjectsSelect<true>;
+    languages: LanguagesSelect<false> | LanguagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'private-files': PrivateFilesSelect<false> | PrivateFilesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -89,9 +99,11 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'site-settings': SiteSetting;
+    'platform-settings': PlatformSetting;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
+    'platform-settings': PlatformSettingsSelect<false> | PlatformSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -217,6 +229,213 @@ export interface Media {
   };
 }
 /**
+ * Tutor applications and public profiles. Filter by status to see applications waiting for review.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tutor-profiles".
+ */
+export interface TutorProfile {
+  id: number;
+  /**
+   * One line students see first, e.g. "Patient KCSE Maths tutor, 8 years' experience".
+   */
+  headline?: string | null;
+  /**
+   * Who you are and how you got into teaching.
+   */
+  about?: string | null;
+  /**
+   * What a lesson with you looks like.
+   */
+  teachingStyle?: string | null;
+  languages?:
+    | {
+        language: number | Language;
+        level: 'native' | 'c2' | 'c1' | 'b2' | 'b1' | 'a2';
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * YouTube, Vimeo or Cloudflare Stream link to a 1-2 minute introduction.
+   */
+  introVideoUrl?: string | null;
+  primarySubject?: (number | null) | Subject;
+  subjects?: (number | Subject)[] | null;
+  levelsTaught?: ('primary' | 'secondary' | 'university' | 'adult' | 'exam')[] | null;
+  /**
+   * Per 60-minute lesson.
+   */
+  hourlyRate?: number | null;
+  offersTrial?: boolean | null;
+  instantBooking?: boolean | null;
+  noticeHours?: number | null;
+  education?:
+    | {
+        degree: string;
+        institution: string;
+        field?: string | null;
+        startYear?: number | null;
+        endYear?: number | null;
+        document?: (number | null) | PrivateFile;
+        verified?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  certifications?:
+    | {
+        title: string;
+        issuer: string;
+        year?: number | null;
+        credentialId?: string | null;
+        document?: (number | null) | PrivateFile;
+        verified?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  experience?:
+    | {
+        role: string;
+        organization: string;
+        startYear?: number | null;
+        /**
+         * Leave empty if current.
+         */
+        endYear?: number | null;
+        description?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  identity?: {
+    documentType?: ('passport' | 'national_id' | 'drivers_license') | null;
+    document?: (number | null) | PrivateFile;
+    verified?: boolean | null;
+  };
+  /**
+   * Shown to the tutor when you request changes or reject.
+   */
+  reviewNotes?: string | null;
+  /**
+   * Only staff see this.
+   */
+  internalNotes?: string | null;
+  reviewHistory?:
+    | {
+        action?: ('draft' | 'submitted' | 'changes_requested' | 'approved' | 'rejected' | 'suspended') | null;
+        notes?: string | null;
+        at?: string | null;
+        by?: (number | null) | User;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'draft' | 'submitted' | 'changes_requested' | 'approved' | 'rejected' | 'suspended';
+  user: number | User;
+  /**
+   * Public name, e.g. "Jane D."
+   */
+  displayName?: string | null;
+  slug?: string | null;
+  country?: string | null;
+  timezone?: string | null;
+  submittedAt?: string | null;
+  approvedAt?: string | null;
+  isFeatured?: boolean | null;
+  isSuperTutor?: boolean | null;
+  /**
+   * Updated automatically from lessons and reviews.
+   */
+  stats?: {
+    rating?: number | null;
+    reviewCount?: number | null;
+    lessonsTaught?: number | null;
+    studentsTaught?: number | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "languages".
+ */
+export interface Language {
+  id: number;
+  name: string;
+  /**
+   * ISO 639-1 code, e.g. en, sw, fr.
+   */
+  code: string;
+  nativeName?: string | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subjects".
+ */
+export interface Subject {
+  id: number;
+  name: string;
+  /**
+   * Used in the web address. Filled in automatically.
+   */
+  slug?: string | null;
+  category: 'languages' | 'mathematics' | 'sciences' | 'exam-prep' | 'coding' | 'humanities' | 'business' | 'arts';
+  /**
+   * One or two sentences shown on the subject page and in search.
+   */
+  description?: string | null;
+  /**
+   * Lucide icon name, e.g. Calculator, Languages, Atom.
+   */
+  icon?: string | null;
+  isActive?: boolean | null;
+  isFeatured?: boolean | null;
+  sortOrder?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "private-files".
+ */
+export interface PrivateFile {
+  id: number;
+  owner: number | User;
+  kind: 'identity' | 'degree' | 'certificate' | 'other';
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "student-profiles".
+ */
+export interface StudentProfile {
+  id: number;
+  user: number | User;
+  displayName?: string | null;
+  subjects?: (number | Subject)[] | null;
+  goal?: ('exam' | 'school' | 'career' | 'conversation' | 'hobby' | 'child') | null;
+  level?: ('beginner' | 'elementary' | 'intermediate' | 'advanced') | null;
+  pace?: ('1' | '2-3' | '4+' | 'unsure') | null;
+  budgetMin?: number | null;
+  budgetMax?: number | null;
+  goalDetails?: string | null;
+  preferredLanguages?: (number | Language)[] | null;
+  savedTutors?: (number | TutorProfile)[] | null;
+  onboardedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -245,8 +464,28 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
+        relationTo: 'tutor-profiles';
+        value: number | TutorProfile;
+      } | null)
+    | ({
+        relationTo: 'student-profiles';
+        value: number | StudentProfile;
+      } | null)
+    | ({
+        relationTo: 'subjects';
+        value: number | Subject;
+      } | null)
+    | ({
+        relationTo: 'languages';
+        value: number | Language;
+      } | null)
+    | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'private-files';
+        value: number | PrivateFile;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -327,6 +566,149 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tutor-profiles_select".
+ */
+export interface TutorProfilesSelect<T extends boolean = true> {
+  headline?: T;
+  about?: T;
+  teachingStyle?: T;
+  languages?:
+    | T
+    | {
+        language?: T;
+        level?: T;
+        id?: T;
+      };
+  introVideoUrl?: T;
+  primarySubject?: T;
+  subjects?: T;
+  levelsTaught?: T;
+  hourlyRate?: T;
+  offersTrial?: T;
+  instantBooking?: T;
+  noticeHours?: T;
+  education?:
+    | T
+    | {
+        degree?: T;
+        institution?: T;
+        field?: T;
+        startYear?: T;
+        endYear?: T;
+        document?: T;
+        verified?: T;
+        id?: T;
+      };
+  certifications?:
+    | T
+    | {
+        title?: T;
+        issuer?: T;
+        year?: T;
+        credentialId?: T;
+        document?: T;
+        verified?: T;
+        id?: T;
+      };
+  experience?:
+    | T
+    | {
+        role?: T;
+        organization?: T;
+        startYear?: T;
+        endYear?: T;
+        description?: T;
+        id?: T;
+      };
+  identity?:
+    | T
+    | {
+        documentType?: T;
+        document?: T;
+        verified?: T;
+      };
+  reviewNotes?: T;
+  internalNotes?: T;
+  reviewHistory?:
+    | T
+    | {
+        action?: T;
+        notes?: T;
+        at?: T;
+        by?: T;
+        id?: T;
+      };
+  status?: T;
+  user?: T;
+  displayName?: T;
+  slug?: T;
+  country?: T;
+  timezone?: T;
+  submittedAt?: T;
+  approvedAt?: T;
+  isFeatured?: T;
+  isSuperTutor?: T;
+  stats?:
+    | T
+    | {
+        rating?: T;
+        reviewCount?: T;
+        lessonsTaught?: T;
+        studentsTaught?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "student-profiles_select".
+ */
+export interface StudentProfilesSelect<T extends boolean = true> {
+  user?: T;
+  displayName?: T;
+  subjects?: T;
+  goal?: T;
+  level?: T;
+  pace?: T;
+  budgetMin?: T;
+  budgetMax?: T;
+  goalDetails?: T;
+  preferredLanguages?: T;
+  savedTutors?: T;
+  onboardedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subjects_select".
+ */
+export interface SubjectsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  category?: T;
+  description?: T;
+  icon?: T;
+  isActive?: T;
+  isFeatured?: T;
+  sortOrder?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "languages_select".
+ */
+export interface LanguagesSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  nativeName?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
@@ -377,6 +759,25 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "private-files_select".
+ */
+export interface PrivateFilesSelect<T extends boolean = true> {
+  owner?: T;
+  kind?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -446,6 +847,28 @@ export interface SiteSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "platform-settings".
+ */
+export interface PlatformSetting {
+  id: number;
+  currency?: ('USD' | 'KES' | 'EUR' | 'GBP') | null;
+  /**
+   * Taken from each lesson payment.
+   */
+  platformFeePercent?: number | null;
+  maxSubjectsPerTutor?: number | null;
+  tutorMinHourlyRate?: number | null;
+  tutorMaxHourlyRate?: number | null;
+  trialLessonMinutes?: number | null;
+  trialLessonDiscountPercent?: number | null;
+  cancellationRefundHours?: number | null;
+  classroomEarlyJoinMinutes?: number | null;
+  instantBookingEnabled?: boolean | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
@@ -470,6 +893,25 @@ export interface SiteSettingsSelect<T extends boolean = true> {
               success?: T;
             };
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "platform-settings_select".
+ */
+export interface PlatformSettingsSelect<T extends boolean = true> {
+  currency?: T;
+  platformFeePercent?: T;
+  maxSubjectsPerTutor?: T;
+  tutorMinHourlyRate?: T;
+  tutorMaxHourlyRate?: T;
+  trialLessonMinutes?: T;
+  trialLessonDiscountPercent?: T;
+  cancellationRefundHours?: T;
+  classroomEarlyJoinMinutes?: T;
+  instantBookingEnabled?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

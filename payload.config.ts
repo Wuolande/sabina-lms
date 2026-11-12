@@ -9,8 +9,14 @@ import sharp from "sharp";
 import { Users } from "./cms/collections/Users";
 import { Media } from "./cms/collections/Media";
 import { SiteSettings } from "./cms/globals/SiteSettings";
+import { PlatformSettings } from "./cms/globals/PlatformSettings";
+import { Languages, Subjects } from "./cms/collections/Subjects";
+import { PrivateFiles } from "./cms/collections/PrivateFiles";
+import { TutorProfiles } from "./cms/collections/TutorProfiles";
+import { StudentProfiles } from "./cms/collections/StudentProfiles";
 import { r2Config, r2PublicUrl, r2Ready } from "./cms/storage/r2";
 import { migrations } from "./cms/migrations";
+import { seedCatalogue } from "./cms/seed/catalogue";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const env = process.env;
@@ -72,8 +78,9 @@ export default buildConfig({
     },
     importMap: { baseDir: path.resolve(dirname) },
   },
-  collections: [Users, Media],
-  globals: [SiteSettings],
+  collections: [Users, TutorProfiles, StudentProfiles, Subjects, Languages, Media, PrivateFiles],
+  globals: [SiteSettings, PlatformSettings],
+  upload: { limits: { fileSize: 20 * 1024 * 1024 } },
   editor: lexicalEditor(),
   db: postgresAdapter({
     // Payload's tables live in their own "payload" schema in the Supabase Postgres database.
@@ -123,7 +130,19 @@ export default buildConfig({
         },
       },
     }),
+    // Private R2 bucket for identity documents and certificates: always served through Payload's access checks.
+    s3Storage({
+      enabled: r2Ready() && Boolean(env.R2_PRIVATE_BUCKET),
+      bucket: env.R2_PRIVATE_BUCKET || "",
+      config: r2Config(),
+      collections: { "private-files": { prefix: "private" } },
+    }),
   ],
+  // Starter subjects and languages on an empty database (never during `next build`).
+  onInit: async (payload) => {
+    if (env.NEXT_PHASE === "phase-production-build") return;
+    await seedCatalogue(payload).catch((err) => payload.logger.error({ err }, "Catalogue seed failed"));
+  },
   typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
   graphQL: { disable: true },
   telemetry: false,

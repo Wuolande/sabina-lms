@@ -1,3 +1,4 @@
+import { ReviewActions as ReviewActions_5c2b8028f7ad4aa15f6405c6f3b089bf } from '../../../cms/admin/tutors/ReviewActions'
 import { Avatar as Avatar_b2f13f7166b151bab9a5bcf0e429c3b8 } from '../../../cms/admin/shell/Avatar'
 import { Nav as Nav_443b6b3499f049854d114c656e337d72 } from '../../../cms/admin/shell/Nav'
 import { Icon as Icon_30ebd91e9e497d4885819d35d826364a } from '../../../cms/admin/Brand'
@@ -12,6 +13,7 @@ import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc056
 
 /** @type import('payload').ImportMap */
 export const importMap = {
+  "/cms/admin/tutors/ReviewActions#ReviewActions": ReviewActions_5c2b8028f7ad4aa15f6405c6f3b089bf,
   "/cms/admin/shell/Avatar#Avatar": Avatar_b2f13f7166b151bab9a5bcf0e429c3b8,
   "/cms/admin/shell/Nav#Nav": Nav_443b6b3499f049854d114c656e337d72,
   "/cms/admin/Brand#Icon": Icon_30ebd91e9e497d4885819d35d826364a,

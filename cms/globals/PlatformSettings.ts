@@ -1,0 +1,57 @@
+import type { GlobalConfig } from "payload";
+import { anyone, isAdmin } from "../access";
+
+export const PLATFORM_DEFAULTS = {
+  currency: "USD",
+  platformFeePercent: 18,
+  tutorMinHourlyRate: 10,
+  tutorMaxHourlyRate: 250,
+  trialLessonMinutes: 30,
+  trialLessonDiscountPercent: 30,
+  cancellationRefundHours: 24,
+  classroomEarlyJoinMinutes: 15,
+  instantBookingEnabled: true,
+  maxSubjectsPerTutor: 5,
+} as const;
+
+/** Fees, price limits and booking policies. Read by the tutor application, marketplace and checkout. */
+export const PlatformSettings: GlobalConfig = {
+  slug: "platform-settings",
+  label: "Fees & policies",
+  admin: { group: "Settings" },
+  access: { read: anyone, update: isAdmin },
+  fields: [
+    {
+      type: "row",
+      fields: [
+        { name: "currency", type: "select", defaultValue: PLATFORM_DEFAULTS.currency, options: ["USD", "KES", "EUR", "GBP"].map((c) => ({ label: c, value: c })), admin: { width: "33%" } },
+        { name: "platformFeePercent", type: "number", min: 0, max: 60, defaultValue: PLATFORM_DEFAULTS.platformFeePercent, label: "Platform fee (%)", admin: { width: "33%", description: "Taken from each lesson payment." } },
+        { name: "maxSubjectsPerTutor", type: "number", min: 1, max: 15, defaultValue: PLATFORM_DEFAULTS.maxSubjectsPerTutor, admin: { width: "33%" } },
+      ],
+    },
+    {
+      type: "row",
+      fields: [
+        { name: "tutorMinHourlyRate", type: "number", min: 1, defaultValue: PLATFORM_DEFAULTS.tutorMinHourlyRate, label: "Minimum hourly rate", admin: { width: "50%" } },
+        { name: "tutorMaxHourlyRate", type: "number", min: 1, defaultValue: PLATFORM_DEFAULTS.tutorMaxHourlyRate, label: "Maximum hourly rate", admin: { width: "50%" } },
+      ],
+    },
+    {
+      type: "row",
+      fields: [
+        { name: "trialLessonMinutes", type: "number", min: 15, max: 60, defaultValue: PLATFORM_DEFAULTS.trialLessonMinutes, label: "Trial lesson length (min)", admin: { width: "50%" } },
+        { name: "trialLessonDiscountPercent", type: "number", min: 0, max: 100, defaultValue: PLATFORM_DEFAULTS.trialLessonDiscountPercent, label: "Trial lesson discount (%)", admin: { width: "50%" } },
+      ],
+    },
+    {
+      type: "row",
+      fields: [
+        { name: "cancellationRefundHours", type: "number", min: 0, defaultValue: PLATFORM_DEFAULTS.cancellationRefundHours, label: "Free cancellation up to (hours before)", admin: { width: "50%" } },
+        { name: "classroomEarlyJoinMinutes", type: "number", min: 0, max: 60, defaultValue: PLATFORM_DEFAULTS.classroomEarlyJoinMinutes, label: "Classroom opens (minutes before)", admin: { width: "50%" } },
+      ],
+    },
+    { name: "instantBookingEnabled", type: "checkbox", defaultValue: PLATFORM_DEFAULTS.instantBookingEnabled, label: "Allow instant booking" },
+  ],
+};
+
+export type Policies = { -readonly [K in keyof typeof PLATFORM_DEFAULTS]: (typeof PLATFORM_DEFAULTS)[K] extends string ? string : (typeof PLATFORM_DEFAULTS)[K] extends boolean ? boolean : number };

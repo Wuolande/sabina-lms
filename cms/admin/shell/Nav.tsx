@@ -27,7 +27,7 @@ export async function Nav({ payload, visibleEntities, user }: Props) {
     }
   };
   const [applications, disputes, reviews] = await Promise.all([
-    count("tutor-applications", { status: { equals: "submitted" } }),
+    count("tutor-profiles", { status: { equals: "submitted" } }),
     count("disputes", { status: { equals: "open" } }),
     count("lesson-reviews", { status: { equals: "pending" } }),
   ]);
