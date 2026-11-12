@@ -25,16 +25,14 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typescript: {
-    // TODO(payload-migration): flip to false once the legacy Supabase code is removed (Phase 8).
-    ignoreBuildErrors: true,
+    // Builds fail on type errors.
+    ignoreBuildErrors: false,
   },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "api.dicebear.com" },
       { protocol: "https", hostname: "avatar.vercel.sh" },
-      // Legacy uploads, until every file has moved to Cloudflare R2.
-      { protocol: "https", hostname: "res.cloudinary.com" },
       // Cloudflare R2 (Payload media) and Cloudflare Stream thumbnails.
       { protocol: "https", hostname: "*.r2.dev" },
       { protocol: "https", hostname: "*.cloudflarestream.com" },

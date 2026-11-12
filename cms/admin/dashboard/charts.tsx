@@ -104,11 +104,11 @@ export function StatusBars({ buckets, height = 230 }: { buckets: Bucket[]; heigh
 }
 
 /** Ranked horizontal bars (one hue). */
-export function RankedBars({ items, unit = "" }: { items: { label: string; value: number }[]; unit?: string }) {
+export function RankedBars({ items, unit = "", empty = { title: "Nothing yet", text: "This fills in as lessons are completed." } }: { items: { label: string; value: number }[]; unit?: string; empty?: { title: string; text: string } }) {
   const max = Math.max(1, ...items.map((i) => i.value));
   if (!items.length) return (
     <div className="ep-empty ep-empty--compact">
-      <b>No requests yet</b><p>The services clients ask about most will be ranked here.</p>
+      <b>{empty.title}</b><p>{empty.text}</p>
     </div>
   );
   return (

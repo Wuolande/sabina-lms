@@ -3,6 +3,7 @@ import { Gutter } from "@payloadcms/ui";
 import { ArrowUpRight, CalendarCheck, ClipboardList, GraduationCap, Image as ImageIcon, Settings, UserPlus, Users, UsersRound, Wallet } from "lucide-react";
 import { Card, Delta, IconChip, StatusPill } from "../ui";
 import { getDashboardData, parseRange } from "./data";
+import { attention } from "../reports/data";
 import { Sparkline, StatusBars } from "./charts";
 
 const RANGES = [["7", "7 days"], ["30", "30 days"], ["90", "90 days"]] as const;
@@ -12,25 +13,13 @@ const ago = (iso: string) => {
 };
 const ROLE: Record<string, string> = { admin: "Admin", manager: "Manager", finance: "Finance", support: "Support", editor: "Editor", tutor: "Tutor", student: "Student" };
 
-/** Migration roadmap shown on the dashboard until every phase has landed. */
-const PHASES = [
-  ["Foundation", "Payload, admin, Cloudflare R2 storage"],
-  ["Accounts & roles", "One sign-in for staff, tutors and students"],
-  ["Tutors & catalogue", "Applications, verification, subjects, marketplace"],
-  ["Scheduling & bookings", "Availability, time zones, double-booking guard"],
-  ["Payments", "Stripe, Paystack, invoices, refunds, payouts"],
-  ["Classroom & lessons", "LiveKit, whiteboard, homework, reviews"],
-  ["Messaging & jobs", "Chat, notifications, emails, reminders"],
-  ["Content & academy", "Blog, pages, SEO, tutor training"],
-  ["Dashboards & launch", "Reports, cleanup, launch checklist"],
-] as const;
-const CURRENT_PHASE = 7;
 
 /** The Sabina dashboard (replaces Payload's default collection grid). */
 export async function DashboardView({ initPageResult, searchParams }: AdminViewServerProps) {
   const { req } = initPageResult;
   const range = parseRange((searchParams as Record<string, string> | undefined)?.range);
-  const d = await getDashboardData(req.payload, range);
+  const [d, todo] = await Promise.all([getDashboardData(req.payload, range), attention(req.payload)]);
+  const open = todo.filter((t) => t.count > 0);
   const user = req.user as { name?: string; firstName?: string; timezone?: string } | null;
   const hour = +new Date().toLocaleString("en-GB", { hour: "numeric", hour12: false, timeZone: user?.timezone || "UTC" });
   const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -150,18 +139,21 @@ export async function DashboardView({ initPageResult, searchParams }: AdminViewS
           <Card title="Sign-ups over time" sub={`${range === 90 ? "Weekly" : "Daily"} new accounts by role, ${period}.`}>
             <StatusBars buckets={d.buckets} />
           </Card>
-          <Card title="Migration roadmap" sub="Every backend moving onto Payload, phase by phase.">
-            <ol className="sb-roadmap">
-              {PHASES.map(([title, sub], i) => (
-                <li key={title} className={i < CURRENT_PHASE ? "is-done" : i === CURRENT_PHASE ? "is-now" : undefined}>
-                  <span className="sb-step">{i < CURRENT_PHASE ? "✓" : i}</span>
-                  <span>
-                    <b>{title}</b>
-                    <small>{sub}</small>
-                  </span>
-                </li>
-              ))}
-            </ol>
+          <Card title="Needs attention" sub={open.length ? "Things waiting for your team." : undefined}>
+            {open.length ? (
+              <ul className="sb-attn">
+                {todo.map((t) => (
+                  <li key={t.label} className={t.count ? "is-due" : undefined}>
+                    <a href={t.href}>
+                      <span>{t.label}</span>
+                      <b>{t.count}</b>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="sb-attn__clear">All clear. Nothing is waiting for your team.</p>
+            )}
           </Card>
         </div>
 
@@ -232,11 +224,11 @@ export async function DashboardView({ initPageResult, searchParams }: AdminViewS
                 </IconChip>
                 <span>Brand &amp; site settings</span>
               </a>
-              <a className="ep-quick__item" href="/admin-legacy">
+              <a className="ep-quick__item" href="/admin/reports">
                 <IconChip tone="warning">
                   <ClipboardList />
                 </IconChip>
-                <span>Open legacy admin (until phase 8)</span>
+                <span>Reports and exports</span>
               </a>
             </div>
           </Card>

@@ -4,7 +4,7 @@ import { anyone, isAdmin, signedIn } from "../access";
 /**
  * Public media: avatars, blog and page images, course thumbnails.
  * Stored in Cloudflare R2 (public bucket) and served from R2_PUBLIC_URL.
- * Private files (ID documents, certificates, lesson materials) live in their own collection (Phase 2).
+ * Private files (ID documents, certificates, lesson materials) live in their own collection (private-files).
  */
 export const Media: CollectionConfig = {
   slug: "media",

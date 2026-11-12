@@ -15,9 +15,6 @@ const AREAS: { prefix: string; roles: Set<string> }[] = [
   { prefix: "/tutor", roles: new Set(["tutor", ...STAFF]) },
   { prefix: "/api/student", roles: new Set(["student", ...STAFF]) },
   { prefix: "/api/tutor", roles: new Set(["tutor", ...STAFF]) },
-  { prefix: "/api/upload", roles: new Set(["student", "tutor", ...STAFF]) },
-  { prefix: "/admin-legacy", roles: STAFF },
-  { prefix: "/api/admin", roles: STAFF },
 ];
 
 const homeFor = (role?: string) => (role === "tutor" ? "/tutor" : role === "student" ? "/student" : role && STAFF.has(role) ? "/admin" : "/login");
@@ -57,10 +54,7 @@ export const config = {
   matcher: [
     "/student/:path*",
     "/tutor/:path*",
-    "/admin-legacy/:path*",
     "/api/student/:path*",
     "/api/tutor/:path*",
-    "/api/admin/:path*",
-    "/api/upload/:path*",
   ],
 };

@@ -295,3 +295,34 @@ Content and academy.
 - Removed: legacy `/api/homepage`, `/api/blogs`, `/api/pages`, `/api/policies`, old blog components and the old
   academy pages.
 - Migration: `20261112_172523_content_academy`. Test: `tests/e2e/phase7-content.spec.ts`.
+
+## Phase 8: done
+
+Dashboards, reports and clean-up. The migration is complete: Sabina runs entirely on Payload.
+
+- **Dashboard**: the migration roadmap is replaced by **Needs attention** (tutor applications, reported
+  lesson problems, flagged conversations, payouts to send, lesson requests waiting on tutors, emails that
+  failed this week), each linking to the filtered list.
+- **Reports** (`/admin/reports`; admin, manager, finance): lesson sales, refunds, Sabina's fee, tutor earnings
+  and paid out, lessons completed, tutor no-shows, cancellation rate; a month-by-month table; top tutors; lessons
+  by subject and by outcome. Ranges: 30 days, 90 days, 12 months.
+- **CSV exports** (`/api/reports/export?type=payments|bookings|payouts&range=`): staff-only, UTF-8 with BOM so
+  Excel opens it correctly, and cells starting with `= + - @` are escaped against spreadsheet formula injection.
+- **Removed**: Supabase (packages, env vars, `src/` services and repositories, 38 legacy SQL migrations),
+  `/admin-legacy`, ~70 legacy `/api/admin/*`, `/api/student/*`, `/api/tutor/*`, `/api/upload/*` routes, legacy
+  one-off scripts, unused components and services, the portal's "coming in phase N" placeholders.
+- The default hero photo now ships with the site (`public/images/hero-student.png`) instead of the old
+  Cloudinary account; Cloudinary is no longer an allowed image host.
+- **`typescript.ignoreBuildErrors` is now `false`**: production builds fail on type errors.
+- Note for API clients: cookie sign-in is only accepted on same-site requests (Payload's CSRF protection).
+  Scripts and other servers should send `Authorization: JWT <token>` from `/api/users/login`.
+- Test: `tests/e2e/phase8-admin.spec.ts`. Full suite: `npx playwright test` (desktop + mobile).
+
+## Before launch
+
+- Add production secrets: `DATABASE_URI`, `PAYLOAD_SECRET`, `NEXT_PUBLIC_APP_URL`, R2 (`R2_*`), Stream
+  (`CLOUDFLARE_STREAM_*`), LiveKit, Stripe and/or Paystack (+ webhook secrets), SMTP, `CRON_SECRET`.
+- Run `npx payload migrate` against the production database (or let the first request apply them).
+- Create the first admin at `/admin` (the first account is always an admin).
+- Have a lawyer review Terms, Privacy, Cookies and Refund policy (Admin → Website → Pages).
+- Try one real video lesson between two devices once LiveKit keys are set.

@@ -1,19 +1,6 @@
-/**
- * Portal navigation for students and tutors. `phase` marks sections that are still being rebuilt
- * on Payload: the shell shows a "coming in phase N" panel for them instead of the legacy page.
- * Remove `phase` from an item when its screens land.
- */
+/** Portal navigation for students and tutors. `primary` items also appear in the phone tab bar. */
 export type PortalRole = "student" | "tutor";
-export type NavItem = { href: string; label: string; short?: string; icon: string; exact?: boolean; phase?: number; primary?: boolean };
-
-export const PHASE_NAMES: Record<number, string> = {
-  2: "Tutors & catalogue",
-  3: "Scheduling & bookings",
-  4: "Payments",
-  5: "Classroom & lessons",
-  6: "Messaging & notifications",
-  7: "Content & academy",
-};
+export type NavItem = { href: string; label: string; short?: string; icon: string; exact?: boolean; primary?: boolean };
 
 export const NAV: Record<PortalRole, NavItem[]> = {
   student: [

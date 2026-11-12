@@ -11,8 +11,7 @@ const STAFF = new Set(["admin", "manager", "finance", "support", "editor"]);
 const pct = (now: number, before: number) => (before ? Math.round(((now - before) / before) * 100) : now ? 100 : 0);
 
 /**
- * Dashboard numbers. Phase 0 only has accounts; bookings, lessons and revenue join this as each
- * collection lands (the cards for them already render and show "coming soon" until then).
+ * Dashboard numbers: sign-ups, people, lessons booked and revenue for the chosen range.
  */
 export async function getDashboardData(payload: Payload, range: Range) {
   const since = new Date(Date.now() - range * DAY);

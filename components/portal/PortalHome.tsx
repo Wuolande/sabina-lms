@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { ArrowRight, CalendarDays, CheckCircle2, Circle, Clock, GraduationCap, Search, Star, Users, Wallet, BookOpen, type LucideIcon } from "lucide-react";
 import { usePortalUser } from "./PortalShell";
-import { PHASE_NAMES } from "./nav";
 import type { PortalUser } from "./types";
 import type { LessonView } from "@/cms/scheduling/server";
 import { fmtDay, fmtRange } from "@/lib/time";
@@ -45,7 +44,7 @@ function UpcomingPanel({ data, role }: { data: HomeData; role: "student" | "tuto
   );
 }
 
-type Step = { done: boolean; title: string; sub: string; href?: string; cta?: string; phase?: number };
+type Step = { done: boolean; title: string; sub: string; href?: string; cta?: string };
 
 function greeting(tz: string) {
   let h = new Date().getHours();
@@ -100,11 +99,6 @@ function Checklist({ steps }: { steps: Step[] }) {
               <Link href={s.href} className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-100">
                 {s.cta ?? "Start"} <ArrowRight size={14} />
               </Link>
-            )}
-            {!s.done && !s.href && s.phase && (
-              <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500" title={PHASE_NAMES[s.phase]}>
-                Opens soon
-              </span>
             )}
           </li>
         ))}

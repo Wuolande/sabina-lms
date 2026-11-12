@@ -2,9 +2,9 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, ChevronDown, LogOut, Menu, Search, Settings, Sparkles, X } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, Search, Settings, X } from "lucide-react";
 import { SabinaLogo } from "@/components/brand/SabinaMark";
-import { NAV, PHASE_NAMES, isActive, itemFor, type PortalRole } from "./nav";
+import { NAV, isActive, itemFor, type PortalRole } from "./nav";
 import { NavIcon } from "./icons";
 import type { PortalUser } from "./types";
 
@@ -91,9 +91,6 @@ function SidebarNav({ role, onNavigate }: { role: PortalRole; onNavigate?: () =>
             <NavIcon name={item.icon} className={active ? "text-white" : "text-slate-400 group-hover:text-slate-600"} />
             <span className="flex-1 truncate">{item.label}</span>
             <Count n={badgeFor(item.href, badges)} active={active} />
-            {item.phase ? (
-              <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-wide ${active ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500"}`}>Soon</span>
-            ) : null}
           </Link>
         );
       })}
@@ -145,24 +142,6 @@ function AccountMenu({ user, role }: { user: PortalUser; role: PortalRole }) {
           </button>
         </div>
       )}
-    </div>
-  );
-}
-
-/** Shown in place of a section that hasn't been rebuilt on Payload yet. */
-function ComingSoon({ label, phase, role }: { label: string; phase: number; role: PortalRole }) {
-  return (
-    <div className="mx-auto max-w-xl py-16 text-center">
-      <span className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-accent-50 text-accent-600 ring-1 ring-accent-200">
-        <Sparkles size={28} />
-      </span>
-      <h1 className="mt-6 font-heading text-2xl font-bold text-slate-900">{label} is being rebuilt</h1>
-      <p className="mt-3 text-slate-600">
-        We&apos;re moving Sabina to a faster, more reliable platform. This section returns in phase {phase}: <b>{PHASE_NAMES[phase]}</b>.
-      </p>
-      <Link href={`/${role}`} className="mt-8 inline-flex h-11 items-center rounded-xl bg-brand-700 px-5 font-semibold text-white hover:bg-brand-800">
-        Back to home
-      </Link>
     </div>
   );
 }
@@ -257,7 +236,7 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
           </header>
 
           <main className="mx-auto w-full max-w-[1280px] px-4 py-6 pb-28 sm:px-6 lg:px-8 lg:py-8 lg:pb-10">
-            {current?.phase ? <ComingSoon label={current.label} phase={current.phase} role={role} /> : children}
+            {children}
           </main>
         </div>
 

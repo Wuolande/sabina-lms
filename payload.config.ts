@@ -83,6 +83,7 @@ export default buildConfig({
       actions: ["/cms/admin/shell/HeaderActions#HeaderActions"],
       views: {
         dashboard: { Component: "/cms/admin/dashboard/DashboardView#DashboardView" },
+        reports: { Component: "/cms/admin/reports/ReportsView#ReportsView", path: "/reports" },
       },
     },
     importMap: { baseDir: path.resolve(dirname) },
