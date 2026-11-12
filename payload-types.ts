@@ -191,6 +191,9 @@ export interface User {
    */
   timezone?: string | null;
   lastLoginAt?: string | null;
+  legacyId?: string | null;
+  legacyPasswordHash?: string | null;
+  legacyAvatarUrl?: string | null;
   /**
    * Booking, payment and account emails are always sent.
    */
@@ -1248,6 +1251,9 @@ export interface UsersSelect<T extends boolean = true> {
   country?: T;
   timezone?: T;
   lastLoginAt?: T;
+  legacyId?: T;
+  legacyPasswordHash?: T;
+  legacyAvatarUrl?: T;
   emailPrefs?:
     | T
     | {

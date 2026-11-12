@@ -6,6 +6,8 @@ import * as migration_20261112_144837_payments_payouts from './20261112_144837_p
 import * as migration_20261112_153439_classroom_reviews from './20261112_153439_classroom_reviews';
 import * as migration_20261112_170454_messaging_notifications from './20261112_170454_messaging_notifications';
 import * as migration_20261112_172523_content_academy from './20261112_172523_content_academy';
+import * as migration_20261112_192945_legacy_import_fields from './20261112_192945_legacy_import_fields';
+import * as migration_20261112_194000_import_legacy_files from './20261112_194000_import_legacy_files';
 
 export const migrations = [
   {
@@ -46,6 +48,16 @@ export const migrations = [
   {
     up: migration_20261112_172523_content_academy.up,
     down: migration_20261112_172523_content_academy.down,
-    name: '20261112_172523_content_academy'
+    name: '20261112_172523_content_academy',
+  },
+  {
+    up: migration_20261112_192945_legacy_import_fields.up,
+    down: migration_20261112_192945_legacy_import_fields.down,
+    name: '20261112_192945_legacy_import_fields',
+  },
+  {
+    up: migration_20261112_194000_import_legacy_files.up,
+    down: migration_20261112_194000_import_legacy_files.down,
+    name: '20261112_194000_import_legacy_files',
   },
 ];

@@ -1,5 +1,6 @@
 import { APIError, type CollectionConfig } from "payload";
 import { ALL_ROLES, hasRole, isAdmin, isAdminField, isStaffUser } from "../access";
+import { upgradeLegacyPassword } from "../auth/legacy";
 import { resetPasswordHTML, resetPasswordSubject, verifyEmailHTML, verifyEmailSubject } from "../email/auth";
 
 const ROLE_LABELS: Record<(typeof ALL_ROLES)[number], string> = {
@@ -49,6 +50,7 @@ export const Users: CollectionConfig = {
     delete: isAdmin,
   },
   hooks: {
+    beforeOperation: [upgradeLegacyPassword],
     beforeLogin: [
       ({ user }) => {
         if (user?.status && user.status !== "active") {
@@ -147,6 +149,10 @@ export const Users: CollectionConfig = {
     },
     { name: "timezone", type: "text", defaultValue: "UTC", admin: { description: "IANA time zone, e.g. Africa/Nairobi. Lesson times are shown in this zone." } },
     { name: "lastLoginAt", type: "date", admin: { readOnly: true, position: "sidebar" } },
+    // Imported from the old Supabase platform. Never sent to the browser or the API.
+    { name: "legacyId", type: "text", index: true, hidden: true },
+    { name: "legacyPasswordHash", type: "text", hidden: true },
+    { name: "legacyAvatarUrl", type: "text", hidden: true },
     {
       name: "emailPrefs",
       type: "group",

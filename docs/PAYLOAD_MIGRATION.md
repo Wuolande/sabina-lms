@@ -326,3 +326,30 @@ Dashboards, reports and clean-up. The migration is complete: Sabina runs entirel
 - Create the first admin at `/admin` (the first account is always an admin).
 - Have a lawyer review Terms, Privacy, Cookies and Refund policy (Admin → Website → Pages).
 - Try one real video lesson between two devices once LiveKit keys are set.
+
+## Data migration from Supabase: done
+
+The live Supabase project (`Sabina LMS`) now holds Payload's own `payload` schema next to the old `public`
+tables, with all migrations recorded, so production starts with nothing left to migrate except the photo copy.
+
+- **Imported** (`cms/seed/legacy-import.ts`, run locally against a fresh database, then applied to Supabase
+  as SQL and verified by checksum): 11 accounts (roles, time zones, countries, join dates, email-confirmed
+  state), 7 tutor profiles (6 live, 1 waiting for review) with subjects, languages, education, notice periods
+  and review notes, 2 tutor schedules, 3 student profiles with goals, the 3 old test bookings (marked as tutor
+  no-shows; sandbox payments, no money moved), platform rules (18% fee, $15–250 rates, 24 h cancellation,
+  30% trial discount) and the X handle.
+- **Imported as drafts** for review: 5 old blog posts, the Careers page and 5 old academy courses. They contain
+  claims the platform doesn't support (whiteboard, LaTeX, recordings, "300%"/"400%" figures, invented authors),
+  so they are not published.
+- **Not imported**: the old homepage copy and the six standard pages (replaced by accurate defaults), the admin
+  account's test tutor profile, sandbox payment records, and the secrets stored in `platform_policy_settings`.
+- **Passwords**: Supabase bcrypt hashes are kept in a hidden `legacyPasswordHash` field. On first sign-in
+  (site or `/admin`) the password is checked against it, saved as a normal Payload password, and the old hash is
+  deleted (`cms/auth/legacy.ts`, tested in `tests/e2e/legacy-login.spec.ts`). The unconfirmed account stays
+  unconfirmed and can use "resend code".
+- **Photos**: 5 profile photos are copied from Cloudinary into the media library (R2) by the migration
+  `20261112_194000_import_legacy_files`, which runs on the first production start after deploy. Two tutor
+  documents (PDFs) are private on Cloudinary and need Cloudinary API access; they're listed in that tutor's
+  internal notes instead.
+- The `payload` schema is not exposed through Supabase's REST/GraphQL API (`anon` and `authenticated` have no
+  access). The old `public` tables and functions are untouched.

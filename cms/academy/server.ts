@@ -9,9 +9,9 @@ import { starterCourse } from "./seed";
 
 const idOf = (v: unknown): number | null => (v == null ? null : typeof v === "object" ? ((v as { id: number }).id ?? null) : Number(v));
 
-/** Create the starter course the first time the academy is opened. */
+/** Create the starter course the first time the academy is opened (it may be edited or unpublished later). */
 async function ensureAcademy(payload: Payload) {
-  const n = await payload.count({ collection: "training-courses", overrideAccess: true });
+  const n = await payload.count({ collection: "training-courses", where: { slug: { equals: "teaching-on-sabina" } }, overrideAccess: true });
   if (n.totalDocs) return;
   const p = await getPolicies(payload);
   const course = starterCourse({ ...(await contentRules(payload)), holdDays: Number(p.earningsHoldDays), minPayout: Number(p.minimumPayout), currency: String(p.currency) });
