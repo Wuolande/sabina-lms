@@ -87,7 +87,7 @@ export default async function SubjectPage({ params }: Props) {
             )}
           </div>
           {tutors.length ? (
-            <div className="mt-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="mt-5 grid gap-5 sm:grid-cols-2 2xl:grid-cols-3">
               {tutors.map((t) => (
                 <TutorCard key={t.id} tutor={t} currency={result.policies.currency} saved={viewer.saved.has(t.id)} signedIn={viewer.signedIn} showSave={!viewer.signedIn || viewer.isStudent} />
               ))}

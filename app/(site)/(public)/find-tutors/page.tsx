@@ -208,7 +208,7 @@ export default async function FindTutorsPage({ searchParams }: Props) {
             )}
 
             {tutors.length ? (
-              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 2xl:grid-cols-3">
                 {tutors.map((t) => (
                   <TutorCard key={t.id} tutor={t} currency={currency} saved={viewer.saved.has(t.id)} signedIn={viewer.signedIn} showSave={!viewer.signedIn || viewer.isStudent} />
                 ))}

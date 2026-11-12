@@ -37,7 +37,8 @@ export const StudentProfiles: CollectionConfig = {
   hooks: {
     beforeChange: [
       async ({ data, operation, req }) => {
-        if (operation === "create" && !isStaffUser(req.user)) {
+        // Students creating their own profile can only create it for themselves.
+        if (operation === "create" && req.user && !isStaffUser(req.user)) {
           data.user = req.user!.id;
           const existing = await req.payload.count({ collection: "student-profiles", where: { user: { equals: req.user!.id } }, overrideAccess: true });
           if (existing.totalDocs > 0) throw new APIError("You already have a student profile.", 409, undefined, true);

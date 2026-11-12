@@ -54,7 +54,7 @@ export default async function StudentProfilePage() {
           </Link>
         </div>
         {recs.length ? (
-          <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-4 grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
             {recs.map((t) => (
               <TutorCard key={t.id} tutor={t} currency={policies.currency} saved={saved.has(t.id)} signedIn />
             ))}

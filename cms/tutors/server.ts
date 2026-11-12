@@ -14,7 +14,14 @@ export async function ownTutorProfile(payload: Payload, user: User): Promise<Tut
   // Filtered by the signed-in tutor's own id, so overriding field access here is safe.
   const found = await payload.find({ collection: "tutor-profiles", where: { user: { equals: user.id } }, limit: 1, depth: 1, overrideAccess: true });
   if (found.docs[0]) return found.docs[0];
-  const created = await payload.create({ collection: "tutor-profiles", data: { user: user.id, status: "draft" } as never, user, overrideAccess: false });
+  let created;
+  try {
+    created = await payload.create({ collection: "tutor-profiles", data: { user: user.id, status: "draft" } as never, user, overrideAccess: false });
+  } catch (err) {
+    const again = await payload.find({ collection: "tutor-profiles", where: { user: { equals: user.id } }, limit: 1, depth: 1, overrideAccess: true });
+    if (again.docs[0]) return again.docs[0];
+    throw err;
+  }
   return (await payload.findByID({ collection: "tutor-profiles", id: created.id, depth: 1, overrideAccess: true })) as TutorProfile;
 }
 

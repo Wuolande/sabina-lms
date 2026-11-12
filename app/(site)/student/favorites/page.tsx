@@ -24,7 +24,7 @@ export default async function SavedTutorsPage() {
         <p className="mt-1 text-slate-500">Tutors you&apos;ve saved to compare or book later.</p>
       </header>
       {tutors.length ? (
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
           {tutors.map((t) => (
             <TutorCard key={t.id} tutor={t} currency={policies.currency} saved signedIn />
           ))}

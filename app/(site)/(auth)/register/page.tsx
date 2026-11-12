@@ -30,7 +30,7 @@ function RoleCard({ value, current, onPick, title, sub, Icon }: { value: Role; c
 function RegisterForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const [role, setRole] = useState<Role>(params.get("role") === "tutor" ? "tutor" : "student");
+  const [role, setRole] = useState<Role>(params.get("role")?.toLowerCase() === "tutor" ? "tutor" : "student");
   const [firstName, setFirst] = useState("");
   const [lastName, setLast] = useState("");
   const [email, setEmail] = useState("");
@@ -140,7 +140,7 @@ function RegisterForm() {
 function Shell() {
   const params = useSearchParams();
   return (
-    <AuthShell audience={params.get("role") === "tutor" ? "tutor" : "student"}>
+    <AuthShell audience={params.get("role")?.toLowerCase() === "tutor" ? "tutor" : "student"}>
       <RegisterForm />
     </AuthShell>
   );

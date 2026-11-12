@@ -83,11 +83,11 @@ export function TutorCard({ tutor, currency, saved, signedIn, showSave = true }:
       <div className="flex-1" />
       <div className="mt-5 flex items-end justify-between gap-3 border-t border-slate-100 pt-4">
         <div>
-          <p className="font-heading text-2xl font-bold text-slate-900">
+          <p className="whitespace-nowrap font-heading text-2xl font-bold text-slate-900">
             {money(tutor.hourlyRate, currency)}
             <span className="text-sm font-medium text-slate-500"> / hour</span>
           </p>
-          {tutor.trialPrice != null && <p className="text-xs font-medium text-emerald-700">Trial lesson {money(tutor.trialPrice, currency)}</p>}
+          {tutor.trialPrice != null && <p className="whitespace-nowrap text-xs font-medium text-emerald-700">Trial lesson {money(tutor.trialPrice, currency)}</p>}
         </div>
         <div className="flex items-center gap-2">
           {tutor.instantBooking && (
@@ -95,7 +95,7 @@ export function TutorCard({ tutor, currency, saved, signedIn, showSave = true }:
               <Zap size={16} />
             </span>
           )}
-          <span className="inline-flex h-10 items-center rounded-xl bg-brand-700 px-4 text-sm font-semibold text-white transition group-hover:bg-brand-800">View profile</span>
+          <span className="inline-flex h-10 items-center whitespace-nowrap rounded-xl bg-brand-700 px-4 text-sm font-semibold text-white transition group-hover:bg-brand-800">View profile</span>
         </div>
       </div>
     </article>
