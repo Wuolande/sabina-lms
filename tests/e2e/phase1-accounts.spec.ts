@@ -47,8 +47,11 @@ test("student: sign up, confirm, sign in, portal, settings, password change", as
   await page.waitForURL("**/student");
 
   // Sections not rebuilt yet show the "being rebuilt" panel, not a broken page.
+  await page.goto("/student/messages");
+  await expect(page.getByRole("heading", { name: "Messages is being rebuilt" })).toBeVisible();
+  // Lessons are live since phase 3: an empty list with a way to book.
   await page.goto("/student/lessons");
-  await expect(page.getByRole("heading", { name: "My lessons is being rebuilt" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No upcoming lessons" })).toBeVisible();
 
   // Settings: profile details.
   await page.goto("/student/settings");
