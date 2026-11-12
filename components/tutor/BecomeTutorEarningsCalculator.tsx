@@ -81,7 +81,7 @@ export function BecomeTutorEarningsCalculator() {
               <span className="text-xs sm:text-sm font-semibold text-slate-300 block mt-0.5">/ month</span>
             </div>
             <p className="text-[11px] sm:text-xs text-slate-300">
-              Based on {hoursPerWeek} lessons/week at ${hourlyRate}/hr after Sabina Edge 18% service fee.
+              Based on {hoursPerWeek} lessons/week at ${hourlyRate}/hr after Sabina's 18% service fee.
             </p>
             <Link href="/register?role=TUTOR" className="block pt-2">
               <Button variant="secondary" size="lg" className="w-full font-bold bg-accent-400 hover:bg-accent-500 text-slate-950 h-11 min-h-[44px]">

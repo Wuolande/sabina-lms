@@ -104,7 +104,7 @@ test("messages, notifications, email settings and reminders", async ({ browser }
   // 7. Admin turns the payment receipt off: the next receipt is logged as off, not sent.
   const admin = await api("/api/auth/login", { method: "POST", body: JSON.stringify(ADMIN) });
   const adminCookie = admin.res.headers.get("set-cookie")!.split(";")[0]!;
-  const tpl = (await api("/api/email-templates?where[key][equals]=payment_receipt", { cookie: adminCookie })).data.docs[0] as { id: number };
+  const tpl = ((await api("/api/email-templates?where[key][equals]=payment_receipt", { cookie: adminCookie })).data.docs as { id: number }[])[0]!;
   expect((await api(`/api/email-templates/${tpl.id}`, { method: "PATCH", cookie: adminCookie, body: JSON.stringify({ enabled: false }) })).res.status).toBe(200);
   await paidLesson(student, tutor.profileId, tutor.slug, 40);
   await expect.poll(async () => (await emails(student.email, "payment_receipt")).map((r) => r.status)).toEqual(["no_smtp", "off"]);

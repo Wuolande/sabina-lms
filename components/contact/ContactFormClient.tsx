@@ -23,7 +23,7 @@ export function ContactFormClient() {
           </div>
           <h3 className="text-xl font-bold text-slate-900">Message Received!</h3>
           <p className="text-sm text-slate-500 max-w-sm mx-auto">
-            Thank you for reaching out. A Sabina Edge support specialist will reply to your email shortly.
+            Thank you for reaching out. Someone from our team will reply by email, usually within a few hours.
           </p>
           <Button variant="outline" onClick={() => setSubmitted(false)}>
             Send another message

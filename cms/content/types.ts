@@ -1,0 +1,1 @@
+export type PostCard = { id: number; slug: string; title: string; excerpt: string; cover: string | null; category: { name: string; slug: string } | null; author: string | null; authorTitle: string | null; publishedAt: string; minutes: number; featured: boolean };

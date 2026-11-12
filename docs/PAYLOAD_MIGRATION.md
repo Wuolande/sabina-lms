@@ -265,3 +265,33 @@ Messaging, notifications and emails.
   (`vercel.json`: every 10 minutes; set `CRON_SECRET`). Vercel Hobby only runs crons daily: on Hobby, use an
   external pinger (e.g. cron-job.org) with the same header.
 - Migration: `20261112_170454_messaging_notifications`. Test: `tests/e2e/phase6-messaging.spec.ts`.
+
+## Phase 7: done
+
+Content and academy.
+
+- **Homepage** (admin → Website → Homepage, `cms/globals/HomePage.ts`): every heading, the rotating
+  headlines, quick subject links, hero photo, the four numbers, how-it-works steps, the tutor section and the
+  FAQ. Empty fields use the defaults in `cms/content/defaults.ts`. `{cancelHours}`, `{trialMinutes}`,
+  `{tutorShare}`, `{earlyJoin}` and `{lateRefundSentence}` are replaced with the live platform rules, so copy
+  never contradicts the settings. "Show live numbers" swaps the four numbers for real counts (tutors, students,
+  lessons taught, average rating). The review rating under the hero only appears after 5 reviews.
+- Copy rewritten to match what the product does: no whiteboard, PDF worksheets, "25-minute trials", "keep 85%",
+  "$40–120/hr" or invented student counts. Brand is "Sabina" everywhere public (header, footer, manifest).
+- **Pages** (`pages`): About, Pricing, Terms, Privacy, Cookies and Refund policy are created from plain-English
+  defaults on first visit and edited in the admin; extra pages live at `/pages/<slug>`. Legal drafts need a
+  lawyer's review before launch.
+- **Blog** (`posts`, `blog-categories`): drafts, scheduled posts (future publish date), featured post,
+  categories, reading time, cover image, per-post SEO. `/blog`, `/blog/<slug>` (with JSON-LD and related posts),
+  latest 3 on the homepage, `/rss.xml` + `/feed.xml`.
+- **SEO** (Site settings → Search and sharing): default title, description, sharing image, X handle, Google/Bing
+  verification and an "allow indexing" switch that drives `robots.txt`. `sitemap.xml` lists tutors, subjects,
+  posts and pages from Payload.
+- Saving the homepage, a page, a post or site settings refreshes the cached public pages straight away.
+- **Academy** (`training-courses`, `training-progress`; `/tutor/training`): courses of short lessons (text plus
+  optional Stream/YouTube/Vimeo video) and a quiz with a pass mark. Progress is saved per lesson; passing gives
+  a printable certificate (`SAB-XXXXXX-XXXX`). A starter course, "Teaching on Sabina", is created on first visit
+  with the platform's real rules. Live cohorts from the old academy were not carried over.
+- Removed: legacy `/api/homepage`, `/api/blogs`, `/api/pages`, `/api/policies`, old blog components and the old
+  academy pages.
+- Migration: `20261112_172523_content_academy`. Test: `tests/e2e/phase7-content.spec.ts`.

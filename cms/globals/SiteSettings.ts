@@ -17,6 +17,7 @@ export const SiteSettings: GlobalConfig = {
   label: "Site settings",
   admin: { group: "Settings" },
   access: { read: anyone, update: isAdmin },
+  hooks: { afterChange: [async () => (await import("../content/revalidate")).refreshSite(["/"])] },
   fields: [
     {
       type: "tabs",
@@ -50,6 +51,18 @@ export const SiteSettings: GlobalConfig = {
                 { type: "row", fields: [colour("accent", "Accent"), colour("accentDark", "Accent dark"), colour("success", "Success")] },
               ],
             },
+          ],
+        },
+        {
+          label: "Search and sharing",
+          name: "seo",
+          fields: [
+            { name: "title", type: "text", maxLength: 70, label: "Homepage title", defaultValue: "Sabina: live 1-on-1 tutoring with verified tutors" },
+            { name: "description", type: "textarea", maxLength: 200, defaultValue: "Find a tutor for maths, sciences, languages, KCSE and IELTS. Book a time that suits you and learn live in your browser." },
+            { name: "image", type: "upload", relationTo: "media", label: "Default sharing image", admin: { description: "1200 × 630. Used when a page has no image of its own." } },
+            { name: "twitter", type: "text", label: "X (Twitter) handle", admin: { description: "e.g. @sabina" } },
+            { type: "row", fields: [{ name: "googleVerification", type: "text", label: "Google site verification", admin: { width: "50%" } }, { name: "bingVerification", type: "text", label: "Bing site verification", admin: { width: "50%" } }] },
+            { name: "allowIndexing", type: "checkbox", defaultValue: true, label: "Let search engines index the site", admin: { description: "Turn off on staging sites." } },
           ],
         },
       ],

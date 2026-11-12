@@ -1,536 +1,88 @@
-"use client";
-
-import * as React from "react";
 import Link from "next/link";
-import {
-  GraduationCap,
-  Award,
-  BookOpen,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-  ShieldCheck,
-  TrendingUp,
-  Play,
-  ArrowRight,
-  Download,
-  Share2,
-  ExternalLink,
-  Laptop,
-  Check,
-  Lock,
-  Radio,
-  Users,
-  Calendar,
-  Video,
-} from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Avatar } from "@/components/ui/Avatar";
-import { trainingService } from "@/services/trainingService";
-import { TrainingCourse, TutorCertificate, LiveTrainingSession } from "@/src/modules/training/types/trainingTypes";
-import { formatDate } from "@/lib/utils";
+import { Award, BookOpen, CheckCircle2, GraduationCap } from "lucide-react";
+import { getPayloadClient, requireUser } from "@/cms/auth/session";
+import { listCourses } from "@/cms/academy/server";
+import { PageHeader } from "@/components/portal/PageHeader";
 
-export default function TutorTrainingDashboard() {
-  const [courses, setCourses] = React.useState<TrainingCourse[]>([]);
-  const [liveSessions, setLiveSessions] = React.useState<LiveTrainingSession[]>([]);
-  const [certificates, setCertificates] = React.useState<TutorCertificate[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [activeMainTab, setActiveMainTab] = React.useState<"live" | "self_paced" | "certificates">("live");
-  const [selectedFilter, setSelectedFilter] = React.useState<string>("all");
-  const [registeringId, setRegisteringId] = React.useState<string | null>(null);
-  const [rsvpError, setRsvpError] = React.useState<string | null>(null);
+export const metadata = { title: "Academy" };
+export const dynamic = "force-dynamic";
 
-  React.useEffect(() => {
-    Promise.all([
-      trainingService.getCourses(),
-      trainingService.getLiveSessions(),
-      trainingService.getCertificates(),
-    ])
-      .then(([cList, lList, certList]) => {
-        setCourses(cList);
-        setLiveSessions(lList);
-        setCertificates(certList);
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  const completedCount = courses.filter((c) => c.status === "completed").length;
-  const totalHours = Math.round(courses.reduce((acc, c) => acc + c.estimatedMinutes, 0) / 60);
-
-  const handleToggleRsvp = async (sessionId: string) => {
-    setRegisteringId(sessionId);
-    setRsvpError(null);
-    try {
-      const res = await trainingService.registerForLiveSession(sessionId);
-      setLiveSessions((prev) =>
-        prev.map((s) =>
-          s.id === sessionId
-            ? {
-                ...s,
-                isRegistered: res.isRegistered,
-                currentAttendees: res.isRegistered
-                  ? s.currentAttendees + 1
-                  : Math.max(0, s.currentAttendees - 1),
-              }
-            : s
-        )
-      );
-    } catch (err: any) {
-      console.error("RSVP error:", err);
-      setRsvpError(err?.message || "Failed to update RSVP. Please refresh and try again.");
-    } finally {
-      setRegisteringId(null);
-    }
-  };
-
-  const filteredCourses = courses.filter((c) => {
-    if (selectedFilter === "all") return true;
-    if (selectedFilter === "mandatory") return c.isMandatory;
-    if (selectedFilter === "completed") return c.status === "completed";
-    if (selectedFilter === "in_progress") return c.status === "in_progress";
-    return c.category.toLowerCase().includes(selectedFilter.toLowerCase());
-  });
-
+export default async function AcademyPage() {
+  const user = await requireUser(["tutor"], "/tutor/training");
+  const courses = await listCourses(await getPayloadClient(), user);
+  const earned = courses.filter((c) => c.passed);
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* ── 1. Hero Header & Certification Ribbon ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-brand p-6 sm:p-8 text-white shadow-xl">
-        <div className="absolute right-0 top-0 h-96 w-96 translate-x-1/3 -translate-y-1/3 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute right-40 bottom-0 h-64 w-64 translate-y-1/3 rounded-full bg-blue-500/10 blur-2xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-extrabold uppercase tracking-wider">
-              <Sparkles className="h-3.5 w-3.5" />
-              Sabina Tutor Academy • Group Live & Self-Paced
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-black font-heading tracking-tight">
-              Train in Live Cohorts & Self-Paced Masterclasses
-            </h1>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              Participate in live group classrooms with senior master trainers, practice in peer breakout labs, and complete self-paced certification tracks to earn verified marketplace badges.
-            </p>
-          </div>
-
-          {/* Quick Metrics Badge Card */}
-          <div className="grid grid-cols-3 gap-3 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 shrink-0 text-center">
-            <div>
-              <span className="text-2xl font-black text-rose-400 flex items-center justify-center gap-1">
-                <Radio className="h-4 w-4 animate-pulse" /> {liveSessions.length}
-              </span>
-              <span className="text-[11px] text-slate-300 block font-semibold">Live Cohorts</span>
-            </div>
-            <div className="border-x border-white/10 px-3">
-              <span className="text-2xl font-black text-amber-400">{certificates.length}</span>
-              <span className="text-[11px] text-slate-300 block font-semibold">Badges Earned</span>
-            </div>
-            <div>
-              <span className="text-2xl font-black text-emerald-400">{completedCount} / {courses.length}</span>
-              <span className="text-[11px] text-slate-300 block font-semibold">Tracks Done</span>
-            </div>
-          </div>
+    <div className="space-y-8">
+      <PageHeader title="Academy" sub="Short courses on how Sabina works and how to teach well online." />
+      {courses.length === 0 ? (
+        <div className="rounded-3xl bg-white px-6 py-14 text-center ring-1 ring-slate-200/70">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-600">
+            <GraduationCap size={26} />
+          </span>
+          <p className="mt-4 font-semibold text-slate-900">No courses yet</p>
+          <p className="mt-1 text-sm text-slate-500">New courses will appear here as our team adds them.</p>
         </div>
-      </div>
-
-      {/* ── 2. Primary Navigation Tabs (Live Cohorts vs Self-Paced vs Badges) ── */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-3 flex-wrap gap-4">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveMainTab("live")}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
-              activeMainTab === "live"
-                ? "bg-brand text-white shadow-sm"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            <Radio className={`h-4 w-4 ${activeMainTab === "live" ? "text-rose-400 animate-pulse" : "text-slate-400"}`} />
-            <span>Live Group Cohorts & Workshops</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px]">
-              {liveSessions.length} Live
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveMainTab("self_paced")}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
-              activeMainTab === "self_paced"
-                ? "bg-brand text-white shadow-sm"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            <BookOpen className="h-4 w-4" />
-            <span>Self-Paced Certification Tracks</span>
-            <span className="px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-800 text-[10px]">
-              {courses.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveMainTab("certificates")}
-            className={`px-4 py-2.5 rounded-2xl text-xs font-extrabold flex items-center gap-2 transition-all cursor-pointer ${
-              activeMainTab === "certificates"
-                ? "bg-brand text-white shadow-sm"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            <Award className="h-4 w-4 text-amber-500" />
-            <span>My Credentials & CEU Transcript</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════
-          TAB 1: LIVE GROUP TRAINING COHORTS & INTERACTIVE WORKSHOPS
-      ═══════════════════════════════════════════════════════════════ */}
-      {activeMainTab === "live" && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h2 className="text-xl font-extrabold text-slate-900 font-heading">
-                Upcoming Live Group Masterclasses
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Join live WebRTC interactive classrooms with senior trainers and peers to practice teaching simulations
-              </p>
-            </div>
-            <Badge variant="subtle" size="sm" className="bg-rose-50 text-rose-700 border-rose-200">
-              <Radio className="h-3 w-3 mr-1 animate-pulse" /> Multi-Tutor Capacity: Up to 100 Tutors / Room
-            </Badge>
-          </div>
-
-          {rsvpError && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between shadow-xs">
-              <span className="font-semibold">{rsvpError}</span>
-              <button
-                type="button"
-                onClick={() => setRsvpError(null)}
-                className="text-rose-500 hover:text-rose-700 font-bold ml-3 text-sm cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
-          {/* Live Sessions Cards Grid or Empty State */}
-          {liveSessions.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center space-y-3 shadow-xs">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-brand">
-                <Radio className="h-7 w-7" />
-              </div>
-              <h3 className="text-base font-extrabold text-slate-900 font-heading">
-                No Live Workshops Currently Scheduled
-              </h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-                Platform master trainers announce live interactive workshops periodically. In the meantime, you can explore and complete self-paced certification courses.
-              </p>
-              <button
-                type="button"
-                onClick={() => setActiveMainTab("self_paced")}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-brand hover:opacity-90 text-white transition-all cursor-pointer shadow-xs"
-              >
-                Browse Self-Paced Courses
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {liveSessions.map((session) => (
-              <div
-                key={session.id}
-                className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-6 group"
-              >
-                <div className="space-y-4">
-                  {/* Top Ribbon */}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold">
-                      {session.category}
-                    </span>
-
-                    {session.isMandatory && (
-                      <span className="text-[11px] font-extrabold bg-rose-500 text-white px-2 py-0.5 rounded-md shadow-xs">
-                        Mandatory
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Title & Description */}
-                  <div className="space-y-2">
-                    <h3 className="text-lg font-black text-slate-900 group-hover:text-brand transition-colors leading-snug font-heading">
-                      {session.title}
-                    </h3>
-                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                      {session.headline}
-                    </p>
-                  </div>
-
-                  {/* Trainer Profile Ribbon */}
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <Avatar
-                        src={session.trainerAvatar}
-                        fallbackName={session.trainerName}
-                        size="sm"
-                        className="ring-2 ring-white"
-                      />
-                      <div className="min-w-0">
-                        <strong className="text-xs font-bold text-slate-900 block truncate">
-                          {session.trainerName}
-                        </strong>
-                        <span className="text-[10px] text-slate-500 block truncate">
-                          {session.trainerRole}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5 text-blue-500" />
-                        {session.currentAttendees} / {session.maxAttendees}
-                      </span>
-                      <span className="text-[10px] text-slate-400 block">Enrolled Tutors</span>
-                    </div>
-                  </div>
-
-                  {/* Schedule Details */}
-                  <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 pt-1">
-                    <span className="flex items-center gap-1.5">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                      {formatDate(session.scheduledAt)}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-slate-400" />
-                      {session.durationMinutes} Mins
-                    </span>
-                  </div>
+      ) : (
+        <ul className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {courses.map((c) => (
+            <li key={c.slug} className="flex flex-col overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/70">
+              {c.cover ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={c.cover} alt="" className="aspect-[16/8] w-full object-cover" />
+              ) : (
+                <div className="grid aspect-[16/8] place-items-center bg-gradient-to-br from-brand-600 to-brand-900 text-white/90" aria-hidden="true">
+                  <GraduationCap size={44} strokeWidth={1.5} />
                 </div>
-
-                {/* Bottom Actions */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleRsvp(session.id)}
-                    disabled={registeringId === session.id}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      session.isRegistered
-                        ? "bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100"
-                        : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    {session.isRegistered ? "✓ RSVP Confirmed" : "+ RSVP for Cohort"}
-                  </button>
-
-                  <Link href={`/tutor/training/live/${session.id}`} className="flex-1 max-w-[200px]">
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="w-full bg-brand hover:opacity-90 text-white font-extrabold rounded-xl shadow-xs cursor-pointer text-xs"
-                      rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-                    >
-                      Enter Live Room
-                    </Button>
-                  </Link>
+              )}
+              <div className="flex flex-1 flex-col p-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  {c.recommended && !c.passed && <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">Recommended</span>}
+                  {c.passed && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200">
+                      <CheckCircle2 size={13} /> Completed
+                    </span>
+                  )}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    )}
-
-      {/* ═══════════════════════════════════════════════════════════════
-          TAB 2: SELF-PACED CERTIFICATION TRACKS
-      ═══════════════════════════════════════════════════════════════ */}
-      {activeMainTab === "self_paced" && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-extrabold text-slate-900 font-heading">
-                Self-Paced Training Courses & Certification Tracks
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Complete modules at your own pace and pass the certification assessment to earn credentials
-              </p>
-            </div>
-
-            {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-              {[
-                { id: "all", label: "All Courses" },
-                { id: "mandatory", label: "Mandatory" },
-                { id: "Classroom Tools", label: "Classroom Tools" },
-                { id: "Pedagogy", label: "Pedagogy" },
-                { id: "Safeguarding", label: "Safeguarding" },
-                { id: "Exam Coaching", label: "Exam Coaching" },
-              ].map((f) => (
-                <button
-                  key={f.id}
-                  type="button"
-                  onClick={() => setSelectedFilter(f.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
-                    selectedFilter === f.id
-                      ? "bg-brand text-white shadow-xs"
-                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
-                  }`}
+                <h2 className="mt-2 font-heading text-lg font-bold text-slate-900">{c.title}</h2>
+                <p className="mt-1 flex-1 text-[15px] leading-relaxed text-slate-600">{c.summary}</p>
+                <p className="mt-4 flex items-center gap-1.5 text-sm text-slate-500">
+                  <BookOpen size={15} /> {c.lessons} lessons · about {c.minutes} min
+                </p>
+                <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={c.percent} aria-valuemin={0} aria-valuemax={100} aria-label={`${c.title} progress`}>
+                  <div className="h-full rounded-full bg-brand-600 transition-all" style={{ width: `${c.percent}%` }} />
+                </div>
+                <Link
+                  href={`/tutor/training/${c.slug}`}
+                  className={`mt-5 inline-flex h-11 items-center justify-center rounded-full text-sm font-semibold transition ${c.passed ? "bg-slate-100 text-slate-800 hover:bg-slate-200" : "bg-brand-700 text-white hover:bg-brand-800"}`}
                 >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Course Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((course) => {
-              const isDone = course.status === "completed";
-              const inProgress = course.status === "in_progress";
-              const progress = isDone ? 100 : course.progressPercentage || 0;
-
-              return (
-                <div
-                  key={course.id}
-                  className="flex flex-col justify-between rounded-3xl border border-slate-200/90 bg-white overflow-hidden shadow-xs hover:shadow-md transition-all group"
-                >
-                  <div>
-                    {/* Thumbnail Banner */}
-                    <div
-                      className="relative h-44 w-full bg-slate-900 bg-cover bg-center overflow-hidden"
-                      style={{ backgroundImage: `url(${course.thumbnailUrl})` }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
-                      
-                      <div className="absolute top-3.5 left-3.5 right-3.5 flex items-center justify-between">
-                        <span className="text-[11px] font-extrabold bg-slate-950/80 backdrop-blur-xs text-white px-2.5 py-1 rounded-lg border border-white/10">
-                          {course.category}
-                        </span>
-
-                        {course.isMandatory && (
-                          <span className="text-[11px] font-extrabold bg-rose-500 text-white px-2 py-0.5 rounded-md shadow-xs">
-                            Mandatory
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="absolute bottom-3 left-3.5 right-3.5 text-xs text-slate-300 flex items-center gap-3">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-slate-400" /> {course.estimatedMinutes} mins
-                        </span>
-                        <span>•</span>
-                        <span>{course.level}</span>
-                      </div>
-                    </div>
-
-                    {/* Body Content */}
-                    <div className="p-5 sm:p-6 space-y-3">
-                      <h3 className="text-base font-extrabold text-slate-900 group-hover:text-brand transition-colors leading-snug font-heading">
-                        {course.title}
-                      </h3>
-                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                        {course.headline}
-                      </p>
-
-                      <div className="p-2.5 rounded-xl bg-amber-50/70 border border-amber-100 flex items-center gap-2 text-xs font-bold text-amber-900">
-                        <Award className="h-4 w-4 text-amber-600 shrink-0" />
-                        <span className="truncate">Reward: {course.badgeTitle}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Footer Progress & CTA */}
-                  <div className="p-5 sm:p-6 pt-0 space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-[11px] font-bold">
-                        <span className={isDone ? "text-emerald-700" : "text-slate-500"}>
-                          {isDone ? "Completed 100%" : inProgress ? `${progress}% Completed` : "Not Started"}
-                        </span>
-                        {isDone && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
-                      </div>
-                      <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-300 ${
-                            isDone ? "bg-emerald-500" : inProgress ? "bg-brand" : "bg-slate-200"
-                          }`}
-                          style={{ width: `${progress}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <Link href={`/tutor/training/${course.slug}`} className="block w-full">
-                      <Button
-                        variant={isDone ? "outline" : "default"}
-                        size="default"
-                        className={`w-full font-bold rounded-xl cursor-pointer ${
-                          isDone
-                            ? "border-slate-200 text-slate-800 hover:bg-slate-50"
-                            : "bg-brand hover:opacity-90 text-white"
-                        }`}
-                        rightIcon={<ArrowRight className="h-4 w-4" />}
-                      >
-                        {isDone ? "Review Modules" : inProgress ? "Continue Learning" : "Start Masterclass"}
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════
-          TAB 3: MY CERTIFICATIONS & CEU TRANSCRIPT
-      ═══════════════════════════════════════════════════════════════ */}
-      {activeMainTab === "certificates" && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-extrabold text-slate-900 font-heading">
-                Your Official Academy Certificates & Badges
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Verifiable credentials earned from self-paced tracks and live training workshops
-              </p>
-            </div>
-            <Badge variant="success" size="sm" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Publicly Verified
-            </Badge>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {certificates.map((cert) => (
-              <div
-                key={cert.id}
-                className="p-5 rounded-2xl border border-slate-200 bg-gradient-to-br from-amber-50/40 via-white to-slate-50 flex items-start justify-between gap-3 group hover:border-amber-300 transition-all shadow-xs"
-              >
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className="h-11 w-11 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
-                    <ShieldCheck className="h-6 w-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-slate-900 leading-snug">
-                      {cert.badgeTitle}
-                    </h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                      {cert.courseTitle}
-                    </p>
-                    <span className="inline-block mt-2 text-[10px] font-mono font-semibold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
-                      ID: {cert.certificateCode}
-                    </span>
-                  </div>
-                </div>
-
-                <Link href={`/tutor/training/certificates/${cert.id}`}>
-                  <Button variant="outline" size="sm" className="text-xs font-bold shrink-0">
-                    View
-                  </Button>
+                  {c.passed ? "Review course" : c.percent > 0 ? "Continue" : "Start course"}
                 </Link>
               </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {earned.length > 0 && (
+        <section>
+          <h2 className="mb-2 px-4 text-[13px] font-medium uppercase tracking-wide text-slate-500">Certificates</h2>
+          <ul className="divide-y divide-slate-100 overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200/70">
+            {earned.map((c) => (
+              <li key={c.slug}>
+                <Link href={`/tutor/training/${c.slug}/certificate`} className="flex items-center gap-3.5 px-4 py-3.5 hover:bg-slate-50">
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-amber-100 text-amber-700">
+                    <Award size={18} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <b className="block truncate text-[15px] font-semibold text-slate-900">{c.title}</b>
+                    <span className="text-sm text-slate-500">Certificate {c.certificate}</span>
+                  </span>
+                  <span className="text-sm font-semibold text-brand-700">View</span>
+                </Link>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+        </section>
       )}
     </div>
   );

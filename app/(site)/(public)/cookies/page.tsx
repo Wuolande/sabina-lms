@@ -1,20 +1,8 @@
-import { notFound } from "next/navigation";
-import { PageLayout } from "@/components/cms/PageLayout";
-import { adminSupabase } from "@/src/shared/database/supabase";
+import { ContentPage, pageMetadata } from "@/components/content/ContentPage";
 
-export const metadata = {
-  title: "Cookie Policy & Tracking Technologies",
-  description: "Information on cookies, session storage, and analytics technologies used on Sabina.",
-};
+export const revalidate = 60;
+export const generateMetadata = () => pageMetadata("cookies", "/cookies");
 
-export default async function CookiePolicyPage() {
-  const { data: page } = await adminSupabase.rpc("get_cms_page_by_slug", {
-    p_slug: "cookies",
-  });
-
-  if (!page || !page.isPublished) {
-    notFound();
-  }
-
-  return <PageLayout page={page} />;
+export default function Page() {
+  return <ContentPage slug="cookies" />;
 }

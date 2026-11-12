@@ -45,10 +45,10 @@ export default function BecomeATutorPage() {
       {/* Interactive Earnings Calculator */}
       <BecomeTutorEarningsCalculator />
 
-      {/* Why teach with Sabina Edge */}
+      {/* Why teach with Sabina */}
       <div className="space-y-6 sm:space-y-8 w-full min-w-0">
         <h2 className="text-2xl sm:text-3xl font-black text-slate-900 text-center font-heading">
-          Why top educators choose Sabina Edge
+          Why tutors choose Sabina
         </h2>
 
         <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
@@ -68,7 +68,7 @@ export default function BecomeATutorPage() {
             </div>
             <h3 className="text-base font-bold text-slate-900">Built-in Teaching Tools</h3>
             <p className="text-xs text-slate-500 leading-relaxed">
-              No need for third-party zoom links or extra subscriptions. Enjoy browser-based video, shared whiteboard, student goals, and lesson notes in one unified interface.
+              No Zoom links or extra subscriptions. Video, screen sharing, chat and lesson notes are all in one place, in the browser.
             </p>
           </div>
 

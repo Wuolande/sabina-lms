@@ -2,16 +2,16 @@ import type { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Educational Insights, Study Guides & Tutoring Advice',
+  title: 'Blog',
   description:
-    'Read evidence-based study strategies, language learning blueprints, coding tutorials, and academic insights from the Sabina educator community.',
+    'Study tips, exam advice and teaching ideas from Sabina tutors and our team.',
   alternates: {
     canonical: '/blog',
   },
   openGraph: {
-    title: 'Sabina Education Blog | Expert Study Tips & Learning Guides',
+    title: 'The Sabina blog',
     description:
-      'Empowering students and tutors with actionable study techniques, pedagogy research, and career advice.',
+      'Study tips, exam advice and teaching ideas from Sabina tutors and our team.',
     url: '/blog',
   },
 };
@@ -27,7 +27,7 @@ export default function BlogRootLayout({
     '@context': 'https://schema.org',
     '@type': 'Blog',
     name: 'Sabina Education Blog',
-    description: 'Insights on 1-on-1 tutoring, language mastery, STEM education, and learning science.',
+    description: 'Study tips, exam advice and teaching ideas from Sabina tutors and our team.',
     url: `${baseUrl}/blog`,
     publisher: {
       '@type': 'EducationalOrganization',

@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLogo } from "@/components/ui/LogoContext";
+import { SabinaLogo } from "@/components/brand/SabinaMark";
 
 interface LogoProps {
   size?: "sm" | "default" | "lg" | "xl";
@@ -109,6 +110,16 @@ export function Logo({
   }
 
   // Fallback: Geometric mortarboard cap + dynamic theme brand wordmark
+  // Without an uploaded logo, use the same Sabina mark as the portals.
+  if (showIcon && showText) {
+    const px = size === "sm" ? 28 : size === "lg" ? 40 : 32;
+    return (
+      <span className={className}>
+        <SabinaLogo tone={variant === "dark" || variant === "light" ? "light" : "dark"} href={href ?? null} size={px} />
+      </span>
+    );
+  }
+
   const content = (
     <div className={cn("inline-flex items-center select-none group transition-transform duration-200", config.gap, className)}>
       {/* ── 1. Icon Badge (Solid Brand Squircle + Accent Mortarboard Outline) ── */}
@@ -150,9 +161,6 @@ export function Logo({
             )}
           >
             SABINA
-          </span>
-          <span className="text-accent">
-            EDGE
           </span>
         </div>
       )}

@@ -1,77 +1,14 @@
-import type { MetadataRoute } from 'next';
-import { adminSupabase } from '@/src/shared/database/supabase';
+import type { MetadataRoute } from "next";
+import { siteSeo } from "@/cms/content/server";
 
-export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
 export default async function robots(): Promise<MetadataRoute.Robots> {
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://sabina.education').replace(/\/+$/, '');
-
-  let allowIndexing = true;
-  try {
-    const { data } = await adminSupabase
-      .from('platform_theme')
-      .select('allow_indexing')
-      .eq('id', 'default')
-      .single();
-
-    if (data && data.allow_indexing === false) {
-      allowIndexing = false;
-    }
-  } catch {
-    allowIndexing = true;
-  }
-
-  if (!allowIndexing) {
-    return {
-      rules: {
-        userAgent: '*',
-        disallow: '/',
-      },
-      sitemap: `${baseUrl}/sitemap.xml`,
-    };
-  }
-
+  const base = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const { index } = await siteSeo().catch(() => ({ index: true }));
+  if (!index) return { rules: { userAgent: "*", disallow: "/" } };
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: [
-          '/student/',
-          '/tutor/',
-          '/admin', '/admin-legacy',
-          '/api/',
-          '/auth/',
-          '/lessons/*/classroom',
-          '/private/',
-        ],
-      },
-      {
-        userAgent: 'Googlebot',
-        allow: '/',
-        disallow: [
-          '/student/',
-          '/tutor/',
-          '/admin', '/admin-legacy',
-          '/api/',
-          '/auth/',
-          '/lessons/*/classroom',
-        ],
-      },
-      {
-        userAgent: 'Bingbot',
-        allow: '/',
-        disallow: [
-          '/student/',
-          '/tutor/',
-          '/admin', '/admin-legacy',
-          '/api/',
-          '/auth/',
-          '/lessons/*/classroom',
-        ],
-      },
-    ],
-    sitemap: `${baseUrl}/sitemap.xml`,
+    rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/", "/student", "/tutor", "/lessons/", "/checkout/"] },
+    sitemap: `${base}/sitemap.xml`,
   };
 }

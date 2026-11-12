@@ -47,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
     authors: [{ name: "Sabina Education", url: baseUrl }],
     creator: "Sabina Education",
     publisher: "Sabina Education",
-    applicationName: "Sabina Edge LMS",
+    applicationName: "Sabina",
     formatDetection: {
       email: false,
       address: false,

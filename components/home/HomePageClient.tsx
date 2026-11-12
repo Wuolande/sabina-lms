@@ -23,7 +23,6 @@ import {
   FileText,
   ChevronDown,
   Monitor,
-  PenTool,
   Check,
   Mic,
   Zap,
@@ -40,17 +39,18 @@ import type { PublicTutor } from "@/cms/marketplace/public";
 import { CATEGORY_LABEL } from "@/components/subjects/SubjectIcon";
 import { CountUp } from "@/components/ui/CountUp";
 import { TutorCardSkeleton, SubjectCardSkeleton } from "@/components/ui/Skeleton";
-import { tutorService } from "@/services/tutorService";
 import { TutorProfile, Subject } from "@/types";
 import { HomeBlogSection } from "@/components/home/HomeBlogSection";
 import { DEFAULT_HERO_IMAGE } from "@/src/modules/homepage/constants";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import type { PostCard } from "@/cms/content/types";
 
 interface HomePageClientProps {
   initialCms: any | null;
   initialFeaturedTutors: PublicTutor[];
   initialPopularSubjects: Subject[];
   currency: string;
+  posts: PostCard[];
 }
 
 export function HomePageClient({
@@ -58,31 +58,24 @@ export function HomePageClient({
   initialFeaturedTutors,
   initialPopularSubjects,
   currency,
+  posts,
 }: HomePageClientProps) {
   const router = useRouter();
 
   // Instant pre-rendered state from server props
-  const [cms, setCms] = React.useState<any | null>(initialCms);
+  const cms = initialCms;
   const [featuredTutors] = React.useState<PublicTutor[]>(initialFeaturedTutors || []);
   const [popularSubjects] = React.useState<Subject[]>(initialPopularSubjects || []);
   const [isTutorsLoading, setIsTutorsLoading] = React.useState(false);
   const [isSubjectsLoading, setIsSubjectsLoading] = React.useState(false);
 
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
-  const [activeTourTab, setActiveTourTab] = React.useState<"video" | "whiteboard" | "notes" | "goals">("video");
+  const [activeTourTab, setActiveTourTab] = React.useState<"video" | "notes" | "goals">("video");
   const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(0);
 
   // Quick search input
   const [quickQuery, setQuickQuery] = React.useState("");
 
-  // Sync if initial props were not provided (fallback)
-  React.useEffect(() => {
-    if (!initialCms) {
-      tutorService.getHomepageContent().then((data) => {
-        if (data) setCms(data);
-      });
-    }
-  }, [initialCms]);
 
   const handleQuickSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,7 +148,7 @@ export function HomePageClient({
   const classroom = cms?.classroomTourSection || {
     badge: "In-Browser Live LMS • Zero Downloads",
     title: "A live video classroom built for mastery.",
-    subtitle: "Experience sub-50ms HD video, collaborative whiteboard with LaTeX formulas, and synchronized PDF lesson notes — directly in your browser.",
+    subtitle: "HD video, screen sharing and chat in one place, with nothing to install.",
   };
 
   const howItWorks = cms?.howItWorksSection || {
@@ -170,12 +163,12 @@ export function HomePageClient({
       {
         num: "02",
         title: "Book in Your Timezone",
-        desc: "Choose a 25-min trial or 50-min standard class. All schedules automatically convert to your local clock.",
+        desc: "Times show in your own time zone. Start with a trial, or book a full lesson.",
       },
       {
         num: "03",
         title: "Learn Live & Level Up",
-        desc: "Enter our browser classroom with HD video, whiteboard, and downloadable notes. Zero software to download.",
+        desc: "Join from your browser on any device. Nothing to install.",
       },
     ],
   };
@@ -186,7 +179,7 @@ export function HomePageClient({
     subtitle: "Set your own hourly rate, teach motivated 1-on-1 students globally from home, and receive reliable automated weekly payouts. Zero upfront costs.",
     rateRange: "$40 – $120 / hr",
     bulletPoints: [
-      "Keep 85% of your earnings",
+      "Set your own rate",
       "100% flexible schedule",
       "Browser video classroom included",
     ],
@@ -199,8 +192,8 @@ export function HomePageClient({
     title: "Frequently Asked Questions",
     faqs: [
       {
-        q: "How does 1-on-1 online tutoring work on Sabina Edge?",
-        a: "You browse verified tutors by subject, specialty, price, and language. Once you find a tutor, book an available time slot converted to your local timezone. When class starts, simply join our dedicated in-browser video classroom with shared whiteboard, notes, and screen sharing.",
+        q: "How does 1-on-1 online tutoring work on Sabina?",
+        a: "You browse verified tutors by subject, specialty, price, and language. Once you find a tutor, book an available time slot converted to your local timezone. When class starts, simply join our dedicated in-browser video classroom with video, chat and screen sharing.",
       },
       {
         q: "What is the 100% Satisfaction Guarantee?",
@@ -208,14 +201,14 @@ export function HomePageClient({
       },
       {
         q: "Do I need to install any external software like Zoom or Skype?",
-        a: "No downloads or extra accounts required! The Sabina Edge Classroom runs entirely inside modern web browsers on desktop, tablet, and mobile with crystal-clear HD audio/video and collaborative tools.",
+        a: "No downloads or extra accounts required! The Sabina Classroom runs entirely inside modern web browsers on desktop, tablet, and mobile with crystal-clear HD audio/video and collaborative tools.",
       },
       {
         q: "How do tutor payments and cancellations work?",
         a: "You only pay per lesson booked — there are zero monthly subscription lock-ins. You can reschedule or cancel any lesson free of charge up to 24 hours before the scheduled start time.",
       },
       {
-        q: "How are tutors vetted and approved on Sabina Edge?",
+        q: "How are tutors vetted and approved on Sabina?",
         a: "Every tutor undergoes a rigorous 7-step credential verification process, including identity checks, certified university degree review, teaching certifications, and a recorded video interview audit before being approved.",
       },
     ],
@@ -383,14 +376,14 @@ export function HomePageClient({
                 </div>
 
                 <div className="space-y-0.5 min-w-0">
-                  <div className="flex items-center gap-1">
+                  {hero.socialProofRating ? <div className="flex items-center gap-1">
                     <div className="flex text-amber-400 gap-0.5">
                       {[1, 2, 3, 4, 5].map((i) => (
                         <Star key={i} className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-amber-400 text-amber-400" />
                       ))}
                     </div>
                     <span className="text-xs sm:text-sm font-black text-slate-900 ml-1">{hero.socialProofRating}</span>
-                  </div>
+                  </div> : null}
                   <p className="text-[11px] sm:text-xs font-semibold text-slate-500 truncate">
                     {hero.socialProofCount}
                   </p>
@@ -743,10 +736,9 @@ export function HomePageClient({
           {/* Interactive Feature Tabs */}
           <div className="w-full max-w-full min-w-0 flex items-center sm:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide touch-scroll px-1 sm:px-0 sm:flex-wrap">
             {[
-              { id: "video", label: "1. HD Video & Audio", icon: Video },
-              { id: "whiteboard", label: "2. Math & Code Canvas", icon: PenTool },
-              { id: "notes", label: "3. Notes & Worksheets", icon: FileText },
-              { id: "goals", label: "4. Learning Streaks & ROI", icon: TrendingUp },
+              { id: "video", label: "Video and chat", icon: Video },
+              { id: "notes", label: "Lesson notes", icon: FileText },
+              { id: "goals", label: "Your progress", icon: TrendingUp },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTourTab === tab.id;
@@ -848,64 +840,13 @@ export function HomePageClient({
                       <div className="space-y-2">
                         <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 text-[11px]">
                           <strong className="text-accent block font-semibold">Dr. Elena Rostova:</strong>
-                          <span>Check the PDF in tab 3 for practice set 4.</span>
+                          <span>I'll put practice questions in your lesson notes.</span>
                         </div>
                         <div className="bg-brand-950/40 p-2 rounded-xl border border-brand-800/50 text-[11px]">
                           <strong className="text-accent block font-semibold">You:</strong>
-                          <span>Got it! Working on equation 2 now.</span>
+                          <span>Thanks! I'll try them before Thursday.</span>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTourTab === "whiteboard" && (
-                <div className="animate-fade-in flex-1 space-y-4">
-                  <div className="flex items-center justify-between gap-2 bg-slate-900 p-2 rounded-2xl border border-slate-800 text-xs overflow-x-auto touch-scroll scrollbar-hide">
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="bg-accent text-slate-950 px-3 py-1 rounded-xl font-bold flex items-center gap-1 shrink-0 whitespace-nowrap">
-                        <PenTool className="h-3.5 w-3.5" /> Pen (Active)
-                      </span>
-                      <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer shrink-0 whitespace-nowrap">
-                        Highlighter
-                      </span>
-                      <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer font-serif shrink-0 whitespace-nowrap">
-                        LaTeX Equation ($)
-                      </span>
-                      <span className="hover:bg-slate-800 px-2.5 py-1 rounded-xl text-slate-400 cursor-pointer shrink-0 whitespace-nowrap">
-                        Python Code
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400 shrink-0">
-                      <span className="hidden sm:inline">Grid: 100%</span>
-                      <Button variant="outline" size="sm" className="h-7 text-xs border-slate-700 text-white whitespace-nowrap">
-                        Export PDF
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-slate-950 border border-slate-800 p-4 sm:p-6 font-mono relative min-h-[240px] sm:min-h-[260px] flex flex-col justify-center space-y-3 sm:space-y-4">
-                    <div className="space-y-2">
-                      <div className="text-accent text-xs sm:text-sm font-bold truncate">
-                        // Theorem: Fundamental Theorem of Calculus
-                      </div>
-                      <div className="text-base sm:text-2xl font-black text-white font-serif bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-800/80 inline-block overflow-x-auto max-w-full">
-                        ∫ [0 to π] x · sin(x) dx = π
-                      </div>
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        Annotation by <span className="text-accent font-bold">Dr. Elena Rostova</span>: &quot;Integrate by parts: let u = x and dv = sin(x)dx &rarr; du = dx, v = -cos(x)&quot;
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 sm:gap-3 pt-2 text-[11px] sm:text-xs text-slate-400 border-t border-slate-800/80 flex-wrap">
-                      <span className="flex items-center gap-1.5 text-accent font-bold">
-                        <span className="h-2 w-2 rounded-full bg-accent" />
-                        2 Users drawing live
-                      </span>
-                      <span>•</span>
-                      <span className="truncate">Alex Rivera cursor active on Step 3</span>
                     </div>
                   </div>
                 </div>
@@ -954,9 +895,9 @@ export function HomePageClient({
                 <div className="animate-fade-in flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <div className="rounded-2xl bg-slate-900 p-4 sm:p-5 border border-slate-800 space-y-1.5 text-center flex flex-col justify-center">
                     <span className="text-2xl sm:text-3xl">🔥</span>
-                    <strong className="text-xl sm:text-2xl font-black text-white font-heading">14 Days</strong>
-                    <span className="text-xs text-amber-400 font-bold">Learning Streak</span>
-                    <p className="text-[11px] text-slate-400">Top 5% student consistency</p>
+                    <strong className="text-xl sm:text-2xl font-black text-white font-heading">6 weeks</strong>
+                    <span className="text-xs text-amber-400 font-bold">Weekly streak</span>
+                    <p className="text-[11px] text-slate-400">A lesson every week</p>
                   </div>
 
                   <div className="rounded-2xl bg-slate-900 p-4 sm:p-5 border border-slate-800 space-y-2.5 flex flex-col justify-center">
@@ -972,8 +913,8 @@ export function HomePageClient({
 
                   <div className="rounded-2xl bg-slate-900 p-4 sm:p-5 border border-slate-800 space-y-1.5 text-center flex flex-col justify-center">
                     <strong className="text-xl sm:text-2xl font-black text-white font-heading">48.5 hrs</strong>
-                    <span className="text-xs text-accent font-bold">Total Learning Time</span>
-                    <p className="text-[11px] text-slate-400">+12% faster mastery</p>
+                    <span className="text-xs text-accent font-bold">Learning time</span>
+                    <p className="text-[11px] text-slate-400">Across 3 subjects</p>
                   </div>
                 </div>
               )}
@@ -1104,7 +1045,7 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           8. SABINA LEARNING HUB & EDITORIAL BLOG SECTION
       ───────────────────────────────────────────────────────────── */}
-      <HomeBlogSection />
+      <HomeBlogSection posts={posts} />
 
       {/* ─────────────────────────────────────────────────────────────
           9. FREQUENTLY ASKED QUESTIONS (Dynamic CMS FAQs)

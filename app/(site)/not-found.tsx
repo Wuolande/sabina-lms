@@ -112,7 +112,7 @@ export default function NotFound() {
                   <h3 className="text-xs font-bold text-slate-900 group-hover:text-emerald-700">
                     Teach on Sabina
                   </h3>
-                  <p className="text-[11px] text-slate-500">Earn up to $120/hr</p>
+                  <p className="text-[11px] text-slate-500">Set your own rate and hours</p>
                 </div>
               </div>
             </Link>

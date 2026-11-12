@@ -81,6 +81,11 @@ export interface Config {
     notifications: Notification;
     'email-templates': EmailTemplate;
     'email-log': EmailLog;
+    posts: Post;
+    'blog-categories': BlogCategory;
+    pages: Page;
+    'training-courses': TrainingCourse;
+    'training-progress': TrainingProgress;
     subjects: Subject;
     languages: Language;
     media: Media;
@@ -106,6 +111,11 @@ export interface Config {
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     'email-templates': EmailTemplatesSelect<false> | EmailTemplatesSelect<true>;
     'email-log': EmailLogSelect<false> | EmailLogSelect<true>;
+    posts: PostsSelect<false> | PostsSelect<true>;
+    'blog-categories': BlogCategoriesSelect<false> | BlogCategoriesSelect<true>;
+    pages: PagesSelect<false> | PagesSelect<true>;
+    'training-courses': TrainingCoursesSelect<false> | TrainingCoursesSelect<true>;
+    'training-progress': TrainingProgressSelect<false> | TrainingProgressSelect<true>;
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
     languages: LanguagesSelect<false> | LanguagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -122,10 +132,12 @@ export interface Config {
   globals: {
     'site-settings': SiteSetting;
     'platform-settings': PlatformSetting;
+    'home-page': HomePage;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     'platform-settings': PlatformSettingsSelect<false> | PlatformSettingsSelect<true>;
+    'home-page': HomePageSelect<false> | HomePageSelect<true>;
   };
   locale: null;
   widgets: {
@@ -830,6 +842,241 @@ export interface EmailLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts".
+ */
+export interface Post {
+  id: number;
+  title: string;
+  /**
+   * One or two sentences for the blog list and search results.
+   */
+  excerpt: string;
+  cover?: (number | null) | Media;
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Optional. Leave empty to use the title and summary.
+   */
+  seo?: {
+    /**
+     * Up to 60 characters shows in full on Google.
+     */
+    title?: string | null;
+    /**
+     * Up to 155 characters shows in full on Google.
+     */
+    description?: string | null;
+    /**
+     * 1200 × 630 works best.
+     */
+    image?: (number | null) | Media;
+    noIndex?: boolean | null;
+  };
+  /**
+   * The web address. Filled in from the title if left empty.
+   */
+  slug?: string | null;
+  status: 'draft' | 'published';
+  /**
+   * Set a future date to schedule it.
+   */
+  publishedAt?: string | null;
+  /**
+   * Show at the top of the blog.
+   */
+  featured?: boolean | null;
+  category?: (number | null) | BlogCategory;
+  author?: (number | null) | User;
+  /**
+   * e.g. "Maths tutor" or "Sabina team"
+   */
+  authorTitle?: string | null;
+  readingMinutes?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-categories".
+ */
+export interface BlogCategory {
+  id: number;
+  name: string;
+  /**
+   * The web address. Filled in from the title if left empty.
+   */
+  slug?: string | null;
+  description?: string | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * About, Pricing and the legal pages, plus any extra pages you add (shown at /pages/<slug>).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages".
+ */
+export interface Page {
+  id: number;
+  title: string;
+  /**
+   * Short line under the title.
+   */
+  intro?: string | null;
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  /**
+   * Optional. Leave empty to use the title and summary.
+   */
+  seo?: {
+    /**
+     * Up to 60 characters shows in full on Google.
+     */
+    title?: string | null;
+    /**
+     * Up to 155 characters shows in full on Google.
+     */
+    description?: string | null;
+    /**
+     * 1200 × 630 works best.
+     */
+    image?: (number | null) | Media;
+    noIndex?: boolean | null;
+  };
+  /**
+   * The web address. Filled in from the title if left empty.
+   */
+  slug?: string | null;
+  kind?: ('company' | 'legal' | 'help') | null;
+  status: 'draft' | 'published';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "training-courses".
+ */
+export interface TrainingCourse {
+  id: number;
+  title: string;
+  summary: string;
+  cover?: (number | null) | Media;
+  lessons: {
+    title: string;
+    minutes?: number | null;
+    /**
+     * Optional. A Cloudflare Stream video ID, or a YouTube or Vimeo link.
+     */
+    video?: string | null;
+    body: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    id?: string | null;
+  }[];
+  quiz?: {
+    /**
+     * Percentage needed to pass.
+     */
+    passMark?: number | null;
+    questions?:
+      | {
+          question: string;
+          options: {
+            text: string;
+            id?: string | null;
+          }[];
+          /**
+           * Which option is right: 1 for the first, 2 for the second…
+           */
+          answer: number;
+          /**
+           * Shown after the tutor answers.
+           */
+          explain?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  slug: string;
+  status?: ('draft' | 'published') | null;
+  required?: boolean | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "training-progress".
+ */
+export interface TrainingProgress {
+  id: number;
+  title?: string | null;
+  tutorUser: number | User;
+  course: number | TrainingCourse;
+  completedLessons?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  percent?: number | null;
+  /**
+   * Best quiz score, %.
+   */
+  quizBest?: number | null;
+  attempts?: number | null;
+  passedAt?: string | null;
+  /**
+   * Certificate number.
+   */
+  certificate?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -907,6 +1154,26 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'email-log';
         value: number | EmailLog;
+      } | null)
+    | ({
+        relationTo: 'posts';
+        value: number | Post;
+      } | null)
+    | ({
+        relationTo: 'blog-categories';
+        value: number | BlogCategory;
+      } | null)
+    | ({
+        relationTo: 'pages';
+        value: number | Page;
+      } | null)
+    | ({
+        relationTo: 'training-courses';
+        value: number | TrainingCourse;
+      } | null)
+    | ({
+        relationTo: 'training-progress';
+        value: number | TrainingProgress;
       } | null)
     | ({
         relationTo: 'subjects';
@@ -1377,6 +1644,128 @@ export interface EmailLogSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "posts_select".
+ */
+export interface PostsSelect<T extends boolean = true> {
+  title?: T;
+  excerpt?: T;
+  cover?: T;
+  body?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        noIndex?: T;
+      };
+  slug?: T;
+  status?: T;
+  publishedAt?: T;
+  featured?: T;
+  category?: T;
+  author?: T;
+  authorTitle?: T;
+  readingMinutes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-categories_select".
+ */
+export interface BlogCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pages_select".
+ */
+export interface PagesSelect<T extends boolean = true> {
+  title?: T;
+  intro?: T;
+  body?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        noIndex?: T;
+      };
+  slug?: T;
+  kind?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "training-courses_select".
+ */
+export interface TrainingCoursesSelect<T extends boolean = true> {
+  title?: T;
+  summary?: T;
+  cover?: T;
+  lessons?:
+    | T
+    | {
+        title?: T;
+        minutes?: T;
+        video?: T;
+        body?: T;
+        id?: T;
+      };
+  quiz?:
+    | T
+    | {
+        passMark?: T;
+        questions?:
+          | T
+          | {
+              question?: T;
+              options?:
+                | T
+                | {
+                    text?: T;
+                    id?: T;
+                  };
+              answer?: T;
+              explain?: T;
+              id?: T;
+            };
+      };
+  slug?: T;
+  status?: T;
+  required?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "training-progress_select".
+ */
+export interface TrainingProgressSelect<T extends boolean = true> {
+  title?: T;
+  tutorUser?: T;
+  course?: T;
+  completedLessons?: T;
+  percent?: T;
+  quizBest?: T;
+  attempts?: T;
+  passedAt?: T;
+  certificate?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "subjects_select".
  */
 export interface SubjectsSelect<T extends boolean = true> {
@@ -1538,6 +1927,24 @@ export interface SiteSetting {
       success?: string | null;
     };
   };
+  seo?: {
+    title?: string | null;
+    description?: string | null;
+    /**
+     * 1200 × 630. Used when a page has no image of its own.
+     */
+    image?: (number | null) | Media;
+    /**
+     * e.g. @sabina
+     */
+    twitter?: string | null;
+    googleVerification?: string | null;
+    bingVerification?: string | null;
+    /**
+     * Turn off on staging sites.
+     */
+    allowIndexing?: boolean | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1578,6 +1985,182 @@ export interface PlatformSetting {
   createdAt?: string | null;
 }
 /**
+ * Leave a field empty to use the default text. {cancelHours}, {trialMinutes}, {tutorShare} and {earlyJoin} are replaced with the current platform rules.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page".
+ */
+export interface HomePage {
+  id: number;
+  hero?: {
+    pretitle?: string | null;
+    headlines?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    subheading?: string | null;
+    searchPlaceholder?: string | null;
+    popularTags?:
+      | {
+          label: string;
+          slug: string;
+          id?: string | null;
+        }[]
+      | null;
+    image?: (number | null) | Media;
+    /**
+     * Shown with the average review rating once there are at least 5 reviews.
+     */
+    proofText?: string | null;
+    card1?: {
+      value?: number | null;
+      /**
+       * e.g. +, %, h
+       */
+      suffix?: string | null;
+      decimals?: number | null;
+      /**
+       * Leave empty to use the default.
+       */
+      label?: string | null;
+    };
+    card2?: {
+      value?: number | null;
+      /**
+       * e.g. +, %, h
+       */
+      suffix?: string | null;
+      decimals?: number | null;
+      /**
+       * Leave empty to use the default.
+       */
+      label?: string | null;
+    };
+    card3?: {
+      value?: number | null;
+      /**
+       * e.g. +, %, h
+       */
+      suffix?: string | null;
+      decimals?: number | null;
+      /**
+       * Leave empty to use the default.
+       */
+      label?: string | null;
+    };
+  };
+  stats?: {
+    /**
+     * Tutors, students, lessons taught and average rating, counted from the platform. Turn on once the numbers are worth showing.
+     */
+    live?: boolean | null;
+    stat1?: {
+      value?: number | null;
+      /**
+       * e.g. +, %, h
+       */
+      suffix?: string | null;
+      decimals?: number | null;
+      /**
+       * Leave empty to use the default.
+       */
+      label?: string | null;
+    };
+    stat2?: {
+      value?: number | null;
+      /**
+       * e.g. +, %, h
+       */
+      suffix?: string | null;
+      decimals?: number | null;
+      /**
+       * Leave empty to use the default.
+       */
+      label?: string | null;
+    };
+    stat3?: {
+      value?: number | null;
+      /**
+       * e.g. +, %, h
+       */
+      suffix?: string | null;
+      decimals?: number | null;
+      /**
+       * Leave empty to use the default.
+       */
+      label?: string | null;
+    };
+    stat4?: {
+      value?: number | null;
+      /**
+       * e.g. +, %, h
+       */
+      suffix?: string | null;
+      decimals?: number | null;
+      /**
+       * Leave empty to use the default.
+       */
+      label?: string | null;
+    };
+  };
+  sections?: {
+    subjects?: {
+      pretitle?: string | null;
+      title?: string | null;
+      cta?: string | null;
+    };
+    tutors?: {
+      pretitle?: string | null;
+      title?: string | null;
+      cta?: string | null;
+    };
+    classroom?: {
+      badge?: string | null;
+      title?: string | null;
+      subtitle?: string | null;
+    };
+    steps?: {
+      pretitle?: string | null;
+      title?: string | null;
+      items?:
+        | {
+            title: string;
+            text: string;
+            id?: string | null;
+          }[]
+        | null;
+    };
+    teach?: {
+      badge?: string | null;
+      title?: string | null;
+      subtitle?: string | null;
+      points?:
+        | {
+            text: string;
+            id?: string | null;
+          }[]
+        | null;
+      cta?: string | null;
+      secondary?: string | null;
+    };
+    faq?: {
+      pretitle?: string | null;
+      title?: string | null;
+      items?:
+        | {
+            q: string;
+            a: string;
+            id?: string | null;
+          }[]
+        | null;
+    };
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
@@ -1603,6 +2186,17 @@ export interface SiteSettingsSelect<T extends boolean = true> {
               success?: T;
             };
       };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        image?: T;
+        twitter?: T;
+        googleVerification?: T;
+        bingVerification?: T;
+        allowIndexing?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1627,6 +2221,164 @@ export interface PlatformSettingsSelect<T extends boolean = true> {
   lateCancellationRefundPercent?: T;
   earningsHoldDays?: T;
   minimumPayout?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "home-page_select".
+ */
+export interface HomePageSelect<T extends boolean = true> {
+  hero?:
+    | T
+    | {
+        pretitle?: T;
+        headlines?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        subheading?: T;
+        searchPlaceholder?: T;
+        popularTags?:
+          | T
+          | {
+              label?: T;
+              slug?: T;
+              id?: T;
+            };
+        image?: T;
+        proofText?: T;
+        card1?:
+          | T
+          | {
+              value?: T;
+              suffix?: T;
+              decimals?: T;
+              label?: T;
+            };
+        card2?:
+          | T
+          | {
+              value?: T;
+              suffix?: T;
+              decimals?: T;
+              label?: T;
+            };
+        card3?:
+          | T
+          | {
+              value?: T;
+              suffix?: T;
+              decimals?: T;
+              label?: T;
+            };
+      };
+  stats?:
+    | T
+    | {
+        live?: T;
+        stat1?:
+          | T
+          | {
+              value?: T;
+              suffix?: T;
+              decimals?: T;
+              label?: T;
+            };
+        stat2?:
+          | T
+          | {
+              value?: T;
+              suffix?: T;
+              decimals?: T;
+              label?: T;
+            };
+        stat3?:
+          | T
+          | {
+              value?: T;
+              suffix?: T;
+              decimals?: T;
+              label?: T;
+            };
+        stat4?:
+          | T
+          | {
+              value?: T;
+              suffix?: T;
+              decimals?: T;
+              label?: T;
+            };
+      };
+  sections?:
+    | T
+    | {
+        subjects?:
+          | T
+          | {
+              pretitle?: T;
+              title?: T;
+              cta?: T;
+            };
+        tutors?:
+          | T
+          | {
+              pretitle?: T;
+              title?: T;
+              cta?: T;
+            };
+        classroom?:
+          | T
+          | {
+              badge?: T;
+              title?: T;
+              subtitle?: T;
+            };
+        steps?:
+          | T
+          | {
+              pretitle?: T;
+              title?: T;
+              items?:
+                | T
+                | {
+                    title?: T;
+                    text?: T;
+                    id?: T;
+                  };
+            };
+        teach?:
+          | T
+          | {
+              badge?: T;
+              title?: T;
+              subtitle?: T;
+              points?:
+                | T
+                | {
+                    text?: T;
+                    id?: T;
+                  };
+              cta?: T;
+              secondary?: T;
+            };
+        faq?:
+          | T
+          | {
+              pretitle?: T;
+              title?: T;
+              items?:
+                | T
+                | {
+                    q?: T;
+                    a?: T;
+                    id?: T;
+                  };
+            };
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

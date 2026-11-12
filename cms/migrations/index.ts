@@ -5,6 +5,7 @@ import * as migration_20261112_140156_scheduling_bookings from './20261112_14015
 import * as migration_20261112_144837_payments_payouts from './20261112_144837_payments_payouts';
 import * as migration_20261112_153439_classroom_reviews from './20261112_153439_classroom_reviews';
 import * as migration_20261112_170454_messaging_notifications from './20261112_170454_messaging_notifications';
+import * as migration_20261112_172523_content_academy from './20261112_172523_content_academy';
 
 export const migrations = [
   {
@@ -40,6 +41,11 @@ export const migrations = [
   {
     up: migration_20261112_170454_messaging_notifications.up,
     down: migration_20261112_170454_messaging_notifications.down,
-    name: '20261112_170454_messaging_notifications'
+    name: '20261112_170454_messaging_notifications',
+  },
+  {
+    up: migration_20261112_172523_content_academy.up,
+    down: migration_20261112_172523_content_academy.down,
+    name: '20261112_172523_content_academy'
   },
 ];

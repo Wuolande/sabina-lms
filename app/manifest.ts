@@ -1,32 +1,14 @@
 import type { MetadataRoute } from 'next';
-import { adminSupabase } from '@/src/shared/database/supabase';
+import { getPlatformSeo } from '@/src/shared/seo/platformSeo';
 
 export const dynamic = 'force-dynamic';
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-  let primaryColor = '#14209C';
-  let title = 'Sabina Edge';
-  let description = 'Connect with certified, elite private tutors for 1-on-1 live video lessons.';
-  let iconUrl = '/apple-touch-icon.png';
-
-  try {
-    const { data } = await adminSupabase
-      .from('platform_theme')
-      .select('primary_color, meta_title, meta_description, favicon_url, apple_touch_icon_url')
-      .eq('id', 'default')
-      .single();
-
-    if (data) {
-      if (data.primary_color) primaryColor = data.primary_color;
-      if (data.meta_title) title = data.meta_title.split('|')[0].trim();
-      if (data.meta_description) description = data.meta_description;
-      if (data.apple_touch_icon_url) {
-        iconUrl = data.apple_touch_icon_url;
-      } else if (data.favicon_url) {
-        iconUrl = data.favicon_url;
-      }
-    }
-  } catch {}
+  const seo = await getPlatformSeo().catch(() => null);
+  const primaryColor = seo?.primaryColor || '#14209C';
+  const title = 'Sabina';
+  const description = seo?.metaDescription || 'Live 1-on-1 lessons with tutors our team has checked.';
+  const iconUrl = seo?.appleTouchIconUrl || '/apple-touch-icon.png';
 
   return {
     name: title,

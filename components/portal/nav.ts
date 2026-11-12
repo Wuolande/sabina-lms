@@ -37,7 +37,7 @@ export const NAV: Record<PortalRole, NavItem[]> = {
     { href: "/tutor/availability", label: "Availability", icon: "Clock" },
     { href: "/tutor/earnings", label: "Earnings", icon: "Wallet" },
     { href: "/tutor/reviews", label: "Reviews", icon: "Star" },
-    { href: "/tutor/training", label: "Academy", icon: "GraduationCap", phase: 7 },
+    { href: "/tutor/training", label: "Academy", icon: "GraduationCap" },
     { href: "/tutor/notifications", label: "Notifications", icon: "Bell" },
     { href: "/tutor/profile", label: "Profile & application", short: "Profile", icon: "User" },
     { href: "/tutor/settings", label: "Account settings", icon: "Settings" },

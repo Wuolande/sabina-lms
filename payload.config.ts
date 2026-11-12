@@ -18,6 +18,9 @@ import { Schedules } from "./cms/collections/Schedules";
 import { Bookings } from "./cms/collections/Bookings";
 import { Payments } from "./cms/collections/Payments";
 import { Reviews } from "./cms/collections/Reviews";
+import { BlogCategories, Pages, Posts } from "./cms/collections/Content";
+import { TrainingCourses, TrainingProgress } from "./cms/collections/Academy";
+import { HomePage } from "./cms/globals/HomePage";
 import { Conversations, EmailLog, EmailTemplates, Messages, Notifications } from "./cms/collections/Messaging";
 import { PayoutMethods, Payouts } from "./cms/collections/Payouts";
 import { r2Config, r2PublicUrl, r2Ready } from "./cms/storage/r2";
@@ -84,8 +87,8 @@ export default buildConfig({
     },
     importMap: { baseDir: path.resolve(dirname) },
   },
-  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Reviews, Payments, Payouts, PayoutMethods, Conversations, Messages, Notifications, EmailTemplates, EmailLog, Subjects, Languages, Media, PrivateFiles],
-  globals: [SiteSettings, PlatformSettings],
+  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Reviews, Payments, Payouts, PayoutMethods, Conversations, Messages, Notifications, EmailTemplates, EmailLog, Posts, BlogCategories, Pages, TrainingCourses, TrainingProgress, Subjects, Languages, Media, PrivateFiles],
+  globals: [SiteSettings, PlatformSettings, HomePage],
   upload: { limits: { fileSize: 20 * 1024 * 1024 } },
   editor: lexicalEditor(),
   db: postgresAdapter({

@@ -62,9 +62,7 @@ export const MENU: MenuSection[] = [
     collapsible: true,
     items: [
       { kind: "collection", slug: "training-courses", label: "Courses", icon: "GraduationCap" },
-      { kind: "collection", slug: "training-modules", label: "Modules", icon: "BookOpen" },
-      { kind: "collection", slug: "training-quizzes", label: "Quizzes", icon: "ListChecks" },
-      { kind: "collection", slug: "training-live-sessions", label: "Live cohorts", icon: "Radio" },
+      { kind: "collection", slug: "training-progress", label: "Tutor progress", icon: "ListChecks" },
     ],
   },
   {

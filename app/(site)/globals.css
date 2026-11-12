@@ -327,3 +327,21 @@
   }
 }
 
+
+/* Long-form reading: blog posts, pages, academy lessons. */
+.sb-prose { color: #334155; font-size: 17px; line-height: 1.7; }
+.sb-prose > * + * { margin-top: 1.1em; }
+.sb-prose h2 { margin-top: 2em; font-family: var(--font-heading, inherit); font-size: 1.5rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.015em; color: #0f172a; }
+.sb-prose h3 { margin-top: 1.6em; font-size: 1.2rem; font-weight: 700; color: #0f172a; }
+.sb-prose h2 + *, .sb-prose h3 + * { margin-top: 0.6em; }
+.sb-prose a { color: #1d2fc4; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.sb-prose strong { color: #0f172a; font-weight: 650; }
+.sb-prose ul, .sb-prose ol { padding-left: 1.3em; }
+.sb-prose ul { list-style: disc; }
+.sb-prose ol { list-style: decimal; }
+.sb-prose li + li { margin-top: 0.45em; }
+.sb-prose li::marker { color: #94a3b8; }
+.sb-prose blockquote { border-left: 3px solid #e2e8f0; padding-left: 1em; color: #475569; font-style: italic; }
+.sb-prose img { border-radius: 1rem; }
+.sb-prose hr { border-color: #e2e8f0; margin: 2.5em 0; }
+.sb-prose > :first-child { margin-top: 0; }

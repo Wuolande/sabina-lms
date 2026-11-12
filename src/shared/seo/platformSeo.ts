@@ -1,10 +1,9 @@
 /**
- * Platform SEO & Theme Helper
- * Provides cached/server-side retrieval of platform theme colors,
- * logos, metadata, verification tokens, and crawler directives.
+ * Site-wide SEO from Payload (admin → Settings → Site settings → Search and sharing).
+ * Kept with the old shape so the root layout keeps working.
  */
-
-import { adminSupabase } from '@/src/shared/database/supabase';
+import { getPayloadClient } from "@/cms/auth/session";
+import { mediaUrl, siteSeo } from "@/cms/content/server";
 
 export interface PlatformSeoConfig {
   primaryColor: string;
@@ -22,61 +21,23 @@ export interface PlatformSeoConfig {
   allowIndexing: boolean;
 }
 
-export const DEFAULT_PLATFORM_SEO: PlatformSeoConfig = {
-  primaryColor: '#14209C',
-  secondaryColor: '#F9C31C',
-  logoUrl: '',
-  faviconUrl: '',
-  appleTouchIconUrl: '',
-  ogImageUrl: '',
-  metaTitle: 'Sabina Edge | Premium 1-on-1 Online Tutoring & Live Classroom',
-  metaDescription: 'Connect with certified, elite private tutors for 1-on-1 live video lessons in languages, STEM, coding, and exam prep.',
-  keywords: [
-    'online tutoring',
-    'private tutor',
-    'learn languages',
-    'math tutor',
-    'python coding',
-    'live classroom',
-    'ielts prep',
-  ],
-  googleSiteVerification: '',
-  bingSiteVerification: '',
-  twitterHandle: '@SabinaLMS',
-  allowIndexing: true,
-};
-
-function isValidHex(value: unknown): value is string {
-  return typeof value === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value);
-}
-
 export async function getPlatformSeo(): Promise<PlatformSeoConfig> {
-  try {
-    const { data, error } = await adminSupabase
-      .from('platform_theme')
-      .select('*')
-      .eq('id', 'default')
-      .maybeSingle();
-
-    if (error || !data) return DEFAULT_PLATFORM_SEO;
-
-    return {
-      primaryColor: isValidHex(data.primary_color) ? data.primary_color : DEFAULT_PLATFORM_SEO.primaryColor,
-      secondaryColor: isValidHex(data.secondary_color) ? data.secondary_color : DEFAULT_PLATFORM_SEO.secondaryColor,
-      logoUrl: typeof data.logo_url === 'string' ? data.logo_url.trim() : '',
-      faviconUrl: typeof data.favicon_url === 'string' ? data.favicon_url.trim() : '',
-      appleTouchIconUrl: typeof data.apple_touch_icon_url === 'string' ? data.apple_touch_icon_url.trim() : '',
-      ogImageUrl: typeof data.og_image_url === 'string' ? data.og_image_url.trim() : '',
-      metaTitle: typeof data.meta_title === 'string' && data.meta_title.trim() ? data.meta_title.trim() : DEFAULT_PLATFORM_SEO.metaTitle,
-      metaDescription: typeof data.meta_description === 'string' && data.meta_description.trim() ? data.meta_description.trim() : DEFAULT_PLATFORM_SEO.metaDescription,
-      keywords: Array.isArray(data.keywords) && data.keywords.length > 0 ? data.keywords : DEFAULT_PLATFORM_SEO.keywords,
-      googleSiteVerification: typeof data.google_site_verification === 'string' ? data.google_site_verification.trim() : '',
-      bingSiteVerification: typeof data.bing_site_verification === 'string' ? data.bing_site_verification.trim() : '',
-      twitterHandle: typeof data.twitter_handle === 'string' && data.twitter_handle.trim() ? data.twitter_handle.trim() : DEFAULT_PLATFORM_SEO.twitterHandle,
-      allowIndexing: data.allow_indexing !== undefined && data.allow_indexing !== null ? Boolean(data.allow_indexing) : true,
-    };
-  } catch (err) {
-    console.error('[getPlatformSeo] Error fetching platform SEO:', err);
-    return DEFAULT_PLATFORM_SEO;
-  }
+  const seo = await siteSeo();
+  const payload = await getPayloadClient();
+  const g = (await payload.findGlobal({ slug: "site-settings", depth: 1, overrideAccess: true }).catch(() => null)) as { brand?: { logo?: unknown; icon?: unknown; colours?: { primary?: string; accent?: string } } } | null;
+  return {
+    primaryColor: g?.brand?.colours?.primary || "#14209C",
+    secondaryColor: g?.brand?.colours?.accent || "#F9C31C",
+    logoUrl: mediaUrl(g?.brand?.logo) ?? "",
+    faviconUrl: mediaUrl(g?.brand?.icon) ?? "",
+    appleTouchIconUrl: mediaUrl(g?.brand?.icon) ?? "",
+    ogImageUrl: seo.image ?? "",
+    metaTitle: seo.title,
+    metaDescription: seo.description,
+    keywords: ["online tutoring", "private tutor", "KCSE tutor", "maths tutor", "IELTS preparation", "learn English online"],
+    googleSiteVerification: seo.google ?? "",
+    bingSiteVerification: seo.bing ?? "",
+    twitterHandle: seo.twitter ?? "",
+    allowIndexing: seo.index,
+  };
 }

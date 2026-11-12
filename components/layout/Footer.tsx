@@ -111,9 +111,8 @@ export function Footer() {
           {/* Brand Column */}
           <div className="col-span-2 lg:col-span-2 space-y-5">
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              Sabina Edge connects ambitious learners with verified, elite
-              tutors worldwide. Master any subject through live 1-on-1 video
-              classrooms and personalised learning goals.
+              Live 1-on-1 lessons with tutors our team has checked. Book a
+              time that suits you and learn in your browser.
             </p>
 
             {/* Newsletter */}
@@ -216,7 +215,7 @@ export function Footer() {
         {/* ─── Bottom Bar ─── */}
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-800 pt-6">
           <p className="text-xs text-slate-500">
-            © 2026 Sabina Edge Inc. All rights reserved.
+            © {new Date().getFullYear()} Sabina Education. All rights reserved.
           </p>
           <p className="text-xs text-slate-600">
             Built for high-trust live online learning

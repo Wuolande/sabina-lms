@@ -33,7 +33,7 @@ export default function HowItWorksPage() {
           Student & Tutor Guide
         </Badge>
         <h1 className="text-2xl sm:text-5xl font-black text-slate-900 tracking-tight font-heading">
-          How Sabina Edge powers your learning journey
+          How Sabina works
         </h1>
         <p className="text-sm sm:text-base text-slate-600">
           Everything you need to know about finding tutors, scheduling lessons across timezones, attending live video sessions, and achieving mastery.
