@@ -115,6 +115,29 @@ in the admin to upload and preview.
 Not yet moved: the onboarding screens (`/onboarding/*`, phase 2), the public tutor marketplace
 (phase 2), and the legacy admin at `/admin-legacy`, which no longer has a sign-in and is removed in phase 8.
 
+## Phase 2: done
+
+- Catalogue in Payload: subjects (22 seeded, editable), languages (16), Fees & policies settings.
+- Tutor profiles: one document per tutor, used as the application while it's reviewed and as the
+  public profile once approved. Identity documents, review notes, document files and the account
+  link are hidden from the public by field-level access.
+- Private documents collection on the private R2 bucket; only the owner and the review team
+  (admin, manager, support) can download files.
+- Tutor application at `/tutor/profile`: 7 steps (photo, profile, subjects & pricing, education,
+  identity, intro video, review), live checklist, price limits from Fees & policies, document
+  uploads, locked while under review, editable again after "changes requested" or approval.
+- Admin review: "Tutor applications" in the sidebar with a count, and Approve / Request changes /
+  Reject / Suspend on each tutor, with a message to the tutor, history, and emails.
+- Public marketplace `/find-tutors` (search, subject, level, language, price, trial filters, sort,
+  pagination, all in the URL), tutor profiles `/tutors/[slug]` with structured data, `/subjects`
+  and `/subjects/[slug]`; homepage featured tutors and subjects come from Payload.
+- Students: save tutors (`/student/favorites`), learning goals with recommendations
+  (`/student/profile`). Old onboarding URLs redirect to these screens.
+- `scripts/seed-demo-tutors.mjs` creates demo tutors through the real flow (development only).
+- Browser tests: `tests/e2e/phase2-tutors.spec.ts`.
+
+Booking buttons say "Booking opens soon" until phase 3.
+
 ### Running locally
 
 ```bash

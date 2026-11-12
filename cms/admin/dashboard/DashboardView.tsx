@@ -24,7 +24,7 @@ const PHASES = [
   ["Content & academy", "Blog, pages, SEO, tutor training"],
   ["Dashboards & launch", "Reports, cleanup, launch checklist"],
 ] as const;
-const CURRENT_PHASE = 2;
+const CURRENT_PHASE = 3;
 
 /** The Sabina dashboard (replaces Payload's default collection grid). */
 export async function DashboardView({ initPageResult, searchParams }: AdminViewServerProps) {
