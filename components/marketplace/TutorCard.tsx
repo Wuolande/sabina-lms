@@ -1,269 +1,103 @@
-"use client";
-
-import * as React from "react";
 import Link from "next/link";
-import { TutorProfile } from "@/types";
-import { Avatar } from "@/components/ui/Avatar";
-import { formatCurrency } from "@/lib/utils";
-import {
-  Heart,
-  ShieldCheck,
-  Zap,
-  Sparkles,
-  CheckCircle2,
-  Calendar,
-  BookOpen,
-  GraduationCap,
-} from "lucide-react";
-import { studentService } from "@/services/studentService";
-import { BookingModal } from "@/components/booking/BookingModal";
+import { BadgeCheck, Languages, Sparkles, Star, Zap } from "lucide-react";
+import type { PublicTutor } from "@/cms/marketplace/public";
+import { money } from "@/lib/money";
+import { SaveTutorButton } from "./SaveTutorButton";
 
-interface TutorCardProps {
-  tutor: TutorProfile;
-  onBook?: (tutor: TutorProfile) => void;
-  showFavoriteButton?: boolean;
+export function TutorAvatar({ tutor, size, rounded = "rounded-2xl" }: { tutor: Pick<PublicTutor, "name" | "photo" | "photoLarge">; size: number; rounded?: string }) {
+  const src = size > 120 ? tutor.photoLarge ?? tutor.photo : tutor.photo;
+  return src ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" width={size} height={size} className={`${rounded} object-cover`} style={{ width: size, height: size }} loading="lazy" />
+  ) : (
+    <span className={`grid place-items-center ${rounded} bg-gradient-to-br from-brand-600 to-brand-900 font-heading font-bold text-white`} style={{ width: size, height: size, fontSize: size * 0.34 }} aria-hidden>
+      {tutor.name
+        .split(/\s+/)
+        .map((w) => w[0])
+        .join("")
+        .replace(/[^A-Za-z]/g, "")
+        .slice(0, 2)}
+    </span>
+  );
 }
 
-export function TutorCard({
-  tutor,
-  onBook,
-  showFavoriteButton = true,
-}: TutorCardProps) {
-  const [isFavorite, setIsFavorite] = React.useState(false);
-  const [internalBookingOpen, setInternalBookingOpen] = React.useState(false);
+export function Rating({ tutor }: { tutor: Pick<PublicTutor, "rating" | "reviewCount"> }) {
+  return tutor.reviewCount > 0 ? (
+    <span className="inline-flex items-center gap-1 text-sm font-semibold text-slate-900">
+      <Star size={15} className="fill-amber-400 text-amber-400" /> {tutor.rating.toFixed(1)}
+      <span className="font-normal text-slate-500">({tutor.reviewCount})</span>
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
+      <Sparkles size={12} /> New tutor
+    </span>
+  );
+}
 
-  React.useEffect(() => {
-    studentService.isTutorFavorite(tutor.id).then(setIsFavorite);
-  }, [tutor.id]);
-
-  const handleBookClick = () => {
-    if (onBook) {
-      onBook(tutor);
-    } else {
-      setInternalBookingOpen(true);
-    }
-  };
-
-  const handleToggleFavorite = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const updated = await studentService.toggleFavoriteTutor(tutor.id);
-    setIsFavorite(updated);
-  };
-
-  const subjectsList: any[] = tutor.subjects || [];
-  const languagesList: any[] = tutor.languages || [];
-  const primarySubObj: any = subjectsList.find((s: any) => s.isPrimary) || subjectsList[0];
-  const primarySubjectName = primarySubObj?.subject?.name || primarySubObj?.name || "Academic Subject";
-
-  const nativeLangObj: any = languagesList.find((l: any) => l.proficiency === "Native" || l.proficiency === "NATIVE" || l.proficiency === "FLUENT") || languagesList[0];
-  const nativeLanguageName = nativeLangObj?.language?.name || nativeLangObj?.name || nativeLangObj?.code;
-
-  const tutorDisplayName = tutor.user?.displayName || (tutor as any).tutorName || (tutor as any).displayName || "Verified Tutor";
-  const tutorAvatarUrl = tutor.user?.avatarUrl || (tutor as any).tutorAvatar || (tutor as any).avatarUrl;
-  const tutorCountry = tutor.user?.country || (tutor as any).country || "Global";
-  const tutorSlugOrId = tutor.slug || tutor.id;
-
+/** Marketplace card: photo, name, headline, subjects, languages, price. The whole card links to the profile. */
+export function TutorCard({ tutor, currency, saved, signedIn, showSave = true }: { tutor: PublicTutor; currency: string; saved?: boolean; signedIn: boolean; showSave?: boolean }) {
   return (
-    <div className="group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-slate-200/70 bg-white p-4 sm:p-7 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.07)] hover:-translate-y-0.5 transition-all duration-200">
-      
-      {/* ─── Top Section: Avatar, Info & Price ─── */}
-      <div>
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-          
-          {/* Avatar + Main Info */}
-          <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
-            <Link href={`/tutors/${tutorSlugOrId}`} className="relative shrink-0">
-              <Avatar
-                src={tutorAvatarUrl}
-                alt={tutorDisplayName}
-                fallbackName={tutorDisplayName}
-                size="md"
-                className="h-12 w-12 sm:h-14 sm:w-14 ring-2 ring-slate-100 group-hover:ring-slate-200 transition-all"
-                statusIndicator="online"
-                superTutor={tutor.isSuperTutor}
-              />
-            </Link>
-
-            <div className="space-y-0.5 sm:space-y-1 min-w-0 flex-1">
-              {/* Name, Badges & Mobile Favorite */}
-              <div className="flex items-center justify-between sm:justify-start gap-2">
-                <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                  <Link
-                    href={`/tutors/${tutorSlugOrId}`}
-                    className="font-bold text-slate-900 text-sm sm:text-lg hover:text-brand transition-colors leading-tight truncate"
-                  >
-                    {tutorDisplayName}
-                  </Link>
-                  {tutor.verificationStatus === "APPROVED" && (
-                    <span title="Identity & Credentials Verified">
-                      <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
-                    </span>
-                  )}
-                  <span title="Sabina Academy Certified Educator">
-                    <GraduationCap className="h-4 w-4 text-brand shrink-0" />
-                  </span>
-                  {tutor.isFeatured && (
-                    <span className="text-[10px] font-semibold bg-brand-50 text-brand border border-brand-100/80 px-1.5 py-0.5 rounded-full shrink-0">
-                      Featured
-                    </span>
-                  )}
-                </div>
-
-                {/* Mobile Favorite Button */}
-                {showFavoriteButton && (
-                  <button
-                    type="button"
-                    onClick={handleToggleFavorite}
-                    className="sm:hidden rounded-full p-1 text-slate-300 hover:text-red-500 hover:bg-red-50/80 transition-colors shrink-0"
-                    aria-label={isFavorite ? "Remove from favorites" : "Save tutor"}
-                  >
-                    <Heart
-                      className={`h-5 w-5 transition-colors ${
-                        isFavorite ? "fill-red-500 text-red-500" : "hover:text-red-500"
-                      }`}
-                    />
-                  </button>
-                )}
-              </div>
-
-              {/* Subject & Origin */}
-              <p className="text-xs text-slate-500 font-medium truncate">
-                {primarySubjectName} · From {tutorCountry}
-              </p>
-
-              {/* Clean Rating & Lessons */}
-              <div className="flex items-center gap-1.5 pt-0.5 text-xs text-slate-500 flex-wrap">
-                <span className="text-amber-400 text-sm leading-none">★</span>
-                <span className="font-bold text-slate-900">
-                  {tutor.averageRating > 0 ? tutor.averageRating.toFixed(1) : "5.0"}
-                </span>
-                <span className="text-slate-400">
-                  ({tutor.reviewCount || 0})
-                </span>
-                <span className="text-slate-300">·</span>
-                <span className="font-medium text-slate-600">
-                  {(tutor.totalLessons || 0).toLocaleString()} lessons
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Desktop Pricing & Favorite */}
-          <div className="hidden sm:flex flex-col items-end gap-1 shrink-0">
-            {showFavoriteButton && (
-              <button
-                type="button"
-                onClick={handleToggleFavorite}
-                className="rounded-full p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50/80 transition-colors focus:outline-none"
-                aria-label={isFavorite ? "Remove from favorites" : "Save tutor"}
-              >
-                <Heart
-                  className={`h-5 w-5 transition-colors ${
-                    isFavorite
-                      ? "fill-red-500 text-red-500"
-                      : "hover:text-red-500"
-                  }`}
-                />
-              </button>
-            )}
-
-            <div className="text-right mt-1">
-              <span className="text-2xl font-black text-slate-950 tracking-tight font-heading leading-none">
-                {formatCurrency(tutor.hourlyRate || 35, tutor.currency || "USD")}
-              </span>
-              <span className="text-[11px] text-slate-400 block font-medium mt-0.5">
-                / 50-min
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Headline */}
-        <p className="mt-3 sm:mt-4 text-[13px] sm:text-[14px] font-bold text-slate-900 line-clamp-2 leading-snug">
-          {tutor.headline || "Certified Educator & Academic Coach"}
-        </p>
-
-        {/* Short Bio */}
-        <p className="mt-1 sm:mt-1.5 text-xs sm:text-[13px] text-slate-500 line-clamp-2 leading-relaxed">
-          {tutor.bio || "Dedicated to helping students master concepts through engaging, personalized 1-on-1 lessons."}
-        </p>
-
-        {/* Subject & Language Badges */}
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          {subjectsList.slice(0, 3).map((sub: any) => {
-            const name = sub.subject?.name || sub.name || "Subject";
-            return (
-              <span
-                key={sub.id || name}
-                className="inline-flex items-center gap-1 text-[11px] font-semibold bg-slate-50 border border-slate-200/80 text-slate-700 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg"
-              >
-                <BookOpen className="h-3 w-3 text-slate-400 shrink-0" />
-                <span className="truncate max-w-[120px]">{name}</span>
-              </span>
-            );
-          })}
-          {nativeLanguageName && (
-            <span className="inline-flex items-center text-[11px] font-semibold bg-brand-50 border border-brand-100 text-brand px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg">
-              {nativeLanguageName}
-            </span>
+    <article className="group relative flex flex-col rounded-3xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(20,32,156,0.35)] hover:ring-brand-200">
+      <div className="flex gap-4">
+        <div className="relative shrink-0">
+          <TutorAvatar tutor={tutor} size={84} />
+          {tutor.isSuperTutor && (
+            <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent-400 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-950 shadow">Super tutor</span>
           )}
         </div>
-
-        {/* Quick Highlights / Trust Line */}
-        <div className="mt-3 sm:mt-4 flex items-center justify-between sm:justify-start gap-3 sm:gap-4 text-xs text-slate-500 pt-2.5 sm:pt-3 border-t border-slate-100 flex-wrap">
-          <div className="flex items-center gap-1">
-            <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-            <span>Responds in ~{tutor.responseTimeMinutes || 15}m</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-            <span>{tutor.attendanceRate || 99}% attendance</span>
+        <div className="min-w-0 flex-1 pr-10">
+          <h3 className="flex items-center gap-1.5 font-heading text-lg font-bold text-slate-900">
+            <Link href={`/tutors/${tutor.slug}`} className="truncate after:absolute after:inset-0 after:rounded-3xl focus-visible:outline-none">
+              {tutor.name}
+            </Link>
+            {tutor.verified && <BadgeCheck size={18} className="shrink-0 text-brand-600" aria-label="Verified tutor" />}
+          </h3>
+          <p className="truncate text-sm text-slate-500">{[tutor.primarySubject?.name, tutor.country].filter(Boolean).join(" · ")}</p>
+          <div className="mt-1.5">
+            <Rating tutor={tutor} />
           </div>
         </div>
+        {showSave && (
+          <div className="absolute right-4 top-4 z-10">
+            <SaveTutorButton tutorId={tutor.id} initialSaved={saved} signedIn={signedIn} />
+          </div>
+        )}
       </div>
 
-      {/* ─── Footer Action Buttons ─── */}
-      <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-slate-100">
-        {/* Mobile Price Row */}
-        <div className="sm:hidden flex items-center justify-between mb-3 bg-slate-50/80 p-2.5 rounded-xl border border-slate-100">
-          <span className="text-xs font-bold text-slate-500">Hourly Rate</span>
-          <div className="flex items-baseline gap-1">
-            <span className="text-lg font-black text-slate-950 font-heading">
-              {formatCurrency(tutor.hourlyRate || 35, tutor.currency || "USD")}
-            </span>
-            <span className="text-[10px] text-slate-400 font-medium">/ 50-min</span>
-          </div>
-        </div>
+      <p className="mt-4 line-clamp-2 min-h-[2.75rem] text-[15px] leading-relaxed text-slate-700">{tutor.headline}</p>
 
-        <div className="flex items-center justify-between gap-2">
-          <Link href={`/tutors/${tutorSlugOrId}`} className="flex-1">
-            <button
-              type="button"
-              className="w-full h-11 min-h-[44px] px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs shadow-xs transition-all active:scale-[0.98]"
-            >
-              View Profile
-            </button>
-          </Link>
-
-          <button
-            type="button"
-            onClick={handleBookClick}
-            className="flex-1 h-11 min-h-[44px] px-3 rounded-xl bg-brand hover:brightness-90 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 shadow-subtle transition-all active:scale-[0.98]"
-          >
-            <Calendar className="h-3.5 w-3.5 text-white/90 shrink-0" />
-            <span>Book Lesson</span>
-          </button>
-        </div>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {tutor.subjects.slice(0, 3).map((s) => (
+          <span key={s.slug} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+            {s.name}
+          </span>
+        ))}
+        {tutor.subjects.length > 3 && <span className="rounded-full px-1.5 py-1 text-xs font-medium text-slate-500">+{tutor.subjects.length - 3}</span>}
       </div>
-
-      {!onBook && (
-        <BookingModal
-          tutor={tutor}
-          isOpen={internalBookingOpen}
-          onClose={() => setInternalBookingOpen(false)}
-        />
+      {tutor.languages.length > 0 && (
+        <p className="mt-3 flex items-center gap-1.5 truncate text-sm text-slate-500">
+          <Languages size={15} className="shrink-0" /> {tutor.languages.map((l) => l.name).join(", ")}
+        </p>
       )}
-    </div>
+
+      <div className="flex-1" />
+      <div className="mt-5 flex items-end justify-between gap-3 border-t border-slate-100 pt-4">
+        <div>
+          <p className="font-heading text-2xl font-bold text-slate-900">
+            {money(tutor.hourlyRate, currency)}
+            <span className="text-sm font-medium text-slate-500"> / hour</span>
+          </p>
+          {tutor.trialPrice != null && <p className="text-xs font-medium text-emerald-700">Trial lesson {money(tutor.trialPrice, currency)}</p>}
+        </div>
+        <div className="flex items-center gap-2">
+          {tutor.instantBooking && (
+            <span className="text-amber-500" title="Instant booking">
+              <Zap size={16} />
+            </span>
+          )}
+          <span className="inline-flex h-10 items-center rounded-xl bg-brand-700 px-4 text-sm font-semibold text-white transition group-hover:bg-brand-800">View profile</span>
+        </div>
+      </div>
+    </article>
   );
 }

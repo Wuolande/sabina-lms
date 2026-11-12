@@ -1,63 +1,53 @@
-/**
- * API Route: GET /api/student/profile
- *           PUT /api/student/profile
- * -----------------------------------------------------------------------
- * GET — Returns full student profile aggregate (identity, learning stats, enrolled tutors).
- * PUT — Update student profile preferences.
- * -----------------------------------------------------------------------
- */
+import { NextResponse, type NextRequest } from "next/server";
+import { getPayloadClient } from "@/cms/auth/session";
+import { fail } from "@/cms/auth/http";
+import { idList, ownStudentProfile } from "@/cms/students/server";
+import { STUDENT_GOALS, STUDENT_LEVELS, STUDENT_PACE } from "@/cms/collections/StudentProfiles";
+import type { StudentProfile, User } from "@/payload-types";
 
-import { NextRequest, NextResponse } from 'next/server';
-import { domainStudentService } from '@/src/modules/students/services/studentService';
-import { getStudentContext } from '@/src/shared/auth/authService';
-import { z } from 'zod';
-
-const UpdateProfileSchema = z.object({
-  displayName: z.string().min(2).optional(),
-  country: z.string().optional(),
-  timezone: z.string().optional(),
-  preferredLanguage: z.string().optional(),
-  phone: z.string().optional(),
-  targetExam: z.string().optional(),
-  currentLevel: z.string().optional(),
-  weeklyStudyHoursTarget: z.number().min(1).max(50).optional(),
+const pick = <T extends { value: string }>(list: readonly T[], v: unknown) => (list.some((o) => o.value === v) ? (v as string) : null);
+const serialize = (p: StudentProfile) => ({
+  subjects: idList(p.subjects),
+  goal: p.goal ?? null,
+  level: p.level ?? null,
+  pace: p.pace ?? null,
+  budgetMin: p.budgetMin ?? null,
+  budgetMax: p.budgetMax ?? null,
+  goalDetails: p.goalDetails ?? "",
+  preferredLanguages: idList(p.preferredLanguages),
+  onboardedAt: p.onboardedAt ?? null,
 });
 
-export async function GET(req: NextRequest) {
-  try {
-    const student = await getStudentContext(req);
-    const student360 = await domainStudentService.getStudent360(student.userId);
-    return NextResponse.json(student360);
-  } catch (error: any) {
-    console.error('[GET /api/student/profile]', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: error.statusCode || 500 }
-    );
-  }
+async function student(req: NextRequest) {
+  const payload = await getPayloadClient();
+  const { user } = (await payload.auth({ headers: req.headers })) as { user: User | null };
+  return { payload, user: user?.role === "student" ? user : null };
 }
 
-export async function PUT(req: NextRequest) {
-  try {
-    const student = await getStudentContext(req);
-    const body = await req.json();
-    const parsed = UpdateProfileSchema.safeParse(body);
+/** GET /api/student/profile: learning goals. */
+export async function GET(req: NextRequest) {
+  const { payload, user } = await student(req);
+  if (!user) return fail("Only students can do this.", 403);
+  return NextResponse.json({ profile: serialize(await ownStudentProfile(payload, user)) });
+}
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid update payload', details: parsed.error.format() },
-        { status: 400 }
-      );
-    }
-
-    await domainStudentService.updateProfile(student.userId, parsed.data);
-    return NextResponse.json({ success: true, message: 'Profile updated successfully.' });
-
-  } catch (error: any) {
-    console.error('[PUT /api/student/profile]', error);
-    return NextResponse.json(
-      { error: error.message || 'Internal Server Error' },
-      { status: error.statusCode || 500 }
-    );
-  }
+/** PATCH /api/student/profile: update learning goals. */
+export async function PATCH(req: NextRequest) {
+  const { payload, user } = await student(req);
+  if (!user) return fail("Only students can do this.", 403);
+  const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const profile = await ownStudentProfile(payload, user);
+  const num = (v: unknown) => (v === null || v === "" || v === undefined ? null : Number.isFinite(Number(v)) && Number(v) >= 0 ? Math.round(Number(v)) : null);
+  const data: Record<string, unknown> = { onboardedAt: profile.onboardedAt ?? new Date().toISOString() };
+  if (Array.isArray(b.subjects)) data.subjects = b.subjects.map(Number).filter(Boolean).slice(0, 10);
+  if (b.goal !== undefined) data.goal = pick(STUDENT_GOALS, b.goal);
+  if (b.level !== undefined) data.level = pick(STUDENT_LEVELS, b.level);
+  if (b.pace !== undefined) data.pace = pick(STUDENT_PACE, b.pace);
+  if (b.budgetMin !== undefined) data.budgetMin = num(b.budgetMin);
+  if (b.budgetMax !== undefined) data.budgetMax = num(b.budgetMax);
+  if (data.budgetMin != null && data.budgetMax != null && (data.budgetMin as number) > (data.budgetMax as number)) return fail("The lowest price must be below the highest.");
+  if (typeof b.goalDetails === "string") data.goalDetails = b.goalDetails.slice(0, 600);
+  if (Array.isArray(b.preferredLanguages)) data.preferredLanguages = b.preferredLanguages.map(Number).filter(Boolean).slice(0, 5);
+  const updated = await payload.update({ collection: "student-profiles", id: profile.id, data, overrideAccess: true });
+  return NextResponse.json({ profile: serialize(updated) });
 }

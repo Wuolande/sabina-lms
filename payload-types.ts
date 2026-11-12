@@ -333,6 +333,10 @@ export interface TutorProfile {
    * Public name, e.g. "Jane D."
    */
   displayName?: string | null;
+  /**
+   * Follows the tutor's account photo.
+   */
+  photo?: (number | null) | Media;
   slug?: string | null;
   country?: string | null;
   timezone?: string | null;
@@ -641,6 +645,7 @@ export interface TutorProfilesSelect<T extends boolean = true> {
   status?: T;
   user?: T;
   displayName?: T;
+  photo?: T;
   slug?: T;
   country?: T;
   timezone?: T;

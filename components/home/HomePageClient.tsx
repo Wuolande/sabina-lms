@@ -36,8 +36,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Rating } from "@/components/ui/Rating";
 import { TutorCard } from "@/components/marketplace/TutorCard";
-import { BookingModal } from "@/components/booking/BookingModal";
-import { TutorDiscoveryModal } from "@/components/discovery/TutorDiscoveryModal";
+import type { PublicTutor } from "@/cms/marketplace/public";
+import { CATEGORY_LABEL } from "@/components/subjects/SubjectIcon";
 import { CountUp } from "@/components/ui/CountUp";
 import { TutorCardSkeleton, SubjectCardSkeleton } from "@/components/ui/Skeleton";
 import { tutorService } from "@/services/tutorService";
@@ -48,28 +48,27 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
 interface HomePageClientProps {
   initialCms: any | null;
-  initialFeaturedTutors: TutorProfile[];
+  initialFeaturedTutors: PublicTutor[];
   initialPopularSubjects: Subject[];
+  currency: string;
 }
 
 export function HomePageClient({
   initialCms,
   initialFeaturedTutors,
   initialPopularSubjects,
+  currency,
 }: HomePageClientProps) {
   const router = useRouter();
 
   // Instant pre-rendered state from server props
   const [cms, setCms] = React.useState<any | null>(initialCms);
-  const [featuredTutors, setFeaturedTutors] = React.useState<TutorProfile[]>(initialFeaturedTutors || []);
-  const [popularSubjects, setPopularSubjects] = React.useState<Subject[]>(initialPopularSubjects || []);
+  const [featuredTutors] = React.useState<PublicTutor[]>(initialFeaturedTutors || []);
+  const [popularSubjects] = React.useState<Subject[]>(initialPopularSubjects || []);
   const [isTutorsLoading, setIsTutorsLoading] = React.useState(false);
   const [isSubjectsLoading, setIsSubjectsLoading] = React.useState(false);
 
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
-  const [bookingTutor, setBookingTutor] = React.useState<TutorProfile | null>(null);
-  const [isBookingOpen, setIsBookingOpen] = React.useState(false);
-  const [isDiscoveryOpen, setIsDiscoveryOpen] = React.useState(false);
   const [activeTourTab, setActiveTourTab] = React.useState<"video" | "whiteboard" | "notes" | "goals">("video");
   const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(0);
 
@@ -78,33 +77,12 @@ export function HomePageClient({
 
   // Sync if initial props were not provided (fallback)
   React.useEffect(() => {
-    if (!initialFeaturedTutors || initialFeaturedTutors.length === 0) {
-      setIsTutorsLoading(true);
-      tutorService
-        .getFeaturedTutors()
-        .then(setFeaturedTutors)
-        .finally(() => setIsTutorsLoading(false));
-    }
-
-    if (!initialPopularSubjects || initialPopularSubjects.length === 0) {
-      setIsSubjectsLoading(true);
-      tutorService
-        .getPopularSubjects()
-        .then(setPopularSubjects)
-        .finally(() => setIsSubjectsLoading(false));
-    }
-
     if (!initialCms) {
       tutorService.getHomepageContent().then((data) => {
         if (data) setCms(data);
       });
     }
-  }, [initialCms, initialFeaturedTutors, initialPopularSubjects]);
-
-  const handleBook = (tutor: TutorProfile) => {
-    setBookingTutor(tutor);
-    setIsBookingOpen(true);
-  };
+  }, [initialCms]);
 
   const handleQuickSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,16 +95,17 @@ export function HomePageClient({
 
   const categories = [
     { id: "all", label: "All Disciplines" },
-    { id: "Languages", label: "Languages" },
-    { id: "STEM", label: "STEM & Mathematics" },
-    { id: "Coding", label: "Coding & Tech" },
-    { id: "Exam Prep", label: "Exam Prep" },
-    { id: "Business", label: "Business & Finance" },
+    { id: "languages", label: "Languages" },
+    { id: "mathematics", label: "Mathematics" },
+    { id: "sciences", label: "Sciences" },
+    { id: "coding", label: "Coding & Tech" },
+    { id: "exam-prep", label: "Exam Prep" },
+    { id: "business", label: "Business" },
   ];
 
   const filteredSubjects = selectedCategory === "all"
     ? popularSubjects
-    : popularSubjects.filter((s) => s.category.toLowerCase().includes(selectedCategory.toLowerCase()) || selectedCategory.toLowerCase().includes(s.category.toLowerCase()));
+    : popularSubjects.filter((s) => s.category === selectedCategory);
 
   // ── CMS Content Fallbacks (Using Real Uploaded Cloudinary Image) ──
   const hero = cms?.heroSection || {
@@ -320,7 +299,7 @@ export function HomePageClient({
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
                   <button
                     type="button"
-                    onClick={() => setIsDiscoveryOpen(true)}
+                    onClick={() => router.push("/find-tutors")}
                     className="h-12 sm:h-14 px-5 sm:px-7 rounded-2xl bg-brand hover:opacity-90 text-white font-black text-xs sm:text-base flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer group shrink-0 min-h-[44px]"
                   >
                     <Sparkles className="h-4 w-4 text-accent fill-accent group-hover:rotate-12 transition-transform" />
@@ -659,7 +638,7 @@ export function HomePageClient({
                     {sub.name}
                   </h3>
                   <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mt-0.5 truncate">
-                    {sub.category}
+                    {CATEGORY_LABEL[sub.category] ?? sub.category}
                   </span>
 
                   <p className="text-xs text-slate-500 line-clamp-2 mt-1.5 sm:mt-2 leading-relaxed">
@@ -709,7 +688,7 @@ export function HomePageClient({
         ) : featuredTutors.length > 0 ? (
           <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {featuredTutors.map((tutor) => (
-              <TutorCard key={tutor.id} tutor={tutor} onBook={handleBook} />
+              <TutorCard key={tutor.id} tutor={tutor} currency={currency} signedIn={false} showSave={false} />
             ))}
           </div>
         ) : (
@@ -1100,7 +1079,7 @@ export function HomePageClient({
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto shrink-0 relative z-10">
-            <Link href="/onboarding/tutor" className="w-full sm:w-auto">
+            <Link href="/register?role=tutor" className="w-full sm:w-auto">
               <Button
                 variant="default"
                 size="lg"
@@ -1168,25 +1147,6 @@ export function HomePageClient({
         </div>
       </section>
 
-      {/* Booking Modal */}
-      <ErrorBoundary fallbackTitle="Booking Unavailable" fallbackMessage="Could not open booking at this moment. Please try again.">
-        <BookingModal
-          tutor={bookingTutor}
-          isOpen={isBookingOpen}
-          onClose={() => setIsBookingOpen(false)}
-        />
-      </ErrorBoundary>
-
-      {/* Preply-Style Tutor Discovery Matchmaker Modal */}
-      <ErrorBoundary fallbackTitle="Tutor Matchmaker Unavailable" fallbackMessage="Could not open matchmaker at this moment. Please explore our tutors directory.">
-        <TutorDiscoveryModal
-          isOpen={isDiscoveryOpen}
-          onClose={() => setIsDiscoveryOpen(false)}
-          onSelectTutorToBook={handleBook}
-          initialTutors={featuredTutors}
-          initialSubjects={popularSubjects}
-        />
-      </ErrorBoundary>
     </div>
   );
 }

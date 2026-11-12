@@ -21,12 +21,12 @@ export const NAV: Record<PortalRole, NavItem[]> = {
     { href: "/student/lessons", label: "My lessons", short: "Lessons", icon: "BookOpen", phase: 5, primary: true },
     { href: "/student/calendar", label: "Calendar", icon: "CalendarDays", phase: 3, primary: true },
     { href: "/student/messages", label: "Messages", icon: "MessageSquare", phase: 6, primary: true },
-    { href: "/student/favorites", label: "Saved tutors", icon: "Heart", phase: 2 },
+    { href: "/student/favorites", label: "Saved tutors", icon: "Heart" },
     { href: "/student/progress", label: "Progress", icon: "TrendingUp", phase: 5 },
     { href: "/student/payments", label: "Payments", icon: "CreditCard", phase: 4 },
     { href: "/student/billing", label: "Invoices", icon: "Receipt", phase: 4 },
     { href: "/student/notifications", label: "Notifications", icon: "Bell", phase: 6 },
-    { href: "/student/profile", label: "Profile", icon: "User", phase: 2 },
+    { href: "/student/profile", label: "Learning goals", icon: "Target" },
     { href: "/student/settings", label: "Account settings", icon: "Settings" },
   ],
   tutor: [
@@ -40,7 +40,7 @@ export const NAV: Record<PortalRole, NavItem[]> = {
     { href: "/tutor/reviews", label: "Reviews", icon: "Star", phase: 5 },
     { href: "/tutor/training", label: "Academy", icon: "GraduationCap", phase: 7 },
     { href: "/tutor/notifications", label: "Notifications", icon: "Bell", phase: 6 },
-    { href: "/tutor/profile", label: "Public profile", icon: "User", phase: 2 },
+    { href: "/tutor/profile", label: "Profile & application", short: "Profile", icon: "User" },
     { href: "/tutor/settings", label: "Account settings", icon: "Settings" },
   ],
 };

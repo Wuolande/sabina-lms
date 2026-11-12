@@ -119,6 +119,7 @@ export function StudentHome() {
   const steps: Step[] = [
     { done: true, title: "Confirm your email", sub: "Your account is active." },
     { done: profileDone(user), title: "Complete your account", sub: "Add a photo, phone number and country.", href: "/student/settings", cta: "Complete" },
+    { done: Boolean(user.goalsSet), title: "Set your learning goals", sub: "Get tutor recommendations that fit you.", href: "/student/profile", cta: "Set goals" },
     { done: false, title: "Find your tutor", sub: "Browse verified tutors by subject and price.", href: "/find-tutors", cta: "Browse" },
     { done: false, title: "Book your first lesson", sub: "Pick a time that suits you.", phase: 3 },
   ];
@@ -139,18 +140,35 @@ export function StudentHome() {
   );
 }
 
+const APP_STEP: Record<string, { done: boolean; sub: string; cta?: string }> = {
+  none: { done: false, sub: "Subjects, experience, ID and certificates.", cta: "Start" },
+  draft: { done: false, sub: "Subjects, experience, ID and certificates.", cta: "Continue" },
+  changes_requested: { done: false, sub: "Our team asked for a few changes.", cta: "Update" },
+  submitted: { done: true, sub: "Submitted. We'll email you within 48 hours." },
+  approved: { done: true, sub: "Approved." },
+  rejected: { done: true, sub: "Not approved. Contact support with questions." },
+  suspended: { done: true, sub: "Suspended. Contact support." },
+};
+
 export function TutorHome() {
   const user = usePortalUser();
+  const st = user.tutorStatus ?? "none";
+  const app = APP_STEP[st] ?? APP_STEP.none!;
+  const live = st === "approved";
   const steps: Step[] = [
     { done: true, title: "Confirm your email", sub: "Your account is active." },
     { done: profileDone(user), title: "Complete your account", sub: "Add a photo, phone number and country.", href: "/tutor/settings", cta: "Complete" },
-    { done: false, title: "Submit your tutor application", sub: "Subjects, experience, ID and certificates.", phase: 2 },
+    { done: app.done, title: "Submit your tutor application", sub: app.sub, href: app.done ? undefined : "/tutor/profile", cta: app.cta },
+    { done: live, title: "Get verified and go live", sub: live ? "Your profile is live in the marketplace." : "We review applications within 48 hours." },
     { done: false, title: "Set your availability", sub: "Choose the hours students can book.", phase: 3 },
-    { done: false, title: "Get verified and go live", sub: "We review applications within 48 hours.", phase: 2 },
   ];
   return (
     <div className="space-y-6">
-      <Hero user={user} line="Welcome to Sabina. Finish setting up and students will be able to find and book you." />
+      <Hero
+        user={user}
+        line={live ? "Your profile is live. Students can find you in the marketplace." : st === "submitted" ? "Your application is with our team. We'll email you as soon as it's reviewed." : "Welcome to Sabina. Finish your application and students will be able to find and book you."}
+        cta={live && user.tutorSlug ? { href: `/tutors/${user.tutorSlug}`, label: "View my profile", icon: ArrowRight } : st === "none" || st === "draft" || st === "changes_requested" ? { href: "/tutor/profile", label: st === "changes_requested" ? "Update application" : "Continue application", icon: ArrowRight } : undefined}
+      />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat icon={Wallet} label="Earned this month" value="—" note="Payouts arrive weekly" tone="emerald" />
         <Stat icon={CalendarDays} label="Upcoming lessons" value="0" note="Nothing booked yet" tone="brand" />

@@ -93,6 +93,7 @@ export const TutorProfiles: CollectionConfig = {
         if (userId && (operation === "create" || !originalDoc?.displayName)) {
           const u = await req.payload.findByID({ collection: "users", id: userId, depth: 0, overrideAccess: true }).catch(() => null);
           if (u) {
+            data.photo ??= typeof u.avatar === "object" && u.avatar ? u.avatar.id : u.avatar;
             data.displayName = u.firstName && u.lastName ? `${u.firstName} ${String(u.lastName).charAt(0)}.` : u.name;
             data.country ??= u.country;
             data.timezone ??= u.timezone;
@@ -255,6 +256,7 @@ export const TutorProfiles: CollectionConfig = {
     { name: "status", type: "select", required: true, defaultValue: "draft", options: [...TUTOR_STATUSES], index: true, access: { update: reviewerField }, admin: { position: "sidebar" } },
     { name: "user", type: "relationship", relationTo: "users", required: true, unique: true, index: true, access: { update: staffField, read: ownerOrReviewerField }, admin: { position: "sidebar" } },
     { name: "displayName", type: "text", index: true, admin: { position: "sidebar", description: "Public name, e.g. \"Jane D.\"" } },
+    { name: "photo", type: "upload", relationTo: "media", admin: { position: "sidebar", readOnly: true, description: "Follows the tutor's account photo." } },
     { name: "slug", type: "text", unique: true, index: true, access: { update: staffField }, admin: { position: "sidebar" } },
     { name: "country", type: "text", index: true, admin: { position: "sidebar" } },
     { name: "timezone", type: "text", admin: { position: "sidebar" } },

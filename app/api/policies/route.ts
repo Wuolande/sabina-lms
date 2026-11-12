@@ -1,14 +1,8 @@
-import { NextResponse } from 'next/server';
-import { getPlatformPolicies } from '@/src/shared/config/platformPolicies';
+import { NextResponse } from "next/server";
+import { getPayloadClient } from "@/cms/auth/session";
+import { getPolicies } from "@/cms/tutors/server";
 
+/** GET /api/policies : public fees and booking policies (Settings › Fees & policies). */
 export async function GET() {
-  try {
-    const policies = await getPlatformPolicies();
-    return NextResponse.json(policies);
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: 'Failed to fetch policies' },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(await getPolicies(await getPayloadClient()), { headers: { "Cache-Control": "public, max-age=300" } });
 }

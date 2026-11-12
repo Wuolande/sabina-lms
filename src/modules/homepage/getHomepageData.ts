@@ -1,11 +1,14 @@
 import { adminSupabase } from "@/src/shared/database/supabase";
-import { TutorProfile, Subject } from "@/types";
+import { Subject } from "@/types";
+import { getPayloadClient } from "@/cms/auth/session";
+import { searchTutors, subjectsWithCounts, type PublicTutor } from "@/cms/marketplace/public";
 
 export { DEFAULT_HERO_IMAGE } from "./constants";
 
 export interface HomepageServerData {
   cms: any | null;
-  featuredTutors: TutorProfile[];
+  featuredTutors: PublicTutor[];
+  currency: string;
   popularSubjects: Subject[];
 }
 
@@ -45,66 +48,28 @@ export async function getHomepageServerData(): Promise<HomepageServerData> {
       }
     })();
 
-    // 2. Fetch featured tutors
-    const tutorsPromise = (async () => {
-      try {
-        const { data } = await adminSupabase.rpc("get_marketplace_tutors", {
-          p_is_featured: true,
-          p_limit: 4,
-          p_offset: 0,
-          p_sort_by: "popularity",
-        });
-        return ((data as any)?.tutors as TutorProfile[]) || [];
-      } catch (err) {
-        console.error("[getHomepageServerData] Tutors fetch error:", err);
-        return [] as TutorProfile[];
-      }
-    })();
+    // 2. Featured tutors (Payload): featured first, then best rated.
+    const payload = await getPayloadClient();
+    const tutorsPromise = searchTutors(payload, { sort: "recommended" })
+      .then((r) => ({ tutors: r.tutors.slice(0, 4), currency: r.policies.currency }))
+      .catch(() => ({ tutors: [] as PublicTutor[], currency: "USD" }));
 
-    // 3. Fetch popular subjects
-    const subjectsPromise = (async () => {
-      try {
-        const { data } = await adminSupabase
-          .from("subjects")
-          .select(`
-            id,
-            name,
-            slug,
-            category,
-            description,
-            is_active,
-            is_featured,
-            tutors:tutor_subjects(count)
-          `)
-          .eq("is_active", true)
-          .order("is_featured", { ascending: false })
-          .order("name", { ascending: true })
-          .limit(12);
+    // 3. Popular subjects (Payload): featured first, with tutor counts.
+    const subjectsPromise = subjectsWithCounts(payload)
+      .then((list) =>
+        [...list]
+          .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || b.tutorCount - a.tutorCount)
+          .slice(0, 12)
+          .map((s) => ({ id: String(s.id), name: s.name, slug: s.slug, category: s.category, description: s.description, iconName: s.icon, tutorCount: s.tutorCount }) as unknown as Subject),
+      )
+      .catch(() => [] as Subject[]);
 
-        return (data || []).map((s: any) => ({
-          id: s.id,
-          name: s.name,
-          slug: s.slug,
-          category: s.category,
-          description: s.description || `Master ${s.name} with certified 1-on-1 educators.`,
-          iconName: s.icon_name || s.iconName || "BookOpen",
-          tutorCount: s.tutors?.[0]?.count || 0,
-        })) as Subject[];
-      } catch (err) {
-        console.error("[getHomepageServerData] Subjects fetch error:", err);
-        return [] as Subject[];
-      }
-    })();
-
-    const [cms, featuredTutors, popularSubjects] = await Promise.all([
-      cmsPromise,
-      tutorsPromise,
-      subjectsPromise,
-    ]);
+    const [cms, featured, popularSubjects] = await Promise.all([cmsPromise, tutorsPromise, subjectsPromise]);
 
     return {
       cms,
-      featuredTutors,
+      featuredTutors: featured.tutors,
+      currency: featured.currency,
       popularSubjects,
     };
   } catch (err) {
@@ -112,6 +77,7 @@ export async function getHomepageServerData(): Promise<HomepageServerData> {
     return {
       cms: null,
       featuredTutors: [],
+      currency: "USD",
       popularSubjects: [],
     };
   }

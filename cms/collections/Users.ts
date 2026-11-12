@@ -63,6 +63,16 @@ export const Users: CollectionConfig = {
           .catch(() => undefined);
       },
     ],
+    afterChange: [
+      // Tutors' public profile photo follows their account photo.
+      async ({ doc, previousDoc, req, operation }) => {
+        if (operation !== "update" || doc.role !== "tutor") return;
+        const id = (v: unknown) => (v && typeof v === "object" ? (v as { id: unknown }).id : v) ?? null;
+        if (id(doc.avatar) === id(previousDoc?.avatar)) return;
+        const t = await req.payload.find({ collection: "tutor-profiles", where: { user: { equals: doc.id } }, limit: 1, depth: 0, overrideAccess: true, req });
+        if (t.docs[0]) await req.payload.update({ collection: "tutor-profiles", id: t.docs[0].id, data: { photo: id(doc.avatar) as number | null }, overrideAccess: true, req });
+      },
+    ],
     beforeChange: [
       async ({ data, operation, req, originalDoc }) => {
         // Keep the display name in sync with first and last name.

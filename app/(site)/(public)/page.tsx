@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const { cms, featuredTutors, popularSubjects } = await getHomepageServerData();
+  const { cms, featuredTutors, popularSubjects, currency } = await getHomepageServerData();
   const heroImage = cms?.heroSection?.heroStudentImage || DEFAULT_HERO_IMAGE;
 
   return (
@@ -30,6 +30,7 @@ export default async function HomePage() {
         initialCms={cms}
         initialFeaturedTutors={featuredTutors}
         initialPopularSubjects={popularSubjects}
+        currency={currency}
       />
     </>
   );
