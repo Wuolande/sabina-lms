@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarCheck, CalendarDays, CheckCircle2, Clock, Hourglass, Loader2, Sparkles, Zap } from "lucide-react";
 import type { LessonOption } from "@/cms/scheduling/server";
 import { useZones } from "@/components/portal/AccountSettings";
+import { PayStep, type Provider } from "@/components/payments/PayStep";
 import { controlCls } from "@/components/portal/form";
 import { addDays, dateKey, DAYS_SHORT, fmtDay, fmtRange, fmtTime, tzLabel, weekdayOfKey, zonedParts } from "@/lib/time";
 import { money } from "@/lib/money";
@@ -30,7 +31,8 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ status: string; reference: string; startsAt: string; endsAt: string } | null>(null);
+  type Held = { id: number; status: string; reference: string; startsAt: string; endsAt: string; holdUntil: string | null; price: number; currency: string };
+  const [done, setDone] = useState<{ booking: Held; providers: Provider[] } | null>(null);
 
   const load = useCallback(
     async (minutes?: number) => {
@@ -86,9 +88,9 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tutorId: tutor.id, startsAt: slot, kind: option.kind, minutes: option.minutes, subjectId, note, timezone: tz }),
     }).catch(() => null);
-    const d = (await res?.json().catch(() => ({}))) as { booking?: { status: string; reference: string; startsAt: string; endsAt: string }; error?: string };
+    const d = (await res?.json().catch(() => ({}))) as { booking?: Held; providers?: Provider[]; error?: string };
     setBusy(false);
-    if (res?.ok && d.booking) return setDone(d.booking);
+    if (res?.ok && d.booking) return setDone({ booking: d.booking, providers: d.providers ?? [] });
     setError(d.error || "We couldn't book that lesson. Please try again.");
     if (res?.status === 409) {
       setSlot(null);
@@ -97,25 +99,49 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
   }
 
   if (done) {
-    const confirmed = done.status === "confirmed";
+    const b = done.booking;
     return (
-      <div className="mx-auto max-w-xl rounded-3xl bg-white p-8 text-center ring-1 ring-slate-200/70">
-        <span className={`mx-auto grid h-16 w-16 place-items-center rounded-2xl ${confirmed ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>{confirmed ? <CheckCircle2 size={32} /> : <Hourglass size={30} />}</span>
-        <h2 className="mt-5 font-heading text-2xl font-bold text-slate-900">{confirmed ? "Your lesson is booked" : "Request sent"}</h2>
-        <p className="mt-2 text-slate-600">
-          {fmtDay(done.startsAt, tz)}, {fmtRange(done.startsAt, done.endsAt, tz)}
-        </p>
-        <p className="mx-auto mt-3 max-w-sm text-sm text-slate-500">
-          {confirmed ? `We've emailed you the details. Reference ${done.reference}.` : `${tutor.name.split(" ")[0]} will accept or decline soon. We're holding the time for you and will email you their answer.`}
-        </p>
-        <div className="mt-7 flex flex-col justify-center gap-2 sm:flex-row">
-          <Link href="/student/lessons" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 font-semibold text-white hover:bg-brand-800">
-            <CalendarCheck size={18} /> My lessons
-          </Link>
-          <Link href={`/tutors/${tutor.slug}`} className="inline-flex h-12 items-center justify-center rounded-xl px-5 font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50">
-            Back to profile
-          </Link>
-        </div>
+      <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <section className="rounded-3xl bg-white p-6 ring-1 ring-slate-200/70">
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Almost done</p>
+          <h2 className="mt-1 font-heading text-2xl font-bold text-slate-900">Pay to {data?.instant ? "confirm" : "send your request"}</h2>
+          <dl className="mt-5 space-y-3 text-sm">
+            <div className="flex items-start gap-3">
+              <Clock size={17} className="mt-0.5 text-slate-400" />
+              <dd className="text-slate-800">{option?.kind === "trial" ? `Trial lesson · ${option.minutes} min` : `${Math.round((Date.parse(b.endsAt) - Date.parse(b.startsAt)) / 60000)}-minute lesson`} with {tutor.name}</dd>
+            </div>
+            <div className="flex items-start gap-3">
+              <CalendarDays size={17} className="mt-0.5 text-slate-400" />
+              <dd className="text-slate-800">
+                {fmtDay(b.startsAt, tz)}
+                <br />
+                {fmtRange(b.startsAt, b.endsAt, tz)}
+              </dd>
+            </div>
+          </dl>
+          <div className="mt-5 flex items-baseline justify-between border-t border-slate-100 pt-4">
+            <span className="text-sm text-slate-500">Total</span>
+            <span className="font-heading text-2xl font-bold text-slate-900">{money(b.price, b.currency)}</span>
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            {data?.instant ? "Your lesson is confirmed as soon as payment goes through." : `${tutor.name.split(" ")[0]} then has until the lesson to accept; if they decline you get a full refund.`} Free cancellation up to {cancellationHours} hours before.
+          </p>
+        </section>
+        <section className="rounded-3xl bg-white p-6 ring-1 ring-slate-200/70">
+          <h3 className="font-heading text-lg font-bold text-slate-900">Payment method</h3>
+          <div className="mt-4">
+            <PayStep bookingId={b.id} amount={b.price} currency={b.currency} holdUntil={b.holdUntil} providers={done.providers} />
+          </div>
+          <button type="button" onClick={async () => {
+              // Release the held time before choosing another.
+              await fetch(`/api/bookings/${b.id}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "cancel", reason: "Picked another time" }) }).catch(() => null);
+              setDone(null);
+              setSlot(null);
+              void load(option?.minutes);
+            }} className="mt-3 w-full text-center text-sm font-medium text-slate-500 hover:text-brand-700">
+            Pick a different time
+          </button>
+        </section>
       </div>
     );
   }
@@ -299,7 +325,7 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
           )}
           <button type="button" onClick={confirm} disabled={!slot || !option || busy} className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-700 font-semibold text-white transition hover:bg-brand-800 disabled:opacity-50">
             {busy ? <Loader2 size={18} className="animate-spin" /> : data?.instant ? <Zap size={18} /> : <CalendarCheck size={18} />}
-            {data?.instant ? "Book lesson" : "Send request"}
+            Continue to payment
           </button>
           <p className="mt-3 text-center text-xs text-slate-500">{data?.instant ? "Instant booking: confirmed straight away." : `${tutor.name.split(" ")[0]} confirms requests personally.`} Free cancellation up to {cancellationHours} hours before.</p>
         </div>

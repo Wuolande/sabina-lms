@@ -62,7 +62,17 @@ export async function getDashboardData(payload: Payload, range: Range) {
     bookingCount({ status: { equals: "requested" } }),
   ]);
 
+  const paid = has("payments")
+    ? await payload
+        .find({ collection: "payments", where: { and: [{ paidAt: { greater_than_equal: since.toISOString() } }, { status: { in: ["succeeded", "partially_refunded", "refunded"] } }] }, limit: 10000, pagination: false, depth: 0, select: { amount: true, refundedAmount: true, currency: true }, overrideAccess: true })
+        .then((r) => r.docs as { amount: number; refundedAmount?: number | null; currency: string }[])
+        .catch(() => [])
+    : [];
+  const gross = Math.round(paid.reduce((n, p) => n + p.amount - (p.refundedAmount ?? 0), 0) * 100) / 100;
+  const payoutsDue = has("payouts") ? await payload.count({ collection: "payouts", where: { status: { in: ["requested", "processing"] } }, overrideAccess: true }).then((r) => r.totalDocs).catch(() => 0) : 0;
+
   return {
+    revenue: { gross, currency: paid[0]?.currency ?? "USD", count: paid.length, payoutsDue },
     lessons: { booked, upcoming, requests },
     totals: { students, tutors, staff, all: students + tutors + staff },
     signups: { count: recent.length, delta: pct(recent.length, prevCount), spark: buckets.map((b) => b.students + b.tutors + b.staff) },

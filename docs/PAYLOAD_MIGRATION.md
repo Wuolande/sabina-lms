@@ -162,6 +162,36 @@ Not yet moved: the onboarding screens (`/onboarding/*`, phase 2), the public tut
   Admin: Bookings and Tutor schedules, plus lesson numbers on the dashboard.
 - Browser tests: `tests/e2e/phase3-booking.spec.ts` (including two students racing for one slot).
 
+## Phase 4: done
+
+- Pay to book: a booking first holds the time ("awaiting payment", 15 minutes by default) while
+  the student pays. A successful payment confirms it (instant booking) or sends the tutor a
+  request. Unpaid holds release the time automatically. If a payment arrives after the hold ran
+  out, the lesson is still booked when the time is free; otherwise the money goes straight back.
+- Providers, each switched on by its secret key and called over its REST API:
+  - **Stripe Checkout** for cards, Apple Pay and Google Pay. Webhook `/api/payments/webhook/stripe`.
+  - **Paystack** for M-Pesa, other mobile money and African cards. Webhook `/api/payments/webhook/paystack`.
+  - Webhook signatures are verified (Stripe: HMAC-SHA256 with a 10-minute tolerance; Paystack:
+    HMAC-SHA512). The return page also asks the provider directly in case a webhook is slow.
+  - **Test payment**: a simulated checkout, offered only outside production when no keys are set
+    (or with `PAYMENTS_DEV_MODE=on`). It lets the whole flow be tried and tested end to end.
+- Refunds follow the rules: full refund when the tutor declines or cancels, when a request expires
+  unanswered, or when the student cancels before the free-cancellation window. Late
+  cancellations refund the percentage set in Fees & policies (0% by default). Refunds go back
+  through the original provider and are emailed.
+- Payments, Payouts and Payout details collections (admin › Money). Settings › Fees & policies
+  gains hold time, late-cancellation refund %, days before earnings clear (2) and minimum payout.
+- Students: `/student/payments` (history, totals) and printable receipts. Emailed receipts.
+- Tutors: `/tutor/earnings`: available, clearing, upcoming and paid-out balances; per-lesson
+  earnings after the platform fee; M-Pesa, bank or PayPal payout details; "Request payout" for
+  everything available. Finance marks a payout paid in the admin (with a transfer reference) and
+  the tutor is emailed.
+- Admin dashboard: revenue for the period and payouts waiting to be sent.
+- Browser tests: `tests/e2e/phase4-payments.spec.ts`.
+
+To go live: add `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` and/or `PAYSTACK_SECRET_KEY`, and
+register the webhook URLs above in each dashboard. PayPal can be added later as a third provider.
+
 ### Running locally
 
 ```bash

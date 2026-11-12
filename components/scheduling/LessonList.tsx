@@ -12,7 +12,7 @@ type Tab = "requests" | "upcoming" | "past" | "cancelled";
 export function LessonList({ lessons, role, tz, cancellationHours, initialTab }: { lessons: LessonView[]; role: "student" | "tutor"; tz: string; cancellationHours: number; initialTab?: Tab }) {
   const groups = useMemo(() => {
     const requests = lessons.filter((l) => l.phase === "requested");
-    const upcoming = lessons.filter((l) => l.phase === "upcoming" || (role === "student" && l.phase === "requested"));
+    const upcoming = lessons.filter((l) => l.phase === "upcoming" || (role === "student" && (l.phase === "requested" || l.phase === "payment")));
     const past = lessons.filter((l) => l.phase === "finished").reverse();
     const cancelled = lessons.filter((l) => l.phase === "cancelled").reverse();
     return { requests, upcoming, past, cancelled };

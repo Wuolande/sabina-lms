@@ -31,7 +31,7 @@ function openRanges(a: Availability, fromKey: string, days: number): [number, nu
 }
 
 const tone = (l: LessonView) =>
-  l.phase === "requested" ? "bg-amber-50 text-amber-900 ring-amber-300 border-dashed" : l.phase === "finished" ? "bg-slate-100 text-slate-600 ring-slate-200" : "bg-brand-600 text-white ring-brand-700";
+  l.phase === "requested" || l.phase === "payment" ? "bg-amber-50 text-amber-900 ring-amber-300 border-dashed" : l.phase === "finished" ? "bg-slate-100 text-slate-600 ring-slate-200" : "bg-brand-600 text-white ring-brand-700";
 
 /** Week view of lessons (and, for tutors, open hours) in the viewer's time zone. Phones get a day agenda. */
 export function WeekCalendar({ lessons, tz, role, availability }: { lessons: LessonView[]; tz: string; role: "student" | "tutor"; availability?: Availability | null }) {

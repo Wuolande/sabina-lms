@@ -54,6 +54,7 @@ export const MENU: MenuSection[] = [
       { kind: "collection", slug: "invoices", label: "Invoices", icon: "Receipt" },
       { kind: "collection", slug: "refunds", label: "Refunds", icon: "Repeat" },
       { kind: "collection", slug: "payouts", label: "Tutor payouts", icon: "Banknote" },
+      { kind: "collection", slug: "payout-methods", label: "Payout details", icon: "Landmark" },
     ],
   },
   {

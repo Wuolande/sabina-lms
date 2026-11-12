@@ -24,7 +24,7 @@ const PHASES = [
   ["Content & academy", "Blog, pages, SEO, tutor training"],
   ["Dashboards & launch", "Reports, cleanup, launch checklist"],
 ] as const;
-const CURRENT_PHASE = 4;
+const CURRENT_PHASE = 5;
 
 /** The Sabina dashboard (replaces Payload's default collection grid). */
 export async function DashboardView({ initPageResult, searchParams }: AdminViewServerProps) {
@@ -131,16 +131,18 @@ export async function DashboardView({ initPageResult, searchParams }: AdminViewS
                 {d.lessons.upcoming} upcoming{d.lessons.requests ? ` · ${d.lessons.requests} awaiting tutors` : ""}
               </span>
             </a>
-            <div className="ep-kpi-tile">
+            <a className="ep-kpi-tile" href="/admin/collections/payments">
               <div className="ep-kpi-tile__top">
                 <IconChip>
                   <Wallet />
                 </IconChip>
               </div>
               <span className="ep-kpi__label">Revenue</span>
-              <span className="ep-kpi__value">—</span>
-              <span className="ep-kpi-tile__note">{d.modules.payments ? "" : "Arrives in phase 4"}</span>
-            </div>
+              <span className="ep-kpi__value">{new Intl.NumberFormat("en-US", { style: "currency", currency: d.revenue.currency, maximumFractionDigits: 0 }).format(d.revenue.gross)}</span>
+              <span className="ep-kpi-tile__note">
+                {d.revenue.count} payments{d.revenue.payoutsDue ? ` · ${d.revenue.payoutsDue} payouts to send` : ""}
+              </span>
+            </a>
           </div>
         </div>
 

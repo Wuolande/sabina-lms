@@ -61,11 +61,11 @@ export async function bookingOptions(payload: Payload, tutor: TutorProfile, poli
   return opts;
 }
 
-const instantFor = (tutor: TutorProfile, schedule: Schedule | null, policies: Policies) => Boolean(policies.instantBookingEnabled && (schedule ? schedule.instantBooking : tutor.instantBooking));
+export const instantFor = (tutor: TutorProfile, schedule: Schedule | null, policies: Policies) => Boolean(policies.instantBookingEnabled && (schedule ? schedule.instantBooking : tutor.instantBooking));
 
 /* ------------------------------------------------------------------ slots */
 
-async function busyFor(payload: Payload, where: Where, from: number, to: number, req?: Partial<PayloadRequest>) {
+export async function busyFor(payload: Payload, where: Where, from: number, to: number, req?: Partial<PayloadRequest>) {
   const r = await payload.find({
     collection: "bookings",
     where: { and: [where, { status: { in: HOLDING } }, { startsAt: { less_than: new Date(to).toISOString() } }, { endsAt: { greater_than: new Date(from).toISOString() } }] },
@@ -80,6 +80,7 @@ async function busyFor(payload: Payload, where: Where, from: number, to: number,
 
 /** Open start times for a tutor. When a student is given, their own lessons are blocked out too. */
 export async function openSlots(payload: Payload, tutor: TutorProfile, minutes: number, policies: Policies, studentId?: number | null) {
+  await expireStale(payload).catch(() => undefined);
   const schedule = await scheduleFor(payload, tutor);
   const timezone = safeTz(schedule?.timezone ?? tutor.timezone);
   if (!schedule?.weekly?.length) return { timezone, slots: [] as number[], hasHours: false, instant: instantFor(tutor, schedule, policies) };
@@ -104,7 +105,7 @@ export async function openSlots(payload: Payload, tutor: TutorProfile, minutes: 
 /* ------------------------------------------------------------------ locking */
 
 /** Run `fn` in a transaction holding advisory locks, so two people can't take the same time. */
-async function withLocks<T>(payload: Payload, keys: [number, number][], fn: (req: Partial<PayloadRequest>) => Promise<T>): Promise<T> {
+export async function withLocks<T>(payload: Payload, keys: [number, number][], fn: (req: Partial<PayloadRequest>) => Promise<T>): Promise<T> {
   const transactionID = (await payload.db.beginTransaction()) as string | number;
   const req: Partial<PayloadRequest> = { transactionID };
   try {
@@ -121,10 +122,10 @@ async function withLocks<T>(payload: Payload, keys: [number, number][], fn: (req
 
 /* ------------------------------------------------------------------ mail */
 
-const personOf = (u: User): MailPerson => ({ email: u.email, firstName: u.firstName, timezone: u.timezone });
+export const personOf = (u: User): MailPerson => ({ email: u.email, firstName: u.firstName, timezone: u.timezone });
 const shortName = (u: Pick<User, "firstName" | "lastName" | "name" | "email">) => (u.firstName ? `${u.firstName}${u.lastName ? ` ${u.lastName.charAt(0)}.` : ""}` : (u.name ?? u.email.split("@")[0]));
 
-async function mailContext(payload: Payload, b: Booking) {
+export async function mailContext(payload: Payload, b: Booking) {
   const [student, tutorUser, tutor, subject] = await Promise.all([
     payload.findByID({ collection: "users", id: idOf(b.student)!, depth: 0, overrideAccess: true }),
     payload.findByID({ collection: "users", id: idOf(b.tutorUser)!, depth: 0, overrideAccess: true }),
@@ -135,7 +136,7 @@ async function mailContext(payload: Payload, b: Booking) {
   return { student, tutorUser, lesson };
 }
 
-function send(payload: Payload, to: string, mail: { subject: string; html: string }) {
+export function send(payload: Payload, to: string, mail: { subject: string; html: string }) {
   return payload.sendEmail({ to, subject: mail.subject, html: mail.html }).catch((err: unknown) => payload.logger.error({ err }, "[bookings] email failed"));
 }
 
@@ -147,6 +148,7 @@ export async function createBooking(
   input: { tutorId: number; startsAt: string; kind: "trial" | "regular"; minutes: number; subjectId?: number | null; note?: string; timezone?: string },
 ) {
   if (student.role !== "student") throw new BookingError("Only student accounts can book lessons.", 403);
+  await expireStale(payload).catch(() => undefined);
   const policies = await getPolicies(payload);
   const tutor = await payload.findByID({ collection: "tutor-profiles", id: input.tutorId, depth: 0, overrideAccess: true }).catch(() => null);
   if (!tutor || tutor.status !== "approved") throw new BookingError("This tutor isn't taking bookings right now.", 404);
@@ -192,8 +194,10 @@ export async function createBooking(
         collection: "bookings",
         data: {
           reference: `SB-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-          status: instant ? "confirmed" : "requested",
+          status: "pending_payment",
           paymentStatus: "unpaid",
+          autoConfirm: instant,
+          holdUntil: new Date(Date.now() + policies.paymentHoldMinutes * 60_000).toISOString(),
           startsAt: new Date(start).toISOString(),
           endsAt: new Date(end).toISOString(),
           student: student.id,
@@ -207,8 +211,7 @@ export async function createBooking(
           platformFeePercent: policies.platformFeePercent,
           studentNote: input.note?.trim().slice(0, 1000) || null,
           studentTimezone: safeTz(input.timezone ?? student.timezone),
-          respondedAt: instant ? now : null,
-          history: [{ action: instant ? "booked" : "requested", by: student.id, at: now }],
+          history: [{ action: "held for payment", by: student.id, at: now }],
         },
         overrideAccess: true,
         req,
@@ -216,10 +219,6 @@ export async function createBooking(
     },
   );
 
-  const ctx = await mailContext(payload, booking);
-  const mails = instant ? bookedConfirmed(ctx.lesson, personOf(ctx.student), personOf(ctx.tutorUser)) : bookingRequested(ctx.lesson, personOf(ctx.student), personOf(ctx.tutorUser));
-  void send(payload, ctx.student.email, mails.student);
-  void send(payload, ctx.tutorUser.email, mails.tutor);
   return booking;
 }
 
@@ -245,12 +244,14 @@ export async function actOnBooking(payload: Payload, user: User, id: number, act
   } else if (action === "cancel") {
     if (!HOLDING.includes(b.status as BookingStatus)) throw new BookingError("This lesson can't be cancelled.", 409);
     if (started) throw new BookingError("This lesson has already started.", 409);
+    if (b.status === "pending_payment" && !isStudent) throw new BookingError("Booking not found.", 404);
     if (isTutor && b.status === "confirmed" && !note) throw new BookingError("Please tell the student why you're cancelling.");
     const policies = await getPolicies(payload);
     const late = Boolean(isStudent && b.status === "confirmed" && Date.parse(b.startsAt) - now < policies.cancellationRefundHours * 3600_000);
     patch = { status: "cancelled", cancelledBy: isStudent ? "student" : "tutor", cancelReason: note, cancelledAt: new Date().toISOString(), lateCancellation: late };
   } else throw new BookingError("Unknown action.");
 
+  const wasUnpaid = b.status === "pending_payment";
   const updated = await payload.update({
     collection: "bookings",
     id: b.id,
@@ -258,6 +259,16 @@ export async function actOnBooking(payload: Payload, user: User, id: number, act
     overrideAccess: true,
   });
 
+  // Money back: in full when the tutor declines or cancels, or the student cancels in time.
+  if (!wasUnpaid && (patch.status === "declined" || patch.status === "cancelled")) {
+    const policies = await getPolicies(payload);
+    const percent = patch.lateCancellation ? Number(policies.lateCancellationRefundPercent ?? 0) : 100;
+    const why = patch.status === "declined" ? "Tutor declined the request" : isTutor ? "Tutor cancelled the lesson" : patch.lateCancellation ? "Late cancellation by the student" : "Cancelled by the student";
+    const { refundBooking } = await import("../payments/server");
+    await refundBooking(payload, updated.id, percent, why).catch((err) => payload.logger.error({ err }, "[bookings] refund failed"));
+  }
+
+  if (wasUnpaid) return updated;
   const ctx = await mailContext(payload, updated);
   if (action === "accept") void send(payload, ctx.student.email, requestAccepted(ctx.lesson, personOf(ctx.student)));
   else if (action === "decline") void send(payload, ctx.student.email, requestDeclined(ctx.lesson, personOf(ctx.student)));
@@ -266,15 +277,30 @@ export async function actOnBooking(payload: Payload, user: User, id: number, act
   return updated;
 }
 
-/** Requests nobody answered before the lesson time lapse. Cheap; called when lists load. */
+/**
+ * Housekeeping, cheap enough to run whenever lists load: unpaid holds release their time, and paid
+ * requests nobody answered before the lesson lapse with a full refund.
+ */
 export async function expireStale(payload: Payload) {
+  const nowIso = new Date().toISOString();
   await payload.update({
     collection: "bookings",
-    where: { and: [{ status: { equals: "requested" } }, { startsAt: { less_than_equal: new Date().toISOString() } }] },
-    data: { status: "expired", cancelledBy: "system", cancelledAt: new Date().toISOString() },
+    where: { and: [{ status: { equals: "pending_payment" } }, { holdUntil: { less_than_equal: nowIso } }] },
+    data: { status: "expired", cancelledBy: "system", cancelledAt: nowIso, cancelReason: "Not paid in time" },
     overrideAccess: true,
     depth: 0,
   });
+  const lapsed = await payload.update({
+    collection: "bookings",
+    where: { and: [{ status: { equals: "requested" } }, { startsAt: { less_than_equal: nowIso } }] },
+    data: { status: "expired", cancelledBy: "system", cancelledAt: nowIso, cancelReason: "The tutor didn't reply in time" },
+    overrideAccess: true,
+    depth: 0,
+  });
+  if (lapsed.docs.length) {
+    const { refundBooking } = await import("../payments/server");
+    for (const b of lapsed.docs) await refundBooking(payload, b.id, 100, "Request expired").catch((err) => payload.logger.error({ err }, "[bookings] refund failed"));
+  }
 }
 
 /* ------------------------------------------------------------------ views */
@@ -285,7 +311,9 @@ export type LessonView = {
   id: number;
   reference: string;
   status: BookingStatus;
-  phase: "requested" | "upcoming" | "finished" | "cancelled";
+  phase: "payment" | "requested" | "upcoming" | "finished" | "cancelled";
+  holdUntil: string | null;
+  refundedAmount: number;
   startsAt: string;
   endsAt: string;
   minutes: number;
@@ -310,7 +338,7 @@ export async function listLessons(payload: Payload, user: User, opts: { from?: D
   const policies = await getPolicies(payload);
   const where: Where = {
     and: [
-      role === "tutor" ? { tutorUser: { equals: user.id } } : { student: { equals: user.id } },
+      role === "tutor" ? { and: [{ tutorUser: { equals: user.id } }, { status: { not_equals: "pending_payment" } }] } : { student: { equals: user.id } },
       ...(opts.from ? [{ endsAt: { greater_than: opts.from.toISOString() } }] : []),
       ...(opts.to ? [{ startsAt: { less_than: opts.to.toISOString() } }] : []),
     ] as Where[],
@@ -322,7 +350,7 @@ export async function listLessons(payload: Payload, user: User, opts: { from?: D
     const student = b.student as User;
     const holding = HOLDING.includes(b.status as BookingStatus);
     const future = Date.parse(b.startsAt) > now;
-    const phase: LessonView["phase"] = !holding && b.status !== "completed" && b.status !== "no_show" ? "cancelled" : b.status === "requested" ? "requested" : Date.parse(b.endsAt) > now && b.status === "confirmed" ? "upcoming" : "finished";
+    const phase: LessonView["phase"] = b.status === "pending_payment" ? "payment" : !holding && b.status !== "completed" && b.status !== "no_show" ? "cancelled" : b.status === "requested" ? "requested" : Date.parse(b.endsAt) > now && b.status === "confirmed" ? "upcoming" : "finished";
     return {
       id: b.id,
       reference: b.reference ?? "",
@@ -344,6 +372,8 @@ export async function listLessons(payload: Payload, user: User, opts: { from?: D
         role === "tutor"
           ? { name: typeof student === "object" ? shortName(student) : "Student", avatar: typeof student === "object" ? mediaUrl(student.avatar) : null, href: null }
           : { name: tutor?.displayName ?? "Tutor", avatar: mediaUrl(tutor?.photo), href: tutor?.slug ? `/tutors/${tutor.slug}` : null },
+      holdUntil: b.holdUntil ?? null,
+      refundedAmount: b.refundedAmount ?? 0,
       canCancel: holding && future,
       canRespond: role === "tutor" && b.status === "requested" && future,
       lateIfCancelledNow: role === "student" && b.status === "confirmed" && Date.parse(b.startsAt) - now < policies.cancellationRefundHours * 3600_000,

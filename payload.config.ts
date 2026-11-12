@@ -16,6 +16,8 @@ import { TutorProfiles } from "./cms/collections/TutorProfiles";
 import { StudentProfiles } from "./cms/collections/StudentProfiles";
 import { Schedules } from "./cms/collections/Schedules";
 import { Bookings } from "./cms/collections/Bookings";
+import { Payments } from "./cms/collections/Payments";
+import { PayoutMethods, Payouts } from "./cms/collections/Payouts";
 import { r2Config, r2PublicUrl, r2Ready } from "./cms/storage/r2";
 import { migrations } from "./cms/migrations";
 import { seedCatalogue } from "./cms/seed/catalogue";
@@ -80,7 +82,7 @@ export default buildConfig({
     },
     importMap: { baseDir: path.resolve(dirname) },
   },
-  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Subjects, Languages, Media, PrivateFiles],
+  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Payments, Payouts, PayoutMethods, Subjects, Languages, Media, PrivateFiles],
   globals: [SiteSettings, PlatformSettings],
   upload: { limits: { fileSize: 20 * 1024 * 1024 } },
   editor: lexicalEditor(),

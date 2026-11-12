@@ -9,7 +9,14 @@ import { listLessons } from "./server";
 export async function homeData(user: User): Promise<HomeData> {
   const payload = await getPayloadClient();
   const lessons = await listLessons(payload, user);
-  const live = lessons.filter((l) => l.phase === "upcoming" || l.phase === "requested");
+  let earned: number | null = null;
+  if (user.role === "tutor") {
+    const { tutorEarnings } = await import("../payments/server");
+    const e = await tutorEarnings(payload, user);
+    const month = new Date().toISOString().slice(0, 7);
+    earned = Math.round(e.rows.filter((r) => r.date.slice(0, 7) === month).reduce((n, r) => n + r.net, 0) * 100) / 100;
+  }
+  const live = lessons.filter((l) => l.phase === "upcoming" || l.phase === "requested" || l.phase === "payment");
   const done = lessons.filter((l) => l.phase === "finished");
   const people = new Set(lessons.filter((l) => l.phase !== "cancelled").map((l) => l.other.name)).size;
   let hasHours = false;
@@ -25,6 +32,8 @@ export async function homeData(user: User): Promise<HomeData> {
     people,
     requests: lessons.filter((l) => l.phase === "requested").length,
     hasHours,
-    booked: lessons.some((l) => l.phase !== "cancelled"),
+    booked: lessons.some((l) => l.phase !== "cancelled" && l.phase !== "payment"),
+    earned,
+    currency: lessons[0]?.currency ?? "USD",
   };
 }

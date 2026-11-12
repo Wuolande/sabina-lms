@@ -2,6 +2,7 @@ import type { CollectionConfig, Where } from "payload";
 import { hasRole, isAdmin, isStaffUser } from "../access";
 
 export const BOOKING_STATUSES = [
+  { label: "Awaiting payment", value: "pending_payment" },
   { label: "Requested", value: "requested" },
   { label: "Confirmed", value: "confirmed" },
   { label: "Completed", value: "completed" },
@@ -12,7 +13,7 @@ export const BOOKING_STATUSES = [
 ] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number]["value"];
 /** Statuses that hold a time slot. */
-export const HOLDING: BookingStatus[] = ["requested", "confirmed"];
+export const HOLDING: BookingStatus[] = ["pending_payment", "requested", "confirmed"];
 
 /**
  * One lesson booked between a student and a tutor. Created only through /api/bookings, which
@@ -42,7 +43,7 @@ export const Bookings: CollectionConfig = {
   fields: [
     { name: "reference", type: "text", unique: true, index: true, admin: { readOnly: true, position: "sidebar" } },
     { name: "status", type: "select", required: true, defaultValue: "requested", options: [...BOOKING_STATUSES], index: true, admin: { position: "sidebar" } },
-    { name: "paymentStatus", type: "select", defaultValue: "unpaid", options: ["unpaid", "paid", "refunded", "partially_refunded", "waived"].map((v) => ({ label: v.replace("_", " "), value: v })), admin: { position: "sidebar" } },
+    { name: "paymentStatus", type: "select", defaultValue: "unpaid", options: ["unpaid", "paid", "refunded", "partially_refunded", "waived", "failed"].map((v) => ({ label: v.replace("_", " "), value: v })), admin: { position: "sidebar" } },
     {
       type: "row",
       fields: [
@@ -87,6 +88,9 @@ export const Bookings: CollectionConfig = {
         { name: "lateCancellation", type: "checkbox", admin: { description: "The student cancelled inside the free-cancellation window." } },
       ],
     },
+    { name: "autoConfirm", type: "checkbox", admin: { readOnly: true, position: "sidebar", description: "Instant booking: confirmed as soon as it's paid." } },
+    { name: "holdUntil", type: "date", admin: { readOnly: true, position: "sidebar", description: "Unpaid bookings release the time after this." } },
+    { name: "refundedAmount", type: "number", defaultValue: 0, admin: { readOnly: true, position: "sidebar" } },
     { name: "respondedAt", type: "date", admin: { readOnly: true, position: "sidebar" } },
     {
       name: "history",

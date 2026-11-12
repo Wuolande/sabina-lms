@@ -72,6 +72,9 @@ export interface Config {
     'student-profiles': StudentProfile;
     schedules: Schedule;
     bookings: Booking;
+    payments: Payment;
+    payouts: Payout;
+    'payout-methods': PayoutMethod;
     subjects: Subject;
     languages: Language;
     media: Media;
@@ -88,6 +91,9 @@ export interface Config {
     'student-profiles': StudentProfilesSelect<false> | StudentProfilesSelect<true>;
     schedules: SchedulesSelect<false> | SchedulesSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
+    payments: PaymentsSelect<false> | PaymentsSelect<true>;
+    payouts: PayoutsSelect<false> | PayoutsSelect<true>;
+    'payout-methods': PayoutMethodsSelect<false> | PayoutMethodsSelect<true>;
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
     languages: LanguagesSelect<false> | LanguagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -489,8 +495,9 @@ export interface Schedule {
 export interface Booking {
   id: number;
   reference?: string | null;
-  status: 'requested' | 'confirmed' | 'completed' | 'declined' | 'cancelled' | 'expired' | 'no_show';
-  paymentStatus?: ('unpaid' | 'paid' | 'refunded' | 'partially_refunded' | 'waived') | null;
+  status:
+    'pending_payment' | 'requested' | 'confirmed' | 'completed' | 'declined' | 'cancelled' | 'expired' | 'no_show';
+  paymentStatus?: ('unpaid' | 'paid' | 'refunded' | 'partially_refunded' | 'waived' | 'failed') | null;
   startsAt: string;
   endsAt: string;
   student: number | User;
@@ -514,6 +521,15 @@ export interface Booking {
    * The student cancelled inside the free-cancellation window.
    */
   lateCancellation?: boolean | null;
+  /**
+   * Instant booking: confirmed as soon as it's paid.
+   */
+  autoConfirm?: boolean | null;
+  /**
+   * Unpaid bookings release the time after this.
+   */
+  holdUntil?: string | null;
+  refundedAmount?: number | null;
   respondedAt?: string | null;
   history?:
     | {
@@ -524,6 +540,110 @@ export interface Booking {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payments".
+ */
+export interface Payment {
+  id: number;
+  reference: string;
+  status: 'pending' | 'succeeded' | 'failed' | 'cancelled' | 'refunded' | 'partially_refunded';
+  provider: 'stripe' | 'paystack' | 'dev';
+  /**
+   * card, mobile_money, …
+   */
+  method?: string | null;
+  amount: number;
+  currency: string;
+  refundedAmount?: number | null;
+  booking: number | Booking;
+  student: number | User;
+  tutor?: (number | null) | TutorProfile;
+  /**
+   * Stripe Checkout session / Paystack reference.
+   */
+  providerRef?: string | null;
+  /**
+   * Stripe payment intent / Paystack transaction id, used for refunds.
+   */
+  chargeRef?: string | null;
+  checkoutUrl?: string | null;
+  paidAt?: string | null;
+  failureReason?: string | null;
+  refunds?:
+    | {
+        amount?: number | null;
+        reason?: string | null;
+        providerRef?: string | null;
+        at?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Provider events received (latest last).
+   */
+  events?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payouts".
+ */
+export interface Payout {
+  id: number;
+  reference: string;
+  status: 'requested' | 'processing' | 'paid' | 'failed' | 'cancelled';
+  amount: number;
+  currency: string;
+  tutorUser: number | User;
+  /**
+   * Copied from the tutor's payout details when they asked.
+   */
+  destination?: {
+    method?: ('mpesa' | 'bank' | 'paypal') | null;
+    details?: string | null;
+  };
+  method?: string | null;
+  /**
+   * M-Pesa code or bank reference, shown to the tutor.
+   */
+  transferRef?: string | null;
+  notes?: string | null;
+  paidAt?: string | null;
+  /**
+   * Lessons this payout covers.
+   */
+  bookings?: (number | Booking)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payout-methods".
+ */
+export interface PayoutMethod {
+  id: number;
+  user: number | User;
+  method: 'mpesa' | 'bank' | 'paypal';
+  mpesaPhone?: string | null;
+  accountName?: string | null;
+  bankName?: string | null;
+  accountNumber?: string | null;
+  swift?: string | null;
+  paypalEmail?: string | null;
+  summary?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -570,6 +690,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'bookings';
         value: number | Booking;
+      } | null)
+    | ({
+        relationTo: 'payments';
+        value: number | Payment;
+      } | null)
+    | ({
+        relationTo: 'payouts';
+        value: number | Payout;
+      } | null)
+    | ({
+        relationTo: 'payout-methods';
+        value: number | PayoutMethod;
       } | null)
     | ({
         relationTo: 'subjects';
@@ -835,6 +967,9 @@ export interface BookingsSelect<T extends boolean = true> {
   cancelReason?: T;
   cancelledAt?: T;
   lateCancellation?: T;
+  autoConfirm?: T;
+  holdUntil?: T;
+  refundedAmount?: T;
   respondedAt?: T;
   history?:
     | T
@@ -845,6 +980,80 @@ export interface BookingsSelect<T extends boolean = true> {
         note?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payments_select".
+ */
+export interface PaymentsSelect<T extends boolean = true> {
+  reference?: T;
+  status?: T;
+  provider?: T;
+  method?: T;
+  amount?: T;
+  currency?: T;
+  refundedAmount?: T;
+  booking?: T;
+  student?: T;
+  tutor?: T;
+  providerRef?: T;
+  chargeRef?: T;
+  checkoutUrl?: T;
+  paidAt?: T;
+  failureReason?: T;
+  refunds?:
+    | T
+    | {
+        amount?: T;
+        reason?: T;
+        providerRef?: T;
+        at?: T;
+        id?: T;
+      };
+  events?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payouts_select".
+ */
+export interface PayoutsSelect<T extends boolean = true> {
+  reference?: T;
+  status?: T;
+  amount?: T;
+  currency?: T;
+  tutorUser?: T;
+  destination?:
+    | T
+    | {
+        method?: T;
+        details?: T;
+      };
+  method?: T;
+  transferRef?: T;
+  notes?: T;
+  paidAt?: T;
+  bookings?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payout-methods_select".
+ */
+export interface PayoutMethodsSelect<T extends boolean = true> {
+  user?: T;
+  method?: T;
+  mpesaPhone?: T;
+  accountName?: T;
+  bankName?: T;
+  accountNumber?: T;
+  swift?: T;
+  paypalEmail?: T;
+  summary?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1037,6 +1246,16 @@ export interface PlatformSetting {
    * Off: every booking is a request the tutor accepts.
    */
   instantBookingEnabled?: boolean | null;
+  paymentHoldMinutes?: number | null;
+  /**
+   * When a student cancels inside the free-cancellation window.
+   */
+  lateCancellationRefundPercent?: number | null;
+  /**
+   * Days after a lesson ends before the tutor can withdraw it.
+   */
+  earningsHoldDays?: number | null;
+  minimumPayout?: number | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1086,6 +1305,10 @@ export interface PlatformSettingsSelect<T extends boolean = true> {
   classroomEarlyJoinMinutes?: T;
   bookingWindowDays?: T;
   instantBookingEnabled?: T;
+  paymentHoldMinutes?: T;
+  lateCancellationRefundPercent?: T;
+  earningsHoldDays?: T;
+  minimumPayout?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -6,8 +6,9 @@ import { PHASE_NAMES } from "./nav";
 import type { PortalUser } from "./types";
 import type { LessonView } from "@/cms/scheduling/server";
 import { fmtDay, fmtRange } from "@/lib/time";
+import { money } from "@/lib/money";
 
-export type HomeData = { tz: string; upcoming: LessonView[]; upcomingCount: number; hours: number; people: number; requests: number; hasHours: boolean; booked: boolean };
+export type HomeData = { tz: string; upcoming: LessonView[]; upcomingCount: number; hours: number; people: number; requests: number; hasHours: boolean; booked: boolean; earned: number | null; currency: string };
 
 function UpcomingPanel({ data, role }: { data: HomeData; role: "student" | "tutor" }) {
   const href = role === "tutor" ? "/tutor/lessons" : "/student/lessons";
@@ -209,7 +210,7 @@ export function TutorHome({ data }: { data: HomeData }) {
         cta={live && user.tutorSlug ? { href: `/tutors/${user.tutorSlug}`, label: "View my profile", icon: ArrowRight } : st === "none" || st === "draft" || st === "changes_requested" ? { href: "/tutor/profile", label: st === "changes_requested" ? "Update application" : "Continue application", icon: ArrowRight } : undefined}
       />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat icon={Wallet} label="Earned this month" value="—" note="Payouts arrive weekly" tone="emerald" />
+        <Stat icon={Wallet} label="Earned this month" value={data.earned != null ? money(data.earned, data.currency) : "—"} note="After the platform fee" tone="emerald" />
         <Stat icon={CalendarDays} label="Upcoming lessons" value={String(data.upcomingCount)} note={data.requests ? `${data.requests} request${data.requests > 1 ? "s" : ""} to answer` : data.upcomingCount ? "Confirmed lessons" : "Nothing booked yet"} tone="brand" />
         <Stat icon={Users} label="Active students" value={String(data.people)} note="Students who booked you" tone="accent" />
         <Stat icon={Star} label="Rating" value="—" note="After your first reviews" tone="slate" />
