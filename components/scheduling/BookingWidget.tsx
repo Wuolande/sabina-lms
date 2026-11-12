@@ -160,7 +160,10 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
                   key={`${o.kind}-${o.minutes}`}
                   type="button"
                   aria-pressed={on}
-                  onClick={() => setChoice({ kind: o.kind, minutes: o.minutes })}
+                  onClick={() => {
+                    if (choice?.minutes !== o.minutes) setSlot(null);
+                    setChoice({ kind: o.kind, minutes: o.minutes });
+                  }}
                   className={`rounded-2xl p-4 text-left ring-1 transition ${on ? "bg-brand-50 ring-2 ring-brand-600" : "bg-white ring-slate-200 hover:ring-brand-300"}`}
                 >
                   <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
@@ -245,6 +248,7 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
                                 key={s}
                                 type="button"
                                 aria-pressed={slot === s}
+                                disabled={loading}
                                 onClick={() => setSlot(s)}
                                 className={`h-11 rounded-xl text-sm font-semibold ring-1 transition ${slot === s ? "bg-brand-700 text-white ring-brand-700" : "bg-white text-slate-800 ring-slate-200 hover:bg-brand-50 hover:ring-brand-300"}`}
                               >

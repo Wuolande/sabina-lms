@@ -33,7 +33,9 @@ test("pay to book, failed payment, expiry, refunds, earnings and payout", async 
   await signIn(ctx, student);
   const page = await ctx.newPage();
   await page.goto(`/tutors/${tutor.slug}/book`);
+  const reloaded = page.waitForResponse((r) => r.url().includes("/slots?minutes=60"));
   await page.getByRole("button", { name: /60 min/ }).click();
+  await reloaded;
   await page.locator("section", { hasText: "2. Pick a day and time" }).getByRole("button").filter({ hasText: /\d:\d\d (AM|PM)/ }).first().click();
   await page.getByRole("button", { name: "Continue to payment" }).click();
   await expect(page.getByRole("heading", { name: "Pay to confirm" })).toBeVisible();
@@ -110,7 +112,7 @@ test("pay to book, failed payment, expiry, refunds, earnings and payout", async 
 
   // 6. Earnings: move the first (paid, confirmed) lesson into the past so it clears.
   const first = (await sql<{ id: number }>("select id from payload.bookings where student_id = $1 and status = 'confirmed' and payment_status = 'paid' order by id limit 1", [student.id]))[0]!.id;
-  await sql("update payload.bookings set starts_at = now() - interval '5 days', ends_at = now() - interval '5 days' + interval '1 hour' where id = $1", [first]);
+  await sql("update payload.bookings set starts_at = now() - interval '5 days', ends_at = now() - interval '5 days' + interval '1 hour', tutor_joined_at = now() - interval '5 days' where id = $1", [first]);
   const tctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
   await signIn(tctx, tutor);
   const tp = await tctx.newPage();
