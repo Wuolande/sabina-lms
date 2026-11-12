@@ -79,12 +79,17 @@ export default async function TutorProfilePage({ params }: Props) {
         </p>
       )}
       <div className="mt-5 space-y-2.5">
-        <button type="button" disabled className="inline-flex h-12 w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-brand-700/60 font-semibold text-white">
-          <CalendarClock size={18} /> Booking opens soon
-        </button>
+        <Link href={`/tutors/${t.slug}/book`} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-700 font-semibold text-white transition hover:bg-brand-800">
+          <CalendarClock size={18} /> Book a lesson
+        </Link>
+        {t.trialPrice != null && (
+          <Link href={`/tutors/${t.slug}/book?type=trial`} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-50 font-semibold text-emerald-800 ring-1 ring-emerald-200 transition hover:bg-emerald-100">
+            Book a trial lesson
+          </Link>
+        )}
         {canSave && <SaveTutorButton tutorId={t.id} initialSaved={viewer.saved.has(t.id)} signedIn={viewer.signedIn} variant="full" />}
       </div>
-      <p className="mt-3 text-center text-xs text-slate-500">Save {t.name.split(" ")[0]} now and we&apos;ll let you know when booking opens.</p>
+      <p className="mt-3 text-center text-xs text-slate-500">{t.instantBooking ? "Instant booking: pick a time and you're confirmed." : `${t.name.split(" ")[0]} confirms each request personally.`} Free cancellation up to {policies.cancellationRefundHours} hours before.</p>
       <ul className="mt-5 space-y-2.5 border-t border-slate-100 pt-5 text-sm text-slate-600">
         <li className="flex items-center gap-2.5">
           <ShieldCheck size={17} className="text-emerald-600" /> ID and qualifications checked by Sabina

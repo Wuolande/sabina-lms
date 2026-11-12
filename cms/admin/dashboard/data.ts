@@ -54,7 +54,16 @@ export async function getDashboardData(payload: Payload, range: Range) {
     else if (STAFF.has(u.role ?? "")) b.staff++;
   }
 
+  const bookingCount = (where: Record<string, unknown>) =>
+    has("bookings") ? payload.count({ collection: "bookings", where: where as never, overrideAccess: true }).then((r) => r.totalDocs).catch(() => 0) : Promise.resolve(0);
+  const [booked, upcoming, requests] = await Promise.all([
+    bookingCount({ and: [{ createdAt: { greater_than_equal: since.toISOString() } }, { status: { in: ["requested", "confirmed", "completed"] } }] }),
+    bookingCount({ and: [{ startsAt: { greater_than: new Date().toISOString() } }, { status: { equals: "confirmed" } }] }),
+    bookingCount({ status: { equals: "requested" } }),
+  ]);
+
   return {
+    lessons: { booked, upcoming, requests },
     totals: { students, tutors, staff, all: students + tutors + staff },
     signups: { count: recent.length, delta: pct(recent.length, prevCount), spark: buckets.map((b) => b.students + b.tutors + b.staff) },
     studentSpark: buckets.map((b) => b.students),

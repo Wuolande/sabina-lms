@@ -24,7 +24,7 @@ const PHASES = [
   ["Content & academy", "Blog, pages, SEO, tutor training"],
   ["Dashboards & launch", "Reports, cleanup, launch checklist"],
 ] as const;
-const CURRENT_PHASE = 3;
+const CURRENT_PHASE = 4;
 
 /** The Sabina dashboard (replaces Payload's default collection grid). */
 export async function DashboardView({ initPageResult, searchParams }: AdminViewServerProps) {
@@ -119,16 +119,18 @@ export async function DashboardView({ initPageResult, searchParams }: AdminViewS
               <span className="ep-kpi__value">{d.totals.tutors}</span>
               <Sparkline data={d.tutorSpark} height={28} color="var(--brand-accent-dark, #C77F02)" />
             </a>
-            <div className="ep-kpi-tile">
+            <a className="ep-kpi-tile" href="/admin/collections/bookings">
               <div className="ep-kpi-tile__top">
                 <IconChip tone="success">
                   <CalendarCheck />
                 </IconChip>
               </div>
               <span className="ep-kpi__label">Lessons booked</span>
-              <span className="ep-kpi__value">—</span>
-              <span className="ep-kpi-tile__note">{d.modules.bookings ? "" : "Arrives in phase 3"}</span>
-            </div>
+              <span className="ep-kpi__value">{d.lessons.booked.toLocaleString()}</span>
+              <span className="ep-kpi-tile__note">
+                {d.lessons.upcoming} upcoming{d.lessons.requests ? ` · ${d.lessons.requests} awaiting tutors` : ""}
+              </span>
+            </a>
             <div className="ep-kpi-tile">
               <div className="ep-kpi-tile__top">
                 <IconChip>

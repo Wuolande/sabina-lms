@@ -75,6 +75,14 @@ export function Navbar() {
   const [portalsOpen, setPortalsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const portalsRef = React.useRef<HTMLDivElement>(null);
+  // Signed-in visitors get a link to their portal instead of "Sign up / Log in".
+  const [me, setMe] = React.useState<{ name: string; home: string } | null>(null);
+  React.useEffect(() => {
+    fetch("/api/auth/session", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.authenticated && setMe({ name: d.user?.firstName || d.user?.name || "My account", home: d.home || "/" }))
+      .catch(() => undefined);
+  }, []);
 
   React.useEffect(() => {
     setMounted(true);
@@ -253,27 +261,38 @@ export function Navbar() {
 
         {/* ─── 3. Right Auth & Quick Actions ─── */}
         <div className="hidden sm:flex items-center gap-2.5">
-          <Link
-            href="/register"
-            className="h-10 px-5 inline-flex items-center rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-xs hover:border-slate-300 hover:bg-slate-50 transition-all active:scale-[0.98]"
-          >
-            Sign up
-          </Link>
-          <Link
-            href="/login"
-            className="h-10 px-5 inline-flex items-center rounded-xl bg-brand text-xs font-bold text-white shadow-subtle hover:brightness-90 transition-all active:scale-[0.98]"
-          >
-            Log in
-          </Link>
+          {me ? (
+            <Link
+              href={me.home}
+              className="h-10 px-5 inline-flex items-center rounded-xl bg-brand text-xs font-bold text-white shadow-subtle hover:brightness-90 transition-all active:scale-[0.98]"
+            >
+              My dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/register"
+                className="h-10 px-5 inline-flex items-center rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-xs hover:border-slate-300 hover:bg-slate-50 transition-all active:scale-[0.98]"
+              >
+                Sign up
+              </Link>
+              <Link
+                href="/login"
+                className="h-10 px-5 inline-flex items-center rounded-xl bg-brand text-xs font-bold text-white shadow-subtle hover:brightness-90 transition-all active:scale-[0.98]"
+              >
+                Log in
+              </Link>
+            </>
+          )}
         </div>
 
         {/* ─── 4. Mobile Menu Toggle ─── */}
         <div className="flex lg:hidden items-center gap-2">
           <Link
-            href="/login"
+            href={me ? me.home : "/login"}
             className="h-9 px-4 inline-flex items-center rounded-xl bg-brand text-xs font-bold text-white hover:brightness-90 transition-all"
           >
-            Log in
+            {me ? "Dashboard" : "Log in"}
           </Link>
           <button
             type="button"
@@ -382,18 +401,24 @@ export function Navbar() {
             {/* Auth Action Buttons */}
             <div className="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
               <Link
-                href="/register"
+                href={me ? me.home : "/register"}
                 onClick={() => setMobileOpen(false)}
                 className="h-12 min-h-[48px] flex items-center justify-center rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-800 shadow-xs active:bg-slate-50"
               >
-                Sign up
+                {me ? "My dashboard" : "Sign up"}
               </Link>
               <Link
-                href="/login"
-                onClick={() => setMobileOpen(false)}
+                href={me ? "/api/auth/logout" : "/login"}
+                onClick={(e) => {
+                  setMobileOpen(false);
+                  if (me) {
+                    e.preventDefault();
+                    fetch("/api/auth/logout", { method: "POST", credentials: "include" }).finally(() => window.location.assign("/"));
+                  }
+                }}
                 className="h-12 min-h-[48px] flex items-center justify-center rounded-xl bg-brand text-sm font-bold text-white shadow-subtle hover:brightness-90 active:scale-[0.98] transition-all"
               >
-                Log in
+                {me ? "Sign out" : "Log in"}
               </Link>
             </div>
           </div>

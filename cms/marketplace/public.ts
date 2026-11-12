@@ -19,8 +19,8 @@ export type PublicTutor = {
   offersTrial: boolean;
   trialPrice: number | null;
   instantBooking: boolean;
-  primarySubject: { name: string; slug: string } | null;
-  subjects: { name: string; slug: string }[];
+  primarySubject: { id: number; name: string; slug: string } | null;
+  subjects: { id: number; name: string; slug: string }[];
   languages: { name: string; level: string }[];
   levelsTaught: string[];
   rating: number;
@@ -38,7 +38,7 @@ export type PublicTutor = {
 
 export type Policies = Awaited<ReturnType<typeof getPolicies>>;
 
-const sub = (s: unknown) => (s && typeof s === "object" ? { name: (s as Subject).name, slug: String((s as Subject).slug) } : null);
+const sub = (s: unknown) => (s && typeof s === "object" ? { id: (s as Subject).id, name: (s as Subject).name, slug: String((s as Subject).slug) } : null);
 
 export function toPublicTutor(t: TutorProfile, policies: Policies): PublicTutor {
   const photo = t.photo && typeof t.photo === "object" ? (t.photo as Media) : null;
@@ -59,7 +59,7 @@ export function toPublicTutor(t: TutorProfile, policies: Policies): PublicTutor 
     trialPrice: t.offersTrial && rate ? Math.round(((rate * policies.trialLessonMinutes) / 60) * (1 - policies.trialLessonDiscountPercent / 100) * 100) / 100 : null,
     instantBooking: Boolean(t.instantBooking),
     primarySubject: sub(t.primarySubject),
-    subjects: (t.subjects ?? []).map(sub).filter(Boolean) as { name: string; slug: string }[],
+    subjects: (t.subjects ?? []).map(sub).filter(Boolean) as { id: number; name: string; slug: string }[],
     languages: (t.languages ?? []).filter((l) => l.language && typeof l.language === "object").map((l) => ({ name: (l.language as Language).name, level: l.level })),
     levelsTaught: t.levelsTaught ?? [],
     rating: t.stats?.rating ?? 0,

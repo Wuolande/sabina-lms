@@ -18,8 +18,8 @@ export const PHASE_NAMES: Record<number, string> = {
 export const NAV: Record<PortalRole, NavItem[]> = {
   student: [
     { href: "/student", label: "Home", icon: "LayoutDashboard", exact: true, primary: true },
-    { href: "/student/lessons", label: "My lessons", short: "Lessons", icon: "BookOpen", phase: 5, primary: true },
-    { href: "/student/calendar", label: "Calendar", icon: "CalendarDays", phase: 3, primary: true },
+    { href: "/student/lessons", label: "My lessons", short: "Lessons", icon: "BookOpen", primary: true },
+    { href: "/student/calendar", label: "Calendar", icon: "CalendarDays", primary: true },
     { href: "/student/messages", label: "Messages", icon: "MessageSquare", phase: 6, primary: true },
     { href: "/student/favorites", label: "Saved tutors", icon: "Heart" },
     { href: "/student/progress", label: "Progress", icon: "TrendingUp", phase: 5 },
@@ -31,11 +31,11 @@ export const NAV: Record<PortalRole, NavItem[]> = {
   ],
   tutor: [
     { href: "/tutor", label: "Home", icon: "LayoutDashboard", exact: true, primary: true },
-    { href: "/tutor/calendar", label: "Schedule", icon: "CalendarDays", phase: 3, primary: true },
-    { href: "/tutor/lessons", label: "Lessons", icon: "BookOpen", phase: 5, primary: true },
+    { href: "/tutor/calendar", label: "Schedule", icon: "CalendarDays", primary: true },
+    { href: "/tutor/lessons", label: "Lessons", icon: "BookOpen", primary: true },
     { href: "/tutor/messages", label: "Messages", icon: "MessageSquare", phase: 6, primary: true },
     { href: "/tutor/students", label: "My students", icon: "Users", phase: 5 },
-    { href: "/tutor/availability", label: "Availability", icon: "Clock", phase: 3 },
+    { href: "/tutor/availability", label: "Availability", icon: "Clock" },
     { href: "/tutor/earnings", label: "Earnings", icon: "Wallet", phase: 4 },
     { href: "/tutor/reviews", label: "Reviews", icon: "Star", phase: 5 },
     { href: "/tutor/training", label: "Academy", icon: "GraduationCap", phase: 7 },

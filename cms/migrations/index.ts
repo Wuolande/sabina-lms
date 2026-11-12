@@ -1,6 +1,7 @@
 import * as migration_20261112_075834_initial from './20261112_075834_initial';
 import * as migration_20261112_085725_auth_verification from './20261112_085725_auth_verification';
 import * as migration_20261112_101517_tutors_catalogue from './20261112_101517_tutors_catalogue';
+import * as migration_20261112_140156_scheduling_bookings from './20261112_140156_scheduling_bookings';
 
 export const migrations = [
   {
@@ -16,6 +17,11 @@ export const migrations = [
   {
     up: migration_20261112_101517_tutors_catalogue.up,
     down: migration_20261112_101517_tutors_catalogue.down,
-    name: '20261112_101517_tutors_catalogue'
+    name: '20261112_101517_tutors_catalogue',
+  },
+  {
+    up: migration_20261112_140156_scheduling_bookings.up,
+    down: migration_20261112_140156_scheduling_bookings.down,
+    name: '20261112_140156_scheduling_bookings'
   },
 ];

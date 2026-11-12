@@ -80,7 +80,8 @@ export const TutorProfiles: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data, operation, req, originalDoc }) => {
+      async ({ data, operation, req, originalDoc, context }) => {
+        if (context?.skipTutorChecks) return data;
         // A tutor always owns exactly one profile: their own.
         if (operation === "create" && hasRole(req, "tutor")) {
           data.user = req.user!.id;

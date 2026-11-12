@@ -4,6 +4,45 @@ import { ArrowRight, CalendarDays, CheckCircle2, Circle, Clock, GraduationCap, S
 import { usePortalUser } from "./PortalShell";
 import { PHASE_NAMES } from "./nav";
 import type { PortalUser } from "./types";
+import type { LessonView } from "@/cms/scheduling/server";
+import { fmtDay, fmtRange } from "@/lib/time";
+
+export type HomeData = { tz: string; upcoming: LessonView[]; upcomingCount: number; hours: number; people: number; requests: number; hasHours: boolean; booked: boolean };
+
+function UpcomingPanel({ data, role }: { data: HomeData; role: "student" | "tutor" }) {
+  const href = role === "tutor" ? "/tutor/lessons" : "/student/lessons";
+  return (
+    <section className="rounded-3xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/70 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-heading text-lg font-semibold text-slate-900">Next lessons</h2>
+        <Link href={href} className="text-sm font-semibold text-brand-700 hover:underline">
+          See all
+        </Link>
+      </div>
+      <ul className="mt-4 space-y-2.5">
+        {data.upcoming.map((l) => (
+          <li key={l.id}>
+            <Link href={href} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 transition hover:bg-brand-50">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white text-center ring-1 ring-slate-200">
+                <span className="block text-[10px] font-semibold uppercase leading-none text-brand-700">{fmtDay(l.startsAt, data.tz, { month: "short" })}</span>
+                <span className="block font-heading text-lg font-bold leading-none text-slate-900">{fmtDay(l.startsAt, data.tz, { day: "numeric" })}</span>
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-slate-900">
+                  {l.kind === "trial" ? "Trial" : (l.subject ?? "Lesson")} · {l.other.name}
+                </span>
+                <span className="block text-sm text-slate-500">
+                  {fmtDay(l.startsAt, data.tz, { weekday: "short" })}, {fmtRange(l.startsAt, l.endsAt, data.tz)}
+                  {l.phase === "requested" ? (role === "tutor" ? " · needs reply" : " · awaiting tutor") : ""}
+                </span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 type Step = { done: boolean; title: string; sub: string; href?: string; cta?: string; phase?: number };
 
@@ -114,27 +153,27 @@ function Hero({ user, line, cta }: { user: PortalUser; line: string; cta?: { hre
   );
 }
 
-export function StudentHome() {
+export function StudentHome({ data }: { data: HomeData }) {
   const user = usePortalUser();
   const steps: Step[] = [
     { done: true, title: "Confirm your email", sub: "Your account is active." },
     { done: profileDone(user), title: "Complete your account", sub: "Add a photo, phone number and country.", href: "/student/settings", cta: "Complete" },
     { done: Boolean(user.goalsSet), title: "Set your learning goals", sub: "Get tutor recommendations that fit you.", href: "/student/profile", cta: "Set goals" },
-    { done: false, title: "Find your tutor", sub: "Browse verified tutors by subject and price.", href: "/find-tutors", cta: "Browse" },
-    { done: false, title: "Book your first lesson", sub: "Pick a time that suits you.", phase: 3 },
+    { done: data.booked, title: "Find your tutor", sub: "Browse verified tutors by subject and price.", href: data.booked ? undefined : "/find-tutors", cta: "Browse" },
+    { done: data.booked, title: "Book your first lesson", sub: data.booked ? "Booked. See you in class!" : "Pick a time that suits you.", href: data.booked ? undefined : "/find-tutors", cta: "Book" },
   ];
   return (
     <div className="space-y-6">
       <Hero user={user} line="Ready to learn something new today? Your lessons, tutors and progress live here." cta={{ href: "/find-tutors", label: "Find a tutor", icon: Search }} />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat icon={CalendarDays} label="Upcoming lessons" value="0" note="Nothing booked yet" tone="brand" />
-        <Stat icon={Clock} label="Hours learned" value="0" note="Starts with your first lesson" tone="accent" />
-        <Stat icon={Users} label="My tutors" value="0" note="Tutors you've learned with" tone="emerald" />
+        <Stat icon={CalendarDays} label="Upcoming lessons" value={String(data.upcomingCount)} note={data.upcomingCount ? "Booked and confirmed" : "Nothing booked yet"} tone="brand" />
+        <Stat icon={Clock} label="Hours learned" value={String(Math.round(data.hours * 10) / 10)} note="Starts with your first lesson" tone="accent" />
+        <Stat icon={Users} label="My tutors" value={String(data.people)} note="Tutors you've booked" tone="emerald" />
         <Stat icon={Star} label="Reviews given" value="0" note="Help others choose" tone="slate" />
       </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Checklist steps={steps} />
-        <EmptyPanel icon={BookOpen} title="No upcoming lessons" body="When you book a lesson it shows up here with a one-tap button to join the classroom." action={{ href: "/find-tutors", label: "Find a tutor" }} />
+        {data.upcoming.length ? <UpcomingPanel data={data} role="student" /> : <EmptyPanel icon={BookOpen} title="No upcoming lessons" body="When you book a lesson it shows up here with a one-tap button to join the classroom." action={{ href: "/find-tutors", label: "Find a tutor" }} />}
       </div>
     </div>
   );
@@ -150,7 +189,7 @@ const APP_STEP: Record<string, { done: boolean; sub: string; cta?: string }> = {
   suspended: { done: true, sub: "Suspended. Contact support." },
 };
 
-export function TutorHome() {
+export function TutorHome({ data }: { data: HomeData }) {
   const user = usePortalUser();
   const st = user.tutorStatus ?? "none";
   const app = APP_STEP[st] ?? APP_STEP.none!;
@@ -160,7 +199,7 @@ export function TutorHome() {
     { done: profileDone(user), title: "Complete your account", sub: "Add a photo, phone number and country.", href: "/tutor/settings", cta: "Complete" },
     { done: app.done, title: "Submit your tutor application", sub: app.sub, href: app.done ? undefined : "/tutor/profile", cta: app.cta },
     { done: live, title: "Get verified and go live", sub: live ? "Your profile is live in the marketplace." : "We review applications within 48 hours." },
-    { done: false, title: "Set your availability", sub: "Choose the hours students can book.", phase: 3 },
+    { done: data.hasHours, title: "Set your availability", sub: data.hasHours ? "Your weekly hours are set." : "Choose the hours students can book.", href: data.hasHours ? undefined : "/tutor/availability", cta: "Set hours" },
   ];
   return (
     <div className="space-y-6">
@@ -171,13 +210,13 @@ export function TutorHome() {
       />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat icon={Wallet} label="Earned this month" value="—" note="Payouts arrive weekly" tone="emerald" />
-        <Stat icon={CalendarDays} label="Upcoming lessons" value="0" note="Nothing booked yet" tone="brand" />
-        <Stat icon={Users} label="Active students" value="0" note="Students you teach" tone="accent" />
+        <Stat icon={CalendarDays} label="Upcoming lessons" value={String(data.upcomingCount)} note={data.requests ? `${data.requests} request${data.requests > 1 ? "s" : ""} to answer` : data.upcomingCount ? "Confirmed lessons" : "Nothing booked yet"} tone="brand" />
+        <Stat icon={Users} label="Active students" value={String(data.people)} note="Students who booked you" tone="accent" />
         <Stat icon={Star} label="Rating" value="—" note="After your first reviews" tone="slate" />
       </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Checklist steps={steps} />
-        <EmptyPanel icon={GraduationCap} title="Your teaching hub" body="Upcoming lessons, new booking requests and messages from students will appear here." />
+        {data.upcoming.length ? <UpcomingPanel data={data} role="tutor" /> : <EmptyPanel icon={GraduationCap} title="Your teaching hub" body="Upcoming lessons, new booking requests and messages from students will appear here." action={data.hasHours ? undefined : { href: "/tutor/availability", label: "Set your hours" }} />}
       </div>
     </div>
   );

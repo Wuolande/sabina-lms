@@ -21,7 +21,7 @@ function Section({ icon: Icon, title, sub, children }: { icon: typeof UserRound;
 }
 
 /** Time zones known to this browser (built after mount: server and browser lists differ). */
-function useZones() {
+export function useZones() {
   const [list, setList] = useState<{ z: string; label: string }[]>([]);
   useEffect(() => {
     let zs: string[];

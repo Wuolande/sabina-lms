@@ -35,13 +35,26 @@ const admin = await call("/api/auth/login", { method: "POST", body: JSON.stringi
 const subjects = Object.fromEntries((await db.query("select id, slug from payload.subjects")).rows.map((r) => [r.slug, r.id]));
 const langs = Object.fromEntries((await db.query("select id, code from payload.languages")).rows.map((r) => [r.code, r.id]));
 
-for (const t of TUTORS) {
+const tzOf = (t) => (t.country === "Kenya" ? "Africa/Nairobi" : t.country === "Nigeria" ? "Africa/Lagos" : "Europe/London");
+/** Weekday evenings plus Saturday mornings in the tutor's zone, unless they already set hours. */
+async function setHours(email, t, i) {
+  const { cookie } = await call("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password: PW }) });
+  const { data } = await call("/api/tutor/schedule", { cookie });
+  if (data.schedule.weekly.length) return;
+  const evening = i % 2 ? { start: "16:00", end: "20:00" } : { start: "09:00", end: "13:00" };
+  const weekly = [1, 2, 3, 4, 5].map((day) => ({ day, ...evening })).concat([{ day: 6, start: "08:00", end: "12:00" }]);
+  await call("/api/tutor/schedule", { method: "PUT", cookie, body: JSON.stringify({ timezone: tzOf(t), weekly, timeOff: [], noticeHours: 4, bufferMinutes: 0, instantBooking: i !== 2 }) });
+  console.log("hours set", email);
+}
+
+for (const [i, t] of TUTORS.entries()) {
   const email = `demo.${t.first.toLowerCase()}.${t.last.toLowerCase()}@example.com`;
   if ((await db.query("select 1 from payload.users where email=$1", [email])).rowCount) {
     console.log("exists", email);
+    await setHours(email, t, i);
     continue;
   }
-  await call("/api/auth/register", { method: "POST", body: JSON.stringify({ email, password: PW, firstName: t.first, lastName: t.last, role: "tutor", acceptTerms: true, timezone: t.country === "Kenya" ? "Africa/Nairobi" : t.country === "Nigeria" ? "Africa/Lagos" : "Europe/London" }) });
+  await call("/api/auth/register", { method: "POST", body: JSON.stringify({ email, password: PW, firstName: t.first, lastName: t.last, role: "tutor", acceptTerms: true, timezone: tzOf(t) }) });
   const token = (await db.query("select _verificationtoken t from payload.users where email=$1", [email])).rows[0].t;
   await call("/api/auth/verify-email", { method: "POST", body: JSON.stringify({ token }) });
   const { cookie } = await call("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password: PW }) });
@@ -86,5 +99,6 @@ for (const t of TUTORS) {
   await call(`/api/tutor-profiles/${id}/review`, { method: "POST", cookie: admin.cookie, body: JSON.stringify({ action: "approve" }) });
   if (t.featured) await db.query("update payload.tutor_profiles set is_featured=true, is_super_tutor=true where id=$1", [id]);
   console.log("approved", email);
+  await setHours(email, t, i);
 }
 await db.end();

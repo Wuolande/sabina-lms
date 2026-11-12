@@ -136,7 +136,31 @@ Not yet moved: the onboarding screens (`/onboarding/*`, phase 2), the public tut
 - `scripts/seed-demo-tutors.mjs` creates demo tutors through the real flow (development only).
 - Browser tests: `tests/e2e/phase2-tutors.spec.ts`.
 
-Booking buttons say "Booking opens soon" until phase 3.
+## Phase 3: done
+
+- Schedules (one per tutor): weekly hours in the tutor's own time zone, time off, minimum notice,
+  a break between lessons, and instant booking on or off. Kept apart from the tutor profile so an
+  approved tutor can change hours without reopening their application.
+- Bookings: student, tutor, subject, trial or regular (30/60/90 min), times in UTC, price and fee
+  snapshot, status (requested, confirmed, declined, cancelled, expired, completed, no-show),
+  cancellation details and history. Payment status stays "unpaid" until phase 4.
+- Open times are calculated on the server from weekly hours, time off, notice, the booking window
+  (Fees & policies: "Students can book up to N days ahead"), existing bookings and the student's
+  own lessons. Daylight-saving changes are handled.
+- Double booking is prevented: each booking is created inside a database transaction holding
+  advisory locks on the tutor and the student, then checked again for overlaps. Times outside the
+  tutor's hours, inside the notice period, or past the booking window are refused.
+- One trial per student and tutor. Instant booking confirms straight away; otherwise the tutor
+  accepts or declines, and requests nobody answers expire at the lesson time.
+- Cancelling: either side before the lesson starts; a tutor cancelling a confirmed lesson must give
+  a reason; a student cancelling inside the free-cancellation window is flagged as late.
+- Emails to both sides for booked, requested, accepted, declined and cancelled lessons, with times
+  in each person's own zone.
+- Screens: booking page `/tutors/[slug]/book`; tutor `/tutor/availability`, `/tutor/calendar`
+  (week view with open hours), `/tutor/lessons` (requests, upcoming, past, cancelled); student
+  `/student/lessons` and `/student/calendar`. Home pages show real numbers and the next lessons.
+  Admin: Bookings and Tutor schedules, plus lesson numbers on the dashboard.
+- Browser tests: `tests/e2e/phase3-booking.spec.ts` (including two students racing for one slot).
 
 ### Running locally
 

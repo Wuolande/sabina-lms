@@ -28,6 +28,7 @@ export const MENU: MenuSection[] = [
       { kind: "collection", slug: "users", label: "All users", icon: "Users" },
       { kind: "view", slug: "tutor-applications", label: "Tutor applications", icon: "ClipboardList", badge: "applications", href: "/admin/collections/tutor-profiles?where[status][equals]=submitted" },
       { kind: "collection", slug: "tutor-profiles", label: "Tutors", icon: "GraduationCap" },
+      { kind: "collection", slug: "schedules", label: "Tutor schedules", icon: "Clock" },
       { kind: "collection", slug: "student-profiles", label: "Students", icon: "UsersRound" },
       { kind: "collection", slug: "private-files", label: "Private documents", icon: "ShieldAlert" },
     ],

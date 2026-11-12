@@ -70,6 +70,8 @@ export interface Config {
     users: User;
     'tutor-profiles': TutorProfile;
     'student-profiles': StudentProfile;
+    schedules: Schedule;
+    bookings: Booking;
     subjects: Subject;
     languages: Language;
     media: Media;
@@ -84,6 +86,8 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     'tutor-profiles': TutorProfilesSelect<false> | TutorProfilesSelect<true>;
     'student-profiles': StudentProfilesSelect<false> | StudentProfilesSelect<true>;
+    schedules: SchedulesSelect<false> | SchedulesSelect<true>;
+    bookings: BookingsSelect<false> | BookingsSelect<true>;
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
     languages: LanguagesSelect<false> | LanguagesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -441,6 +445,90 @@ export interface StudentProfile {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "schedules".
+ */
+export interface Schedule {
+  id: number;
+  label?: string | null;
+  user: number | User;
+  /**
+   * IANA zone the weekly hours are in, e.g. Africa/Nairobi.
+   */
+  timezone: string;
+  weekly?:
+    | {
+        day: '0' | '1' | '2' | '3' | '4' | '5' | '6';
+        start: string;
+        end: string;
+        id?: string | null;
+      }[]
+    | null;
+  timeOff?:
+    | {
+        from: string;
+        to: string;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  noticeHours?: number | null;
+  bufferMinutes?: number | null;
+  /**
+   * Off: students send a request you accept or decline.
+   */
+  instantBooking?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Every lesson booked on Sabina. Times are stored in UTC and shown in your browser's time zone.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookings".
+ */
+export interface Booking {
+  id: number;
+  reference?: string | null;
+  status: 'requested' | 'confirmed' | 'completed' | 'declined' | 'cancelled' | 'expired' | 'no_show';
+  paymentStatus?: ('unpaid' | 'paid' | 'refunded' | 'partially_refunded' | 'waived') | null;
+  startsAt: string;
+  endsAt: string;
+  student: number | User;
+  tutor: number | TutorProfile;
+  tutorUser: number | User;
+  subject?: (number | null) | Subject;
+  kind: 'trial' | 'regular';
+  minutes: number;
+  price: number;
+  currency: string;
+  /**
+   * Snapshot at booking time.
+   */
+  platformFeePercent?: number | null;
+  studentNote?: string | null;
+  studentTimezone?: string | null;
+  cancelledBy?: ('student' | 'tutor' | 'staff' | 'system') | null;
+  cancelReason?: string | null;
+  cancelledAt?: string | null;
+  /**
+   * The student cancelled inside the free-cancellation window.
+   */
+  lateCancellation?: boolean | null;
+  respondedAt?: string | null;
+  history?:
+    | {
+        action?: string | null;
+        by?: (number | null) | User;
+        at?: string | null;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -474,6 +562,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'student-profiles';
         value: number | StudentProfile;
+      } | null)
+    | ({
+        relationTo: 'schedules';
+        value: number | Schedule;
+      } | null)
+    | ({
+        relationTo: 'bookings';
+        value: number | Booking;
       } | null)
     | ({
         relationTo: 'subjects';
@@ -686,6 +782,74 @@ export interface StudentProfilesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "schedules_select".
+ */
+export interface SchedulesSelect<T extends boolean = true> {
+  label?: T;
+  user?: T;
+  timezone?: T;
+  weekly?:
+    | T
+    | {
+        day?: T;
+        start?: T;
+        end?: T;
+        id?: T;
+      };
+  timeOff?:
+    | T
+    | {
+        from?: T;
+        to?: T;
+        note?: T;
+        id?: T;
+      };
+  noticeHours?: T;
+  bufferMinutes?: T;
+  instantBooking?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookings_select".
+ */
+export interface BookingsSelect<T extends boolean = true> {
+  reference?: T;
+  status?: T;
+  paymentStatus?: T;
+  startsAt?: T;
+  endsAt?: T;
+  student?: T;
+  tutor?: T;
+  tutorUser?: T;
+  subject?: T;
+  kind?: T;
+  minutes?: T;
+  price?: T;
+  currency?: T;
+  platformFeePercent?: T;
+  studentNote?: T;
+  studentTimezone?: T;
+  cancelledBy?: T;
+  cancelReason?: T;
+  cancelledAt?: T;
+  lateCancellation?: T;
+  respondedAt?: T;
+  history?:
+    | T
+    | {
+        action?: T;
+        by?: T;
+        at?: T;
+        note?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "subjects_select".
  */
 export interface SubjectsSelect<T extends boolean = true> {
@@ -868,6 +1032,10 @@ export interface PlatformSetting {
   trialLessonDiscountPercent?: number | null;
   cancellationRefundHours?: number | null;
   classroomEarlyJoinMinutes?: number | null;
+  bookingWindowDays?: number | null;
+  /**
+   * Off: every booking is a request the tutor accepts.
+   */
   instantBookingEnabled?: boolean | null;
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -916,6 +1084,7 @@ export interface PlatformSettingsSelect<T extends boolean = true> {
   trialLessonDiscountPercent?: T;
   cancellationRefundHours?: T;
   classroomEarlyJoinMinutes?: T;
+  bookingWindowDays?: T;
   instantBookingEnabled?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -12,6 +12,8 @@ export const PLATFORM_DEFAULTS = {
   classroomEarlyJoinMinutes: 15,
   instantBookingEnabled: true,
   maxSubjectsPerTutor: 5,
+  bookingWindowDays: 42,
+  regularLessonMinutes: [30, 60, 90] as number[],
 } as const;
 
 /** Fees, price limits and booking policies. Read by the tutor application, marketplace and checkout. */
@@ -50,7 +52,13 @@ export const PlatformSettings: GlobalConfig = {
         { name: "classroomEarlyJoinMinutes", type: "number", min: 0, max: 60, defaultValue: PLATFORM_DEFAULTS.classroomEarlyJoinMinutes, label: "Classroom opens (minutes before)", admin: { width: "50%" } },
       ],
     },
-    { name: "instantBookingEnabled", type: "checkbox", defaultValue: PLATFORM_DEFAULTS.instantBookingEnabled, label: "Allow instant booking" },
+    {
+      type: "row",
+      fields: [
+        { name: "bookingWindowDays", type: "number", min: 7, max: 180, defaultValue: PLATFORM_DEFAULTS.bookingWindowDays, label: "Students can book up to (days ahead)", admin: { width: "50%" } },
+        { name: "instantBookingEnabled", type: "checkbox", defaultValue: PLATFORM_DEFAULTS.instantBookingEnabled, label: "Allow instant booking", admin: { width: "50%", description: "Off: every booking is a request the tutor accepts." } },
+      ],
+    },
   ],
 };
 
