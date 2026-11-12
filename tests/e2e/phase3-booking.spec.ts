@@ -61,13 +61,13 @@ test("tutor hours → student books → tutor accepts → student cancels; no do
   const booked = sp.waitForResponse((r) => r.url().endsWith("/api/bookings") && r.request().method() === "POST");
   await sp.getByRole("button", { name: "Continue to payment" }).click();
   expect((await booked).status()).toBe(201);
+  const trialStart = ((await (await booked).json()) as { booking: { startsAt: string } }).booking.startsAt;
   // Phase 4: pay (test checkout) to send the request.
   await sp.getByRole("radio", { name: /Test payment/ }).click();
   await sp.getByRole("button", { name: /^Pay / }).click();
   await sp.waitForURL(/\/checkout\/dev/);
   await sp.getByRole("button", { name: /^Pay / }).click();
   await expect(sp.getByRole("heading", { name: "Paid. Request sent" })).toBeVisible();
-  const trialStart = ((await (await booked).json()) as { booking: { startsAt: string } }).booking.startsAt;
 
   // A second trial with the same tutor isn't offered any more.
   const again = await api(`/api/tutors/${tutor.slug}/slots`, { cookie: student.cookie });
