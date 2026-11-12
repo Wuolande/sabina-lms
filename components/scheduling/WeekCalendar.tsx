@@ -131,7 +131,7 @@ export function WeekCalendar({ lessons, tz, role, availability }: { lessons: Les
         <div className="space-y-2 px-3 pb-4">
           {agenda.length ? (
             agenda.map((l) => (
-              <Link key={l.id} href={listHref} className={`block rounded-2xl p-3 ring-1 ${tone(l)}`}>
+              <Link key={l.id} href={`/${role}/lessons/${l.id}`} className={`block rounded-2xl p-3 ring-1 ${tone(l)}`}>
                 <p className="text-sm font-semibold">{fmtRange(l.startsAt, l.endsAt, tz)}</p>
                 <p className="text-sm opacity-90">
                   {l.kind === "trial" ? "Trial" : (l.subject ?? "Lesson")} · {l.other.name}
@@ -177,7 +177,7 @@ export function WeekCalendar({ lessons, tz, role, availability }: { lessons: Les
                 return (
                   <Link
                     key={l.id}
-                    href={listHref}
+                    href={`/${role}/lessons/${l.id}`}
                     title={`${fmtRange(l.startsAt, l.endsAt, tz)} · ${l.other.name}`}
                     className={`absolute inset-x-1 z-20 overflow-hidden rounded-lg px-2 py-1 text-xs ring-1 transition hover:brightness-95 ${tone(l)}`}
                     style={{ top: y(s, c.start) + 1, height: h }}

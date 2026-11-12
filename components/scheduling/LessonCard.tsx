@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { AlertTriangle, CalendarClock, Check, Clock, Loader2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { AlertTriangle, CalendarClock, Check, Clock, Loader2, Star, Video, X } from "lucide-react";
 import type { LessonView } from "@/cms/scheduling/server";
 import { fmtDay, fmtRange } from "@/lib/time";
 import { money } from "@/lib/money";
@@ -74,6 +74,15 @@ export function LessonCard({ lesson: l, role, tz, cancellationHours }: { lesson:
   }
 
   const needsReason = dialog === "cancel" && role === "tutor" && l.status === "confirmed";
+  // Decided after mount so server and browser render the same thing.
+  const [canJoin, setCanJoin] = useState(false);
+  useEffect(() => {
+    const check = () => setCanJoin(l.status === "confirmed" && Date.now() >= Date.parse(l.joinOpensAt) && Date.now() <= Date.parse(l.joinClosesAt));
+    check();
+    const t = setInterval(check, 30_000);
+    return () => clearInterval(t);
+  }, [l.status, l.joinOpensAt, l.joinClosesAt]);
+  const detail = `/${role}/lessons/${l.id}`;
   const name = l.other.href ? (
     <Link href={l.other.href} className="hover:text-brand-700 hover:underline">
       {l.other.name}
@@ -90,7 +99,7 @@ export function LessonCard({ lesson: l, role, tz, cancellationHours }: { lesson:
           <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
             <div className="min-w-0">
               <h3 className="font-heading text-base font-bold text-slate-900 sm:text-lg">
-                {l.kind === "trial" ? "Trial lesson" : `${l.subject ?? "Lesson"}`} <span className="font-normal text-slate-500">with</span> {name}
+                <Link href={detail} className="hover:text-brand-700">{l.kind === "trial" ? "Trial lesson" : `${l.subject ?? "Lesson"}`}</Link> <span className="font-normal text-slate-500">with</span> {name}
               </h3>
               <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-slate-600">
                 <span className="inline-flex items-center gap-1.5">
@@ -119,8 +128,18 @@ export function LessonCard({ lesson: l, role, tz, cancellationHours }: { lesson:
             <p className="text-sm text-slate-500">
               <span className="font-semibold text-slate-900">{money(l.price, l.currency)}</span> · Ref {l.reference}
             </p>
-            {(l.canRespond || l.canCancel) && !dialog && (
+            {!dialog && (
               <div className="flex flex-wrap gap-2">
+                {role === "student" && l.status === "completed" && !l.reviewed && (
+                  <Link href={detail} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-amber-50 px-4 text-sm font-semibold text-amber-900 ring-1 ring-amber-200 hover:bg-amber-100">
+                    <Star size={16} /> Write a review
+                  </Link>
+                )}
+                {(l.phase === "finished" || l.phase === "cancelled") && (
+                  <Link href={detail} className="inline-flex h-10 items-center rounded-xl px-3 text-sm font-semibold text-slate-600 hover:bg-slate-100">
+                    Details
+                  </Link>
+                )}
                 {l.canRespond && (
                   <>
                     <button type="button" onClick={() => run("accept")} disabled={!!busy} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
@@ -130,6 +149,11 @@ export function LessonCard({ lesson: l, role, tz, cancellationHours }: { lesson:
                       <X size={16} /> Decline
                     </button>
                   </>
+                )}
+                {canJoin && (
+                  <Link href={`/lessons/${l.id}`} className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white hover:bg-emerald-700">
+                    <Video size={16} /> Join lesson
+                  </Link>
                 )}
                 {l.phase === "payment" && role === "student" && (
                   <Link href={`/checkout/pay/${l.id}`} className="inline-flex h-10 items-center rounded-xl bg-brand-700 px-4 text-sm font-semibold text-white hover:bg-brand-800">

@@ -192,6 +192,38 @@ Not yet moved: the onboarding screens (`/onboarding/*`, phase 2), the public tut
 To go live: add `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` and/or `PAYSTACK_SECRET_KEY`, and
 register the webhook URLs above in each dashboard. PayPal can be added later as a third provider.
 
+## Phase 5: done
+
+- New classroom at `/lessons/[id]` on LiveKit, built from scratch (the 2,900-line legacy page,
+  its Supabase services and the Zoom/Meet/ClassIn stubs were removed). Apple-style: black room,
+  rounded video tiles, frosted floating controls, system font.
+  - Lobby: camera preview, mic/camera toggles, who you're meeting, and a "Join lesson" button
+    that unlocks when the classroom opens (15 minutes before, set in Fees & policies).
+  - Room: the other person large, yourself picture-in-picture, screen sharing takes the stage,
+    speaking ring, chat over the data channel, time left, reconnecting notice.
+  - Tutors leave with "Finish lesson" and can add notes for the student.
+  - Tokens are issued only to the lesson's student and tutor, only for confirmed lessons, and
+    only between opening time and 15 minutes after the end.
+- Attendance decides the outcome 30 minutes after a lesson ends: if the tutor joined, the lesson
+  is completed (a student who didn't turn up still pays). If the tutor never joined, it's a tutor
+  no-show and the student is refunded in full. Tutors can also finish a lesson themselves.
+- Lesson page for both sides (`/student|tutor/lessons/[id]`): time, join button, notes, review,
+  payment and receipt, and "Report a problem" (up to 48 hours after; shown to staff under
+  "Reported problems" in the admin, with a count).
+- Reviews: one per completed lesson, 1–5 stars plus an optional comment. They feed the tutor's
+  rating and count and appear on the public profile. Tutors reply from `/tutor/reviews`; staff
+  can hide a review.
+- Tutor stats (lessons taught, students taught) update on completion. New pages: `/tutor/students`
+  and `/student/progress` (lessons, hours, tutors, weekly streak, time by subject, tutor notes,
+  lessons waiting for a review).
+- Cloudflare Stream: tutors can upload their intro video from the application (direct creator
+  upload with a progress bar, max 3 minutes / 200 MB) when `CLOUDFLARE_STREAM_ACCOUNT_ID`,
+  `CLOUDFLARE_STREAM_API_TOKEN` and `CLOUDFLARE_STREAM_CUSTOMER_CODE` are set. Links still work.
+- Browser tests: `tests/e2e/phase5-classroom.spec.ts`.
+
+Not yet: lesson recordings (LiveKit Egress to Stream) and a shared whiteboard. Both can be added
+on top of this room later.
+
 ### Running locally
 
 ```bash

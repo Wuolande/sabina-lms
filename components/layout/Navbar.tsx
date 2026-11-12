@@ -53,15 +53,6 @@ const portalItems = [
     color: "text-emerald-700",
     bg: "bg-emerald-50 group-hover:bg-emerald-100",
   },
-  {
-    href: "/lessons/les_01/classroom",
-    label: "Live Classroom Demo",
-    sub: "Interactive HD video stage & whiteboard",
-    icon: Video,
-    badge: "Live",
-    color: "text-purple-700",
-    bg: "bg-purple-50 group-hover:bg-purple-100",
-  },
 ];
 
 const secondaryLinks = [

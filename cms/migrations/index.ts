@@ -3,6 +3,7 @@ import * as migration_20261112_085725_auth_verification from './20261112_085725_
 import * as migration_20261112_101517_tutors_catalogue from './20261112_101517_tutors_catalogue';
 import * as migration_20261112_140156_scheduling_bookings from './20261112_140156_scheduling_bookings';
 import * as migration_20261112_144837_payments_payouts from './20261112_144837_payments_payouts';
+import * as migration_20261112_153439_classroom_reviews from './20261112_153439_classroom_reviews';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20261112_144837_payments_payouts.up,
     down: migration_20261112_144837_payments_payouts.down,
-    name: '20261112_144837_payments_payouts'
+    name: '20261112_144837_payments_payouts',
+  },
+  {
+    up: migration_20261112_153439_classroom_reviews.up,
+    down: migration_20261112_153439_classroom_reviews.down,
+    name: '20261112_153439_classroom_reviews'
   },
 ];

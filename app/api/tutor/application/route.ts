@@ -1,3 +1,4 @@
+import { streamConfigured } from "@/cms/media/stream";
 import { NextResponse, type NextRequest } from "next/server";
 import { getPayloadClient } from "@/cms/auth/session";
 import { fail } from "@/cms/auth/http";
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest) {
       subjects: subjects.docs.map((s) => ({ id: s.id, name: s.name, category: s.category })),
       languages: languages.docs.map((l) => ({ id: l.id, name: l.name })),
       policies,
+      videoUpload: streamConfigured(),
     },
   });
 }

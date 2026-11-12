@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Award, BadgeCheck, Briefcase, CalendarClock, Clock, Globe2, GraduationCap, Languages, MessageCircle, ShieldCheck, Star, Zap } from "lucide-react";
 import { getPayloadClient } from "@/cms/auth/session";
 import { getTutorBySlug } from "@/cms/marketplace/public";
+import { publicReviews } from "@/cms/lessons/server";
+import { Stars } from "@/components/lesson-room/LessonDetail";
 import { marketplaceViewer } from "@/cms/marketplace/viewer";
 import { Rating, TutorAvatar } from "@/components/marketplace/TutorCard";
 import { SaveTutorButton } from "@/components/marketplace/SaveTutorButton";
@@ -48,6 +50,7 @@ export default async function TutorProfilePage({ params }: Props) {
   const [data, viewer] = await Promise.all([getTutorBySlug(payload, slug), marketplaceViewer(payload)]);
   if (!data) notFound();
   const { tutor: t, policies } = data;
+  const reviews = await publicReviews(payload, t.id);
   const currency = policies.currency;
   const embed = videoEmbedUrl(t.introVideoUrl);
   const canSave = !viewer.signedIn || viewer.isStudent;
@@ -257,9 +260,33 @@ export default async function TutorProfilePage({ params }: Props) {
             </Section>
           )}
 
-          <Section icon={Star} title="Reviews">
-            {t.reviewCount > 0 ? (
-              <p className="text-slate-700">Reviews appear here soon.</p>
+          <Section icon={Star} title={reviews.total ? `Reviews (${reviews.total})` : "Reviews"}>
+            {reviews.items.length ? (
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="font-heading text-3xl font-bold text-slate-900">{t.rating.toFixed(1)}</span>
+                  <Stars value={Math.round(t.rating)} size={18} />
+                </div>
+                <ul className="mt-5 divide-y divide-slate-100">
+                  {reviews.items.map((r) => (
+                    <li key={r.id} className="py-4 first:pt-0 last:pb-0">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-slate-900">{r.name}</span>
+                        <span className="text-sm text-slate-500">{new Date(r.date).toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</span>
+                      </div>
+                      <div className="mt-1">
+                        <Stars value={r.rating} size={14} />
+                      </div>
+                      {r.comment && <p className="mt-2 text-[15px] leading-relaxed text-slate-700">{r.comment}</p>}
+                      {r.reply && (
+                        <p className="mt-3 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">
+                          <span className="font-semibold text-slate-800">{t.name.split(" ")[0]} replied:</span> {r.reply}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ) : (
               <p className="text-slate-600">{t.name.split(" ")[0]} is new on Sabina, so there are no reviews yet. Reviews come from students after real lessons.</p>
             )}

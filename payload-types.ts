@@ -72,6 +72,7 @@ export interface Config {
     'student-profiles': StudentProfile;
     schedules: Schedule;
     bookings: Booking;
+    reviews: Review;
     payments: Payment;
     payouts: Payout;
     'payout-methods': PayoutMethod;
@@ -91,6 +92,7 @@ export interface Config {
     'student-profiles': StudentProfilesSelect<false> | StudentProfilesSelect<true>;
     schedules: SchedulesSelect<false> | SchedulesSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
+    reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     payments: PaymentsSelect<false> | PaymentsSelect<true>;
     payouts: PayoutsSelect<false> | PayoutsSelect<true>;
     'payout-methods': PayoutMethodsSelect<false> | PayoutMethodsSelect<true>;
@@ -531,6 +533,22 @@ export interface Booking {
   holdUntil?: string | null;
   refundedAmount?: number | null;
   respondedAt?: string | null;
+  studentJoinedAt?: string | null;
+  tutorJoinedAt?: string | null;
+  completedAt?: string | null;
+  /**
+   * Who didn't turn up (set automatically from classroom attendance).
+   */
+  noShowBy?: ('tutor' | 'student') | null;
+  /**
+   * Shared with the student after the lesson.
+   */
+  tutorNotes?: string | null;
+  issue?: {
+    text?: string | null;
+    reportedAt?: string | null;
+    resolved?: boolean | null;
+  };
   history?:
     | {
         action?: string | null;
@@ -540,6 +558,28 @@ export interface Booking {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews".
+ */
+export interface Review {
+  id: number;
+  title?: string | null;
+  rating: number;
+  status: 'published' | 'hidden';
+  comment?: string | null;
+  tutorReply?: string | null;
+  booking: number | Booking;
+  tutor: number | TutorProfile;
+  student: number | User;
+  /**
+   * Shown publicly, e.g. "Amani N."
+   */
+  studentName?: string | null;
+  subject?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -690,6 +730,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'bookings';
         value: number | Booking;
+      } | null)
+    | ({
+        relationTo: 'reviews';
+        value: number | Review;
       } | null)
     | ({
         relationTo: 'payments';
@@ -971,6 +1015,18 @@ export interface BookingsSelect<T extends boolean = true> {
   holdUntil?: T;
   refundedAmount?: T;
   respondedAt?: T;
+  studentJoinedAt?: T;
+  tutorJoinedAt?: T;
+  completedAt?: T;
+  noShowBy?: T;
+  tutorNotes?: T;
+  issue?:
+    | T
+    | {
+        text?: T;
+        reportedAt?: T;
+        resolved?: T;
+      };
   history?:
     | T
     | {
@@ -980,6 +1036,24 @@ export interface BookingsSelect<T extends boolean = true> {
         note?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "reviews_select".
+ */
+export interface ReviewsSelect<T extends boolean = true> {
+  title?: T;
+  rating?: T;
+  status?: T;
+  comment?: T;
+  tutorReply?: T;
+  booking?: T;
+  tutor?: T;
+  student?: T;
+  studentName?: T;
+  subject?: T;
   updatedAt?: T;
   createdAt?: T;
 }

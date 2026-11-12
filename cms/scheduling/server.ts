@@ -301,6 +301,8 @@ export async function expireStale(payload: Payload) {
     const { refundBooking } = await import("../payments/server");
     for (const b of lapsed.docs) await refundBooking(payload, b.id, 100, "Request expired").catch((err) => payload.logger.error({ err }, "[bookings] refund failed"));
   }
+  const { settleAttendance } = await import("../lessons/server");
+  await settleAttendance(payload);
 }
 
 /* ------------------------------------------------------------------ views */
@@ -314,6 +316,12 @@ export type LessonView = {
   phase: "payment" | "requested" | "upcoming" | "finished" | "cancelled";
   holdUntil: string | null;
   refundedAmount: number;
+  joinOpensAt: string;
+  joinClosesAt: string;
+  tutorNotes: string | null;
+  reviewed: boolean;
+  issueReported: boolean;
+  noShowBy: string | null;
   startsAt: string;
   endsAt: string;
   minutes: number;
@@ -343,6 +351,12 @@ export async function listLessons(payload: Payload, user: User, opts: { from?: D
       ...(opts.to ? [{ startsAt: { less_than: opts.to.toISOString() } }] : []),
     ] as Where[],
   };
+  const reviewed = new Set(
+    role === "student"
+      ? (await payload.find({ collection: "reviews", where: { student: { equals: user.id } }, limit: 5000, pagination: false, depth: 0, select: { booking: true }, overrideAccess: true })).docs.map((d) => idOf(d.booking))
+      : [],
+  );
+  const early = policies.classroomEarlyJoinMinutes * 60_000;
   const res = await payload.find({ collection: "bookings", where, sort: "startsAt", limit: opts.limit ?? 300, depth: 2, overrideAccess: true }); // filtered to the viewer's own lessons above
   const now = Date.now();
   return res.docs.map((b) => {
@@ -374,6 +388,12 @@ export async function listLessons(payload: Payload, user: User, opts: { from?: D
           : { name: tutor?.displayName ?? "Tutor", avatar: mediaUrl(tutor?.photo), href: tutor?.slug ? `/tutors/${tutor.slug}` : null },
       holdUntil: b.holdUntil ?? null,
       refundedAmount: b.refundedAmount ?? 0,
+      joinOpensAt: new Date(Date.parse(b.startsAt) - early).toISOString(),
+      joinClosesAt: new Date(Date.parse(b.endsAt) + 15 * 60_000).toISOString(),
+      tutorNotes: b.tutorNotes ?? null,
+      reviewed: reviewed.has(b.id),
+      issueReported: Boolean(b.issue?.reportedAt),
+      noShowBy: b.noShowBy ?? null,
       canCancel: holding && future,
       canRespond: role === "tutor" && b.status === "requested" && future,
       lateIfCancelledNow: role === "student" && b.status === "confirmed" && Date.parse(b.startsAt) - now < policies.cancellationRefundHours * 3600_000,

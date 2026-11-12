@@ -93,6 +93,33 @@ export const Bookings: CollectionConfig = {
     { name: "refundedAmount", type: "number", defaultValue: 0, admin: { readOnly: true, position: "sidebar" } },
     { name: "respondedAt", type: "date", admin: { readOnly: true, position: "sidebar" } },
     {
+      type: "collapsible",
+      label: "Classroom & attendance",
+      admin: { initCollapsed: true },
+      fields: [
+        {
+          type: "row",
+          fields: [
+            { name: "studentJoinedAt", type: "date", admin: { width: "33%", readOnly: true, date: { pickerAppearance: "dayAndTime" } } },
+            { name: "tutorJoinedAt", type: "date", admin: { width: "33%", readOnly: true, date: { pickerAppearance: "dayAndTime" } } },
+            { name: "completedAt", type: "date", admin: { width: "33%", readOnly: true, date: { pickerAppearance: "dayAndTime" } } },
+          ],
+        },
+        { name: "noShowBy", type: "select", options: ["tutor", "student"].map((v) => ({ label: v, value: v })), admin: { description: "Who didn't turn up (set automatically from classroom attendance)." } },
+        { name: "tutorNotes", type: "textarea", maxLength: 2000, label: "Lesson notes from the tutor", admin: { description: "Shared with the student after the lesson." } },
+        {
+          name: "issue",
+          type: "group",
+          label: "Reported problem",
+          fields: [
+            { name: "text", type: "textarea" },
+            { name: "reportedAt", type: "date" },
+            { name: "resolved", type: "checkbox" },
+          ],
+        },
+      ],
+    },
+    {
       name: "history",
       type: "array",
       admin: { readOnly: true, initCollapsed: true },

@@ -1,4 +1,5 @@
 "use client";
+import { StreamUpload } from "./StreamUpload";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -46,6 +47,7 @@ type Options = {
   subjects: { id: number; name: string; category: string }[];
   languages: { id: number; name: string }[];
   policies: { currency: string; platformFeePercent: number; tutorMinHourlyRate: number; tutorMaxHourlyRate: number; trialLessonMinutes: number; trialLessonDiscountPercent: number; maxSubjectsPerTutor: number };
+  videoUpload?: boolean;
 };
 type Payload = { application: App; requirements: Requirement[]; missing: Requirement[]; options?: Options };
 
@@ -678,8 +680,10 @@ export function TutorApplication() {
                   onChange={(e) => set("introVideoUrl", e.target.value.trim())}
                   placeholder="https://youtu.be/…"
                   error={videoInvalid ? "Use a YouTube, Vimeo or Cloudflare Stream link." : null}
-                  hint="Upload to YouTube as “Unlisted” and paste the link here. Direct uploads are coming soon."
+                  hint={options?.videoUpload ? "Paste a YouTube or Vimeo link, or upload a video below." : "Upload to YouTube as “Unlisted” and paste the link here."}
                 />
+                {options?.videoUpload && !locked && <StreamUpload onUploaded={(url) => set("introVideoUrl", url)} />}
+                {draft.introVideoUrl.includes("cloudflarestream.com") && <p className="text-sm text-slate-500">Uploaded videos take a minute or two to process before they play.</p>}
                 {embed && !videoInvalid && (
                   <div className="aspect-video overflow-hidden rounded-2xl bg-slate-900 ring-1 ring-slate-200">
                     <iframe src={embed} title="Intro video preview" className="h-full w-full" allow="encrypted-media; picture-in-picture" allowFullScreen />

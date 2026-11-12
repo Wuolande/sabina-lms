@@ -23,7 +23,7 @@ function UpcomingPanel({ data, role }: { data: HomeData; role: "student" | "tuto
       <ul className="mt-4 space-y-2.5">
         {data.upcoming.map((l) => (
           <li key={l.id}>
-            <Link href={href} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 transition hover:bg-brand-50">
+            <Link href={`/${role}/lessons/${l.id}`} className="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 transition hover:bg-brand-50">
               <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-white text-center ring-1 ring-slate-200">
                 <span className="block text-[10px] font-semibold uppercase leading-none text-brand-700">{fmtDay(l.startsAt, data.tz, { month: "short" })}</span>
                 <span className="block font-heading text-lg font-bold leading-none text-slate-900">{fmtDay(l.startsAt, data.tz, { day: "numeric" })}</span>

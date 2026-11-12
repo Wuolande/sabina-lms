@@ -28,7 +28,7 @@ export async function Nav({ payload, visibleEntities, user }: Props) {
   };
   const [applications, disputes, reviews] = await Promise.all([
     count("tutor-profiles", { status: { equals: "submitted" } }),
-    count("disputes", { status: { equals: "open" } }),
+    count("bookings", { and: [{ "issue.reportedAt": { exists: true } }, { "issue.resolved": { not_equals: true } }] }),
     count("lesson-reviews", { status: { equals: "pending" } }),
   ]);
   const badges: Record<string, number> = { applications, disputes, reviews };
