@@ -1,6 +1,6 @@
 /**
  * Rich text (Lexical JSON) helpers shared by the admin, the API and the site.
- * Content written on the site is cleaned to a small, safe set of nodes before it is saved.
+ * Content written on the site is cleaned to a safe set of formatting nodes before it is saved.
  */
 export type Lexical = { root: { type: "root"; children: LexNode[]; [k: string]: unknown } };
 type LexNode = { type: string; children?: LexNode[]; text?: string; [k: string]: unknown };
@@ -36,38 +36,65 @@ export const richLength = (v: unknown) => lexicalToText(v).replace(/\n/g, "").le
 export const richEmpty = (v: unknown) => richLength(v) === 0;
 
 const SAFE_URL = /^(https?:\/\/|mailto:)/i;
-const FORMAT_MASK = 1 | 2 | 8; // bold, italic, underline
+// bold, italic, strikethrough, underline, code, subscript, superscript
+const FORMAT_MASK = 1 | 2 | 4 | 8 | 16 | 32 | 64;
+const ALIGN = new Set(["", "left", "center", "right", "justify", "start", "end"]);
+const HEADINGS = new Set(["h2", "h3", "h4"]);
 
-/** Keep only paragraphs, bold/italic/underline text, line breaks, lists and safe links. */
+/** Alignment and indent of a block, kept within safe values. */
+const blockBase = (n: LexNode) => ({
+  ...base,
+  format: ALIGN.has(String(n.format ?? "")) ? String(n.format ?? "") : "",
+  indent: Math.min(6, Math.max(0, Number(n.indent) || 0)),
+});
+
+/**
+ * Keep only formatting nodes: paragraphs, headings, quotes, lists, line breaks, formatted text
+ * and safe links. Everything else (images, embeds, unknown nodes) is dropped.
+ */
 function clean(n: LexNode, depth = 0): LexNode | null {
-  if (depth > 6) return null;
+  if (depth > 8) return null;
   const kids = () => (n.children ?? []).map((c) => clean(c, depth + 1)).filter(Boolean) as LexNode[];
   switch (n.type) {
     case "text":
       return typeof n.text === "string" && n.text ? textNode(n.text.slice(0, 5000), Number(n.format) & FORMAT_MASK) : null;
     case "linebreak":
       return { type: "linebreak", version: 1 };
+    case "tab":
+      return textNode(" ");
     case "paragraph":
-    case "heading":
+      return { ...para(kids()), ...blockBase(n) };
+    case "heading": {
+      const tag = String(n.tag ?? "h2");
+      return { ...blockBase(n), type: "heading", tag: HEADINGS.has(tag) ? tag : tag === "h1" ? "h2" : "h4", children: kids() };
+    }
     case "quote":
-      return para(kids());
+      return { ...blockBase(n), type: "quote", children: kids() };
     case "list": {
       const listType = n.listType === "number" ? "number" : "bullet";
-      return { ...base, type: "list", listType, tag: listType === "number" ? "ol" : "ul", start: 1, children: kids().filter((c) => c.type === "listitem") };
+      return { ...blockBase(n), type: "list", listType, tag: listType === "number" ? "ol" : "ul", start: 1, children: kids().filter((c) => c.type === "listitem") };
     }
     case "listitem":
-      return { ...base, type: "listitem", value: Number(n.value) || 1, children: kids().filter((c) => c.type !== "list" || depth < 4) };
+      return { ...blockBase(n), type: "listitem", value: Number(n.value) || 1, children: kids().filter((c) => c.type !== "list" || depth < 6) };
     case "link":
     case "autolink": {
       const fields = (n.fields ?? {}) as { url?: string };
-      const url = String(fields.url ?? n.url ?? "");
-      const children = kids();
-      if (!SAFE_URL.test(url)) return children.length ? (children[0] as LexNode) : null;
+      const url = String(fields.url ?? n.url ?? "").trim();
+      const children = kids().filter((c) => c.type === "text" || c.type === "linebreak");
+      if (!SAFE_URL.test(url)) return children.length === 1 ? (children[0] as LexNode) : children.length ? para(children) : null;
       return { ...base, type: "link", version: 3, fields: { url, newTab: true, linkType: "custom" }, children };
     }
     default:
       return null;
   }
+}
+
+const INLINE = new Set(["text", "link", "linebreak"]);
+
+/** Clean a whole document; loose inline nodes at the top are wrapped in paragraphs. */
+function cleanDoc(v: Lexical): Lexical {
+  const children = v.root.children.slice(0, 300).map((c) => clean(c)).filter(Boolean) as LexNode[];
+  return { root: { ...base, type: "root", children: children.map((c) => (INLINE.has(c.type) ? (para([c]) as LexNode) : c)) } };
 }
 
 /**
@@ -78,22 +105,28 @@ export function toSafeLexical(input: unknown, max: number, label = "This text"):
   let doc: Lexical | null;
   if (input == null || input === "") return null;
   if (typeof input === "string") doc = textToLexical(input);
-  else if (isLexical(input)) {
-    const children = input.root.children.slice(0, 200).map((c) => clean(c)).filter(Boolean) as LexNode[];
-    doc = { root: { ...base, type: "root", children: children.map((c) => (c.type === "text" || c.type === "link" ? (para([c]) as LexNode) : c)) } };
-  } else return null;
+  else if (isLexical(input)) doc = cleanDoc(input);
+  else return null;
   if (!doc || richEmpty(doc)) return null;
   if (richLength(doc) > max) throw new RangeError(`${label} is too long. Keep it under ${max} characters.`);
   return doc;
 }
 
-/** For the site editor, which has no link node: links become their plain text. */
+/**
+ * Prepares saved content for the site editor: drops anything it can't show, and turns Payload's
+ * links ({ fields: { url } }) into the editor's own link format ({ url }).
+ */
 export function forSiteEditor(v: unknown): Lexical | null {
   if (typeof v === "string") return textToLexical(v);
   if (!isLexical(v)) return null;
-  const strip = (n: LexNode): LexNode[] => {
-    if (n.type === "link" || n.type === "autolink") return (n.children ?? []).flatMap(strip);
-    return [{ ...n, ...(n.children ? { children: n.children.flatMap(strip) } : {}) }];
+  const toSite = (n: LexNode): LexNode => {
+    const children = n.children?.map(toSite);
+    if (n.type === "link") {
+      const url = String((n.fields as { url?: string } | undefined)?.url ?? "");
+      return { ...base, type: "link", version: 1, url, rel: "noopener noreferrer", target: "_blank", title: null, children };
+    }
+    return children ? { ...n, children } : n;
   };
-  return { root: { ...v.root, children: v.root.children.flatMap(strip) } };
+  const doc = cleanDoc(v);
+  return doc.root.children.length ? { root: { ...doc.root, children: doc.root.children.map(toSite) } } : null;
 }

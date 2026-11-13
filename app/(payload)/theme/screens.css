@@ -925,36 +925,40 @@
 }
 
 /* Lexical Rich Text Editor */
-/* One clean box: label above, then toolbar + text inside a single bordered card. */
+/* Label above; toolbar and text joined in one bordered card; the hint sits under the card. */
 .rich-text-lexical { background: none; border: 0; }
 .rich-text-lexical .rich-text-lexical__label-row { margin-bottom: 6px; }
-.rich-text-lexical .rich-text-lexical__wrap {
-  border-radius: var(--ep-r-lg);
-  background: var(--ep-surface);
+.rich-text-lexical .rich-text-lexical__wrap > .fixed-toolbar {
+  position: sticky;
+  top: var(--doc-controls-height, 0px);
+  z-index: 3;
+  transform: none !important;
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 44px;
+  margin: 0 !important;
+  padding: 4px 6px !important;
+  border: 1px solid var(--ep-line) !important;
+  border-bottom-color: var(--ep-line) !important;
+  border-radius: var(--ep-r-lg) var(--ep-r-lg) 0 0 !important;
+  background: var(--ep-surface-2, var(--ep-surface)) !important;
+}
+.rich-text-lexical .rich-text-lexical__wrap > .editor-container {
   border: 1px solid var(--ep-line);
+  border-top: 0;
+  border-radius: 0 0 var(--ep-r-lg) var(--ep-r-lg);
+  background: var(--ep-surface);
   transition: border-color .15s, box-shadow .15s;
 }
-.rich-text-lexical .rich-text-lexical__wrap:focus-within {
-  border-color: var(--ep-accent);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--ep-accent) 15%, transparent);
-}
-.rich-text-lexical .editor-container, .rich-text-lexical .editor-scroller, .rich-text-lexical .editor { border: 0 !important; box-shadow: none !important; outline: 0 !important; background: transparent !important; }
-.rich-text-lexical .ContentEditable__root { outline: 0 !important; border: 0 !important; box-shadow: none !important; }
-.rich-text-lexical .editor, .rich-text-lexical .ContentEditable__root {
-  min-height: 150px;
-  padding: 14px 18px !important;
-  font-size: var(--ep-text-md);
-  line-height: 1.65;
-}
-.rich-text-lexical .editor-placeholder { left: 18px !important; top: 14px !important; }
-.rich-text-lexical .fixed-toolbar {
-  border-radius: var(--ep-r-lg) var(--ep-r-lg) 0 0 !important;
-  background: var(--ep-surface-2) !important;
-  border-bottom: 1px solid var(--ep-line) !important;
-  position: sticky;
-  top: calc(var(--app-header-height, 56px) + 40px);
-  z-index: 3;
-}
+/* No toolbar (read-only view): the text box gets the full rounded border. */
+.rich-text-lexical .rich-text-lexical__wrap > .editor-container:first-child { border-top: 1px solid var(--ep-line); border-radius: var(--ep-r-lg); }
+.rich-text-lexical .rich-text-lexical__wrap:focus-within > .fixed-toolbar,
+.rich-text-lexical .rich-text-lexical__wrap:focus-within > .editor-container { border-color: var(--ep-accent) !important; }
+.rich-text-lexical .rich-text-lexical__wrap:focus-within > .editor-container { box-shadow: 0 4px 0 -1px color-mix(in srgb, var(--ep-accent) 15%, transparent); }
+.rich-text-lexical .editor-scroller, .rich-text-lexical .editor { border: 0 !important; box-shadow: none !important; outline: 0 !important; background: transparent !important; }
+.rich-text-lexical .ContentEditable__root { outline: 0 !important; border: 0 !important; box-shadow: none !important; min-height: 160px; padding-top: 14px; padding-bottom: 14px; padding-right: 18px; }
+.rich-text-lexical .rich-text-lexical__wrap > .field-description { margin-top: 8px; }
 .rich-text-lexical h2 { font-size: 22px; margin: 1.2em 0 0.4em; }
 .rich-text-lexical h3 { font-size: 18px; margin: 1em 0 0.3em; }
 .rich-text-lexical blockquote {
@@ -1562,8 +1566,6 @@
 .document-fields__sidebar-fields .rs__value-container { min-width: 0; }
 /* Rich-text editor content uses the admin font, not the browser's serif default. */
 .rich-text-lexical .ContentEditable__root, .rich-text-lexical .editor { font-family: var(--ep-font, inherit) !important; font-size: var(--ep-text-md, 15px); line-height: 1.6; }
-/* Editor toolbar: solid so text scrolling underneath doesn't show through. */
-.rich-text-lexical .fixed-toolbar { background: var(--ep-surface) !important; box-shadow: 0 1px 0 var(--ep-line); }
 /* Editor tables: use the full width and give columns room instead of 90px slivers. */
 .rich-text-lexical table { width: 100% !important; table-layout: auto !important; }
 .rich-text-lexical table col { width: auto !important; }

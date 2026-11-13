@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
-import { lexicalEditor } from "@payloadcms/richtext-lexical";
+import { fullEditor } from "./cms/fields/richtext";
 import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
 import { s3Storage } from "@payloadcms/storage-s3";
 import sharp from "sharp";
@@ -96,7 +96,7 @@ export default buildConfig({
   collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Reviews, Payments, Payouts, PayoutMethods, Conversations, Messages, Notifications, EmailTemplates, EmailLog, Posts, BlogCategories, Pages, TrainingCourses, TrainingProgress, Subjects, Languages, Countries, Timezones, Media, PrivateFiles],
   globals: [SiteSettings, PlatformSettings, HomePage],
   upload: { limits: { fileSize: 20 * 1024 * 1024 } },
-  editor: lexicalEditor(),
+  editor: fullEditor,
   db: postgresAdapter({
     // Payload's tables live in their own "payload" schema in the Supabase Postgres database.
     // The legacy Supabase tables in "public" are left alone and dropped once every phase is done.

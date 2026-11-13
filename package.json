@@ -17,9 +17,11 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@lexical/link": "0.50.0",
     "@lexical/list": "0.50.0",
     "@lexical/react": "0.50.0",
     "@lexical/rich-text": "0.50.0",
+    "@lexical/selection": "0.50.0",
     "@lexical/utils": "0.50.0",
     "@livekit/components-react": "^2.9.24",
     "@livekit/components-styles": "^1.2.0",

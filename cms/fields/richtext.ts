@@ -1,10 +1,22 @@
 import type { RichTextField, Validate } from "payload";
-import { BoldFeature, FixedToolbarFeature, InlineToolbarFeature, ItalicFeature, LinkFeature, OrderedListFeature, ParagraphFeature, UnderlineFeature, UnorderedListFeature, lexicalEditor } from "@payloadcms/richtext-lexical";
+import { FixedToolbarFeature, lexicalEditor } from "@payloadcms/richtext-lexical";
 import { richLength } from "../content/rich";
 
-/** A light editor for descriptions: bold, italic, underline, lists and links. */
+/**
+ * The full editor: every formatting tool Payload ships (headings, bold, italic, underline,
+ * strikethrough, sub/superscript, code, alignment, indent, lists, checklists, links, quotes,
+ * dividers, images) with the toolbar always showing above the text.
+ */
+export const fullEditor = lexicalEditor({
+  features: ({ defaultFeatures }) => [...defaultFeatures, FixedToolbarFeature()],
+});
+
+/**
+ * Description boxes get every text formatting tool. Images and links to other records are left
+ * out: descriptions are shown in places (cards, profiles) where only text belongs.
+ */
 export const descriptionEditor = lexicalEditor({
-  features: () => [ParagraphFeature(), BoldFeature(), ItalicFeature(), UnderlineFeature(), UnorderedListFeature(), OrderedListFeature(), LinkFeature(), FixedToolbarFeature(), InlineToolbarFeature()],
+  features: ({ defaultFeatures }) => [...defaultFeatures.filter((f) => f.key !== "upload" && f.key !== "relationship"), FixedToolbarFeature()],
 });
 
 /** A description box with formatting, limited to `maxChars` characters of text. */
