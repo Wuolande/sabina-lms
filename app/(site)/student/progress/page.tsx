@@ -2,6 +2,10 @@ import Link from "next/link";
 import { BookOpen, Clock, Flame, NotebookPen, Star, Users } from "lucide-react";
 import { getPayloadClient, requireUser } from "@/cms/auth/session";
 import { studentProgress } from "@/cms/lessons/server";
+import { listAssignments, listGoals, shareStatus } from "@/cms/progress/server";
+import { GoalsBoard } from "@/components/progress/GoalsBoard";
+import { HomeworkList } from "@/components/progress/HomeworkList";
+import { ParentShare } from "@/components/progress/ParentShare";
 import { PageHeader } from "@/components/portal/PageHeader";
 import { fmtDay, safeTz } from "@/lib/time";
 
@@ -10,7 +14,9 @@ export const dynamic = "force-dynamic";
 
 export default async function ProgressPage() {
   const user = await requireUser(["student"], "/student/progress");
-  const p = await studentProgress(await getPayloadClient(), user);
+  const payload = await getPayloadClient();
+  const [p, goals, homework, share] = await Promise.all([studentProgress(payload, user), listGoals(payload, user, user.id), listAssignments(payload, user), shareStatus(payload, user)]);
+  const todo = homework.filter((a) => a.status === "assigned");
   const tz = safeTz(user.timezone);
   const hours = Math.round((p.minutes / 60) * 10) / 10;
   const top = Math.max(1, ...p.subjects.map((s) => s.minutes));
@@ -22,7 +28,7 @@ export default async function ProgressPage() {
   ];
   return (
     <div className="space-y-6">
-      <PageHeader title="Progress" sub="Your lessons so far, and what your tutors noted." />
+      <PageHeader title="Progress" sub="Your lessons, goals, homework and what your tutors noted." />
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {tiles.map((t) => (
           <div key={t.label} className="rounded-3xl bg-white p-5 ring-1 ring-slate-200/70">
@@ -49,6 +55,31 @@ export default async function ProgressPage() {
           </ul>
         </section>
       )}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <section className="space-y-4 rounded-3xl bg-white p-5 ring-1 ring-slate-200/70 sm:p-6">
+          <div>
+            <h2 className="font-heading text-lg font-bold text-slate-900">My goals</h2>
+            <p className="text-sm text-slate-500">Break a big goal into steps. Your tutors can see and update them too.</p>
+          </div>
+          <GoalsBoard initial={goals} />
+        </section>
+        <div className="space-y-6">
+          <section className="space-y-3 rounded-3xl bg-white p-5 ring-1 ring-slate-200/70 sm:p-6">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="font-heading text-lg font-bold text-slate-900">Homework to do</h2>
+              <Link href="/student/homework" className="text-sm font-semibold text-brand-700 hover:underline">
+                All homework
+              </Link>
+            </div>
+            <HomeworkList items={todo.slice(0, 4)} viewer="student" tz={tz} empty="You're all caught up." />
+          </section>
+          <section className="space-y-3 rounded-3xl bg-white p-5 ring-1 ring-slate-200/70 sm:p-6">
+            <h2 className="font-heading text-lg font-bold text-slate-900">Share with a parent</h2>
+            <ParentShare initialPath={share.token ? `/progress/${share.token}` : null} />
+          </section>
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-3xl bg-white p-5 ring-1 ring-slate-200/70 sm:p-6">

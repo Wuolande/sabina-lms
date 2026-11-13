@@ -72,6 +72,8 @@ export interface Config {
     'student-profiles': StudentProfile;
     schedules: Schedule;
     bookings: Booking;
+    assignments: Assignment;
+    goals: Goal;
     reviews: Review;
     payments: Payment;
     'lesson-packages': LessonPackage;
@@ -105,6 +107,8 @@ export interface Config {
     'student-profiles': StudentProfilesSelect<false> | StudentProfilesSelect<true>;
     schedules: SchedulesSelect<false> | SchedulesSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
+    assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
+    goals: GoalsSelect<false> | GoalsSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     payments: PaymentsSelect<false> | PaymentsSelect<true>;
     'lesson-packages': LessonPackagesSelect<false> | LessonPackagesSelect<true>;
@@ -524,7 +528,7 @@ export interface Subject {
 export interface PrivateFile {
   id: number;
   owner: number | User;
-  kind: 'identity' | 'degree' | 'certificate' | 'other';
+  kind: 'identity' | 'degree' | 'certificate' | 'homework' | 'other';
   prefix?: string | null;
   _objectKey?: string | null;
   updatedAt: string;
@@ -571,6 +575,12 @@ export interface StudentProfile {
   preferredLanguages?: (number | Language)[] | null;
   savedTutors?: (number | TutorProfile)[] | null;
   onboardedAt?: string | null;
+  shareToken?: string | null;
+  shareCreatedAt?: string | null;
+  /**
+   * Optional: gets a short weekly summary.
+   */
+  parentEmail?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -760,6 +770,142 @@ export interface LessonPackage {
         id?: string | null;
       }[]
     | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Set by tutors for their students between lessons.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "assignments".
+ */
+export interface Assignment {
+  id: number;
+  title: string;
+  kind: 'homework' | 'quiz';
+  status: 'assigned' | 'submitted' | 'reviewed';
+  dueAt?: string | null;
+  student: number | User;
+  tutorUser: number | User;
+  subject?: (number | null) | Subject;
+  /**
+   * The lesson this follows on from, if any.
+   */
+  lesson?: (number | null) | Booking;
+  instructions?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  questions?:
+    | {
+        prompt: string;
+        type: 'choice' | 'short';
+        options?:
+          | {
+              text: string;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * Which option is right (first = 0).
+         */
+        correct?: number | null;
+        /**
+         * Accepted answers, separated by |. Not case-sensitive.
+         */
+        accepted?: string | null;
+        /**
+         * Shown to the student after they finish.
+         */
+        explanation?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  answer?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  files?: (number | PrivateFile)[] | null;
+  /**
+   * Quiz answers, one per question.
+   */
+  responses?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  submittedAt?: string | null;
+  /**
+   * Quiz: questions right.
+   */
+  score?: number | null;
+  outOf?: number | null;
+  feedback?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  reviewedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "goals".
+ */
+export interface Goal {
+  id: number;
+  title: string;
+  student: number | User;
+  status: 'active' | 'achieved' | 'archived';
+  targetDate?: string | null;
+  subject?: (number | null) | Subject;
+  createdBy?: (number | null) | User;
+  milestones?:
+    | {
+        text: string;
+        done?: boolean | null;
+        doneAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  achievedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -973,6 +1119,9 @@ export interface EmailTemplate {
     | 'lesson_reminder_hour'
     | 'new_message'
     | 'review_received'
+    | 'homework_set'
+    | 'homework_submitted'
+    | 'homework_reviewed'
     | 'payment_receipt'
     | 'package_receipt'
     | 'refund_issued'
@@ -1328,6 +1477,14 @@ export interface PayloadLockedDocument {
         value: number | Booking;
       } | null)
     | ({
+        relationTo: 'assignments';
+        value: number | Assignment;
+      } | null)
+    | ({
+        relationTo: 'goals';
+        value: number | Goal;
+      } | null)
+    | ({
         relationTo: 'reviews';
         value: number | Review;
       } | null)
@@ -1618,6 +1775,9 @@ export interface StudentProfilesSelect<T extends boolean = true> {
   preferredLanguages?: T;
   savedTutors?: T;
   onboardedAt?: T;
+  shareToken?: T;
+  shareCreatedAt?: T;
+  parentEmail?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1704,6 +1864,70 @@ export interface BookingsSelect<T extends boolean = true> {
         note?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "assignments_select".
+ */
+export interface AssignmentsSelect<T extends boolean = true> {
+  title?: T;
+  kind?: T;
+  status?: T;
+  dueAt?: T;
+  student?: T;
+  tutorUser?: T;
+  subject?: T;
+  lesson?: T;
+  instructions?: T;
+  questions?:
+    | T
+    | {
+        prompt?: T;
+        type?: T;
+        options?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        correct?: T;
+        accepted?: T;
+        explanation?: T;
+        id?: T;
+      };
+  answer?: T;
+  files?: T;
+  responses?: T;
+  submittedAt?: T;
+  score?: T;
+  outOf?: T;
+  feedback?: T;
+  reviewedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "goals_select".
+ */
+export interface GoalsSelect<T extends boolean = true> {
+  title?: T;
+  student?: T;
+  status?: T;
+  targetDate?: T;
+  subject?: T;
+  createdBy?: T;
+  milestones?:
+    | T
+    | {
+        text?: T;
+        done?: T;
+        doneAt?: T;
+        id?: T;
+      };
+  achievedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

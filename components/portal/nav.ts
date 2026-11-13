@@ -9,6 +9,7 @@ export const NAV: Record<PortalRole, NavItem[]> = {
     { href: "/student/calendar", label: "Calendar", icon: "CalendarDays", primary: true },
     { href: "/student/messages", label: "Messages", icon: "MessageSquare", primary: true },
     { href: "/student/favorites", label: "Saved tutors", icon: "Heart" },
+    { href: "/student/homework", label: "Homework", icon: "ClipboardList" },
     { href: "/student/progress", label: "Progress", icon: "TrendingUp" },
     { href: "/student/packages", label: "Lesson packages", short: "Packages", icon: "Package" },
     { href: "/student/payments", label: "Payments", icon: "CreditCard" },

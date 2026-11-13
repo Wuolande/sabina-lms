@@ -43,6 +43,8 @@ export const MENU: MenuSection[] = [
       { kind: "collection", slug: "homework", label: "Homework", icon: "BookOpen" },
       { kind: "collection", slug: "reviews", label: "Reviews", icon: "Star" },
       { kind: "view", slug: "lesson-problems", label: "Reported problems", icon: "ShieldAlert", badge: "disputes", href: "/admin/collections/bookings?where[or][0][and][0][issue.reportedAt][exists]=true&where[or][0][and][1][issue.resolved][not_equals]=true" },
+      { kind: "collection", slug: "assignments", label: "Homework & quizzes", icon: "ClipboardList" },
+      { kind: "collection", slug: "goals", label: "Learning goals", icon: "ListChecks" },
       { kind: "collection", slug: "subjects", label: "Subjects", icon: "Layers" },
       { kind: "collection", slug: "languages", label: "Languages", icon: "Languages" },
     ],

@@ -69,5 +69,15 @@ export const StudentProfiles: CollectionConfig = {
     { name: "preferredLanguages", type: "relationship", relationTo: "languages", hasMany: true },
     { name: "savedTutors", type: "relationship", relationTo: "tutor-profiles", hasMany: true },
     { name: "onboardedAt", type: "date", admin: { readOnly: true } },
+    {
+      type: "collapsible",
+      label: "Parent view",
+      admin: { initCollapsed: true, description: "A private read-only link the student can share with a parent or guardian." },
+      fields: [
+        { name: "shareToken", type: "text", unique: true, index: true, access: { read: ({ req }) => isStaffUser(req.user), update: () => false }, admin: { readOnly: true } },
+        { name: "shareCreatedAt", type: "date", admin: { readOnly: true } },
+        { name: "parentEmail", type: "email", admin: { description: "Optional: gets a short weekly summary." } },
+      ],
+    },
   ],
 };

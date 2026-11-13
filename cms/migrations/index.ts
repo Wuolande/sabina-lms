@@ -11,6 +11,7 @@ import * as migration_20261112_194000_import_legacy_files from './20261112_19400
 import * as migration_20261113_040559_rich_text_geo from './20261113_040559_rich_text_geo';
 import * as migration_20261113_054332_r2_prefix from './20261113_054332_r2_prefix';
 import * as migration_20261113_063011_lesson_packages from './20261113_063011_lesson_packages';
+import * as migration_20261113_085028_progress_homework_goals from './20261113_085028_progress_homework_goals';
 
 export const migrations = [
   {
@@ -76,6 +77,11 @@ export const migrations = [
   {
     up: migration_20261113_063011_lesson_packages.up,
     down: migration_20261113_063011_lesson_packages.down,
-    name: '20261113_063011_lesson_packages'
+    name: '20261113_063011_lesson_packages',
+  },
+  {
+    up: migration_20261113_085028_progress_homework_goals.up,
+    down: migration_20261113_085028_progress_homework_goals.down,
+    name: '20261113_085028_progress_homework_goals'
   },
 ];

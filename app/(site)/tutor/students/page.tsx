@@ -23,7 +23,7 @@ export default async function StudentsPage() {
               <div className="flex items-center gap-3">
                 <PersonAvatar name={s.name} src={s.avatar} size={48} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-slate-900">{s.name}</p>
+                  <Link href={`/tutor/students/${s.id}`} className="block truncate font-semibold text-slate-900 hover:text-brand-700">{s.name}</Link>
                   <p className="truncate text-sm text-slate-500">{s.subjects.join(", ") || "No subject yet"}</p>
                 </div>
                 <Link href={`/tutor/messages?student=${s.id}`} aria-label={`Message ${s.name}`} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-50 text-brand-700 hover:bg-brand-100">
@@ -44,6 +44,9 @@ export default async function StudentsPage() {
                   <dd className="truncate pt-1 text-sm font-semibold text-slate-900">{s.next ? fmtDay(s.next, tz, { month: "short", day: "numeric" }) : "—"}</dd>
                 </div>
               </dl>
+              <Link href={`/tutor/students/${s.id}`} className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl bg-slate-50 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100">
+                Homework, quizzes & goals
+              </Link>
             </li>
           ))}
         </ul>
