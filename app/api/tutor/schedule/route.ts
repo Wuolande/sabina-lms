@@ -5,6 +5,7 @@ import { fail } from "@/cms/auth/http";
 import { ownSchedule } from "@/cms/scheduling/server";
 import { validTimeZone } from "@/lib/time";
 import type { Schedule, User } from "@/payload-types";
+import { isKnownZone } from "@/cms/geo/server";
 
 const view = (s: Schedule) => ({
   timezone: s.timezone,
@@ -36,7 +37,7 @@ export async function PUT(req: NextRequest) {
   const { payload, user } = await tutor(req);
   if (!user) return fail("Tutors only.", 403);
   const b = (await req.json().catch(() => ({}))) as Partial<ScheduleView>;
-  if (!validTimeZone(b.timezone)) return fail("Choose a valid time zone.");
+  if (!validTimeZone(b.timezone) || !(await isKnownZone(payload, b.timezone))) return fail("Choose a time zone from the list.");
   const weekly = (Array.isArray(b.weekly) ? b.weekly : []).slice(0, 70);
   if (weekly.some((w) => !(Number(w.day) >= 0 && Number(w.day) <= 6) || !HHMM.test(w.start) || !HHMM.test(w.end))) return fail("Check your weekly hours.");
   const timeOff = (Array.isArray(b.timeOff) ? b.timeOff : []).slice(0, 60);

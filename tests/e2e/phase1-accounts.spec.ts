@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import sharp from "sharp";
 import { tokenFor, uniqueEmail } from "./db";
+import { choose } from "./accounts";
 
 const PASSWORD = "Learn2026x";
 
@@ -57,7 +58,7 @@ test("student: sign up, confirm, sign in, portal, settings, password change", as
   // Settings: profile details.
   await page.goto("/student/settings");
   await page.getByLabel("Phone").fill("+254 712 345 678");
-  await page.getByLabel("Country").fill("Kenya");
+  await choose(page, "Country", "Kenya");
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.getByText("Saved.")).toBeVisible();
 

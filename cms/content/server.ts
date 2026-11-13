@@ -47,15 +47,18 @@ export const mediaUrl = (m: unknown, size?: "card" | "thumb") =>
 
 const pick = <T,>(v: T | null | undefined, d: T): T => (v === null || v === undefined || (typeof v === "string" && !v.trim()) || (Array.isArray(v) && !v.length) ? d : v);
 type Counter = { value: number | string; suffix?: string | null; decimals?: number | null; label: string };
+/** Each part of a counter falls back on its own, so an empty number can follow the platform rules. */
 const counter = (c: Partial<Counter> | null | undefined, d: Counter) => {
-  const use = c?.label && c.value !== null && c.value !== undefined ? c : d;
-  return { value: Number(use.value) || 0, suffix: use.suffix || " ", decimals: use.decimals ?? 0, label: use.label! };
+  const value = c?.value !== null && c?.value !== undefined && c.value !== "" ? c.value : d.value;
+  return { value: Number(value) || 0, suffix: c?.suffix || d.suffix || " ", decimals: c?.decimals ?? d.decimals ?? 0, label: c?.label || d.label };
 };
 
 /** Homepage content in the shape the homepage component reads, with defaults and live numbers. */
 export async function homeContent(payload: Payload | null) {
   const [g, rules] = await Promise.all([(payload ? payload.findGlobal({ slug: "home-page", depth: 1, overrideAccess: true }).catch(() => null) : Promise.resolve(null)) as Promise<HomePage | null>, contentRules(payload)]);
   const D = fill(HOME_DEFAULTS, rules);
+  // First visit after set-up: copy the default content into the Homepage editor so it can be edited.
+  if (payload && g && !g.hero?.pretitle && !g.hero?.headlines?.length) void import("./seed-home").then((m) => m.seedHomePage(payload)).catch(() => undefined);
   const h: NonNullable<HomePage["hero"]> = g?.hero ?? {};
   const s: NonNullable<HomePage["stats"]> = g?.stats ?? {};
   const x: NonNullable<HomePage["sections"]> = g?.sections ?? {};

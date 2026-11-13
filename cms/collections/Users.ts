@@ -2,6 +2,7 @@ import { APIError, type CollectionConfig } from "payload";
 import { ALL_ROLES, hasRole, isAdmin, isAdminField, isStaffUser } from "../access";
 import { upgradeLegacyPassword } from "../auth/legacy";
 import { resetPasswordHTML, resetPasswordSubject, verifyEmailHTML, verifyEmailSubject } from "../email/auth";
+import { countryField, timezoneField } from "../fields/geo";
 
 const ROLE_LABELS: Record<(typeof ALL_ROLES)[number], string> = {
   admin: "Admin: everything, including users and platform settings",
@@ -144,10 +145,10 @@ export const Users: CollectionConfig = {
       type: "row",
       fields: [
         { name: "phone", type: "text", admin: { width: "50%" } },
-        { name: "country", type: "text", admin: { width: "50%" } },
+        countryField({ admin: { width: "50%" } }),
       ],
     },
-    { name: "timezone", type: "text", defaultValue: "UTC", admin: { description: "IANA time zone, e.g. Africa/Nairobi. Lesson times are shown in this zone." } },
+    timezoneField({ defaultValue: "UTC", admin: { description: "Lesson times are shown in this time zone." } }),
     { name: "lastLoginAt", type: "date", admin: { readOnly: true, position: "sidebar" } },
     // Imported from the old Supabase platform. Never sent to the browser or the API.
     { name: "legacyId", type: "text", index: true, hidden: true },

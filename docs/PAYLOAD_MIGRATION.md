@@ -358,3 +358,28 @@ tables, with all migrations recorded, so production starts with nothing left to 
   internal notes instead.
 - The `payload` schema is not exposed through Supabase's REST/GraphQL API (`anon` and `authenticated` have no
   access). The old `public` tables and functions are untouched.
+
+## Admin clean-up: done
+
+- **Payload's REST API moved to `/api/cms`** (`routes.api` in `payload.config.ts`). The site's own routes
+  (`/api/subjects`, `/api/languages`, `/api/reviews`, `/api/bookings`, `/api/messages`, `/api/notifications`,
+  `/api/payments`) used to shadow Payload's, so admin dropdowns showed "Untitled - ID: n".
+- **Countries and time zones** are collections under Settings (`cms/collections/Geo.ts`), seeded from the IANA
+  database (`cms/geo/seed-data.ts`). Users, tutor profiles and schedules still store the country name and IANA
+  zone as text, but every write is checked against the active lists (`cms/geo/server.ts`). The admin uses a
+  searchable picker (`cms/admin/fields/GeoSelect.tsx`); the site uses `useGeo()` + `<Combobox>`. `GET /api/geo`
+  serves both lists.
+- **Dropdowns**: `components/ui/Combobox.tsx` (search for long lists, keyboard support, groups) replaces native
+  `<select>`s on the site; `components/ui/FormSelect.tsx` for GET forms such as the tutor search.
+- **Rich text**: tutor About, Teaching style and work-experience descriptions, subject descriptions, student goal
+  details and lesson notes are Lexical rich text (`cms/fields/richtext.ts`). The site edits them with
+  `components/ui/RichTextEditor.tsx` (bold, italic, underline, lists); anything posted is cleaned by
+  `toSafeLexical()` in `cms/content/rich.ts`. `tutor-profiles.aboutText` is a plain-text copy for search.
+  Short plain-text fields stay plain: SEO descriptions, summaries/excerpts, one-line subtitles, chat messages
+  and review comments.
+- **Admin menu filters** use Payload's own query format (`where[or][0][and][0][field][op]=value`); the short
+  form was dropped by the list view when opened from the menu.
+- **Homepage editor** is filled with the default content on first use (`cms/content/seed-home.ts`). A counter's
+  number can be left empty to follow the platform rules (e.g. trial minutes).
+- Migration `20261113_040559_rich_text_geo` converts existing text to rich text, adds the new tables, seeds
+  countries, time zones and the homepage, and names schedules after their tutor.

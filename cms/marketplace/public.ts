@@ -2,6 +2,7 @@ import "server-only";
 import type { Payload, Where } from "payload";
 import type { Media, Subject, TutorProfile, Language } from "@/payload-types";
 import { getPolicies } from "../tutors/server";
+import { lexicalToText, type Lexical } from "../content/rich";
 
 /** Everything the public marketplace shows about a tutor (no private fields). */
 export type PublicTutor = {
@@ -9,8 +10,8 @@ export type PublicTutor = {
   slug: string;
   name: string;
   headline: string;
-  about: string;
-  teachingStyle: string;
+  about: Lexical | null;
+  teachingStyle: Lexical | null;
   photo: string | null;
   photoLarge: string | null;
   country: string | null;
@@ -32,7 +33,7 @@ export type PublicTutor = {
   introVideoUrl: string | null;
   education: { degree: string; institution: string; field?: string | null; endYear?: number | null; verified: boolean }[];
   certifications: { title: string; issuer: string; year?: number | null; verified: boolean }[];
-  experience: { role: string; organization: string; startYear?: number | null; endYear?: number | null; description?: string | null }[];
+  experience: { role: string; organization: string; startYear?: number | null; endYear?: number | null; description?: Lexical | null }[];
   joinedAt: string | null;
 };
 
@@ -48,8 +49,8 @@ export function toPublicTutor(t: TutorProfile, policies: Policies): PublicTutor 
     slug: String(t.slug),
     name: t.displayName ?? "Tutor",
     headline: t.headline ?? "",
-    about: t.about ?? "",
-    teachingStyle: t.teachingStyle ?? "",
+    about: (t.about as Lexical | null) ?? null,
+    teachingStyle: (t.teachingStyle as Lexical | null) ?? null,
     photo: photo?.sizes?.thumb?.url ?? photo?.url ?? null,
     photoLarge: photo?.sizes?.card?.url ?? photo?.url ?? null,
     country: t.country ?? null,
@@ -71,7 +72,7 @@ export function toPublicTutor(t: TutorProfile, policies: Policies): PublicTutor 
     introVideoUrl: t.introVideoUrl || null,
     education: (t.education ?? []).map((e) => ({ degree: e.degree, institution: e.institution, field: e.field, endYear: e.endYear, verified: Boolean(e.verified) })),
     certifications: (t.certifications ?? []).map((c) => ({ title: c.title, issuer: c.issuer, year: c.year, verified: Boolean(c.verified) })),
-    experience: (t.experience ?? []).map((x) => ({ role: x.role, organization: x.organization, startYear: x.startYear, endYear: x.endYear, description: x.description })),
+    experience: (t.experience ?? []).map((x) => ({ role: x.role, organization: x.organization, startYear: x.startYear, endYear: x.endYear, description: (x.description as Lexical | null) ?? null })),
     joinedAt: t.approvedAt ?? null,
   };
 }
@@ -103,7 +104,7 @@ export async function searchTutors(payload: Payload, params: SearchParams) {
       or: [
         { displayName: { like: q } },
         { headline: { like: q } },
-        { about: { like: q } },
+        { aboutText: { like: q } },
         ...(subs.docs.length ? [{ subjects: { in: subs.docs.map((s) => s.id) } }] : []),
       ],
     });
@@ -145,6 +146,6 @@ export async function subjectsWithCounts(payload: Payload) {
     const id = typeof s === "object" ? s.id : s;
     counts.set(id, (counts.get(id) ?? 0) + 1);
   }
-  return subjects.docs.map((s) => ({ id: s.id, name: s.name, slug: String(s.slug), category: s.category, description: s.description ?? "", icon: s.icon ?? "BookOpen", isFeatured: Boolean(s.isFeatured), tutorCount: counts.get(s.id) ?? 0 }));
+  return subjects.docs.map((s) => ({ id: s.id, name: s.name, slug: String(s.slug), category: s.category, description: lexicalToText(s.description), icon: s.icon ?? "BookOpen", isFeatured: Boolean(s.isFeatured), tutorCount: counts.get(s.id) ?? 0 }));
 }
 export type SubjectSummary = Awaited<ReturnType<typeof subjectsWithCounts>>[number];

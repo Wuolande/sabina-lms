@@ -23,17 +23,17 @@ test("homepage, pages, blog, SEO and academy", async ({ browser }, info) => {
   const page = await ctx.newPage();
 
   // 1. Homepage: default copy with the platform's real rules, no claims about unbuilt features.
-  await api("/api/globals/home-page", { method: "POST", cookie: admin, body: JSON.stringify({ hero: { pretitle: "" }, stats: { live: false } }) });
+  await api("/api/cms/globals/home-page", { method: "POST", cookie: admin, body: JSON.stringify({ hero: { pretitle: "" }, stats: { live: false } }) });
   await page.goto("/");
   await expect(page.getByText("LIVE 1-ON-1 TUTORING")).toBeVisible();
   await expect(page.getByText(/free cancellation up to 24 hours before/i).first()).toBeVisible();
   const html = await page.content();
   expect(html).not.toMatch(/Sabina Edge|whiteboard|\{cancelHours\}|\{tutorShare\}/i);
   // An edit in the admin shows up.
-  await api("/api/globals/home-page", { method: "POST", cookie: admin, body: JSON.stringify({ hero: { pretitle: `TUTORS FOR EVERY EXAM ${tag}` } }) });
+  await api("/api/cms/globals/home-page", { method: "POST", cookie: admin, body: JSON.stringify({ hero: { pretitle: `TUTORS FOR EVERY EXAM ${tag}` } }) });
   await page.goto("/");
   await expect(page.getByText(`TUTORS FOR EVERY EXAM ${tag}`)).toBeVisible();
-  await api("/api/globals/home-page", { method: "POST", cookie: admin, body: JSON.stringify({ hero: { pretitle: "" } }) });
+  await api("/api/cms/globals/home-page", { method: "POST", cookie: admin, body: JSON.stringify({ hero: { pretitle: "" } }) });
 
   // 2. Standard pages exist with real rules; editing one changes it; extra pages; drafts are hidden.
   for (const [path, title] of [["/about", "About Sabina"], ["/pricing", "Pricing"], ["/terms", "Terms of service"], ["/privacy", "Privacy policy"], ["/cookies", "Cookie policy"], ["/refund-policy", "Refund policy"]]) {
@@ -42,19 +42,19 @@ test("homepage, pages, blog, SEO and academy", async ({ browser }, info) => {
   }
   await page.goto("/pricing");
   await expect(page.getByText("Cancel at least 24 hours before the start for a full refund.")).toBeVisible();
-  const extra = await api("/api/pages", { method: "POST", cookie: admin, body: JSON.stringify({ title: `Safeguarding ${tag}`, intro: "How we keep students safe.", body: para("Every tutor is checked."), status: "published" }) });
+  const extra = await api("/api/cms/pages", { method: "POST", cookie: admin, body: JSON.stringify({ title: `Safeguarding ${tag}`, intro: "How we keep students safe.", body: para("Every tutor is checked."), status: "published" }) });
   expect(extra.res.status).toBe(201);
   const extraSlug = (extra.data.doc as { slug: string }).slug;
   await page.goto(`/pages/${extraSlug}`);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(`Safeguarding ${tag}`);
   await expect(page.getByText("Every tutor is checked.")).toBeVisible();
-  await api(`/api/pages/${(extra.data.doc as { id: number }).id}`, { method: "PATCH", cookie: admin, body: JSON.stringify({ status: "draft" }) });
+  await api(`/api/cms/pages/${(extra.data.doc as { id: number }).id}`, { method: "PATCH", cookie: admin, body: JSON.stringify({ status: "draft" }) });
   expect((await page.goto(`/pages/${extraSlug}`))?.status()).toBe(404);
 
   // 3. Blog: a published post (featured, with category), a draft and a scheduled one.
-  const cat = await api("/api/blog-categories", { method: "POST", cookie: admin, body: JSON.stringify({ name: `Exam tips ${tag}` }) });
+  const cat = await api("/api/cms/blog-categories", { method: "POST", cookie: admin, body: JSON.stringify({ name: `Exam tips ${tag}` }) });
   const catDoc = cat.data.doc as { id: number; slug: string };
-  const mk = (title: string, extraData: object) => api("/api/posts", { method: "POST", cookie: admin, body: JSON.stringify({ title, excerpt: `Summary of ${title}.`, body: para(`Body of ${title}.`), category: catDoc.id, ...extraData }) });
+  const mk = (title: string, extraData: object) => api("/api/cms/posts", { method: "POST", cookie: admin, body: JSON.stringify({ title, excerpt: `Summary of ${title}.`, body: para(`Body of ${title}.`), category: catDoc.id, ...extraData }) });
   const live = await mk(`How to revise for KCSE chemistry ${tag}`, { status: "published", featured: true });
   expect(live.res.status).toBe(201);
   const liveSlug = (live.data.doc as { slug: string }).slug;
@@ -74,7 +74,7 @@ test("homepage, pages, blog, SEO and academy", async ({ browser }, info) => {
   await expect(page).toHaveTitle(new RegExp(`How to revise for KCSE chemistry ${tag}`));
   expect((await page.goto(`/blog/draft-post-${tag}`))?.status()).toBe(404);
   // Anonymous API readers can't see drafts either.
-  expect(((await api(`/api/posts?where[title][equals]=Draft post ${tag}`)).data.docs as unknown[]).length).toBe(0);
+  expect(((await api(`/api/cms/posts?where[title][equals]=Draft post ${tag}`)).data.docs as unknown[]).length).toBe(0);
   // Homepage shows the latest post; RSS and sitemap list it.
   await page.goto("/");
   await expect(page.getByRole("heading", { name: `How to revise for KCSE chemistry ${tag}` })).toBeVisible();
@@ -84,11 +84,11 @@ test("homepage, pages, blog, SEO and academy", async ({ browser }, info) => {
   expect(await (await page.request.get("/sitemap.xml")).text()).toContain(`/blog/${liveSlug}`);
 
   // 4. SEO settings: homepage title, and robots follows "allow indexing".
-  await api("/api/globals/site-settings", { method: "POST", cookie: admin, body: JSON.stringify({ seo: { title: `Sabina tutors ${tag}`, allowIndexing: false } }) });
+  await api("/api/cms/globals/site-settings", { method: "POST", cookie: admin, body: JSON.stringify({ seo: { title: `Sabina tutors ${tag}`, allowIndexing: false } }) });
   await page.goto("/");
   await expect(page).toHaveTitle(`Sabina tutors ${tag}`);
   expect(await (await page.request.get("/robots.txt")).text()).toMatch(/Disallow: \/\s*$/m);
-  await api("/api/globals/site-settings", { method: "POST", cookie: admin, body: JSON.stringify({ seo: { title: "", allowIndexing: true } }) });
+  await api("/api/cms/globals/site-settings", { method: "POST", cookie: admin, body: JSON.stringify({ seo: { title: "", allowIndexing: true } }) });
   expect(await (await page.request.get("/robots.txt")).text()).toContain("Sitemap:");
 
   // 5. Academy: a tutor works through the starter course, fails then passes the quiz, gets a certificate.

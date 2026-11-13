@@ -7,6 +7,9 @@ import type { LessonDetailView } from "@/cms/lessons/server";
 import { PersonAvatar, StatusPill } from "@/components/scheduling/LessonCard";
 import { fmtDay, fmtRange, fmtTime } from "@/lib/time";
 import { money } from "@/lib/money";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { RichText } from "@/components/content/RichText";
+import type { Lexical } from "@/cms/content/rich";
 
 async function post(id: number, body: object) {
   const res = await fetch(`/api/lessons/${id}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
@@ -86,7 +89,7 @@ function ReviewForm({ id, tutor }: { id: number; tutor: string }) {
   );
 }
 
-function NotesEditor({ id, initial, done }: { id: number; initial: string; done: boolean }) {
+function NotesEditor({ id, initial, done }: { id: number; initial: Lexical | null; done: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(initial);
@@ -104,10 +107,12 @@ function NotesEditor({ id, initial, done }: { id: number; initial: string; done:
     );
   return (
     <div className="p-5 sm:p-6">
-      <label className="block">
-        <span className="text-sm font-semibold text-slate-800">Notes for your student</span>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={5} maxLength={2000} placeholder="What you covered, and what to practise before next time" className="mt-1.5 w-full rounded-2xl border-0 bg-slate-50 px-4 py-3 text-[15px] ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-500" />
-      </label>
+      <div className="block">
+        <label htmlFor={`notes-${id}`} className="text-sm font-semibold text-slate-800">Notes for your student</label>
+        <div className="mt-1.5">
+          <RichTextEditor id={`notes-${id}`} value={notes} onChange={setNotes} placeholder="What you covered, and what to practise before next time" minHeight={130} />
+        </div>
+      </div>
       {error && <p className="mt-2 text-sm font-medium text-rose-600">{error}</p>}
       <div className="mt-3 flex gap-2">
         <button
@@ -270,12 +275,12 @@ export function LessonDetail({ l, tz }: { l: LessonDetailView; tz: string }) {
           {l.tutorNotes && (
             <div className="flex gap-3 p-5 sm:px-6">
               <NotebookPen size={20} className="mt-0.5 shrink-0 text-slate-400" />
-              <p className="whitespace-pre-wrap text-[15px] text-slate-700">{l.tutorNotes}</p>
+              <RichText data={l.tutorNotes} className="min-w-0 text-[15px] text-slate-700" />
             </div>
           )}
           {l.canFinish && (
             <div className={l.tutorNotes ? "border-t border-slate-100" : ""}>
-              <NotesEditor id={l.id} initial={l.tutorNotes ?? ""} done={l.status === "completed"} />
+              <NotesEditor id={l.id} initial={l.tutorNotes ?? null} done={l.status === "completed"} />
             </div>
           )}
         </Group>

@@ -14,6 +14,7 @@ import { randomBytes } from "node:crypto";
 import { getPayload, type Payload } from "payload";
 import config from "@payload-config";
 import { lexical } from "../content/lexical";
+import { textToLexical } from "../content/rich";
 
 type Snapshot = {
   policy: Record<string, number | boolean | string>;
@@ -185,8 +186,8 @@ export async function importLegacy(payload: Payload, snap: Snapshot, content: Co
       displayName: `${first} ${owner.last_name.charAt(0).toUpperCase()}.`,
       slug: t.slug,
       headline: t.headline,
-      about: t.bio || null,
-      teachingStyle: t.teaching_style,
+      about: textToLexical(t.bio),
+      teachingStyle: textToLexical(t.teaching_style),
       hourlyRate: t.hourly_rate,
       offersTrial: t.trial,
       instantBooking: true,
@@ -234,7 +235,7 @@ export async function importLegacy(payload: Payload, snap: Snapshot, content: Co
       user: userId,
       level: s.level ? s.level.toLowerCase() : undefined,
       goal: goalText ? (/hobby|personal/i.test(goalText) ? "hobby" : "exam") : undefined,
-      goalDetails: goalText,
+      goalDetails: textToLexical(goalText),
       subjects: subject ? [subject] : [],
       pace: s.weekly_hours && s.weekly_hours >= 4 ? "2-3" : "1",
       onboardedAt: goalText ? new Date().toISOString() : null,

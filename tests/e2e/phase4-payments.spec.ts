@@ -135,7 +135,7 @@ test("pay to book, failed payment, expiry, refunds, earnings and payout", async 
   // 7. Finance marks it paid in the admin; the tutor sees it.
   const admin = await api("/api/auth/login", { method: "POST", body: JSON.stringify(ADMIN) });
   const payout = (await sql<{ id: number }>("select id from payload.payouts where tutor_user_id = $1", [tutor.id]))[0]!.id;
-  const mark = await api(`/api/payouts/${payout}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ status: "paid", transferRef: "QK12AB34CD" }) });
+  const mark = await api(`/api/cms/payouts/${payout}`, { method: "PATCH", cookie: admin.cookie, body: JSON.stringify({ status: "paid", transferRef: "QK12AB34CD" }) });
   expect(mark.res.ok).toBe(true);
   await tp.reload();
   await expect(tp.getByRole("listitem").getByText("Paid", { exact: true })).toBeVisible();
@@ -148,7 +148,7 @@ test("pay to book, failed payment, expiry, refunds, earnings and payout", async 
   expect((await api(`/api/payments/dev`, { method: "POST", cookie: stranger.cookie, body: JSON.stringify({ ref, outcome: "succeeded" }) })).res.status).toBe(404);
   const forged = await fetch(`${process.env.BASE_URL || "http://localhost:3000"}/api/payments/webhook/paystack`, { method: "POST", headers: { "Content-Type": "application/json", "x-paystack-signature": "deadbeef" }, body: JSON.stringify({ event: "charge.success", data: { reference: ref, status: "success" } }) });
   expect(forged.status).toBe(400);
-  expect((await api("/api/payouts", { cookie: stranger.cookie })).data.docs).toEqual([]);
+  expect((await api("/api/cms/payouts", { cookie: stranger.cookie })).data.docs).toEqual([]);
 
   // 9. Phone layouts.
   for (const [p, paths] of [

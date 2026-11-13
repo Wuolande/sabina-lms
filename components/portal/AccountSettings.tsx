@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { Camera, Globe2, LogOut, ShieldCheck, Trash2, UserRound } from "lucide-react";
 import { Alert, PasswordChecklist, PasswordInput, SubmitButton, TextInput, passwordOk } from "@/components/auth/fields";
 import { UserAvatar, usePortalUser } from "./PortalShell";
+import { Select } from "./form";
+import { useGeo, withCurrent } from "@/components/ui/useGeo";
 
 function Section({ icon: Icon, title, sub, children }: { icon: typeof UserRound; title: string; sub: string; children: React.ReactNode }) {
   return (
@@ -18,30 +20,6 @@ function Section({ icon: Icon, title, sub, children }: { icon: typeof UserRound;
       <div className="min-w-0">{children}</div>
     </section>
   );
-}
-
-/** Time zones known to this browser (built after mount: server and browser lists differ). */
-export function useZones() {
-  const [list, setList] = useState<{ z: string; label: string }[]>([]);
-  useEffect(() => {
-    let zs: string[];
-    try {
-      zs = (Intl as unknown as { supportedValuesOf: (k: string) => string[] }).supportedValuesOf("timeZone");
-    } catch {
-      zs = ["UTC", "Africa/Nairobi", "Africa/Lagos", "Europe/London", "America/New_York"];
-    }
-    setList(zs.map((z) => ({ z, label: `${z.replace(/_/g, " ")} (${offsetOf(z)})` })));
-  }, []);
-  return list;
-}
-
-function offsetOf(tz: string) {
-  try {
-    const part = new Intl.DateTimeFormat("en-GB", { timeZone: tz, timeZoneName: "shortOffset" }).formatToParts(new Date()).find((p) => p.type === "timeZoneName");
-    return part?.value.replace("GMT", "UTC") ?? "";
-  } catch {
-    return "";
-  }
 }
 
 async function send(url: string, method: string, body?: unknown) {
@@ -59,7 +37,7 @@ function ProfileForm() {
   const [avatar, setAvatar] = useState(user.avatarUrl);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
-  const tzOptions = useZones();
+  const { countryOptions, zoneOptions, zonesFor } = useGeo();
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -114,26 +92,36 @@ function ProfileForm() {
         <TextInput label="First name" autoComplete="given-name" value={f.firstName} onChange={(e) => setF({ ...f, firstName: e.target.value })} />
         <TextInput label="Last name" autoComplete="family-name" value={f.lastName} onChange={(e) => setF({ ...f, lastName: e.target.value })} />
         <TextInput label="Phone" type="tel" autoComplete="tel" placeholder="+254 712 345 678" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
-        <TextInput label="Country" autoComplete="country-name" placeholder="Kenya" value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })} />
       </div>
-      <div className="space-y-1.5">
-        <label htmlFor="tz" className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
-          <Globe2 size={15} /> Time zone
-        </label>
-        <select
-          id="tz"
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Select
+          label="Country"
+          placeholder="Choose your country"
+          searchPlaceholder="Search countries"
+          options={withCurrent(countryOptions, f.country)}
+          value={f.country || null}
+          clearable
+          onChange={(v) => {
+            const zones = zonesFor(v);
+            // Moving to a country with one time zone? Switch it too, so lesson times stay right.
+            setF({ ...f, country: v ?? "", timezone: zones.length === 1 && zones[0] !== f.timezone ? zones[0]! : f.timezone });
+          }}
+        />
+        <Select
+          label="Time zone"
+          searchPlaceholder="Search a city or country"
+          options={withCurrent(
+            [...zoneOptions].sort((x, y) => Number(zonesFor(f.country).includes(y.value)) - Number(zonesFor(f.country).includes(x.value))),
+            f.timezone,
+          )}
           value={f.timezone}
-          onChange={(e) => setF({ ...f, timezone: e.target.value })}
-          className="block h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-[15px] text-slate-900 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-600/15"
-        >
-          {!tzOptions.some((o) => o.z === f.timezone) && <option value={f.timezone}>{f.timezone.replace(/_/g, " ")}</option>}
-          {tzOptions.map(({ z, label }) => (
-            <option key={z} value={z}>
-              {label}
-            </option>
-          ))}
-        </select>
-        <p className="text-[13px] text-slate-500">Lesson times are shown in this time zone.</p>
+          onChange={(v) => v && setF({ ...f, timezone: v })}
+          hint={
+            <span className="inline-flex items-center gap-1">
+              <Globe2 size={13} /> Lesson times are shown in this time zone.
+            </span>
+          }
+        />
       </div>
 
       <div className="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center">

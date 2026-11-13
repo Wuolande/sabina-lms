@@ -7,6 +7,7 @@ import { getPolicies } from "@/cms/tutors/server";
 import { STUDENT_GOALS, STUDENT_LEVELS, STUDENT_PACE } from "@/cms/collections/StudentProfiles";
 import { LearningGoalsForm } from "@/components/portal/LearningGoalsForm";
 import { TutorCard } from "@/components/marketplace/TutorCard";
+import type { Lexical } from "@/cms/content/rich";
 
 export const metadata = { title: "Learning goals" };
 
@@ -38,7 +39,7 @@ export default async function StudentProfilePage() {
         <p className="mt-1 text-slate-500">What you want to learn, and tutors who match.</p>
       </header>
       <LearningGoalsForm
-        initial={{ subjects: chosen, goal: profile.goal ?? null, level: profile.level ?? null, pace: profile.pace ?? null, budgetMin: profile.budgetMin ?? null, budgetMax: profile.budgetMax ?? null, goalDetails: profile.goalDetails ?? "", preferredLanguages: idList(profile.preferredLanguages) }}
+        initial={{ subjects: chosen, goal: profile.goal ?? null, level: profile.level ?? null, pace: profile.pace ?? null, budgetMin: profile.budgetMin ?? null, budgetMax: profile.budgetMax ?? null, goalDetails: (profile.goalDetails as Lexical | null) ?? null, preferredLanguages: idList(profile.preferredLanguages) }}
         subjects={subjects.docs.map((s) => ({ id: s.id, name: s.name }))}
         languages={languages.docs.map((l) => ({ id: l.id, name: l.name }))}
         goals={[...STUDENT_GOALS]}

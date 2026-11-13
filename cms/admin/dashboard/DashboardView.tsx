@@ -88,7 +88,7 @@ export async function DashboardView({ initPageResult, searchParams }: AdminViewS
           </section>
 
           <div className="ep-kpis">
-            <a className="ep-kpi-tile" href="/admin/collections/users?where[role][equals]=student">
+            <a className="ep-kpi-tile" href="/admin/collections/users?where[or][0][and][0][role][equals]=student">
               <div className="ep-kpi-tile__top">
                 <IconChip tone="accent">
                   <UsersRound />
@@ -98,7 +98,7 @@ export async function DashboardView({ initPageResult, searchParams }: AdminViewS
               <span className="ep-kpi__value">{d.totals.students}</span>
               <Sparkline data={d.studentSpark} height={28} />
             </a>
-            <a className="ep-kpi-tile" href="/admin/collections/users?where[role][equals]=tutor">
+            <a className="ep-kpi-tile" href="/admin/collections/users?where[or][0][and][0][role][equals]=tutor">
               <div className="ep-kpi-tile__top">
                 <IconChip tone="warning">
                   <GraduationCap />

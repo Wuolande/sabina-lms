@@ -2,6 +2,9 @@ import { APIError, type Access, type CollectionConfig, type FieldAccess, type Wh
 import { hasRole, isAdmin, isStaffUser } from "../access";
 import { slugify } from "../fields/slug";
 import { reviewEndpoint } from "../tutors/review";
+import { countryField, timezoneField } from "../fields/geo";
+import { richDescription } from "../fields/richtext";
+import { lexicalToText } from "../content/rich";
 
 export const TUTOR_STATUSES = [
   { label: "Draft", value: "draft" },
@@ -126,8 +129,9 @@ export const TutorProfiles: CollectionConfig = {
           label: "Profile",
           fields: [
             { name: "headline", type: "text", maxLength: 90, admin: { description: "One line students see first, e.g. \"Patient KCSE Maths tutor, 8 years' experience\"." } },
-            { name: "about", type: "textarea", maxLength: 2000, admin: { description: "Who you are and how you got into teaching." } },
-            { name: "teachingStyle", type: "textarea", maxLength: 1500, admin: { description: "What a lesson with you looks like." } },
+            richDescription("about", { maxChars: 2000, description: "Who you are and how you got into teaching." }),
+            { name: "aboutText", type: "text", admin: { hidden: true }, hooks: { beforeChange: [({ siblingData }) => lexicalToText(siblingData.about).slice(0, 2000) || null] } },
+            richDescription("teachingStyle", { maxChars: 1500, description: "What a lesson with you looks like." }),
             {
               name: "languages",
               type: "array",
@@ -204,7 +208,7 @@ export const TutorProfiles: CollectionConfig = {
               fields: [
                 { type: "row", fields: [{ name: "role", type: "text", required: true, admin: { width: "50%" } }, { name: "organization", type: "text", required: true, admin: { width: "50%" } }] },
                 { type: "row", fields: [{ name: "startYear", type: "number", admin: { width: "50%" } }, { name: "endYear", type: "number", admin: { width: "50%", description: "Leave empty if current." } }] },
-                { name: "description", type: "textarea", maxLength: 500 },
+                richDescription("description", { maxChars: 500 }),
               ],
             },
           ],
@@ -259,8 +263,8 @@ export const TutorProfiles: CollectionConfig = {
     { name: "displayName", type: "text", index: true, admin: { position: "sidebar", description: "Public name, e.g. \"Jane D.\"" } },
     { name: "photo", type: "upload", relationTo: "media", admin: { position: "sidebar", readOnly: true, description: "Follows the tutor's account photo." } },
     { name: "slug", type: "text", unique: true, index: true, access: { update: staffField }, admin: { position: "sidebar" } },
-    { name: "country", type: "text", index: true, admin: { position: "sidebar" } },
-    { name: "timezone", type: "text", admin: { position: "sidebar" } },
+    countryField({ admin: { position: "sidebar" } }),
+    timezoneField({ admin: { position: "sidebar" } }),
     { name: "submittedAt", type: "date", access: { update: reviewerField }, admin: { position: "sidebar", readOnly: true } },
     { name: "approvedAt", type: "date", access: { update: reviewerField }, admin: { position: "sidebar", readOnly: true } },
     { name: "isFeatured", type: "checkbox", defaultValue: false, access: { update: reviewerField }, admin: { position: "sidebar" } },

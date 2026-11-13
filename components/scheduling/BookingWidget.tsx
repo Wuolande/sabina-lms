@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarCheck, CalendarDays, CheckCircle2, Clock, Hourglass, Loader2, Sparkles, Zap } from "lucide-react";
 import type { LessonOption } from "@/cms/scheduling/server";
-import { useZones } from "@/components/portal/AccountSettings";
+import { Combobox } from "@/components/ui/Combobox";
+import { useGeo, withCurrent } from "@/components/ui/useGeo";
 import { PayStep, type Provider } from "@/components/payments/PayStep";
 import { controlCls } from "@/components/portal/form";
 import { addDays, dateKey, DAYS_SHORT, fmtDay, fmtRange, fmtTime, tzLabel, weekdayOfKey, zonedParts } from "@/lib/time";
@@ -20,7 +21,7 @@ const PERIODS = [
 
 /** Pick a lesson type, a day and a time in the student's own zone, then confirm. */
 export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours }: { tutor: Tutor; initialTz: string; initialKind?: "trial" | "regular"; cancellationHours: number }) {
-  const zones = useZones();
+  const { zoneOptions } = useGeo();
   const [tz, setTz] = useState(initialTz);
   const [data, setData] = useState<SlotsResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -183,17 +184,10 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
         <section className="rounded-3xl bg-white p-5 ring-1 ring-slate-200/70 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 className="font-heading text-lg font-bold text-slate-900">2. Pick a day and time</h2>
-            <label className="flex min-w-0 items-center gap-2 text-sm text-slate-500">
+            <div className="flex min-w-0 items-center gap-2 text-sm text-slate-500">
               <span className="shrink-0">Times in</span>
-              <select value={tz} onChange={(e) => setTz(e.target.value)} className="min-w-0 max-w-[14rem] truncate rounded-lg border-0 bg-slate-100 py-1.5 pl-2.5 pr-8 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-brand-500" aria-label="Time zone">
-                {!zones.some((z) => z.z === tz) && <option value={tz}>{tz.replace(/_/g, " ")}</option>}
-                {zones.map((z) => (
-                  <option key={z.z} value={z.z}>
-                    {z.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <Combobox aria-label="Time zone" size="sm" className="w-[15rem] max-w-full" options={withCurrent(zoneOptions, tz)} value={tz} onChange={(v) => v && setTz(v)} searchPlaceholder="Search a city or country" />
+            </div>
           </div>
 
           {data && !data.hasHours ? (
@@ -303,16 +297,10 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
             </div>
           </dl>
           {tutor.subjects.length > 1 && (
-            <label className="mt-5 block">
+            <div className="mt-5">
               <span className="text-sm font-semibold text-slate-800">Subject</span>
-              <select value={subjectId ?? ""} onChange={(e) => setSubjectId(Number(e.target.value))} className={`${controlCls} mt-1.5 h-11 text-sm`}>
-                {tutor.subjects.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <Combobox aria-label="Subject" size="sm" className="mt-1.5" options={tutor.subjects.map((x) => ({ value: x.id, label: x.name }))} value={subjectId} onChange={(v) => v != null && setSubjectId(v)} />
+            </div>
           )}
           <label className="mt-4 block">
             <span className="text-sm font-semibold text-slate-800">Note for {tutor.name.split(" ")[0]} (optional)</span>

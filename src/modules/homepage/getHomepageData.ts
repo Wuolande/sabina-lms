@@ -1,6 +1,7 @@
 import { Subject } from "@/types";
 import { homeContent, listPosts, maybePayload, type PostCard } from "@/cms/content/server";
 import { searchTutors, subjectsWithCounts, type PublicTutor } from "@/cms/marketplace/public";
+import { lexicalToText } from "@/cms/content/rich";
 
 export { DEFAULT_HERO_IMAGE } from "./constants";
 
@@ -29,7 +30,7 @@ export async function getHomepageServerData(): Promise<HomepageServerData> {
         [...list]
           .sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured) || b.tutorCount - a.tutorCount)
           .slice(0, 12)
-          .map((s) => ({ id: String(s.id), name: s.name, slug: s.slug, category: s.category, description: s.description, iconName: s.icon, tutorCount: s.tutorCount }) as unknown as Subject),
+          .map((s) => ({ id: String(s.id), name: s.name, slug: s.slug, category: s.category, description: lexicalToText(s.description), iconName: s.icon, tutorCount: s.tutorCount }) as unknown as Subject),
       )
       .catch(() => [] as Subject[]),
     listPosts(payload, { limit: 3 })

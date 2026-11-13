@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { APIError } from "payload";
 import { hasRole, isAdmin, isStaffUser, staffOrOwner } from "../access";
+import { richDescription } from "../fields/richtext";
 
 export const STUDENT_LEVELS = [
   { label: "Complete beginner", value: "beginner" },
@@ -64,7 +65,7 @@ export const StudentProfiles: CollectionConfig = {
       { name: "budgetMin", type: "number", min: 0, admin: { width: "50%" } },
       { name: "budgetMax", type: "number", min: 0, admin: { width: "50%" } },
     ] },
-    { name: "goalDetails", type: "textarea", maxLength: 600, label: "In their own words" },
+    richDescription("goalDetails", { maxChars: 600, label: "In their own words" }),
     { name: "preferredLanguages", type: "relationship", relationTo: "languages", hasMany: true },
     { name: "savedTutors", type: "relationship", relationTo: "tutor-profiles", hasMany: true },
     { name: "onboardedAt", type: "date", admin: { readOnly: true } },

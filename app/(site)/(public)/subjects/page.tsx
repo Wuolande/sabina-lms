@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { getPayloadClient } from "@/cms/auth/session";
 import { subjectsWithCounts } from "@/cms/marketplace/public";
 import { CATEGORY_LABEL, SubjectIcon } from "@/components/subjects/SubjectIcon";
+import { lexicalToText } from "@/cms/content/rich";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +46,7 @@ export default async function SubjectsPage() {
                     <SubjectIcon name={s.icon} />
                   </span>
                   <h3 className="mt-4 font-heading text-lg font-bold text-slate-900">{s.name}</h3>
-                  <p className="mt-1 line-clamp-2 flex-1 text-sm text-slate-500">{s.description}</p>
+                  <p className="mt-1 line-clamp-2 flex-1 text-sm text-slate-500">{lexicalToText(s.description)}</p>
                   <p className="mt-4 flex items-center justify-between text-sm font-semibold text-brand-700">
                     {s.tutorCount ? `${s.tutorCount} ${s.tutorCount === 1 ? "tutor" : "tutors"}` : "Tutors joining soon"}
                     <ArrowRight size={16} className="transition group-hover:translate-x-0.5" />

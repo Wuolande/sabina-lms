@@ -33,9 +33,9 @@ test("old Supabase passwords keep working and are upgraded on first sign-in", as
   expect((await sql<{ h: string | null }>("select legacy_password_hash h from payload.users where id = $1", [a.id]))[0]!.h).toBeNull();
   // From now on it's a normal Payload password, on both sign-in endpoints.
   expect((await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email: a.email, password: old }) })).res.status).toBe(200);
-  expect((await api("/api/users/login", { method: "POST", body: JSON.stringify({ email: a.email, password: old }) })).res.status).toBe(200);
+  expect((await api("/api/cms/users/login", { method: "POST", body: JSON.stringify({ email: a.email, password: old }) })).res.status).toBe(200);
 
   // The hidden fields never reach the API.
-  const me = await api("/api/users/me", { cookie: ok.cookie });
+  const me = await api("/api/cms/users/me", { cookie: ok.cookie });
   expect(JSON.stringify(me.data)).not.toMatch(/legacyPasswordHash|legacyAvatarUrl|legacyId/);
 });

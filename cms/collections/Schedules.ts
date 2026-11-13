@@ -2,6 +2,7 @@ import type { CollectionConfig } from "payload";
 import { APIError } from "payload";
 import { isAdmin, isStaffUser, staffOrOwner } from "../access";
 import { toMinutes, validTimeZone } from "../../lib/time";
+import { timezoneField } from "../fields/geo";
 
 /**
  * A tutor's weekly hours, time off and booking rules. Kept apart from the tutor profile so an
@@ -54,9 +55,24 @@ export const Schedules: CollectionConfig = {
     ],
   },
   fields: [
-    { name: "label", type: "text", admin: { hidden: true }, hooks: { beforeChange: [({ siblingData, req }) => siblingData.label ?? (req.user?.name ? `${req.user.name}` : undefined)] } },
+    {
+      name: "label",
+      type: "text",
+      admin: { hidden: true },
+      hooks: {
+        // Always the tutor's name (never the editor's), so the admin list reads "Grace Achieng" etc.
+        beforeChange: [
+          async ({ siblingData, req }) => {
+            const uid = typeof siblingData.user === "object" ? siblingData.user?.id : siblingData.user;
+            if (!uid) return siblingData.label;
+            const u = await req.payload.findByID({ collection: "users", id: uid, depth: 0, overrideAccess: true, req }).catch(() => null);
+            return (u && ([u.firstName, u.lastName].filter(Boolean).join(" ") || u.email)) || siblingData.label;
+          },
+        ],
+      },
+    },
     { name: "user", type: "relationship", relationTo: "users", required: true, unique: true, index: true, access: { update: ({ req }) => isStaffUser(req.user) }, admin: { position: "sidebar" } },
-    { name: "timezone", type: "text", required: true, defaultValue: "UTC", admin: { description: "IANA zone the weekly hours are in, e.g. Africa/Nairobi." } },
+    timezoneField({ required: true, defaultValue: "UTC", admin: { description: "The weekly hours are in this time zone." } }),
     {
       name: "weekly",
       type: "array",

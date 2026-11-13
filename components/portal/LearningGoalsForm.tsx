@@ -3,10 +3,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Target } from "lucide-react";
 import { Alert } from "@/components/auth/fields";
-import { Card, Chips, Select, TextArea } from "./form";
+import { Card, Chips, RichTextArea, Select } from "./form";
+import type { Lexical } from "@/cms/content/rich";
 
 type Opt = { value: string; label: string };
-export type GoalsValue = { subjects: number[]; goal: string | null; level: string | null; pace: string | null; budgetMin: number | null; budgetMax: number | null; goalDetails: string; preferredLanguages: number[] };
+export type GoalsValue = { subjects: number[]; goal: string | null; level: string | null; pace: string | null; budgetMin: number | null; budgetMax: number | null; goalDetails: Lexical | null; preferredLanguages: number[] };
 
 export function LearningGoalsForm({ initial, subjects, languages, goals, levels, paces, currency }: { initial: GoalsValue; subjects: { id: number; name: string }[]; languages: { id: number; name: string }[]; goals: Opt[]; levels: Opt[]; paces: Opt[]; currency: string }) {
   const router = useRouter();
@@ -41,30 +42,9 @@ export function LearningGoalsForm({ initial, subjects, languages, goals, levels,
         </div>
         <Chips label="What do you want to learn?" options={subjects.map((s) => ({ value: s.id, label: s.name }))} value={v.subjects} onChange={(subjects) => setV({ ...v, subjects })} max={10} />
         <div className="grid gap-4 sm:grid-cols-3">
-          <Select label="Main goal" value={v.goal ?? ""} onChange={(e) => setV({ ...v, goal: e.target.value || null })}>
-            <option value="">Choose…</option>
-            {goals.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
-          <Select label="Current level" value={v.level ?? ""} onChange={(e) => setV({ ...v, level: e.target.value || null })}>
-            <option value="">Choose…</option>
-            {levels.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
-          <Select label="How often" value={v.pace ?? ""} onChange={(e) => setV({ ...v, pace: e.target.value || null })}>
-            <option value="">Choose…</option>
-            {paces.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </Select>
+          <Select label="Main goal" placeholder="Choose…" clearable options={goals.map((o) => ({ value: o.value, label: o.label }))} value={v.goal} onChange={(x) => setV({ ...v, goal: x })} />
+          <Select label="Current level" placeholder="Choose…" clearable options={levels.map((o) => ({ value: o.value, label: o.label }))} value={v.level} onChange={(x) => setV({ ...v, level: x })} />
+          <Select label="How often" placeholder="Choose…" clearable options={paces.map((o) => ({ value: o.value, label: o.label }))} value={v.pace} onChange={(x) => setV({ ...v, pace: x })} />
         </div>
         <fieldset className="space-y-1.5">
           <legend className="text-sm font-semibold text-slate-800">Budget per lesson ({currency})</legend>
@@ -75,7 +55,7 @@ export function LearningGoalsForm({ initial, subjects, languages, goals, levels,
           </div>
         </fieldset>
         <Chips label="Tutor should speak (optional)" options={languages.map((l) => ({ value: l.id, label: l.name }))} value={v.preferredLanguages} onChange={(preferredLanguages) => setV({ ...v, preferredLanguages })} max={5} />
-        <TextArea label="Anything else? (optional)" rows={3} maxLength={600} value={v.goalDetails} onChange={(e) => setV({ ...v, goalDetails: e.target.value })} placeholder="e.g. I'm sitting KCSE in November and struggle with calculus." />
+        <RichTextArea label="Anything else? (optional)" minHeight={90} maxLength={600} value={v.goalDetails} onChange={(x) => setV({ ...v, goalDetails: x })} placeholder="e.g. I'm sitting KCSE in November and struggle with calculus." />
         <div className="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center">
           <button type="submit" disabled={busy} className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-6 font-semibold text-white hover:bg-brand-800 disabled:opacity-60">
             {busy && <Loader2 size={18} className="animate-spin" />} Save goals

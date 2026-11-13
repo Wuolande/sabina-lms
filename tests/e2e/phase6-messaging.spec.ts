@@ -104,11 +104,11 @@ test("messages, notifications, email settings and reminders", async ({ browser }
   // 7. Admin turns the payment receipt off: the next receipt is logged as off, not sent.
   const admin = await api("/api/auth/login", { method: "POST", body: JSON.stringify(ADMIN) });
   const adminCookie = admin.res.headers.get("set-cookie")!.split(";")[0]!;
-  const tpl = ((await api("/api/email-templates?where[key][equals]=payment_receipt", { cookie: adminCookie })).data.docs as { id: number }[])[0]!;
-  expect((await api(`/api/email-templates/${tpl.id}`, { method: "PATCH", cookie: adminCookie, body: JSON.stringify({ enabled: false }) })).res.status).toBe(200);
+  const tpl = ((await api("/api/cms/email-templates?where[key][equals]=payment_receipt", { cookie: adminCookie })).data.docs as { id: number }[])[0]!;
+  expect((await api(`/api/cms/email-templates/${tpl.id}`, { method: "PATCH", cookie: adminCookie, body: JSON.stringify({ enabled: false }) })).res.status).toBe(200);
   await paidLesson(student, tutor.profileId, tutor.slug, 40);
   await expect.poll(async () => (await emails(student.email, "payment_receipt")).map((r) => r.status)).toEqual(["no_smtp", "off"]);
-  await api(`/api/email-templates/${tpl.id}`, { method: "PATCH", cookie: adminCookie, body: JSON.stringify({ enabled: true }) });
+  await api(`/api/cms/email-templates/${tpl.id}`, { method: "PATCH", cookie: adminCookie, body: JSON.stringify({ enabled: true }) });
 
   // 8. Reminder an hour before: sent once to each side, shown in notifications.
   await sql("update payload.bookings set starts_at = now() + interval '50 minutes', ends_at = now() + interval '110 minutes', created_at = now() - interval '1 day' where id = $1", [lesson]);

@@ -11,6 +11,7 @@ import { Rating, TutorAvatar } from "@/components/marketplace/TutorCard";
 import { SaveTutorButton } from "@/components/marketplace/SaveTutorButton";
 import { money } from "@/lib/money";
 import { videoEmbedUrl } from "@/lib/video";
+import { RichText } from "@/components/content/RichText";
 
 export const dynamic = "force-dynamic";
 
@@ -175,11 +176,11 @@ export default async function TutorProfilePage({ params }: Props) {
           )}
 
           <Section icon={MessageCircle} title={`About ${t.name.split(" ")[0]}`}>
-            <p className="whitespace-pre-line leading-relaxed text-slate-700">{t.about}</p>
+            <RichText data={t.about} className="leading-relaxed text-slate-700" />
             {t.teachingStyle && (
               <>
                 <h3 className="mt-6 font-semibold text-slate-900">Teaching style</h3>
-                <p className="mt-2 whitespace-pre-line leading-relaxed text-slate-700">{t.teachingStyle}</p>
+                <RichText data={t.teachingStyle} className="mt-2 leading-relaxed text-slate-700" />
               </>
             )}
             <dl className="mt-6 grid gap-4 rounded-2xl bg-slate-50 p-4 sm:grid-cols-2">
@@ -261,7 +262,7 @@ export default async function TutorProfilePage({ params }: Props) {
                       {x.organization}
                       {x.startYear ? ` · ${x.startYear} – ${x.endYear ?? "present"}` : ""}
                     </p>
-                    {x.description && <p className="mt-1.5 text-sm leading-relaxed text-slate-700">{x.description}</p>}
+                    {x.description && <RichText data={x.description} className="mt-1.5 text-sm leading-relaxed text-slate-700" />}
                   </li>
                 ))}
               </ol>

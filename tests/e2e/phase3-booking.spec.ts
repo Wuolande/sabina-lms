@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { account, api, approvedTutor, signIn } from "./accounts";
+import { account, api, approvedTutor, signIn, choose } from "./accounts";
 
 /**
  * Phase 3: a tutor sets weekly hours, a student books a trial (request), the tutor accepts, the
@@ -29,7 +29,7 @@ test("tutor hours → student books → tutor accepts → student cancels; no do
   await tp.getByRole("button", { name: "Weekdays 9–5" }).click();
   for (const d of ["Saturday", "Sunday"]) await tp.locator("li", { hasText: d }).getByRole("checkbox").check();
   await expect(tp.getByText("56 hours a week open for booking.")).toBeVisible();
-  await tp.getByLabel("Minimum notice").selectOption("0");
+  await choose(tp, "Minimum notice", "None");
   await tp.getByText("Instant booking", { exact: true }).click();
   await tp.getByRole("button", { name: "Add time off" }).click();
   await tp.getByRole("button", { name: "Save changes" }).click();
@@ -54,7 +54,7 @@ test("tutor hours → student books → tutor accepts → student cancels; no do
   await sp.getByRole("link", { name: "Book a trial lesson" }).click();
   await expect(sp.getByRole("heading", { name: /Book a lesson with Baraka/ })).toBeVisible();
   await expect(sp.getByRole("button", { name: /Trial/ })).toHaveAttribute("aria-pressed", "true");
-  await expect(sp.getByLabel("Time zone")).toHaveValue("Europe/London");
+  await expect(sp.getByRole("combobox", { name: "Time zone" })).toContainText("London");
   const firstTime = sp.locator("section", { hasText: "2. Pick a day and time" }).getByRole("button", { pressed: false }).filter({ hasText: /\d:\d\d (AM|PM)/ }).first();
   await firstTime.click();
   await sp.getByLabel(/Note for Baraka/).fill("Help with circular motion, please.");
@@ -113,7 +113,7 @@ test("tutor hours → student books → tutor accepts → student cancels; no do
   await sp.goto("/student");
   await expect(sp.getByRole("heading", { name: "Next lessons" })).toBeVisible();
   await sp.goto("/student/calendar");
-  await expect(sp.getByText("Times in Europe/London")).toBeVisible();
+  await expect(sp.getByRole("combobox", { name: "Time zone" })).toContainText("London");
   await sp.goto("/student/lessons");
   await expect(card.getByText("Confirmed")).toBeVisible();
   await card.getByRole("button", { name: "Cancel lesson" }).click();

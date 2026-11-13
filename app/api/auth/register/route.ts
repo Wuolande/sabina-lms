@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getPayloadClient } from "@/cms/auth/session";
 import { EMAIL_RE, fail, guard, normEmail, passwordProblem } from "@/cms/auth/http";
+import { isKnownZone } from "@/cms/geo/server";
 
 const clean = (v: unknown, max = 60) => (typeof v === "string" ? v.trim().replace(/\s+/g, " ").slice(0, max) : "");
 
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
   const firstName = clean(body.firstName);
   const lastName = clean(body.lastName);
   const role = String(body.role ?? "").toLowerCase() === "tutor" ? "tutor" : "student";
-  const timezone = clean(body.timezone, 64) || "UTC";
+  const timezoneIn = clean(body.timezone, 64) || "UTC";
 
   if (!firstName || !lastName) return fail("Enter your first and last name.");
   if (!EMAIL_RE.test(email)) return fail("Enter a valid email address.");
@@ -26,6 +27,8 @@ export async function POST(req: NextRequest) {
   if (body.acceptTerms !== true) return fail("Please accept the terms and privacy policy to continue.");
 
   const payload = await getPayloadClient();
+  // The browser's zone, if it is one we offer; otherwise UTC (they can change it in Settings).
+  const timezone = (await isKnownZone(payload, timezoneIn)) ? timezoneIn : "UTC";
   const existing = await payload.count({ collection: "users", where: { email: { equals: email } }, overrideAccess: true });
   if (existing.totalDocs > 0) {
     return fail("An account with this email already exists. Sign in, or reset your password.", 409, { code: "EMAIL_TAKEN" });

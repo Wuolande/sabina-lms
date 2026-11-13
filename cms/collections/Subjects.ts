@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { anyone, isAdmin, isEditor, isStaffUser } from "../access";
 import { slugField } from "../fields/slug";
+import { richDescription } from "../fields/richtext";
 
 export const SUBJECT_CATEGORIES = [
   { label: "Languages", value: "languages" },
@@ -29,7 +30,7 @@ export const Subjects: CollectionConfig = {
     { name: "name", type: "text", required: true, unique: true },
     slugField("name"),
     { name: "category", type: "select", required: true, options: [...SUBJECT_CATEGORIES], index: true },
-    { name: "description", type: "textarea", maxLength: 300, admin: { description: "One or two sentences shown on the subject page and in search." } },
+    richDescription("description", { maxChars: 300, description: "One or two sentences shown on the subject page and in search." }),
     { name: "icon", type: "text", admin: { description: "Lucide icon name, e.g. Calculator, Languages, Atom." } },
     {
       type: "row",

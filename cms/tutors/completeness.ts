@@ -2,9 +2,10 @@
  * What a tutor application needs before it can be submitted. Pure functions, shared by the
  * application form (live checklist) and the submit endpoint (enforcement).
  */
+import { richLength } from "../content/rich";
 export type ApplicationLike = {
   headline?: string | null;
-  about?: string | null;
+  about?: unknown;
   languages?: unknown[] | null;
   primarySubject?: unknown;
   subjects?: unknown[] | null;
@@ -29,7 +30,7 @@ export function requirements(app: ApplicationLike, extra: { hasPhoto: boolean })
   return [
     { key: "photo", label: "Profile photo", section: "about", ok: extra.hasPhoto },
     { key: "headline", label: `Headline (${HEADLINE_MIN}+ characters)`, section: "profile", ok: len(app.headline) >= HEADLINE_MIN },
-    { key: "about", label: `About you (${ABOUT_MIN}+ characters)`, section: "profile", ok: len(app.about) >= ABOUT_MIN },
+    { key: "about", label: `About you (${ABOUT_MIN}+ characters)`, section: "profile", ok: richLength(app.about) >= ABOUT_MIN },
     { key: "languages", label: "At least one language you speak", section: "profile", ok: (app.languages?.length ?? 0) > 0 },
     { key: "subjects", label: "Main subject", section: "subjects", ok: Boolean(app.primarySubject) || (app.subjects?.length ?? 0) > 0 },
     { key: "levels", label: "Levels you teach", section: "subjects", ok: (app.levelsTaught?.length ?? 0) > 0 },

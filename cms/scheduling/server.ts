@@ -8,6 +8,7 @@ import { bookedConfirmed, bookingRequested, lessonCancelled, requestAccepted, re
 import type { Mail } from "../email/layout";
 import { getPolicies } from "../tutors/server";
 import { computeSlots, withinHours, type WeeklyRange } from "./slots";
+import type { Lexical } from "../content/rich";
 
 export class BookingError extends Error {
   constructor(message: string, public status = 400) {
@@ -322,7 +323,7 @@ export type LessonView = {
   refundedAmount: number;
   joinOpensAt: string;
   joinClosesAt: string;
-  tutorNotes: string | null;
+  tutorNotes: Lexical | null;
   reviewed: boolean;
   issueReported: boolean;
   noShowBy: string | null;
@@ -394,7 +395,7 @@ export async function listLessons(payload: Payload, user: User, opts: { from?: D
       refundedAmount: b.refundedAmount ?? 0,
       joinOpensAt: new Date(Date.parse(b.startsAt) - early).toISOString(),
       joinClosesAt: new Date(Date.parse(b.endsAt) + 15 * 60_000).toISOString(),
-      tutorNotes: b.tutorNotes ?? null,
+      tutorNotes: (b.tutorNotes as Lexical | null) ?? null,
       reviewed: reviewed.has(b.id),
       issueReported: Boolean(b.issue?.reportedAt),
       noShowBy: b.noShowBy ?? null,

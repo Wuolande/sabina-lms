@@ -30,7 +30,7 @@ export function ReviewActions() {
   async function run(action: Action, withNotes = "") {
     setBusy(true);
     setErr("");
-    const res = await fetch(`/api/tutor-profiles/${id}/review`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, notes: withNotes }) });
+    const res = await fetch(`/api/cms/tutor-profiles/${id}/review`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action, notes: withNotes }) });
     const d = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) return setErr(d.errors?.[0]?.message ?? d.error ?? "That didn't work.");

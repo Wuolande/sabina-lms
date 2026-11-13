@@ -27,7 +27,7 @@ export const MENU: MenuSection[] = [
     collapsible: true,
     items: [
       { kind: "collection", slug: "users", label: "All users", icon: "Users" },
-      { kind: "view", slug: "tutor-applications", label: "Tutor applications", icon: "ClipboardList", badge: "applications", href: "/admin/collections/tutor-profiles?where[status][equals]=submitted" },
+      { kind: "view", slug: "tutor-applications", label: "Tutor applications", icon: "ClipboardList", badge: "applications", href: "/admin/collections/tutor-profiles?where[or][0][and][0][status][equals]=submitted" },
       { kind: "collection", slug: "tutor-profiles", label: "Tutors", icon: "GraduationCap" },
       { kind: "collection", slug: "schedules", label: "Tutor schedules", icon: "Clock" },
       { kind: "collection", slug: "student-profiles", label: "Students", icon: "UsersRound" },
@@ -42,7 +42,7 @@ export const MENU: MenuSection[] = [
       { kind: "collection", slug: "lessons", label: "Lessons", icon: "Video" },
       { kind: "collection", slug: "homework", label: "Homework", icon: "BookOpen" },
       { kind: "collection", slug: "reviews", label: "Reviews", icon: "Star" },
-      { kind: "view", slug: "lesson-problems", label: "Reported problems", icon: "ShieldAlert", badge: "disputes", href: "/admin/collections/bookings?where[issue.reportedAt][exists]=true&where[issue.resolved][not_equals]=true" },
+      { kind: "view", slug: "lesson-problems", label: "Reported problems", icon: "ShieldAlert", badge: "disputes", href: "/admin/collections/bookings?where[or][0][and][0][issue.reportedAt][exists]=true&where[or][0][and][1][issue.resolved][not_equals]=true" },
       { kind: "collection", slug: "subjects", label: "Subjects", icon: "Layers" },
       { kind: "collection", slug: "languages", label: "Languages", icon: "Languages" },
     ],
@@ -71,7 +71,7 @@ export const MENU: MenuSection[] = [
     collapsible: true,
     items: [
       { kind: "collection", slug: "conversations", label: "Conversations", icon: "MessagesSquare" },
-      { kind: "view", slug: "flagged-conversations", label: "Flagged for review", icon: "ShieldAlert", badge: "flagged", href: "/admin/collections/conversations?where[flagged][equals]=true" },
+      { kind: "view", slug: "flagged-conversations", label: "Flagged for review", icon: "ShieldAlert", badge: "flagged", href: "/admin/collections/conversations?where[or][0][and][0][flagged][equals]=true" },
       { kind: "collection", slug: "messages", label: "All messages", icon: "MessageSquare" },
       { kind: "collection", slug: "notifications", label: "Notifications", icon: "Bell" },
       { kind: "collection", slug: "email-templates", label: "Emails", icon: "Mail" },
@@ -95,6 +95,8 @@ export const MENU: MenuSection[] = [
     collapsible: true,
     items: [
       { kind: "global", slug: "site-settings", label: "Site settings", icon: "Settings" },
+      { kind: "collection", slug: "countries", label: "Countries", icon: "Flag" },
+      { kind: "collection", slug: "timezones", label: "Time zones", icon: "Globe2" },
       { kind: "view", slug: "jobs", label: "Scheduled jobs", icon: "Clock", href: "/admin/jobs", adminOnly: true },
       { kind: "global", slug: "seo-settings", label: "SEO", icon: "Search", adminOnly: true },
       { kind: "global", slug: "platform-settings", label: "Fees & policies", icon: "Percent", adminOnly: true },

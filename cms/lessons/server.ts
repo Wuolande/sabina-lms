@@ -4,6 +4,7 @@ import type { Payload } from "payload";
 import type { Booking, Subject, TutorProfile, User } from "@/payload-types";
 import { getPolicies } from "../tutors/server";
 import { BookingError } from "../scheduling/server";
+import { lexicalToText, toSafeLexical, type Lexical } from "../content/rich";
 
 const idOf = (v: unknown): number | null => (v == null ? null : typeof v === "object" ? ((v as { id: number }).id ?? null) : Number(v));
 const LATE_JOIN_MIN = 15; // the room stays open this long after the scheduled end
@@ -75,7 +76,7 @@ export async function settleAttendance(payload: Payload) {
   }
 }
 
-async function markCompleted(payload: Payload, b: Booking, notes: string | null) {
+async function markCompleted(payload: Payload, b: Booking, notes: Lexical | null | undefined) {
   await payload.update({
     collection: "bookings",
     id: b.id,
@@ -83,7 +84,7 @@ async function markCompleted(payload: Payload, b: Booking, notes: string | null)
       status: "completed",
       completedAt: new Date().toISOString(),
       noShowBy: b.studentJoinedAt ? null : "student",
-      ...(notes != null ? { tutorNotes: notes } : {}),
+      ...(notes !== undefined ? { tutorNotes: notes } : {}),
       history: [...(b.history ?? []), { action: "completed", at: new Date().toISOString() }],
     } as never,
     overrideAccess: true,
@@ -102,11 +103,16 @@ async function markCompleted(payload: Payload, b: Booking, notes: string | null)
 }
 
 /** Tutor finishes the lesson (from the classroom or the lesson page), optionally with notes. */
-export async function finishLesson(payload: Payload, user: User, id: number, notes: string) {
+export async function finishLesson(payload: Payload, user: User, id: number, notes: unknown) {
   const found = await lessonFor(payload, user, id);
   if (!found || found.role !== "tutor") throw new BookingError("Lesson not found.", 404);
   const { b } = found;
-  const clean = notes.trim().slice(0, 2000);
+  let clean: Lexical | null;
+  try {
+    clean = toSafeLexical(notes, 2000, "Lesson notes");
+  } catch (e) {
+    throw new BookingError((e as Error).message);
+  }
   if (b.status === "completed") {
     await payload.update({ collection: "bookings", id: b.id, data: { tutorNotes: clean }, overrideAccess: true });
     return;
@@ -258,7 +264,7 @@ export async function studentProgress(payload: Payload, user: User) {
     notes: done
       .filter((b) => b.tutorNotes)
       .slice(0, 10)
-      .map((b) => ({ id: b.id, date: b.startsAt, tutor: (b.tutor as TutorProfile)?.displayName ?? "Tutor", subject: (b.subject as Subject | null)?.name ?? null, notes: b.tutorNotes! })),
+      .map((b) => ({ id: b.id, date: b.startsAt, tutor: (b.tutor as TutorProfile)?.displayName ?? "Tutor", subject: (b.subject as Subject | null)?.name ?? null, notes: lexicalToText(b.tutorNotes) })),
     toReview: done.filter((b) => !reviewed.has(b.id)).slice(0, 3).map((b) => ({ id: b.id, tutor: (b.tutor as TutorProfile)?.displayName ?? "Tutor", date: b.startsAt })),
   };
 }
@@ -296,7 +302,7 @@ export async function lessonDetail(payload: Payload, user: User, id: number) {
     messageHref: role === "student" ? `/student/messages?tutor=${tutor?.id}` : `/tutor/messages?student=${student?.id}`,
     me: { name: role === "tutor" ? (tutor?.displayName ?? "You") : `${user.firstName ?? "You"}`, avatar: media(role === "tutor" ? tutor?.photo : user.avatar) },
     note: b.studentNote ?? null,
-    tutorNotes: b.tutorNotes ?? null,
+    tutorNotes: (b.tutorNotes as Lexical | null) ?? null,
     noShowBy: b.noShowBy ?? null,
     cancelReason: b.cancelReason ?? null,
     review: review ? { rating: review.rating, comment: review.comment ?? "", reply: review.tutorReply ?? null } : null,

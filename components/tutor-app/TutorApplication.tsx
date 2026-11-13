@@ -8,25 +8,27 @@ import {
   Send, Sparkles, Trash2, Upload, UserRound, Video, X, type LucideIcon,
 } from "lucide-react";
 import { Alert, TextInput } from "@/components/auth/fields";
-import { Card, Chips, Select, TextArea, Toggle, controlCls } from "@/components/portal/form";
+import { Card, Chips, RichTextArea, Select, TextArea, Toggle, controlCls } from "@/components/portal/form";
+import type { Lexical } from "@/cms/content/rich";
 import { UserAvatar, usePortalUser } from "@/components/portal/PortalShell";
 import { ABOUT_MIN, HEADLINE_MIN, VIDEO_RE, type Requirement, type SectionKey } from "@/cms/tutors/completeness";
 import { videoEmbedUrl } from "@/lib/video";
+import { Combobox } from "@/components/ui/Combobox";
 
 /* ------------------------------------------------------------------ types */
 
 type Doc = { id: number; filename: string; url: string | null } | null;
 type Edu = { degree: string; institution: string; field: string; startYear: number | null; endYear: number | null; document: Doc; verified?: boolean };
 type Cert = { title: string; issuer: string; year: number | null; credentialId: string; document: Doc; verified?: boolean };
-type Exp = { role: string; organization: string; startYear: number | null; endYear: number | null; description: string };
+type Exp = { role: string; organization: string; startYear: number | null; endYear: number | null; description: Lexical | null };
 type App = {
   id: number;
   status: "draft" | "submitted" | "changes_requested" | "approved" | "rejected" | "suspended";
   slug: string | null;
   displayName: string | null;
   headline: string;
-  about: string;
-  teachingStyle: string;
+  about: Lexical | null;
+  teachingStyle: Lexical | null;
   introVideoUrl: string;
   languages: { language: number; level: string }[];
   primarySubject: number | null;
@@ -453,27 +455,31 @@ export function TutorApplication() {
               <div className="space-y-5">
                 <SectionHead icon={BookOpen} title="Teaching profile" sub="This is what students read before booking you." />
                 <TextInput label="Headline" maxLength={90} disabled={locked} value={draft.headline} onChange={(e) => set("headline", e.target.value)} placeholder="e.g. Patient KCSE Maths tutor with 8 years' experience" hint={`Keep it to one line (${HEADLINE_MIN}-90 characters).`} />
-                <TextArea label="About you" rows={6} maxLength={2000} minHint={ABOUT_MIN} disabled={locked} value={draft.about} onChange={(e) => set("about", e.target.value)} placeholder="Who you are, your background, and why you love teaching." hint="Write in the first person." />
-                <TextArea label="Your teaching style (optional)" rows={4} maxLength={1500} disabled={locked} value={draft.teachingStyle} onChange={(e) => set("teachingStyle", e.target.value)} placeholder="What does a typical lesson with you look like? How do you adapt to each student?" />
+                <RichTextArea label="About you" minHeight={170} maxLength={2000} minHint={ABOUT_MIN} disabled={locked} value={draft.about} onChange={(v) => set("about", v)} placeholder="Who you are, your background, and why you love teaching." hint="Write in the first person." />
+                <RichTextArea label="Your teaching style (optional)" maxLength={1500} disabled={locked} value={draft.teachingStyle} onChange={(v) => set("teachingStyle", v)} placeholder="What does a typical lesson with you look like? How do you adapt to each student?" />
                 <div className="space-y-3">
                   <p className="text-sm font-semibold text-slate-800">Languages you speak</p>
                   {draft.languages.map((l, i) => (
                     <div key={i} className="flex gap-2">
-                      <select aria-label="Language" disabled={locked} className={`${controlCls} h-12 flex-1`} value={l.language || ""} onChange={(e) => set("languages", draft.languages.map((x, j) => (j === i ? { ...x, language: Number(e.target.value) } : x)))}>
-                        <option value="">Choose a language</option>
-                        {options.languages.map((o) => (
-                          <option key={o.id} value={o.id} disabled={draft.languages.some((x, j) => j !== i && x.language === o.id)}>
-                            {o.name}
-                          </option>
-                        ))}
-                      </select>
-                      <select aria-label="Level" disabled={locked} className={`${controlCls} h-12 w-44 sm:w-56`} value={l.level} onChange={(e) => set("languages", draft.languages.map((x, j) => (j === i ? { ...x, level: e.target.value } : x)))}>
-                        {LANG_LEVELS.map((o) => (
-                          <option key={o.value} value={o.value}>
-                            {o.label}
-                          </option>
-                        ))}
-                      </select>
+                      <Combobox
+                        aria-label="Language"
+                        className="flex-1"
+                        disabled={locked}
+                        placeholder="Choose a language"
+                        searchPlaceholder="Search languages"
+                        options={options.languages.filter((o) => !draft.languages.some((x, j) => j !== i && x.language === o.id)).map((o) => ({ value: o.id, label: o.name }))}
+                        value={l.language || null}
+                        onChange={(v) => set("languages", draft.languages.map((x, j) => (j === i ? { ...x, language: v ?? 0 } : x)))}
+                      />
+                      <Combobox
+                        aria-label="Level"
+                        className="w-44 sm:w-56"
+                        disabled={locked}
+                        searchable={false}
+                        options={LANG_LEVELS.map((o) => ({ value: o.value, label: o.label }))}
+                        value={l.level}
+                        onChange={(v) => v && set("languages", draft.languages.map((x, j) => (j === i ? { ...x, level: v } : x)))}
+                      />
                       {!locked && (
                         <button type="button" onClick={() => set("languages", draft.languages.filter((_, j) => j !== i))} className="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-red-600" aria-label="Remove language">
                           <Trash2 size={18} />
@@ -496,24 +502,13 @@ export function TutorApplication() {
                 <Select
                   label="Main subject"
                   disabled={locked}
-                  value={draft.primarySubject ?? ""}
-                  onChange={(e) => {
-                    const v = e.target.value ? Number(e.target.value) : null;
-                    setDraft((d) => (d ? { ...d, primarySubject: v, subjects: v && !d.subjects.includes(v) ? [v, ...d.subjects].slice(0, p.maxSubjectsPerTutor) : d.subjects } : d));
-                  }}
+                  placeholder="Choose your main subject"
+                  searchPlaceholder="Search subjects"
+                  value={draft.primarySubject ?? null}
+                  options={[...subjectsByCat.entries()].flatMap(([cat, list]) => list.map((x) => ({ value: x.id, label: x.name, group: cat.replace("-", " ").replace(/^\w/, (c) => c.toUpperCase()) })))}
+                  onChange={(v) => setDraft((d) => (d ? { ...d, primarySubject: v, subjects: v && !d.subjects.includes(v) ? [v, ...d.subjects].slice(0, p.maxSubjectsPerTutor) : d.subjects } : d))}
                   hint="Students searching this subject see you first."
-                >
-                  <option value="">Choose your main subject</option>
-                  {[...subjectsByCat.entries()].map(([cat, list]) => (
-                    <optgroup key={cat} label={cat.replace("-", " ").replace(/^\w/, (c) => c.toUpperCase())}>
-                      {list.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </Select>
+                />
                 <Chips
                   label="Other subjects you teach"
                   disabled={locked}
@@ -554,13 +549,7 @@ export function TutorApplication() {
                   />
                   <Toggle label="Instant booking" sub="Students book open slots without waiting for you to accept." checked={draft.instantBooking} onChange={(v) => set("instantBooking", v)} disabled={locked} />
                 </div>
-                <Select label="Minimum notice before a lesson" disabled={locked} value={draft.noticeHours} onChange={(e) => set("noticeHours", Number(e.target.value))}>
-                  {[2, 6, 12, 24, 48].map((h) => (
-                    <option key={h} value={h}>
-                      {h} hours
-                    </option>
-                  ))}
-                </Select>
+                <Select label="Minimum notice before a lesson" disabled={locked} value={draft.noticeHours} onChange={(v) => v != null && set("noticeHours", v)} options={[2, 6, 12, 24, 48].map((h) => ({ value: h, label: `${h} hours` }))} />
               </div>
             )}
 
@@ -633,12 +622,12 @@ export function TutorApplication() {
                           <TextInput label="Start year" inputMode="numeric" disabled={locked} value={x.startYear ?? ""} onChange={(ev) => up({ startYear: yearNum(ev.target.value) })} />
                           <TextInput label="End year" inputMode="numeric" disabled={locked} value={x.endYear ?? ""} onChange={(ev) => up({ endYear: yearNum(ev.target.value) })} placeholder="Leave empty if current" />
                         </div>
-                        <TextArea label="What you did (optional)" rows={3} maxLength={500} disabled={locked} value={x.description} onChange={(ev) => up({ description: ev.target.value })} />
+                        <RichTextArea key={`exp-${i}-${draft.experience.length}`} label="What you did (optional)" minHeight={90} maxLength={500} disabled={locked} value={x.description} onChange={(v) => up({ description: v })} />
                       </RowCard>
                     );
                   })}
                   {!locked && (
-                    <button type="button" onClick={() => set("experience", [...draft.experience, { role: "", organization: "", startYear: null, endYear: null, description: "" }])} className="inline-flex items-center gap-1.5 rounded-xl px-1 text-sm font-semibold text-brand-700 hover:text-brand-800">
+                    <button type="button" onClick={() => set("experience", [...draft.experience, { role: "", organization: "", startYear: null, endYear: null, description: null }])} className="inline-flex items-center gap-1.5 rounded-xl px-1 text-sm font-semibold text-brand-700 hover:text-brand-800">
                       <Plus size={16} /> Add a role
                     </button>
                   )}

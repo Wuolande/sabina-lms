@@ -8,6 +8,7 @@ import * as migration_20261112_170454_messaging_notifications from './20261112_1
 import * as migration_20261112_172523_content_academy from './20261112_172523_content_academy';
 import * as migration_20261112_192945_legacy_import_fields from './20261112_192945_legacy_import_fields';
 import * as migration_20261112_194000_import_legacy_files from './20261112_194000_import_legacy_files';
+import * as migration_20261113_040559_rich_text_geo from './20261113_040559_rich_text_geo';
 
 export const migrations = [
   {
@@ -59,5 +60,10 @@ export const migrations = [
     up: migration_20261112_194000_import_legacy_files.up,
     down: migration_20261112_194000_import_legacy_files.down,
     name: '20261112_194000_import_legacy_files',
+  },
+  {
+    up: migration_20261113_040559_rich_text_geo.up,
+    down: migration_20261113_040559_rich_text_geo.down,
+    name: '20261113_040559_rich_text_geo'
   },
 ];

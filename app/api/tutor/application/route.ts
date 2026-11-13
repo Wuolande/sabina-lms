@@ -5,6 +5,7 @@ import { fail } from "@/cms/auth/http";
 import { checkApplication, getPolicies, ownTutorProfile, serializeApplication } from "@/cms/tutors/server";
 import { VIDEO_RE } from "@/cms/tutors/completeness";
 import type { User } from "@/payload-types";
+import { toSafeLexical } from "@/cms/content/rich";
 
 async function tutor(req: NextRequest) {
   const payload = await getPayloadClient();
@@ -53,7 +54,16 @@ export async function PATCH(req: NextRequest) {
   const b = (await req.json().catch(() => ({}))) as Record<string, unknown>;
   const data: Record<string, unknown> = {};
 
-  for (const [k, max] of [["headline", 90], ["about", 2000], ["teachingStyle", 1500]] as const) if (b[k] !== undefined) data[k] = str(b[k], max) ?? "";
+  if (b.headline !== undefined) data.headline = str(b.headline, 90) ?? "";
+  try {
+    if (b.about !== undefined) data.about = toSafeLexical(b.about, 2000, "About you");
+    if (b.teachingStyle !== undefined) data.teachingStyle = toSafeLexical(b.teachingStyle, 1500, "Your teaching style");
+    if (Array.isArray(b.experience))
+      data.experience = b.experience.slice(0, 10).filter((x: any) => x?.role?.trim() && x?.organization?.trim()).map((x: any) => ({ role: str(x.role, 120), organization: str(x.organization, 160), startYear: year(x.startYear), endYear: year(x.endYear), description: toSafeLexical(x.description, 500, "Work experience") }));
+  } catch (e) {
+    if (e instanceof RangeError) return fail(e.message);
+    throw e;
+  }
   if (b.introVideoUrl !== undefined) {
     const v = String(b.introVideoUrl ?? "").trim();
     if (v && !VIDEO_RE.test(v)) return fail("Use a YouTube, Vimeo or Cloudflare Stream link for your video.");
@@ -70,8 +80,6 @@ export async function PATCH(req: NextRequest) {
     data.education = b.education.slice(0, 8).filter((e: any) => e?.degree?.trim() && e?.institution?.trim()).map((e: any) => ({ degree: str(e.degree, 120), institution: str(e.institution, 160), field: str(e.field, 120) ?? "", startYear: year(e.startYear), endYear: year(e.endYear), document: fileId(e.document) }));
   if (Array.isArray(b.certifications))
     data.certifications = b.certifications.slice(0, 10).filter((c: any) => c?.title?.trim() && c?.issuer?.trim()).map((c: any) => ({ title: str(c.title, 160), issuer: str(c.issuer, 160), year: year(c.year), credentialId: str(c.credentialId, 80) ?? "", document: fileId(c.document) }));
-  if (Array.isArray(b.experience))
-    data.experience = b.experience.slice(0, 10).filter((x: any) => x?.role?.trim() && x?.organization?.trim()).map((x: any) => ({ role: str(x.role, 120), organization: str(x.organization, 160), startYear: year(x.startYear), endYear: year(x.endYear), description: str(x.description, 500) ?? "" }));
   if (b.identity && typeof b.identity === "object") {
     const id = b.identity as Record<string, unknown>;
     const t = ["passport", "national_id", "drivers_license"].includes(String(id.documentType)) ? String(id.documentType) : null;

@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { CalendarOff, Check, Copy, Loader2, Plus, Trash2 } from "lucide-react";
 import type { ScheduleView } from "@/app/api/tutor/schedule/route";
 import { Card, Select, Toggle, controlCls } from "@/components/portal/form";
-import { useZones } from "@/components/portal/AccountSettings";
+import { Combobox } from "@/components/ui/Combobox";
+import { useGeo, withCurrent } from "@/components/ui/useGeo";
 import { DAYS, fromMinutes, toMinutes } from "@/lib/time";
 
 type Range = { day: number; start: string; end: string };
@@ -15,21 +16,25 @@ const label12 = (hhmm: string) => {
   return `${((h! + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h! < 12 ? "am" : "pm"}`;
 };
 
+const TIME_OPTIONS = TIMES.map((t) => ({ value: t, label: label12(t) }));
+
 function TimeSelect({ value, onChange, min, max, label }: { value: string; onChange: (v: string) => void; min?: string; max?: string; label: string }) {
   return (
-    <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} className={`${controlCls} h-11 w-[7.5rem] px-3 text-sm`}>
-      {TIMES.filter((t) => (!min || t > min) && (!max || t < max)).map((t) => (
-        <option key={t} value={t}>
-          {label12(t)}
-        </option>
-      ))}
-    </select>
+    <Combobox
+      aria-label={label}
+      size="sm"
+      className="w-[8.5rem]"
+      searchable={false}
+      options={TIME_OPTIONS.filter((t) => (!min || t.value > min) && (!max || t.value < max))}
+      value={value}
+      onChange={(v) => v && onChange(v)}
+    />
   );
 }
 
 /** Weekly hours, booking rules and time off for a tutor. Saves the whole schedule in one request. */
 export function AvailabilityEditor({ initial, todayKey }: { initial: ScheduleView; todayKey: string }) {
-  const zones = useZones();
+  const { zoneOptions } = useGeo();
   const [s, setS] = useState<ScheduleView>(initial);
   const [saved, setSaved] = useState(JSON.stringify(initial));
   const [busy, setBusy] = useState(false);
@@ -79,29 +84,27 @@ export function AvailabilityEditor({ initial, todayKey }: { initial: ScheduleVie
       <Card>
         <h2 className="font-heading text-lg font-bold text-slate-900">Booking rules</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <Select label="Your time zone" value={s.timezone} onChange={(e) => setS({ ...s, timezone: e.target.value })} hint="Your weekly hours are in this zone. Students see them in theirs.">
-            {!zones.some((z) => z.z === s.timezone) && <option value={s.timezone}>{s.timezone.replace(/_/g, " ")}</option>}
-            {zones.map((z) => (
-              <option key={z.z} value={z.z}>
-                {z.label}
-              </option>
-            ))}
-          </Select>
+          <Select
+            label="Your time zone"
+            value={s.timezone}
+            onChange={(v) => v && setS({ ...s, timezone: v })}
+            options={withCurrent(zoneOptions, s.timezone)}
+            searchPlaceholder="Search a city or country"
+            hint="Your weekly hours are in this zone. Students see them in theirs."
+          />
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Minimum notice" value={String(s.noticeHours)} onChange={(e) => setS({ ...s, noticeHours: Number(e.target.value) })}>
-              {[0, 1, 2, 4, 6, 12, 24, 48, 72].map((h) => (
-                <option key={h} value={h}>
-                  {h === 0 ? "None" : h < 24 ? `${h} hour${h > 1 ? "s" : ""}` : `${h / 24} day${h > 24 ? "s" : ""}`}
-                </option>
-              ))}
-            </Select>
-            <Select label="Break between lessons" value={String(s.bufferMinutes)} onChange={(e) => setS({ ...s, bufferMinutes: Number(e.target.value) })}>
-              {[0, 5, 10, 15, 30].map((m) => (
-                <option key={m} value={m}>
-                  {m === 0 ? "None" : `${m} minutes`}
-                </option>
-              ))}
-            </Select>
+            <Select
+              label="Minimum notice"
+              value={s.noticeHours}
+              onChange={(v) => v != null && setS({ ...s, noticeHours: v })}
+              options={[0, 1, 2, 4, 6, 12, 24, 48, 72].map((h) => ({ value: h, label: h === 0 ? "None" : h < 24 ? `${h} hour${h > 1 ? "s" : ""}` : `${h / 24} day${h > 24 ? "s" : ""}` }))}
+            />
+            <Select
+              label="Break between lessons"
+              value={s.bufferMinutes}
+              onChange={(v) => v != null && setS({ ...s, bufferMinutes: v })}
+              options={[0, 5, 10, 15, 30].map((m) => ({ value: m, label: m === 0 ? "None" : `${m} minutes` }))}
+            />
           </div>
         </div>
         <div className="mt-4">

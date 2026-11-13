@@ -64,13 +64,23 @@ export async function approvedTutor(first: string, last: string, admin: { email:
   if (!submit.res.ok) throw new Error(`submit ${JSON.stringify(submit.data)}`);
   const a = await api("/api/auth/login", { method: "POST", body: JSON.stringify(admin) });
   const profileId = Number(((app.data.application ?? app.data) as { id: number }).id);
-  const review = await api(`/api/tutor-profiles/${profileId}/review`, { method: "POST", cookie: a.cookie, body: JSON.stringify({ action: "approve" }) });
+  const review = await api(`/api/cms/tutor-profiles/${profileId}/review`, { method: "POST", cookie: a.cookie, body: JSON.stringify({ action: "approve" }) });
   if (!review.res.ok) throw new Error(`approve ${JSON.stringify(review.data)}`);
-  const pub = await api(`/api/tutor-profiles/${profileId}`, { cookie: t.cookie });
+  const pub = await api(`/api/cms/tutor-profiles/${profileId}`, { cookie: t.cookie });
   return { ...t, profileId, slug: String(pub.data.slug) };
 }
 
 /** Sign a browser context in as an account created through the API. */
 export async function signIn(context: BrowserContext, a: Account) {
   await context.addCookies([{ name: "payload-token", value: a.token, url: BASE, httpOnly: true, sameSite: "Lax" }]);
+}
+
+/** Pick an option from one of the site's <Combobox> dropdowns (types into its search box when it has one). */
+export async function choose(page: import("@playwright/test").Page, label: string | RegExp, option: string | RegExp) {
+  await page.getByRole("combobox", { name: label }).click();
+  const list = page.getByRole("listbox");
+  await list.waitFor();
+  const search = list.locator("xpath=..").getByRole("textbox");
+  if (typeof option === "string" && (await search.count())) await search.fill(option);
+  await list.getByRole("option", { name: option }).first().click();
 }

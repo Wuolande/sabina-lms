@@ -1,5 +1,8 @@
 "use client";
-import { useId, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { useId, useState, type ReactNode, type TextareaHTMLAttributes } from "react";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { richLength, type Lexical } from "@/cms/content/rich";
+import { Combobox, type Option } from "@/components/ui/Combobox";
 import { Check } from "lucide-react";
 import { Field } from "@/components/auth/fields";
 
@@ -31,13 +34,63 @@ export function TextArea({ label, hint, error, value, maxLength, minHint, ...res
   );
 }
 
-export function Select({ label, hint, error, children, ...rest }: { label: string; hint?: ReactNode; error?: string | null; children: ReactNode } & SelectHTMLAttributes<HTMLSelectElement>) {
+/** Labelled rich text box (bold, italic, underline, lists) with a character counter. */
+export function RichTextArea({ label, hint, error, value, onChange, maxLength, minHint, placeholder, disabled, minHeight }: { label: string; hint?: ReactNode; error?: string | null; value: unknown; onChange: (v: Lexical | null) => void; maxLength?: number; minHint?: number; placeholder?: string; disabled?: boolean; minHeight?: number }) {
+  const id = useId();
+  const [len, setLen] = useState(() => richLength(value));
+  const over = Boolean(maxLength && len > maxLength);
+  return (
+    <Field
+      label={label}
+      id={id}
+      error={error ?? (over ? `Keep it under ${maxLength} characters.` : null)}
+      hint={
+        <span className="flex justify-between gap-3">
+          <span>{hint}</span>
+          {maxLength ? (
+            <span className={over ? "text-red-600" : minHint && len < minHint ? "text-amber-600" : "text-slate-400"}>
+              {len}/{maxLength}
+              {minHint && len < minHint ? ` · ${minHint - len} more needed` : ""}
+            </span>
+          ) : null}
+        </span>
+      }
+    >
+      <RichTextEditor id={id} value={value} onChange={onChange} onLength={setLen} placeholder={placeholder} disabled={disabled} minHeight={minHeight} />
+    </Field>
+  );
+}
+
+/** Labelled dropdown built on <Combobox>: modern list, search for long lists, keyboard friendly. */
+export function Select<T extends string | number>({
+  label,
+  hint,
+  error,
+  options,
+  value,
+  onChange,
+  placeholder,
+  searchPlaceholder,
+  disabled,
+  searchable,
+  clearable,
+}: {
+  label: string;
+  hint?: ReactNode;
+  error?: string | null;
+  options: Option<T>[];
+  value: T | null | undefined;
+  onChange: (v: T | null) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  disabled?: boolean;
+  searchable?: boolean;
+  clearable?: boolean;
+}) {
   const id = useId();
   return (
     <Field label={label} id={id} hint={hint} error={error}>
-      <select id={id} className={`${controlCls} h-12`} {...rest}>
-        {children}
-      </select>
+      <Combobox id={id} options={options} value={value} onChange={onChange} placeholder={placeholder} searchPlaceholder={searchPlaceholder} disabled={disabled} searchable={searchable} clearable={clearable} />
     </Field>
   );
 }

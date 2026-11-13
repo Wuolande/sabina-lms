@@ -88,6 +88,8 @@ export interface Config {
     'training-progress': TrainingProgress;
     subjects: Subject;
     languages: Language;
+    countries: Country;
+    timezones: Timezone;
     media: Media;
     'private-files': PrivateFile;
     'payload-kv': PayloadKv;
@@ -118,6 +120,8 @@ export interface Config {
     'training-progress': TrainingProgressSelect<false> | TrainingProgressSelect<true>;
     subjects: SubjectsSelect<false> | SubjectsSelect<true>;
     languages: LanguagesSelect<false> | LanguagesSelect<true>;
+    countries: CountriesSelect<false> | CountriesSelect<true>;
+    timezones: TimezonesSelect<false> | TimezonesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'private-files': PrivateFilesSelect<false> | PrivateFilesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -187,7 +191,7 @@ export interface User {
   phone?: string | null;
   country?: string | null;
   /**
-   * IANA time zone, e.g. Africa/Nairobi. Lesson times are shown in this zone.
+   * Lesson times are shown in this time zone.
    */
   timezone?: string | null;
   lastLoginAt?: string | null;
@@ -287,11 +291,40 @@ export interface TutorProfile {
   /**
    * Who you are and how you got into teaching.
    */
-  about?: string | null;
+  about?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  aboutText?: string | null;
   /**
    * What a lesson with you looks like.
    */
-  teachingStyle?: string | null;
+  teachingStyle?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   languages?:
     | {
         language: number | Language;
@@ -345,7 +378,21 @@ export interface TutorProfile {
          * Leave empty if current.
          */
         endYear?: number | null;
-        description?: string | null;
+        description?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
         id?: string | null;
       }[]
     | null;
@@ -431,7 +478,21 @@ export interface Subject {
   /**
    * One or two sentences shown on the subject page and in search.
    */
-  description?: string | null;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   /**
    * Lucide icon name, e.g. Calculator, Languages, Atom.
    */
@@ -476,7 +537,21 @@ export interface StudentProfile {
   pace?: ('1' | '2-3' | '4+' | 'unsure') | null;
   budgetMin?: number | null;
   budgetMax?: number | null;
-  goalDetails?: string | null;
+  goalDetails?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   preferredLanguages?: (number | Language)[] | null;
   savedTutors?: (number | TutorProfile)[] | null;
   onboardedAt?: string | null;
@@ -492,7 +567,7 @@ export interface Schedule {
   label?: string | null;
   user: number | User;
   /**
-   * IANA zone the weekly hours are in, e.g. Africa/Nairobi.
+   * The weekly hours are in this time zone.
    */
   timezone: string;
   weekly?:
@@ -583,7 +658,21 @@ export interface Booking {
   /**
    * Shared with the student after the lesson.
    */
-  tutorNotes?: string | null;
+  tutorNotes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   issue?: {
     text?: string | null;
     reportedAt?: string | null;
@@ -1079,6 +1168,47 @@ export interface TrainingProgress {
   createdAt: string;
 }
 /**
+ * The countries tutors and students choose from. Turn one off to hide it.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries".
+ */
+export interface Country {
+  id: number;
+  name: string;
+  /**
+   * Two-letter ISO code, e.g. KE.
+   */
+  code: string;
+  /**
+   * Suggested first when someone picks this country.
+   */
+  timezones?: (number | Timezone)[] | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * The time zones tutors and students choose from. Turn one off to hide it.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timezones".
+ */
+export interface Timezone {
+  id: number;
+  /**
+   * IANA name, e.g. Africa/Nairobi.
+   */
+  zone: string;
+  /**
+   * What people see, e.g. Nairobi. Filled in for you if empty.
+   */
+  label?: string | null;
+  isActive?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1187,6 +1317,14 @@ export interface PayloadLockedDocument {
         value: number | Language;
       } | null)
     | ({
+        relationTo: 'countries';
+        value: number | Country;
+      } | null)
+    | ({
+        relationTo: 'timezones';
+        value: number | Timezone;
+      } | null)
+    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -1287,6 +1425,7 @@ export interface UsersSelect<T extends boolean = true> {
 export interface TutorProfilesSelect<T extends boolean = true> {
   headline?: T;
   about?: T;
+  aboutText?: T;
   teachingStyle?: T;
   languages?:
     | T
@@ -1794,6 +1933,29 @@ export interface LanguagesSelect<T extends boolean = true> {
   name?: T;
   code?: T;
   nativeName?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "countries_select".
+ */
+export interface CountriesSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  timezones?: T;
+  isActive?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "timezones_select".
+ */
+export interface TimezonesSelect<T extends boolean = true> {
+  zone?: T;
+  label?: T;
   isActive?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getPayloadClient } from "@/cms/auth/session";
 import { fail } from "@/cms/auth/http";
+import { isKnownCountry, isKnownZone } from "@/cms/geo/server";
 
 const clean = (v: unknown, max: number) => (typeof v === "string" ? v.trim().replace(/\s+/g, " ").slice(0, max) : undefined);
 
@@ -37,10 +38,13 @@ export async function PATCH(req: NextRequest) {
     data.phone = phone;
   }
   const country = clean(body.country, 60);
-  if (country !== undefined) data.country = country;
+  if (country !== undefined) {
+    if (country && !(await isKnownCountry(payload, country))) return fail("Choose a country from the list.");
+    data.country = country || null;
+  }
   const timezone = clean(body.timezone, 64);
   if (timezone !== undefined) {
-    if (!validZone(timezone)) return fail("Choose a valid time zone.");
+    if (!validZone(timezone) || !(await isKnownZone(payload, timezone))) return fail("Choose a time zone from the list.");
     data.timezone = timezone;
   }
 

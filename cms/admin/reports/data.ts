@@ -100,11 +100,11 @@ export async function attention(payload: Payload) {
     count("email-log", { and: [{ status: { equals: "failed" } }, { createdAt: { greater_than_equal: weekAgo } }] }),
   ]);
   return [
-    { label: "Tutor applications to review", count: applications, href: "/admin/collections/tutor-profiles?where[status][equals]=submitted" },
-    { label: "Reported lesson problems", count: problems, href: "/admin/collections/bookings?where[issue.reportedAt][exists]=true&where[issue.resolved][not_equals]=true" },
-    { label: "Conversations flagged for review", count: flagged, href: "/admin/collections/conversations?where[flagged][equals]=true" },
-    { label: "Payouts to send", count: payouts, href: "/admin/collections/payouts?where[status][in]=requested,processing" },
-    { label: "Lesson requests waiting on tutors", count: requests, href: "/admin/collections/bookings?where[status][equals]=requested" },
-    { label: "Emails that failed this week", count: failedEmails, href: "/admin/collections/email-log?where[status][equals]=failed" },
+    { label: "Tutor applications to review", count: applications, href: "/admin/collections/tutor-profiles?where[or][0][and][0][status][equals]=submitted" },
+    { label: "Reported lesson problems", count: problems, href: "/admin/collections/bookings?where[or][0][and][0][issue.reportedAt][exists]=true&where[or][0][and][1][issue.resolved][not_equals]=true" },
+    { label: "Conversations flagged for review", count: flagged, href: "/admin/collections/conversations?where[or][0][and][0][flagged][equals]=true" },
+    { label: "Payouts to send", count: payouts, href: "/admin/collections/payouts?where[or][0][and][0][status][in]=requested,processing" },
+    { label: "Lesson requests waiting on tutors", count: requests, href: "/admin/collections/bookings?where[or][0][and][0][status][equals]=requested" },
+    { label: "Emails that failed this week", count: failedEmails, href: "/admin/collections/email-log?where[or][0][and][0][status][equals]=failed" },
   ];
 }

@@ -1,6 +1,7 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import sharp from "sharp";
 import { tokenFor, uniqueEmail } from "./db";
+import { choose } from "./accounts";
 
 /**
  * Phase 2: a tutor applies, the admin requests changes, the tutor resubmits, the admin approves,
@@ -71,12 +72,12 @@ test("tutor application → review → approval → marketplace → saved by a s
   await page.getByLabel("Headline").fill(`Friendly chemistry tutor ${last}`);
   await page.getByLabel("About you").fill("I teach chemistry with experiments you can do at home, clear diagrams and lots of exam practice. ".repeat(2));
   await page.getByRole("button", { name: "Add a language" }).click();
-  await page.getByLabel("Language", { exact: true }).selectOption({ label: "English" });
+  await choose(page, "Language", "English");
   await saveAndContinue(page);
 
   // Subjects & pricing
   await expect(page.getByRole("heading", { name: "Subjects & pricing" })).toBeVisible();
-  await page.getByLabel("Main subject").selectOption({ label: "Chemistry" });
+  await choose(page, "Main subject", "Chemistry");
   await page.getByRole("button", { name: "Secondary / high school" }).click();
   await page.getByLabel(/Hourly rate/).fill("999");
   await page.getByRole("button", { name: /Save & continue/ }).click();
@@ -171,7 +172,7 @@ test("tutor application → review → approval → marketplace → saved by a s
   await expect(student.locator(`a[href="/tutors/${profileUrl.split("/").pop()}"]`)).toBeVisible();
   await student.goto("/student/profile");
   await student.getByRole("button", { name: "Chemistry" }).click();
-  await student.getByLabel("Main goal").selectOption({ label: "Pass an exam" });
+  await choose(student, "Main goal", "Pass an exam");
   await student.getByRole("button", { name: "Save goals" }).click();
   await expect(student.getByText("Saved. Your recommendations are updated below.")).toBeVisible();
   await expect(student.locator(`a[href="/tutors/${profileUrl.split("/").pop()}"]`)).toBeVisible();

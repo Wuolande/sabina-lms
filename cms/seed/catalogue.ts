@@ -1,4 +1,5 @@
 import type { Payload } from "payload";
+import { textToLexical } from "../content/rich";
 
 /** Starter catalogue. Edit freely in the admin afterwards; seeding only runs on an empty table. */
 const SUBJECTS: { name: string; category: string; icon: string; description: string; featured?: boolean }[] = [
@@ -54,7 +55,7 @@ export async function seedCatalogue(payload: Payload) {
     let i = 0;
     for (const sub of SUBJECTS) {
       i += 10;
-      await payload.create({ collection: "subjects", overrideAccess: true, data: { name: sub.name, category: sub.category as never, icon: sub.icon, description: sub.description, isFeatured: Boolean(sub.featured), isActive: true, sortOrder: i } });
+      await payload.create({ collection: "subjects", overrideAccess: true, data: { name: sub.name, category: sub.category as never, icon: sub.icon, description: textToLexical(sub.description) as never, isFeatured: Boolean(sub.featured), isActive: true, sortOrder: i } });
     }
     payload.logger.info(`Seeded ${SUBJECTS.length} subjects`);
   }

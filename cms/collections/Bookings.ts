@@ -1,5 +1,6 @@
 import type { CollectionConfig, Where } from "payload";
 import { hasRole, isAdmin, isStaffUser } from "../access";
+import { richDescription } from "../fields/richtext";
 
 export const BOOKING_STATUSES = [
   { label: "Awaiting payment", value: "pending_payment" },
@@ -108,7 +109,7 @@ export const Bookings: CollectionConfig = {
           ],
         },
         { name: "noShowBy", type: "select", options: ["tutor", "student"].map((v) => ({ label: v, value: v })), admin: { description: "Who didn't turn up (set automatically from classroom attendance)." } },
-        { name: "tutorNotes", type: "textarea", maxLength: 2000, label: "Lesson notes from the tutor", admin: { description: "Shared with the student after the lesson." } },
+        richDescription("tutorNotes", { maxChars: 2000, label: "Lesson notes from the tutor", description: "Shared with the student after the lesson." }),
         {
           name: "issue",
           type: "group",

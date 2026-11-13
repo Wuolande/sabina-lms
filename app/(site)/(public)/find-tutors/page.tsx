@@ -5,6 +5,8 @@ import { getPayloadClient } from "@/cms/auth/session";
 import { PAGE_SIZE, SORTS, searchTutors, type SearchParams } from "@/cms/marketplace/public";
 import { marketplaceViewer } from "@/cms/marketplace/viewer";
 import { TutorCard } from "@/components/marketplace/TutorCard";
+import { FormSelect } from "@/components/ui/FormSelect";
+import { lexicalToText } from "@/cms/content/rich";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +41,6 @@ const PRICES: { label: string; min?: number; max?: number }[] = [
   { label: "50+", min: 50 },
 ];
 
-const selectCls = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-600/15";
 
 export default async function FindTutorsPage({ searchParams }: Props) {
   const sp = await searchParams;
@@ -72,39 +73,18 @@ export default async function FindTutorsPage({ searchParams }: Props) {
   const filters = (
     <>
       <input type="hidden" name="q" value={sp.q ?? ""} />
-      <label className="block space-y-1.5">
+      <div className="block space-y-1.5">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Subject</span>
-        <select name="subject" defaultValue={sp.subject ?? ""} className={selectCls}>
-          <option value="">All subjects</option>
-          {subjects.docs.map((s) => (
-            <option key={s.id} value={String(s.slug)}>
-              {s.name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block space-y-1.5">
+        <FormSelect name="subject" aria-label="Subject" defaultValue={sp.subject ?? ""} placeholder="All subjects" searchPlaceholder="Search subjects" options={subjects.docs.map((s) => ({ value: String(s.slug), label: s.name }))} />
+      </div>
+      <div className="block space-y-1.5">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Level</span>
-        <select name="level" defaultValue={sp.level ?? ""} className={selectCls}>
-          <option value="">Any level</option>
-          {LEVELS.map((l) => (
-            <option key={l.value} value={l.value}>
-              {l.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block space-y-1.5">
+        <FormSelect name="level" aria-label="Level" defaultValue={sp.level ?? ""} placeholder="Any level" options={LEVELS.map((l) => ({ value: l.value, label: l.label }))} />
+      </div>
+      <div className="block space-y-1.5">
         <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tutor speaks</span>
-        <select name="language" defaultValue={sp.language ?? ""} className={selectCls}>
-          <option value="">Any language</option>
-          {languages.docs.map((l) => (
-            <option key={l.id} value={l.code}>
-              {l.name}
-            </option>
-          ))}
-        </select>
-      </label>
+        <FormSelect name="language" aria-label="Tutor speaks" defaultValue={sp.language ?? ""} placeholder="Any language" searchPlaceholder="Search languages" options={languages.docs.map((l) => ({ value: l.code, label: l.name }))} />
+      </div>
       <fieldset className="space-y-1.5">
         <legend className="text-xs font-semibold uppercase tracking-wide text-slate-500">Price per hour ({currency})</legend>
         <div className="grid grid-cols-2 gap-1.5">
@@ -139,7 +119,7 @@ export default async function FindTutorsPage({ searchParams }: Props) {
         <div aria-hidden className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-accent-400/20 blur-3xl" />
         <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-10 sm:px-6 sm:pt-14 lg:px-8">
           <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-5xl">{subject ? `${subject.name} tutors` : "Find your tutor"}</h1>
-          <p className="mt-3 max-w-2xl text-white/75 sm:text-lg">{subject?.description || "Every tutor is interviewed and ID-verified. Learn live, 1-to-1, in our online classroom."}</p>
+          <p className="mt-3 max-w-2xl text-white/75 sm:text-lg">{lexicalToText(subject?.description) || "Every tutor is interviewed and ID-verified. Learn live, 1-to-1, in our online classroom."}</p>
           <form action="/find-tutors" className="mt-7 flex max-w-2xl gap-2 rounded-2xl bg-white p-2 shadow-xl">
             {sp.subject && <input type="hidden" name="subject" value={sp.subject} />}
             <label className="flex flex-1 items-center gap-2 px-3">

@@ -13,7 +13,7 @@ export function LoginForm() {
     setBusy(true);
     setErr("");
     try {
-      const res = await fetch("/api/users/login", {
+      const res = await fetch("/api/cms/users/login", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

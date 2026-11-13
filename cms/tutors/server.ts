@@ -3,6 +3,7 @@ import type { Payload } from "payload";
 import type { TutorProfile, User } from "@/payload-types";
 import { PLATFORM_DEFAULTS } from "../globals/PlatformSettings";
 import { missingRequired, requirements } from "./completeness";
+import type { Lexical } from "../content/rich";
 
 export async function getPolicies(payload: Payload) {
   const g = (await payload.findGlobal({ slug: "platform-settings", overrideAccess: true }).catch(() => null)) as Partial<typeof PLATFORM_DEFAULTS> | null;
@@ -36,8 +37,8 @@ export function serializeApplication(p: TutorProfile) {
     slug: p.slug,
     displayName: p.displayName,
     headline: p.headline ?? "",
-    about: p.about ?? "",
-    teachingStyle: p.teachingStyle ?? "",
+    about: (p.about as Lexical | null) ?? null,
+    teachingStyle: (p.teachingStyle as Lexical | null) ?? null,
     introVideoUrl: p.introVideoUrl ?? "",
     languages: (p.languages ?? []).map((l) => ({ language: idOf(l.language) as number, level: l.level })),
     primarySubject: (idOf(p.primarySubject) as number) ?? null,
@@ -49,7 +50,7 @@ export function serializeApplication(p: TutorProfile) {
     noticeHours: p.noticeHours ?? 12,
     education: (p.education ?? []).map((e) => ({ degree: e.degree, institution: e.institution, field: e.field ?? "", startYear: e.startYear ?? null, endYear: e.endYear ?? null, document: file(e.document), verified: Boolean(e.verified) })),
     certifications: (p.certifications ?? []).map((c) => ({ title: c.title, issuer: c.issuer, year: c.year ?? null, credentialId: c.credentialId ?? "", document: file(c.document), verified: Boolean(c.verified) })),
-    experience: (p.experience ?? []).map((x) => ({ role: x.role, organization: x.organization, startYear: x.startYear ?? null, endYear: x.endYear ?? null, description: x.description ?? "" })),
+    experience: (p.experience ?? []).map((x) => ({ role: x.role, organization: x.organization, startYear: x.startYear ?? null, endYear: x.endYear ?? null, description: (x.description as Lexical | null) ?? null })),
     identity: { documentType: p.identity?.documentType ?? null, document: file(p.identity?.document), verified: Boolean(p.identity?.verified) },
     reviewNotes: p.reviewNotes ?? "",
     submittedAt: p.submittedAt ?? null,

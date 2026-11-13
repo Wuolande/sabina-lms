@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       case "join":
         return NextResponse.json(await joinLesson(payload, user, id), { headers: { "Cache-Control": "no-store" } });
       case "finish":
-        await finishLesson(payload, user, id, String(b.notes ?? ""));
+        await finishLesson(payload, user, id, b.notes ?? null);
         return NextResponse.json({ success: true });
       case "report":
         await reportProblem(payload, user, id, String(b.text ?? ""));

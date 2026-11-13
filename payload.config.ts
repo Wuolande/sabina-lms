@@ -11,6 +11,7 @@ import { Media } from "./cms/collections/Media";
 import { SiteSettings } from "./cms/globals/SiteSettings";
 import { PlatformSettings } from "./cms/globals/PlatformSettings";
 import { Languages, Subjects } from "./cms/collections/Subjects";
+import { Countries, Timezones } from "./cms/collections/Geo";
 import { PrivateFiles } from "./cms/collections/PrivateFiles";
 import { TutorProfiles } from "./cms/collections/TutorProfiles";
 import { StudentProfiles } from "./cms/collections/StudentProfiles";
@@ -52,6 +53,9 @@ const smtpReady = Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
  */
 export default buildConfig({
   serverURL: env.VERCEL_ENV === "preview" ? undefined : site,
+  // Payload's own REST API lives under /api/cms so it never collides with the site's /api routes
+  // (e.g. /api/subjects, /api/reviews), which the admin's dropdowns would otherwise read by mistake.
+  routes: { api: "/api/cms" },
   csrf: origins,
   cors: origins,
   secret: env.PAYLOAD_SECRET || (isProd ? "" : "dev-only-secret-change-me"),
@@ -89,7 +93,7 @@ export default buildConfig({
     },
     importMap: { baseDir: path.resolve(dirname) },
   },
-  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Reviews, Payments, Payouts, PayoutMethods, Conversations, Messages, Notifications, EmailTemplates, EmailLog, Posts, BlogCategories, Pages, TrainingCourses, TrainingProgress, Subjects, Languages, Media, PrivateFiles],
+  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Reviews, Payments, Payouts, PayoutMethods, Conversations, Messages, Notifications, EmailTemplates, EmailLog, Posts, BlogCategories, Pages, TrainingCourses, TrainingProgress, Subjects, Languages, Countries, Timezones, Media, PrivateFiles],
   globals: [SiteSettings, PlatformSettings, HomePage],
   upload: { limits: { fileSize: 20 * 1024 * 1024 } },
   editor: lexicalEditor(),

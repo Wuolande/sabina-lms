@@ -7,6 +7,8 @@ import { searchTutors } from "@/cms/marketplace/public";
 import { marketplaceViewer } from "@/cms/marketplace/viewer";
 import { TutorCard } from "@/components/marketplace/TutorCard";
 import { CATEGORY_LABEL, SubjectIcon } from "@/components/subjects/SubjectIcon";
+import { lexicalToText } from "@/cms/content/rich";
+import { RichText } from "@/components/content/RichText";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
@@ -21,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!s) return { title: "Subject not found", robots: { index: false } };
   return {
     title: `${s.name} tutors & online lessons`,
-    description: `${s.description ?? ""} Learn ${s.name} live, 1-to-1 with a verified tutor on Sabina.`.trim().slice(0, 160),
+    description: `${lexicalToText(s.description)} Learn ${s.name} live, 1-to-1 with a verified tutor on Sabina.`.trim().slice(0, 160),
     alternates: { canonical: `/subjects/${s.slug}` },
   };
 }
@@ -51,7 +53,7 @@ export default async function SubjectPage({ params }: Props) {
               <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-5xl">{subject.name}</h1>
             </div>
           </div>
-          <p className="mt-4 max-w-2xl text-white/80 sm:text-lg">{subject.description}</p>
+          <RichText data={subject.description} className="mt-4 max-w-2xl text-white/80 sm:text-lg [&_*]:!text-inherit [&_strong]:!text-white" />
           <div className="mt-7 flex flex-wrap gap-3">
             <Link href={`/find-tutors?subject=${subject.slug}`} className="inline-flex h-12 items-center gap-2 rounded-xl bg-accent-400 px-5 font-semibold text-brand-950 hover:bg-accent-300">
               See all {subject.name} tutors <ArrowRight size={17} />
