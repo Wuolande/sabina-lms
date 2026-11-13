@@ -145,7 +145,9 @@ test("classroom, attendance, reviews, notes and progress", async ({ browser }, i
     await page.setViewportSize({ width: 390, height: 844 });
     for (const p of paths) {
       await page.goto(p);
-      await page.waitForLoadState("networkidle");
+      await page.waitForLoadState("load");
+      await page.locator("main").first().waitFor();
+      await page.waitForTimeout(500);
       await noOverflow(page, p);
     }
   }
