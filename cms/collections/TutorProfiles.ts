@@ -1,6 +1,7 @@
 import { APIError, type Access, type CollectionConfig, type FieldAccess, type Where } from "payload";
 import { hasRole, isAdmin, isStaffUser } from "../access";
 import { slugify } from "../fields/slug";
+import { PACKAGE_SIZES } from "./Packages";
 import { reviewEndpoint } from "../tutors/review";
 import { countryField, timezoneField } from "../fields/geo";
 import { richDescription } from "../fields/richtext";
@@ -111,6 +112,15 @@ export const TutorProfiles: CollectionConfig = {
           if (data.hourlyRate != null && (data.hourlyRate < min || data.hourlyRate > max)) throw new APIError(`Set an hourly rate between ${min} and ${max}.`, 400, undefined, true);
           if (Array.isArray(data.subjects) && data.subjects.length > maxSubjects) throw new APIError(`Choose up to ${maxSubjects} subjects.`, 400, undefined, true);
         }
+        // Package discounts within the admin's limit, one package per size.
+        if (!isStaffUser(req.user) && Array.isArray(data.packages)) {
+          const p = (await req.payload.findGlobal({ slug: "platform-settings", overrideAccess: true }).catch(() => null)) as { packagesEnabled?: boolean; packageMaxDiscountPercent?: number } | null;
+          if (p?.packagesEnabled === false && data.packages.length) throw new APIError("Lesson packages are turned off at the moment.", 400, undefined, true);
+          const cap = p?.packageMaxDiscountPercent ?? 25;
+          const sizes = data.packages.map((x: { lessons?: string }) => String(x.lessons));
+          if (new Set(sizes).size !== sizes.length) throw new APIError("Offer each package size once.", 400, undefined, true);
+          if (data.packages.some((x: { discountPercent?: number }) => Number(x.discountPercent) > cap)) throw new APIError(`Package discounts can be up to ${cap}%.`, 400, undefined, true);
+        }
         // Keep the primary subject inside the subject list.
         const subjects = (data.subjects ?? originalDoc?.subjects ?? []).map((s: unknown) => (typeof s === "object" && s ? (s as { id: unknown }).id : s));
         if (data.primarySubject) {
@@ -165,6 +175,23 @@ export const TutorProfiles: CollectionConfig = {
               ],
             },
             { name: "noticeHours", type: "number", min: 0, max: 168, defaultValue: 12, label: "Minimum notice for bookings (hours)" },
+            {
+              name: "packages",
+              type: "array",
+              label: "Lesson packages",
+              labels: { singular: "Package", plural: "Packages" },
+              maxRows: 3,
+              admin: { description: "Prepaid lessons at a discount. Students choose the lesson length when they buy." },
+              fields: [
+                {
+                  type: "row",
+                  fields: [
+                    { name: "lessons", type: "select", required: true, options: PACKAGE_SIZES.map((n) => ({ label: `${n} lessons`, value: String(n) })), admin: { width: "50%" } },
+                    { name: "discountPercent", type: "number", required: true, min: 1, max: 50, label: "Discount (%)", admin: { width: "50%" } },
+                  ],
+                },
+              ],
+            },
           ],
         },
         {

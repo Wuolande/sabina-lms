@@ -12,6 +12,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ ref:
   const found = await payload.find({ collection: "payments", where: { and: [{ reference: { equals: (await params).ref } }, { student: { equals: user.id } }] }, limit: 1, depth: 0, overrideAccess: true });
   if (!found.docs[0]) return fail("Payment not found.", 404);
   const p = await refreshPayment(payload, found.docs[0]);
+  if (p.package) {
+    const k = await payload.findByID({ collection: "lesson-packages", id: typeof p.package === "object" ? p.package.id : p.package, depth: 1, overrideAccess: true });
+    const t = typeof k.tutor === "object" ? k.tutor : null;
+    return NextResponse.json(
+      {
+        payment: { reference: p.reference, status: p.status, amount: p.amount, currency: p.currency, refunded: p.refundedAmount ?? 0, id: p.id },
+        package: { id: k.id, reference: k.reference, status: k.status, lessons: k.lessons, minutes: k.minutes, expiresAt: k.expiresAt ?? null, tutor: t?.displayName ?? null, tutorSlug: t?.slug ?? null },
+      },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  if (!p.booking) return fail("Payment not found.", 404);
   const b = (await payload.findByID({ collection: "bookings", id: typeof p.booking === "object" ? p.booking.id : p.booking, depth: 1, overrideAccess: true })) as Booking;
   return NextResponse.json(
     {

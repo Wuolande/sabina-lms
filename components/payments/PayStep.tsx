@@ -18,8 +18,8 @@ function useCountdown(until: string | null) {
   return left;
 }
 
-/** Choose a payment method and go to checkout. Shows how long the time is held. */
-export function PayStep({ bookingId, amount, currency, holdUntil, providers, onExpired }: { bookingId: number; amount: number; currency: string; holdUntil: string | null; providers: Provider[]; onExpired?: () => void }) {
+/** Choose a payment method and go to checkout (a booking or a lesson package). Shows how long a time is held. */
+export function PayStep({ bookingId, packageId, amount, currency, holdUntil, providers, onExpired }: { bookingId?: number; packageId?: number; amount: number; currency: string; holdUntil: string | null; providers: Provider[]; onExpired?: () => void }) {
   const [choice, setChoice] = useState<Provider["id"] | null>(providers[0]?.id ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +33,7 @@ export function PayStep({ bookingId, amount, currency, holdUntil, providers, onE
     if (!choice) return;
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/payments/checkout", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bookingId, provider: choice }) }).catch(() => null);
+    const res = await fetch("/api/payments/checkout", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(packageId ? { packageId, provider: choice } : { bookingId, provider: choice }) }).catch(() => null);
     const d = (await res?.json().catch(() => ({}))) as { url?: string; error?: string };
     if (res?.ok && d.url) return window.location.assign(d.url);
     setBusy(false);

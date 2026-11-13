@@ -18,6 +18,24 @@ export function paymentReceipt(to: MailPerson, p: { reference: string; amount: n
   };
 }
 
+export function packageReceipt(to: MailPerson, p: { reference: string; amount: number; currency: string; id: number; lessons: number; minutes: number; tutorName: string; expiresAt: string | null }) {
+  const tz = safeTz(to.timezone);
+  return {
+    subject: `Receipt ${p.reference}: ${p.lessons} lessons with ${p.tutorName}`,
+    ...mailOf("package_receipt", {
+      preheader: `Your ${p.lessons} lessons with ${p.tutorName} are ready to book.`,
+      heading: "Your lessons are ready to book",
+      body: [
+        hi(to),
+        `We've received ${money(p.amount, p.currency)} for ${p.lessons} ${p.minutes}-minute lessons with ${p.tutorName}.`,
+        `Book them whenever suits you${p.expiresAt ? `, up to ${fmtDay(p.expiresAt, tz)}` : ""}. If you cancel a lesson in time, it goes back into your package.`,
+        `Receipt ${p.reference}.`,
+      ],
+      cta: { label: "Book a lesson", href: `${siteUrl()}/student/packages` },
+    }),
+  };
+}
+
 export function refundIssued(to: MailPerson, r: { amount: number; currency: string; bookingRef: string; reason: string }) {
   return {
     subject: `Refund of ${money(r.amount, r.currency)} on its way`,

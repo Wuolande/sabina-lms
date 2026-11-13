@@ -20,7 +20,7 @@ export const GET = (req: NextRequest) =>
     let rows: unknown[][] = [];
     if (type === "payments") {
       const r = await payload.find({ collection: "payments", where: { createdAt: { greater_than_equal: since } }, sort: "-createdAt", limit: 50000, pagination: false, depth: 1, overrideAccess: true });
-      rows = [["Reference", "Status", "Provider", "Amount", "Refunded", "Currency", "Paid at", "Student", "Booking"], ...r.docs.map((p) => [p.reference, p.status, p.provider, p.amount, p.refundedAmount ?? 0, p.currency, p.paidAt ?? "", name(p.student), typeof p.booking === "object" && p.booking ? p.booking.reference : p.booking])];
+      rows = [["Reference", "Status", "Provider", "Amount", "Refunded", "Currency", "Paid at", "Student", "Booking"], ...r.docs.map((p) => [p.reference, p.status, p.provider, p.amount, p.refundedAmount ?? 0, p.currency, p.paidAt ?? "", name(p.student), typeof p.booking === "object" && p.booking ? p.booking.reference : typeof p.package === "object" && p.package ? p.package.reference : (p.booking ?? p.package ?? "")])];
     } else if (type === "bookings") {
       const r = await payload.find({ collection: "bookings", where: { startsAt: { greater_than_equal: since } }, sort: "-startsAt", limit: 50000, pagination: false, depth: 1, overrideAccess: true });
       rows = [

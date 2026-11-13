@@ -149,7 +149,7 @@ export async function send(payload: Payload, to: User | string, mail: Mail) {
 export async function createBooking(
   payload: Payload,
   student: User,
-  input: { tutorId: number; startsAt: string; kind: "trial" | "regular"; minutes: number; subjectId?: number | null; note?: string; timezone?: string },
+  input: { tutorId: number; startsAt: string; kind: "trial" | "regular"; minutes: number; subjectId?: number | null; note?: string; timezone?: string; packageId?: number | null },
 ) {
   if (student.role !== "student") throw new BookingError("Only student accounts can book lessons.", 403);
   await expireStale(payload).catch(() => undefined);
@@ -162,6 +162,8 @@ export async function createBooking(
   const minutes = kind === "trial" ? policies.trialLessonMinutes : Number(input.minutes);
   if (kind === "regular" && !(policies.regularLessonMinutes as number[]).includes(minutes)) throw new BookingError("Choose a lesson length.");
   if (kind === "trial" && !tutor.offersTrial) throw new BookingError("This tutor doesn't offer trial lessons.");
+  const packageId = input.packageId ? Number(input.packageId) : null;
+  if (packageId && kind === "trial") throw new BookingError("Trial lessons can't be booked from a package.");
   const start = Date.parse(input.startsAt);
   if (!Number.isFinite(start)) throw new BookingError("Choose a time.");
   const end = start + minutes * 60_000;
@@ -181,13 +183,16 @@ export async function createBooking(
   const buffer = (schedule.bufferMinutes ?? 0) * 60_000;
   const instant = instantFor(tutor, schedule, policies);
 
+  const { claimLesson, syncPackage, PACKAGE_LOCK } = await import("../packages/server");
   const booking = await withLocks(
     payload,
     [
       [1, tutor.id],
       [2, student.id],
+      ...(packageId ? ([[PACKAGE_LOCK, packageId]] as [number, number][]) : []),
     ],
     async (req) => {
+      const pkg = packageId ? await claimLesson(payload, packageId, student.id, tutor.id, minutes, start, req) : null;
       if (kind === "trial" && (await hadTrial(payload, student.id, tutor.id, req))) throw new BookingError("You've already had a trial lesson with this tutor.", 409);
       const tutorBusy = await busyFor(payload, { tutor: { equals: tutor.id } }, start - buffer, end + buffer, req);
       if (tutorBusy.length) throw new BookingError("Sorry, that time was just taken. Please pick another.", 409);
@@ -198,10 +203,13 @@ export async function createBooking(
         collection: "bookings",
         data: {
           reference: `SB-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-          status: "pending_payment",
-          paymentStatus: "unpaid",
+          // Paid from a package: no checkout, straight to the tutor (or confirmed for instant booking).
+          status: pkg ? (instant ? "confirmed" : "requested") : "pending_payment",
+          paymentStatus: pkg ? "paid" : "unpaid",
+          package: pkg?.id ?? null,
+          respondedAt: pkg && instant ? now : null,
           autoConfirm: instant,
-          holdUntil: new Date(Date.now() + policies.paymentHoldMinutes * 60_000).toISOString(),
+          holdUntil: pkg ? null : new Date(Date.now() + policies.paymentHoldMinutes * 60_000).toISOString(),
           startsAt: new Date(start).toISOString(),
           endsAt: new Date(end).toISOString(),
           student: student.id,
@@ -210,12 +218,12 @@ export async function createBooking(
           subject: subjectId,
           kind,
           minutes,
-          price: lessonPrice(tutor, policies, kind, minutes),
-          currency: policies.currency,
-          platformFeePercent: policies.platformFeePercent,
+          price: pkg ? pkg.perLesson : lessonPrice(tutor, policies, kind, minutes),
+          currency: pkg ? pkg.currency : policies.currency,
+          platformFeePercent: pkg?.platformFeePercent ?? policies.platformFeePercent,
           studentNote: input.note?.trim().slice(0, 1000) || null,
           studentTimezone: safeTz(input.timezone ?? student.timezone),
-          history: [{ action: "held for payment", by: student.id, at: now }],
+          history: [{ action: pkg ? `booked from package ${pkg.reference}` : "held for payment", by: student.id, at: now }],
         },
         overrideAccess: true,
         req,
@@ -223,6 +231,13 @@ export async function createBooking(
     },
   );
 
+  if (booking.package) {
+    await syncPackage(payload, idOf(booking.package)!);
+    const ctx = await mailContext(payload, booking);
+    const mails = booking.status === "confirmed" ? bookedConfirmed(ctx.lesson, personOf(ctx.student), personOf(ctx.tutorUser)) : bookingRequested(ctx.lesson, personOf(ctx.student), personOf(ctx.tutorUser));
+    void send(payload, ctx.student, mails.student);
+    void send(payload, ctx.tutorUser, mails.tutor);
+  }
   return booking;
 }
 
@@ -305,6 +320,8 @@ export async function expireStale(payload: Payload) {
     const { refundBooking } = await import("../payments/server");
     for (const b of lapsed.docs) await refundBooking(payload, b.id, 100, "Request expired").catch((err) => payload.logger.error({ err }, "[bookings] refund failed"));
   }
+  const { expirePackages } = await import("../packages/server");
+  await expirePackages(payload).catch((err) => payload.logger.error({ err }, "[packages] expiry failed"));
   const { settleAttendance, sendReminders } = await import("../lessons/server");
   await settleAttendance(payload);
   await sendReminders(payload).catch((err) => payload.logger.error({ err }, "[reminders] failed"));

@@ -19,6 +19,8 @@ export type PublicTutor = {
   hourlyRate: number;
   offersTrial: boolean;
   trialPrice: number | null;
+  /** Biggest package discount on offer (percent), if the tutor sells packages. */
+  packageSaving: number | null;
   instantBooking: boolean;
   primarySubject: { id: number; name: string; slug: string } | null;
   subjects: { id: number; name: string; slug: string }[];
@@ -58,6 +60,7 @@ export function toPublicTutor(t: TutorProfile, policies: Policies): PublicTutor 
     hourlyRate: rate,
     offersTrial: Boolean(t.offersTrial),
     trialPrice: t.offersTrial && rate ? Math.round(((rate * policies.trialLessonMinutes) / 60) * (1 - policies.trialLessonDiscountPercent / 100) * 100) / 100 : null,
+    packageSaving: policies.packagesEnabled && (t.packages ?? []).length ? Math.min(Number(policies.packageMaxDiscountPercent ?? 25), Math.max(...(t.packages ?? []).map((k) => Number(k.discountPercent) || 0))) || null : null,
     instantBooking: Boolean(t.instantBooking),
     primarySubject: sub(t.primarySubject),
     subjects: (t.subjects ?? []).map(sub).filter(Boolean) as { id: number; name: string; slug: string }[],

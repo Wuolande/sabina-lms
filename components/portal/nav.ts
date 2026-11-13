@@ -10,6 +10,7 @@ export const NAV: Record<PortalRole, NavItem[]> = {
     { href: "/student/messages", label: "Messages", icon: "MessageSquare", primary: true },
     { href: "/student/favorites", label: "Saved tutors", icon: "Heart" },
     { href: "/student/progress", label: "Progress", icon: "TrendingUp" },
+    { href: "/student/packages", label: "Lesson packages", short: "Packages", icon: "Package" },
     { href: "/student/payments", label: "Payments", icon: "CreditCard" },
     { href: "/student/notifications", label: "Notifications", icon: "Bell" },
     { href: "/student/profile", label: "Learning goals", icon: "Target" },

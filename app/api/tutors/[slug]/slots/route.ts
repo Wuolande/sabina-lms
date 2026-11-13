@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getPayloadClient } from "@/cms/auth/session";
 import { bookingOptions, getPolicies, openSlots } from "@/cms/scheduling/server";
+import { packageOffers, studentPackages } from "@/cms/packages/server";
 import type { User } from "@/payload-types";
 
 /**
@@ -20,8 +21,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   const asked = Number(req.nextUrl.searchParams.get("minutes"));
   const minutes = options.some((o) => o.minutes === asked) ? asked : (options[0]?.minutes ?? 60);
   const { slots, timezone, hasHours, instant } = await openSlots(payload, tutor, minutes, policies, studentId);
+  // Packages: what the tutor sells, and what this student has left to book with them.
+  const offers = packageOffers(tutor, policies);
+  const packages = studentId && user ? (await studentPackages(payload, user, { tutorId: tutor.id, usable: true })).map((k) => ({ id: k.id, minutes: k.minutes, left: k.left, expiresAt: k.expiresAt })) : [];
   return NextResponse.json(
-    { minutes, options, slots: slots.map((t) => new Date(t).toISOString()), tutorTimezone: timezone, hasHours, instant, currency: policies.currency, windowDays: policies.bookingWindowDays },
+    { minutes, options, slots: slots.map((t) => new Date(t).toISOString()), tutorTimezone: timezone, hasHours, instant, currency: policies.currency, windowDays: policies.bookingWindowDays, offers, packages },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

@@ -8,6 +8,7 @@ import { s3Storage } from "@payloadcms/storage-s3";
 import sharp from "sharp";
 import { Users } from "./cms/collections/Users";
 import { Media } from "./cms/collections/Media";
+import { LessonPackages } from "./cms/collections/Packages";
 import { SiteSettings } from "./cms/globals/SiteSettings";
 import { PlatformSettings } from "./cms/globals/PlatformSettings";
 import { Languages, Subjects } from "./cms/collections/Subjects";
@@ -93,7 +94,7 @@ export default buildConfig({
     },
     importMap: { baseDir: path.resolve(dirname) },
   },
-  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Reviews, Payments, Payouts, PayoutMethods, Conversations, Messages, Notifications, EmailTemplates, EmailLog, Posts, BlogCategories, Pages, TrainingCourses, TrainingProgress, Subjects, Languages, Countries, Timezones, Media, PrivateFiles],
+  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Reviews, Payments, LessonPackages, Payouts, PayoutMethods, Conversations, Messages, Notifications, EmailTemplates, EmailLog, Posts, BlogCategories, Pages, TrainingCourses, TrainingProgress, Subjects, Languages, Countries, Timezones, Media, PrivateFiles],
   globals: [SiteSettings, PlatformSettings, HomePage],
   upload: { limits: { fileSize: 20 * 1024 * 1024 } },
   editor: fullEditor,

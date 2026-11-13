@@ -74,6 +74,7 @@ export interface Config {
     bookings: Booking;
     reviews: Review;
     payments: Payment;
+    'lesson-packages': LessonPackage;
     payouts: Payout;
     'payout-methods': PayoutMethod;
     conversations: Conversation;
@@ -106,6 +107,7 @@ export interface Config {
     bookings: BookingsSelect<false> | BookingsSelect<true>;
     reviews: ReviewsSelect<false> | ReviewsSelect<true>;
     payments: PaymentsSelect<false> | PaymentsSelect<true>;
+    'lesson-packages': LessonPackagesSelect<false> | LessonPackagesSelect<true>;
     payouts: PayoutsSelect<false> | PayoutsSelect<true>;
     'payout-methods': PayoutMethodsSelect<false> | PayoutMethodsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
@@ -348,6 +350,16 @@ export interface TutorProfile {
   offersTrial?: boolean | null;
   instantBooking?: boolean | null;
   noticeHours?: number | null;
+  /**
+   * Prepaid lessons at a discount. Students choose the lesson length when they buy.
+   */
+  packages?:
+    | {
+        lessons: '5' | '10' | '20';
+        discountPercent: number;
+        id?: string | null;
+      }[]
+    | null;
   education?:
     | {
         degree: string;
@@ -635,6 +647,10 @@ export interface Booking {
    */
   lateCancellation?: boolean | null;
   /**
+   * Paid from this prepaid package.
+   */
+  package?: (number | null) | LessonPackage;
+  /**
    * Instant booking: confirmed as soon as it's paid.
    */
   autoConfirm?: boolean | null;
@@ -695,6 +711,59 @@ export interface Booking {
   createdAt: string;
 }
 /**
+ * Prepaid lessons. Students book lessons from a package without paying again; cancelling in time returns the lesson to the package.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-packages".
+ */
+export interface LessonPackage {
+  id: number;
+  reference: string;
+  status: 'pending_payment' | 'active' | 'used_up' | 'expired' | 'refunded' | 'cancelled';
+  /**
+   * Unused lessons can't be booked after this date.
+   */
+  expiresAt?: string | null;
+  paidAt?: string | null;
+  refundedAmount?: number | null;
+  student: number | User;
+  tutor: number | TutorProfile;
+  tutorUser: number | User;
+  /**
+   * Lessons in the package.
+   */
+  lessons: number;
+  /**
+   * Length of each lesson.
+   */
+  minutes: number;
+  discountPercent?: number | null;
+  /**
+   * Snapshot at purchase.
+   */
+  platformFeePercent?: number | null;
+  /**
+   * Total paid.
+   */
+  price: number;
+  /**
+   * What each lesson is worth (and what the tutor earns from).
+   */
+  perLesson: number;
+  currency: string;
+  history?:
+    | {
+        action?: string | null;
+        by?: (number | null) | User;
+        at?: string | null;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "reviews".
  */
@@ -732,7 +801,8 @@ export interface Payment {
   amount: number;
   currency: string;
   refundedAmount?: number | null;
-  booking: number | Booking;
+  booking?: (number | null) | Booking;
+  package?: (number | null) | LessonPackage;
   student: number | User;
   tutor?: (number | null) | TutorProfile;
   /**
@@ -904,6 +974,7 @@ export interface EmailTemplate {
     | 'new_message'
     | 'review_received'
     | 'payment_receipt'
+    | 'package_receipt'
     | 'refund_issued'
     | 'payout_requested'
     | 'payout_sent'
@@ -1265,6 +1336,10 @@ export interface PayloadLockedDocument {
         value: number | Payment;
       } | null)
     | ({
+        relationTo: 'lesson-packages';
+        value: number | LessonPackage;
+      } | null)
+    | ({
         relationTo: 'payouts';
         value: number | Payout;
       } | null)
@@ -1446,6 +1521,13 @@ export interface TutorProfilesSelect<T extends boolean = true> {
   offersTrial?: T;
   instantBooking?: T;
   noticeHours?: T;
+  packages?:
+    | T
+    | {
+        lessons?: T;
+        discountPercent?: T;
+        id?: T;
+      };
   education?:
     | T
     | {
@@ -1594,6 +1676,7 @@ export interface BookingsSelect<T extends boolean = true> {
   cancelReason?: T;
   cancelledAt?: T;
   lateCancellation?: T;
+  package?: T;
   autoConfirm?: T;
   holdUntil?: T;
   refundedAmount?: T;
@@ -1655,6 +1738,7 @@ export interface PaymentsSelect<T extends boolean = true> {
   currency?: T;
   refundedAmount?: T;
   booking?: T;
+  package?: T;
   student?: T;
   tutor?: T;
   providerRef?: T;
@@ -1672,6 +1756,38 @@ export interface PaymentsSelect<T extends boolean = true> {
         id?: T;
       };
   events?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lesson-packages_select".
+ */
+export interface LessonPackagesSelect<T extends boolean = true> {
+  reference?: T;
+  status?: T;
+  expiresAt?: T;
+  paidAt?: T;
+  refundedAmount?: T;
+  student?: T;
+  tutor?: T;
+  tutorUser?: T;
+  lessons?: T;
+  minutes?: T;
+  discountPercent?: T;
+  platformFeePercent?: T;
+  price?: T;
+  perLesson?: T;
+  currency?: T;
+  history?:
+    | T
+    | {
+        action?: T;
+        by?: T;
+        at?: T;
+        note?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2147,6 +2263,12 @@ export interface PlatformSetting {
    * Off: every booking is a request the tutor accepts.
    */
   instantBookingEnabled?: boolean | null;
+  packagesEnabled?: boolean | null;
+  packageMaxDiscountPercent?: number | null;
+  /**
+   * Unused lessons can't be booked after this.
+   */
+  packageValidityDays?: number | null;
   paymentHoldMinutes?: number | null;
   /**
    * When a student cancels inside the free-cancellation window.
@@ -2393,6 +2515,9 @@ export interface PlatformSettingsSelect<T extends boolean = true> {
   classroomEarlyJoinMinutes?: T;
   bookingWindowDays?: T;
   instantBookingEnabled?: T;
+  packagesEnabled?: T;
+  packageMaxDiscountPercent?: T;
+  packageValidityDays?: T;
   paymentHoldMinutes?: T;
   lateCancellationRefundPercent?: T;
   earningsHoldDays?: T;

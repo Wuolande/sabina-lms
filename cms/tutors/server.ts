@@ -48,6 +48,7 @@ export function serializeApplication(p: TutorProfile) {
     offersTrial: p.offersTrial ?? true,
     instantBooking: p.instantBooking ?? true,
     noticeHours: p.noticeHours ?? 12,
+    packages: (p.packages ?? []).map((k) => ({ lessons: Number(k.lessons), discountPercent: Number(k.discountPercent) })),
     education: (p.education ?? []).map((e) => ({ degree: e.degree, institution: e.institution, field: e.field ?? "", startYear: e.startYear ?? null, endYear: e.endYear ?? null, document: file(e.document), verified: Boolean(e.verified) })),
     certifications: (p.certifications ?? []).map((c) => ({ title: c.title, issuer: c.issuer, year: c.year ?? null, credentialId: c.credentialId ?? "", document: file(c.document), verified: Boolean(c.verified) })),
     experience: (p.experience ?? []).map((x) => ({ role: x.role, organization: x.organization, startYear: x.startYear ?? null, endYear: x.endYear ?? null, description: (x.description as Lexical | null) ?? null })),

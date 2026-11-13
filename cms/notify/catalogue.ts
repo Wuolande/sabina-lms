@@ -12,6 +12,7 @@ export const EMAIL_CATALOGUE = [
   { key: "new_message", name: "New message", audience: "Student or tutor", description: "Someone sent a message. At most one email per conversation every 30 minutes." },
   { key: "review_received", name: "New review", audience: "Tutor", description: "A student reviewed a lesson." },
   { key: "payment_receipt", name: "Payment receipt", audience: "Student", description: "Payment received for a lesson." },
+  { key: "package_receipt", name: "Package receipt", audience: "Student", description: "Payment received for a lesson package." },
   { key: "refund_issued", name: "Refund sent", audience: "Student", description: "Money was refunded." },
   { key: "payout_requested", name: "Payout requested", audience: "Tutor", description: "The tutor asked to withdraw earnings." },
   { key: "payout_sent", name: "Payout sent", audience: "Tutor", description: "Finance marked a payout as paid." },

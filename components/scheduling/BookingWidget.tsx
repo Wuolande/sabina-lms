@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarCheck, CalendarDays, CheckCircle2, Clock, Hourglass, Loader2, Sparkles, Zap } from "lucide-react";
+import { CalendarCheck, CalendarDays, CheckCircle2, Clock, Hourglass, Loader2, Package, Sparkles, Zap } from "lucide-react";
+import type { PackageOffer } from "@/cms/packages/server";
 import type { LessonOption } from "@/cms/scheduling/server";
 import { Combobox } from "@/components/ui/Combobox";
 import { useGeo, withCurrent } from "@/components/ui/useGeo";
@@ -10,7 +11,8 @@ import { controlCls } from "@/components/portal/form";
 import { addDays, dateKey, DAYS_SHORT, fmtDay, fmtRange, fmtTime, tzLabel, weekdayOfKey, zonedParts } from "@/lib/time";
 import { money } from "@/lib/money";
 
-type SlotsResponse = { minutes: number; options: LessonOption[]; slots: string[]; tutorTimezone: string; hasHours: boolean; instant: boolean; currency: string; windowDays: number };
+type OwnPackage = { id: number; minutes: number; left: number; expiresAt: string | null };
+type SlotsResponse = { minutes: number; options: LessonOption[]; slots: string[]; tutorTimezone: string; hasHours: boolean; instant: boolean; currency: string; windowDays: number; offers: PackageOffer[]; packages: OwnPackage[] };
 type Tutor = { id: number; slug: string; name: string; photo: string | null; subjects: { id: number; name: string }[]; primarySubjectId: number | null };
 
 const PERIODS = [
@@ -32,7 +34,9 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  type Held = { id: number; status: string; reference: string; startsAt: string; endsAt: string; holdUntil: string | null; price: number; currency: string };
+  type Held = { id: number; status: string; reference: string; startsAt: string; endsAt: string; holdUntil: string | null; price: number; currency: string; paidFromPackage?: boolean };
+  const [usePackage, setUsePackage] = useState(true);
+  const [buying, setBuying] = useState<string | null>(null);
   const [done, setDone] = useState<{ booking: Held; providers: Provider[] } | null>(null);
 
   const load = useCallback(
@@ -78,6 +82,24 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
 
   const option = data?.options.find((o) => choice && o.kind === choice.kind && o.minutes === choice.minutes) ?? null;
   const daySlots = (day && slotsByDay.get(day)) || [];
+  // A package that can pay for this lesson (regular, same length, not expiring before the time).
+  const ownPackage =
+    option?.kind === "regular"
+      ? ((data?.packages ?? []).filter((k) => k.minutes === option.minutes && k.left > 0 && (!slot || !k.expiresAt || Date.parse(k.expiresAt) >= Date.parse(slot))).sort((a, b) => Date.parse(a.expiresAt ?? "9999") - Date.parse(b.expiresAt ?? "9999"))[0] ?? null)
+      : null;
+  const fromPackage = Boolean(ownPackage && usePackage);
+  const offers = (data?.offers ?? []).filter((o) => o.minutes === (option?.kind === "regular" ? option.minutes : 60));
+
+  async function buy(o: PackageOffer) {
+    setBuying(`${o.lessons}-${o.minutes}`);
+    setError(null);
+    const res = await fetch("/api/packages", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tutorId: tutor.id, lessons: o.lessons, minutes: o.minutes }) }).catch(() => null);
+    const d = (await res?.json().catch(() => ({}))) as { id?: number; error?: string };
+    if (res?.status === 401) return window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+    if (res?.ok && d.id) return window.location.assign(`/checkout/package/${d.id}`);
+    setBuying(null);
+    setError(d.error || "We couldn't set up that package. Please try again.");
+  }
 
   async function confirm() {
     if (!option || !slot) return;
@@ -87,7 +109,7 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tutorId: tutor.id, startsAt: slot, kind: option.kind, minutes: option.minutes, subjectId, note, timezone: tz }),
+      body: JSON.stringify({ tutorId: tutor.id, startsAt: slot, kind: option.kind, minutes: option.minutes, subjectId, note, timezone: tz, packageId: fromPackage ? ownPackage?.id : undefined }),
     }).catch(() => null);
     const d = (await res?.json().catch(() => ({}))) as { booking?: Held; providers?: Provider[]; error?: string };
     setBusy(false);
@@ -97,6 +119,38 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
       setSlot(null);
       void load(option.minutes);
     }
+  }
+
+  if (done?.booking.paidFromPackage) {
+    const b = done.booking;
+    const confirmed = b.status === "confirmed";
+    return (
+      <div className="mx-auto max-w-xl rounded-3xl bg-white p-8 text-center ring-1 ring-slate-200/70">
+        <span className={`mx-auto grid h-16 w-16 place-items-center rounded-2xl ${confirmed ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"}`}>{confirmed ? <CheckCircle2 size={32} /> : <Hourglass size={30} />}</span>
+        <h2 className="mt-5 font-heading text-2xl font-bold text-slate-900">{confirmed ? "Your lesson is booked" : "Request sent"}</h2>
+        <p className="mt-2 text-slate-600">
+          {fmtDay(b.startsAt, tz)}, {fmtRange(b.startsAt, b.endsAt, tz)} with {tutor.name}.
+          <br />
+          {confirmed ? "Paid from your package." : `Paid from your package. ${tutor.name.split(" ")[0]} will confirm soon; if they can't, the lesson goes back into your package.`}
+        </p>
+        <div className="mt-7 flex flex-col justify-center gap-2 sm:flex-row">
+          <Link href="/student/lessons" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 font-semibold text-white hover:bg-brand-800">
+            <CalendarCheck size={18} /> My lessons
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setDone(null);
+              setSlot(null);
+              void load(option?.minutes);
+            }}
+            className="inline-flex h-12 items-center justify-center rounded-xl px-5 font-semibold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+          >
+            Book another
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (done) {
@@ -172,13 +226,37 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
                     {o.kind === "trial" ? "Trial" : `${o.minutes} min`}
                   </span>
                   <span className="mt-1 block font-heading text-xl font-bold text-slate-900">{money(o.price, data!.currency)}</span>
-                  <span className="text-xs text-slate-500">{o.kind === "trial" ? `${o.minutes} min, first lesson` : "Regular lesson"}</span>
+                  <span className="text-xs text-slate-500">{o.kind === "trial" ? `${o.minutes} min, first lesson` : (data?.packages ?? []).some((k) => k.minutes === o.minutes && k.left > 0) ? "In your package" : "Regular lesson"}</span>
                 </button>
               );
             })}
             {!data && Array.from({ length: 4 }, (_, i) => <div key={i} className="h-[6.5rem] animate-pulse rounded-2xl bg-slate-100" />)}
           </div>
         </section>
+
+        {offers.length > 0 && !ownPackage && (
+          <section className="rounded-3xl bg-gradient-to-br from-brand-50 to-white p-5 ring-1 ring-brand-100 sm:p-6">
+            <div className="flex items-center gap-2">
+              <Package size={18} className="text-brand-700" />
+              <h2 className="font-heading text-lg font-bold text-slate-900">Save with a package</h2>
+            </div>
+            <p className="mt-1 text-sm text-slate-600">Pay once for several {offers[0]!.minutes}-minute lessons and book them whenever suits you. Cancel in time and the lesson goes back into your package.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {offers.map((o) => (
+                <div key={`${o.lessons}-${o.minutes}`} className="flex flex-col rounded-2xl bg-white p-4 ring-1 ring-slate-200">
+                  <span className="text-sm font-semibold text-slate-900">{o.lessons} lessons</span>
+                  <span className="mt-1 font-heading text-xl font-bold text-slate-900">{money(o.price, data!.currency)}</span>
+                  <span className="text-xs text-slate-500">
+                    {money(o.perLesson, data!.currency)} a lesson · <span className="font-semibold text-emerald-700">save {o.discountPercent}%</span>
+                  </span>
+                  <button type="button" onClick={() => buy(o)} disabled={buying !== null} className="mt-3 inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-slate-900 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50">
+                    {buying === `${o.lessons}-${o.minutes}` ? <Loader2 size={16} className="animate-spin" /> : null} Buy {o.lessons} lessons
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* 2. Day and time */}
         <section className="rounded-3xl bg-white p-5 ring-1 ring-slate-200/70 sm:p-6">
@@ -306,9 +384,20 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
             <span className="text-sm font-semibold text-slate-800">Note for {tutor.name.split(" ")[0]} (optional)</span>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={1000} rows={3} placeholder="What would you like to work on?" className={`${controlCls} mt-1.5 py-2.5 text-sm`} />
           </label>
+          {ownPackage && (
+            <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl bg-emerald-50 p-3.5 ring-1 ring-emerald-200">
+              <input type="checkbox" checked={usePackage} onChange={(e) => setUsePackage(e.target.checked)} className="mt-0.5 h-4 w-4 accent-emerald-600" />
+              <span className="text-sm">
+                <span className="block font-semibold text-emerald-900">Use a lesson from my package</span>
+                <span className="text-emerald-800">
+                  {ownPackage.left} {ownPackage.left === 1 ? "lesson" : "lessons"} left{ownPackage.expiresAt ? `, book by ${fmtDay(ownPackage.expiresAt, tz, { month: "short", day: "numeric" })}` : ""}
+                </span>
+              </span>
+            </label>
+          )}
           <div className="mt-5 flex items-baseline justify-between border-t border-slate-100 pt-4">
             <span className="text-sm text-slate-500">Total</span>
-            <span className="font-heading text-2xl font-bold text-slate-900">{option && data ? money(option.price, data.currency) : "—"}</span>
+            <span className="font-heading text-2xl font-bold text-slate-900">{fromPackage ? "Prepaid" : option && data ? money(option.price, data.currency) : "—"}</span>
           </div>
           {error && (
             <p role="alert" className="mt-3 rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
@@ -317,7 +406,7 @@ export function BookingWidget({ tutor, initialTz, initialKind, cancellationHours
           )}
           <button type="button" onClick={confirm} disabled={!slot || !option || busy} className="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-700 font-semibold text-white transition hover:bg-brand-800 disabled:opacity-50">
             {busy ? <Loader2 size={18} className="animate-spin" /> : data?.instant ? <Zap size={18} /> : <CalendarCheck size={18} />}
-            Continue to payment
+            {fromPackage ? (data?.instant ? "Book lesson" : "Send request") : "Continue to payment"}
           </button>
           <p className="mt-3 text-center text-xs text-slate-500">{data?.instant ? "Instant booking: confirmed straight away." : `${tutor.name.split(" ")[0]} confirms requests personally.`} Free cancellation up to {cancellationHours} hours before.</p>
         </div>

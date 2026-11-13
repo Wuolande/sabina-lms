@@ -89,6 +89,7 @@ export const Bookings: CollectionConfig = {
         { name: "lateCancellation", type: "checkbox", admin: { description: "The student cancelled inside the free-cancellation window." } },
       ],
     },
+    { name: "package", type: "relationship", relationTo: "lesson-packages", index: true, admin: { readOnly: true, position: "sidebar", description: "Paid from this prepaid package." } },
     { name: "autoConfirm", type: "checkbox", admin: { readOnly: true, position: "sidebar", description: "Instant booking: confirmed as soon as it's paid." } },
     { name: "holdUntil", type: "date", admin: { readOnly: true, position: "sidebar", description: "Unpaid bookings release the time after this." } },
     { name: "refundedAmount", type: "number", defaultValue: 0, admin: { readOnly: true, position: "sidebar" } },

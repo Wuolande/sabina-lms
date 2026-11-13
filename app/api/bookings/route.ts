@@ -5,7 +5,7 @@ import { BookingError, createBooking } from "@/cms/scheduling/server";
 import { enabledProviders } from "@/cms/payments/providers";
 import type { User } from "@/payload-types";
 
-/** POST { tutorId, startsAt, kind, minutes, subjectId?, note?, timezone? } : book a lesson (students). */
+/** POST { tutorId, startsAt, kind, minutes, subjectId?, note?, timezone?, packageId? } : book a lesson (students). */
 export async function POST(req: NextRequest) {
   const payload = await getPayloadClient();
   const { user } = (await payload.auth({ headers: req.headers })) as { user: User | null };
@@ -20,8 +20,9 @@ export async function POST(req: NextRequest) {
       subjectId: b.subjectId ? Number(b.subjectId) : null,
       note: typeof b.note === "string" ? b.note : undefined,
       timezone: typeof b.timezone === "string" ? b.timezone : undefined,
+      packageId: b.packageId ? Number(b.packageId) : null,
     });
-    return NextResponse.json({ success: true, booking: { id: booking.id, reference: booking.reference, status: booking.status, startsAt: booking.startsAt, endsAt: booking.endsAt, holdUntil: booking.holdUntil, price: booking.price, currency: booking.currency }, providers: enabledProviders() }, { status: 201 });
+    return NextResponse.json({ success: true, booking: { id: booking.id, reference: booking.reference, status: booking.status, paidFromPackage: Boolean(booking.package), startsAt: booking.startsAt, endsAt: booking.endsAt, holdUntil: booking.holdUntil, price: booking.price, currency: booking.currency }, providers: enabledProviders() }, { status: 201 });
   } catch (err) {
     if (err instanceof BookingError) return fail(err.message, err.status);
     payload.logger.error({ err }, "[bookings] create failed");

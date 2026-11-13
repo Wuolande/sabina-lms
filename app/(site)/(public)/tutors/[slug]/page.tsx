@@ -82,6 +82,11 @@ export default async function TutorProfilePage({ params }: Props) {
           Trial lesson: {policies.trialLessonMinutes} min for <b>{money(t.trialPrice, currency)}</b>
         </p>
       )}
+      {t.packageSaving != null && (
+        <p className="mt-2 rounded-xl bg-brand-50 px-3 py-2 text-sm font-medium text-brand-800">
+          Lesson packages: save up to <b>{t.packageSaving}%</b>
+        </p>
+      )}
       <div className="mt-5 space-y-2.5">
         <Link href={`/tutors/${t.slug}/book`} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-700 font-semibold text-white transition hover:bg-brand-800">
           <CalendarClock size={18} /> Book a lesson

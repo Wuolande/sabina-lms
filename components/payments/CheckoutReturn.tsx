@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CalendarCheck, CheckCircle2, Hourglass, Loader2, RotateCcw, XCircle } from "lucide-react";
+import { CalendarCheck, CheckCircle2, Hourglass, Loader2, Package, RotateCcw, XCircle } from "lucide-react";
 import { fmtDay, fmtRange } from "@/lib/time";
 import { money } from "@/lib/money";
 
 type Status = {
   payment: { id: number; reference: string; status: string; amount: number; currency: string; refunded: number };
-  booking: { id: number; reference: string; status: string; paymentStatus: string; startsAt: string; endsAt: string; holdUntil: string | null; tutor: string | null; tutorSlug: string | null };
+  booking?: { id: number; reference: string; status: string; paymentStatus: string; startsAt: string; endsAt: string; holdUntil: string | null; tutor: string | null; tutorSlug: string | null };
+  package?: { id: number; reference: string; status: string; lessons: number; minutes: number; expiresAt: string | null; tutor: string | null; tutorSlug: string | null };
 };
 
 /** After the provider sends the student back: wait for the payment to settle, then show the result. */
@@ -47,7 +48,52 @@ export function CheckoutReturn({ reference, cancelled, tz }: { reference: string
   if (error) return box(<XCircle size={30} />, "bg-rose-50 text-rose-600", "Something went wrong", error, <Link href="/student/lessons" className={primary}>My lessons</Link>);
   if (!s) return box(<Loader2 size={30} className="animate-spin" />, "bg-brand-50 text-brand-600", "Checking your payment…", "This only takes a moment.", null);
 
-  const { payment: p, booking: b } = s;
+  const { payment: p } = s;
+  if (s.package) {
+    const k = s.package;
+    if (p.status === "succeeded" && k.status !== "pending_payment")
+      return box(
+        <Package size={30} />,
+        "bg-emerald-50 text-emerald-600",
+        "Your lessons are ready to book",
+        <>
+          <p className="font-medium text-slate-800">
+            {k.lessons} × {k.minutes}-minute lessons with {k.tutor}
+          </p>
+          <p className="mt-2 text-sm text-slate-500">
+            Book them whenever suits you{k.expiresAt ? `, up to ${fmtDay(k.expiresAt, tz, { month: "long", day: "numeric", year: "numeric" })}` : ""}. We&apos;ve emailed your receipt ({money(p.amount, p.currency)}, {p.reference}).
+          </p>
+        </>,
+        <>
+          {k.tutorSlug && (
+            <Link href={`/tutors/${k.tutorSlug}/book`} className={primary}>
+              <CalendarCheck size={18} /> Book your first lesson
+            </Link>
+          )}
+          <Link href={`/student/payments/${p.id}`} className={ghost}>
+            View receipt
+          </Link>
+        </>,
+      );
+    if (p.status === "pending" && !cancelled)
+      return box(<Loader2 size={30} className="animate-spin" />, "bg-brand-50 text-brand-600", "Waiting for confirmation…", <>{tries > 20 ? "This is taking longer than usual. If you approved the payment, we'll email you as soon as it's confirmed." : "If you're paying by M-Pesa, approve the prompt on your phone."}</>, <Link href="/student/packages" className={ghost}>My packages</Link>);
+    return box(
+      <XCircle size={30} />,
+      "bg-rose-50 text-rose-600",
+      cancelled ? "Payment cancelled" : "Payment didn't go through",
+      "No money was taken. You can try again whenever you're ready.",
+      k.status === "pending_payment" ? (
+        <Link href={`/checkout/package/${k.id}`} className={primary}>
+          Try again
+        </Link>
+      ) : (
+        <Link href={k.tutorSlug ? `/tutors/${k.tutorSlug}/book` : "/find-tutors"} className={primary}>
+          Choose again
+        </Link>
+      ),
+    );
+  }
+  const b = s.booking!;
   const when = (
     <p className="font-medium text-slate-800">
       {fmtDay(b.startsAt, tz)}, {fmtRange(b.startsAt, b.endsAt, tz)}

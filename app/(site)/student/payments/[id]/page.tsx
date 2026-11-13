@@ -5,7 +5,7 @@ import { getPayloadClient, requireUser } from "@/cms/auth/session";
 import { PrintButton } from "@/components/payments/PrintButton";
 import { fmtDay, fmtRange, safeTz } from "@/lib/time";
 import { money } from "@/lib/money";
-import type { Booking, TutorProfile } from "@/payload-types";
+import type { Booking, LessonPackage, TutorProfile } from "@/payload-types";
 
 export const metadata = { title: "Receipt" };
 export const dynamic = "force-dynamic";
@@ -16,8 +16,10 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   const payload = await getPayloadClient();
   const p = await payload.findByID({ collection: "payments", id: Number(id), depth: 2, overrideAccess: true }).catch(() => null);
   if (!p || (typeof p.student === "object" ? p.student.id : p.student) !== user.id || p.status === "pending" || p.status === "failed" || p.status === "cancelled") notFound();
-  const b = p.booking as Booking;
-  const t = b.tutor as TutorProfile;
+  const b = (p.booking && typeof p.booking === "object" ? p.booking : null) as Booking | null;
+  const k = (p.package && typeof p.package === "object" ? p.package : null) as LessonPackage | null;
+  if (!b && !k) notFound();
+  const t = (b?.tutor ?? k?.tutor) as TutorProfile | undefined;
   const tz = safeTz(user.timezone);
   const row = (k: string, v: React.ReactNode) => (
     <div className="flex justify-between gap-4 py-2.5">
@@ -47,9 +49,20 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
         <dl className="mt-8 divide-y divide-slate-100 text-sm">
           {row("Billed to", `${user.firstName ?? ""} ${user.lastName ?? ""} · ${user.email}`)}
           {row("Date paid", fmtDay(p.paidAt ?? p.createdAt, tz, { year: "numeric", month: "long", day: "numeric" }))}
-          {row("Lesson", `${b.kind === "trial" ? "Trial lesson" : `${b.minutes}-minute lesson`} with ${t?.displayName ?? "tutor"}`)}
-          {row("Lesson time", `${fmtDay(b.startsAt, tz, { month: "short", day: "numeric", year: "numeric" })}, ${fmtRange(b.startsAt, b.endsAt, tz)}`)}
-          {row("Booking", b.reference)}
+          {b ? (
+            <>
+              {row("Lesson", `${b.kind === "trial" ? "Trial lesson" : `${b.minutes}-minute lesson`} with ${t?.displayName ?? "tutor"}`)}
+              {row("Lesson time", `${fmtDay(b.startsAt, tz, { month: "short", day: "numeric", year: "numeric" })}, ${fmtRange(b.startsAt, b.endsAt, tz)}`)}
+              {row("Booking", b.reference)}
+            </>
+          ) : k ? (
+            <>
+              {row("Lesson package", `${k.lessons} × ${k.minutes}-minute lessons with ${t?.displayName ?? "tutor"}`)}
+              {k.discountPercent ? row("Package discount", `${k.discountPercent}%`) : null}
+              {k.expiresAt ? row("Book lessons by", fmtDay(k.expiresAt, tz, { month: "short", day: "numeric", year: "numeric" })) : null}
+              {row("Package", k.reference)}
+            </>
+          ) : null}
           {row("Paid with", `${p.provider === "paystack" ? "Paystack" : p.provider === "stripe" ? "Stripe" : "Test payment"}${p.method ? ` (${p.method.replace("_", " ")})` : ""}`)}
           {(p.refunds ?? []).map((r, i) => row(`Refund${r.at ? ` · ${fmtDay(r.at, tz, { month: "short", day: "numeric" })}` : ""}`, `−${money(r.amount ?? 0, p.currency)} (${r.reason})`))}
         </dl>

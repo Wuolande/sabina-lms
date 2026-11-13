@@ -4,7 +4,7 @@ import { hasRole, isAdmin, isStaffUser } from "../access";
 export const PAYMENT_STATUSES = ["pending", "succeeded", "failed", "cancelled", "refunded", "partially_refunded"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-/** One checkout attempt for a booking. Written only by the server (checkout, webhooks, refunds). */
+/** One checkout attempt for a booking or a lesson package. Written only by the server (checkout, webhooks, refunds). */
 export const Payments: CollectionConfig = {
   slug: "payments",
   labels: { singular: "Payment", plural: "Payments" },
@@ -37,7 +37,8 @@ export const Payments: CollectionConfig = {
     {
       type: "row",
       fields: [
-        { name: "booking", type: "relationship", relationTo: "bookings", required: true, index: true, admin: { width: "34%" } },
+        { name: "booking", type: "relationship", relationTo: "bookings", index: true, admin: { width: "34%", condition: (d) => !d?.package } },
+        { name: "package", type: "relationship", relationTo: "lesson-packages", index: true, admin: { width: "34%", condition: (d) => Boolean(d?.package) } },
         { name: "student", type: "relationship", relationTo: "users", required: true, index: true, admin: { width: "33%" } },
         { name: "tutor", type: "relationship", relationTo: "tutor-profiles", index: true, admin: { width: "33%" } },
       ],

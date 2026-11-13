@@ -18,6 +18,9 @@ export const PLATFORM_DEFAULTS = {
   lateCancellationRefundPercent: 0,
   earningsHoldDays: 2,
   minimumPayout: 20,
+  packagesEnabled: true,
+  packageMaxDiscountPercent: 25,
+  packageValidityDays: 180,
 } as const;
 
 /** Fees, price limits and booking policies. Read by the tutor application, marketplace and checkout. */
@@ -61,6 +64,20 @@ export const PlatformSettings: GlobalConfig = {
       fields: [
         { name: "bookingWindowDays", type: "number", min: 7, max: 180, defaultValue: PLATFORM_DEFAULTS.bookingWindowDays, label: "Students can book up to (days ahead)", admin: { width: "50%" } },
         { name: "instantBookingEnabled", type: "checkbox", defaultValue: PLATFORM_DEFAULTS.instantBookingEnabled, label: "Allow instant booking", admin: { width: "50%", description: "Off: every booking is a request the tutor accepts." } },
+      ],
+    },
+    {
+      type: "collapsible",
+      label: "Lesson packages",
+      fields: [
+        {
+          type: "row",
+          fields: [
+            { name: "packagesEnabled", type: "checkbox", defaultValue: PLATFORM_DEFAULTS.packagesEnabled, label: "Tutors can sell lesson packages", admin: { width: "34%" } },
+            { name: "packageMaxDiscountPercent", type: "number", min: 0, max: 50, defaultValue: PLATFORM_DEFAULTS.packageMaxDiscountPercent, label: "Highest package discount (%)", admin: { width: "33%" } },
+            { name: "packageValidityDays", type: "number", min: 30, max: 730, defaultValue: PLATFORM_DEFAULTS.packageValidityDays, label: "Packages last (days)", admin: { width: "33%", description: "Unused lessons can't be booked after this." } },
+          ],
+        },
       ],
     },
     {

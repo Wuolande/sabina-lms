@@ -38,6 +38,7 @@ type App = {
   offersTrial: boolean;
   instantBooking: boolean;
   noticeHours: number;
+  packages: { lessons: number; discountPercent: number }[];
   education: Edu[];
   certifications: Cert[];
   experience: Exp[];
@@ -48,7 +49,7 @@ type App = {
 type Options = {
   subjects: { id: number; name: string; category: string }[];
   languages: { id: number; name: string }[];
-  policies: { currency: string; platformFeePercent: number; tutorMinHourlyRate: number; tutorMaxHourlyRate: number; trialLessonMinutes: number; trialLessonDiscountPercent: number; maxSubjectsPerTutor: number };
+  policies: { currency: string; platformFeePercent: number; tutorMinHourlyRate: number; tutorMaxHourlyRate: number; trialLessonMinutes: number; trialLessonDiscountPercent: number; maxSubjectsPerTutor: number; packagesEnabled?: boolean; packageMaxDiscountPercent?: number };
   videoUpload?: boolean;
 };
 type Payload = { application: App; requirements: Requirement[]; missing: Requirement[]; options?: Options };
@@ -275,7 +276,7 @@ export function TutorApplication() {
       case "profile":
         return { headline: draft.headline, about: draft.about, teachingStyle: draft.teachingStyle, languages: draft.languages };
       case "subjects":
-        return { primarySubject: draft.primarySubject, subjects: draft.subjects, levelsTaught: draft.levelsTaught, hourlyRate: draft.hourlyRate, offersTrial: draft.offersTrial, instantBooking: draft.instantBooking, noticeHours: draft.noticeHours };
+        return { primarySubject: draft.primarySubject, subjects: draft.subjects, levelsTaught: draft.levelsTaught, hourlyRate: draft.hourlyRate, offersTrial: draft.offersTrial, instantBooking: draft.instantBooking, noticeHours: draft.noticeHours, packages: draft.packages };
       case "background":
         return { education: draft.education, certifications: draft.certifications, experience: draft.experience };
       case "identity":
@@ -549,7 +550,53 @@ export function TutorApplication() {
                   />
                   <Toggle label="Instant booking" sub="Students book open slots without waiting for you to accept." checked={draft.instantBooking} onChange={(v) => set("instantBooking", v)} disabled={locked} />
                 </div>
-                <Select label="Minimum notice before a lesson" disabled={locked} value={draft.noticeHours} onChange={(v) => v != null && set("noticeHours", v)} options={[2, 6, 12, 24, 48].map((h) => ({ value: h, label: `${h} hours` }))} />
+                <Select label="Minimum notice before a lesson" disabled={locked} value={draft.noticeHours} onChange={(v) => v != null && set("noticeHours", v)} options={[0, 2, 6, 12, 24, 48].map((h) => ({ value: h, label: h ? `${h} hours` : "No minimum" }))} />
+                {p.packagesEnabled !== false && (
+                  <div className="rounded-2xl p-5 ring-1 ring-slate-200">
+                    <h3 className="font-semibold text-slate-900">Lesson packages</h3>
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      Sell several lessons at once for a lower price. Students who buy a package usually stay longer. You can offer up to {p.packageMaxDiscountPercent ?? 25}% off.
+                    </p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      {[5, 10, 20].map((n) => {
+                        const cur = (draft.packages ?? []).find((k) => k.lessons === n);
+                        const max = p.packageMaxDiscountPercent ?? 25;
+                        const put = (pct: number | null) =>
+                          set(
+                            "packages",
+                            pct == null ? (draft.packages ?? []).filter((k) => k.lessons !== n) : [...(draft.packages ?? []).filter((k) => k.lessons !== n), { lessons: n, discountPercent: Math.min(max, Math.max(1, pct)) }].sort((a, b) => a.lessons - b.lessons),
+                          );
+                        const each = draft.hourlyRate && cur ? draft.hourlyRate * (1 - cur.discountPercent / 100) : null;
+                        return (
+                          <div key={n} className={`rounded-2xl p-4 ring-1 transition ${cur ? "bg-brand-50/60 ring-brand-200" : "bg-white ring-slate-200"}`}>
+                            <label className="flex cursor-pointer items-center justify-between gap-2">
+                              <span className="font-semibold text-slate-900">{n} lessons</span>
+                              <input type="checkbox" className="h-4 w-4 accent-brand-700" disabled={locked} checked={Boolean(cur)} onChange={(e) => put(e.target.checked ? Math.min(max, n === 5 ? 5 : n === 10 ? 10 : 15) : null)} />
+                            </label>
+                            {cur && (
+                              <>
+                                <label className="mt-3 flex items-center gap-2 text-sm text-slate-600">
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={max}
+                                    disabled={locked}
+                                    value={cur.discountPercent}
+                                    onChange={(e) => put(Number(e.target.value) || 1)}
+                                    aria-label={`Discount for ${n} lessons (%)`}
+                                    className="h-9 w-16 rounded-lg border border-slate-200 px-2 text-right text-sm font-semibold text-slate-900 outline-none focus:border-brand-600"
+                                  />
+                                  % off
+                                </label>
+                                {each != null && <p className="mt-2 text-xs text-slate-500">{money(each, p.currency)} per hour instead of {money(draft.hourlyRate!, p.currency)}</p>}
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

@@ -10,6 +10,7 @@ import * as migration_20261112_192945_legacy_import_fields from './20261112_1929
 import * as migration_20261112_194000_import_legacy_files from './20261112_194000_import_legacy_files';
 import * as migration_20261113_040559_rich_text_geo from './20261113_040559_rich_text_geo';
 import * as migration_20261113_054332_r2_prefix from './20261113_054332_r2_prefix';
+import * as migration_20261113_063011_lesson_packages from './20261113_063011_lesson_packages';
 
 export const migrations = [
   {
@@ -70,6 +71,11 @@ export const migrations = [
   {
     up: migration_20261113_054332_r2_prefix.up,
     down: migration_20261113_054332_r2_prefix.down,
-    name: '20261113_054332_r2_prefix'
+    name: '20261113_054332_r2_prefix',
+  },
+  {
+    up: migration_20261113_063011_lesson_packages.up,
+    down: migration_20261113_063011_lesson_packages.down,
+    name: '20261113_063011_lesson_packages'
   },
 ];

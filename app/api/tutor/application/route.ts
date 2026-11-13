@@ -76,6 +76,13 @@ export async function PATCH(req: NextRequest) {
   if (b.hourlyRate !== undefined) data.hourlyRate = num(b.hourlyRate);
   for (const k of ["offersTrial", "instantBooking"] as const) if (typeof b[k] === "boolean") data[k] = b[k];
   if (b.noticeHours !== undefined) data.noticeHours = Math.min(168, Math.max(0, num(b.noticeHours) ?? 12));
+  if (Array.isArray(b.packages)) {
+    const seen = new Set<number>();
+    data.packages = b.packages
+      .map((k: any) => ({ lessons: Number(k?.lessons), discountPercent: Math.round(Number(k?.discountPercent)) }))
+      .filter((k: { lessons: number; discountPercent: number }) => [5, 10, 20].includes(k.lessons) && k.discountPercent >= 1 && k.discountPercent <= 50 && !seen.has(k.lessons) && seen.add(k.lessons))
+      .map((k: { lessons: number; discountPercent: number }) => ({ lessons: String(k.lessons), discountPercent: k.discountPercent }));
+  }
   if (Array.isArray(b.education))
     data.education = b.education.slice(0, 8).filter((e: any) => e?.degree?.trim() && e?.institution?.trim()).map((e: any) => ({ degree: str(e.degree, 120), institution: str(e.institution, 160), field: str(e.field, 120) ?? "", startYear: year(e.startYear), endYear: year(e.endYear), document: fileId(e.document) }));
   if (Array.isArray(b.certifications))

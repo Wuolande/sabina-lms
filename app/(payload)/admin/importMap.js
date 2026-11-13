@@ -23,6 +23,7 @@ import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997e
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ReviewActions as ReviewActions_5c2b8028f7ad4aa15f6405c6f3b089bf } from '../../../cms/admin/tutors/ReviewActions'
+import { RefundPackage as RefundPackage_98e502b96e4ed3dc5187c3bdbdee0ba0 } from '@/cms/admin/fields/RefundPackage'
 import { UploadFeatureClient as UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { RelationshipFeatureClient as RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { Avatar as Avatar_b2f13f7166b151bab9a5bcf0e429c3b8 } from '../../../cms/admin/shell/Avatar'
@@ -66,6 +67,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/cms/admin/tutors/ReviewActions#ReviewActions": ReviewActions_5c2b8028f7ad4aa15f6405c6f3b089bf,
+  "@/cms/admin/fields/RefundPackage#RefundPackage": RefundPackage_98e502b96e4ed3dc5187c3bdbdee0ba0,
   "@payloadcms/richtext-lexical/client#UploadFeatureClient": UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#RelationshipFeatureClient": RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/cms/admin/shell/Avatar#Avatar": Avatar_b2f13f7166b151bab9a5bcf0e429c3b8,
