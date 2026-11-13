@@ -292,7 +292,7 @@ export function HomePageClient({
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
                   <button
                     type="button"
-                    onClick={() => router.push("/find-tutors")}
+                    onClick={() => router.push("/match")}
                     className="h-12 sm:h-14 px-5 sm:px-7 rounded-2xl bg-brand hover:opacity-90 text-white font-black text-xs sm:text-base flex items-center justify-center gap-2 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer group shrink-0 min-h-[44px]"
                   >
                     <Sparkles className="h-4 w-4 text-accent fill-accent group-hover:rotate-12 transition-transform" />
@@ -327,7 +327,7 @@ export function HomePageClient({
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                   </span>
-                  <span>Matchmaker takes 2 minutes • 100% Satisfaction Guarantee</span>
+                  <span>Five quick questions • We suggest the three tutors who fit you best</span>
                 </div>
               </div>
 

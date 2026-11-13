@@ -154,7 +154,7 @@ export function StudentHome({ data }: { data: HomeData }) {
     { done: true, title: "Confirm your email", sub: "Your account is active." },
     { done: profileDone(user), title: "Complete your account", sub: "Add a photo, phone number and country.", href: "/student/settings", cta: "Complete" },
     { done: Boolean(user.goalsSet), title: "Set your learning goals", sub: "Get tutor recommendations that fit you.", href: "/student/profile", cta: "Set goals" },
-    { done: data.booked, title: "Find your tutor", sub: "Browse verified tutors by subject and price.", href: data.booked ? undefined : "/find-tutors", cta: "Browse" },
+    { done: data.booked, title: "Find your tutor", sub: "Answer five quick questions and we'll suggest three tutors.", href: data.booked ? undefined : "/match", cta: "Get matched" },
     { done: data.booked, title: "Book your first lesson", sub: data.booked ? "Booked. See you in class!" : "Pick a time that suits you.", href: data.booked ? undefined : "/find-tutors", cta: "Book" },
   ];
   return (

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X, Wand2 } from "lucide-react";
 import { getPayloadClient } from "@/cms/auth/session";
 import { PAGE_SIZE, SORTS, searchTutors, type SearchParams } from "@/cms/marketplace/public";
 import { marketplaceViewer } from "@/cms/marketplace/viewer";
@@ -131,6 +131,9 @@ export default async function FindTutorsPage({ searchParams }: Props) {
               Search
             </button>
           </form>
+          <Link href={`/match${sp.subject ? `?subject=${encodeURIComponent(sp.subject)}` : ""}`} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white/90 underline-offset-4 hover:text-white hover:underline">
+            <Wand2 size={16} className="text-accent-300" /> Not sure who to pick? Answer five quick questions
+          </Link>
         </div>
       </section>
 

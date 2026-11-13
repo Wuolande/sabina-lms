@@ -7,29 +7,12 @@ interface ThemeSynchronizerProps {
   initialSecondary: string;
 }
 
+/** Applies the brand colours from Site settings (passed in by the layout on every page load). */
 export function ThemeSynchronizer({ initialPrimary, initialSecondary }: ThemeSynchronizerProps) {
   React.useEffect(() => {
-    // 1. Immediately apply server-provided colors to documentElement
-    if (initialPrimary) {
-      document.documentElement.style.setProperty("--color-primary", initialPrimary);
-    }
-    if (initialSecondary) {
-      document.documentElement.style.setProperty("--color-secondary", initialSecondary);
-    }
-
-    // 2. Poll/fetch fresh theme from /api/theme to guarantee real-time sync with admin changes
-    fetch("/api/theme")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (!data) return;
-        if (data.primaryColor && /^#[0-9A-Fa-f]{6}$/.test(data.primaryColor)) {
-          document.documentElement.style.setProperty("--color-primary", data.primaryColor);
-        }
-        if (data.secondaryColor && /^#[0-9A-Fa-f]{6}$/.test(data.secondaryColor)) {
-          document.documentElement.style.setProperty("--color-secondary", data.secondaryColor);
-        }
-      })
-      .catch(() => {});
+    const ok = (c: string) => /^#[0-9A-Fa-f]{6}$/.test(c);
+    if (initialPrimary && ok(initialPrimary)) document.documentElement.style.setProperty("--color-primary", initialPrimary);
+    if (initialSecondary && ok(initialSecondary)) document.documentElement.style.setProperty("--color-secondary", initialSecondary);
   }, [initialPrimary, initialSecondary]);
 
   return null;
