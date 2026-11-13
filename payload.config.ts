@@ -134,6 +134,8 @@ export default buildConfig({
     // Cloudflare R2 for uploads. Without R2 variables (local development) files go to disk.
     s3Storage({
       enabled: r2Ready(),
+      // Keep the storage columns in the schema even without R2, so migrations match production.
+      alwaysInsertFields: true,
       bucket: env.R2_BUCKET || "",
       config: r2Config(),
       collections: {
@@ -148,6 +150,7 @@ export default buildConfig({
     // Private R2 bucket for identity documents and certificates: always served through Payload's access checks.
     s3Storage({
       enabled: r2Ready() && Boolean(env.R2_PRIVATE_BUCKET),
+      alwaysInsertFields: true,
       bucket: env.R2_PRIVATE_BUCKET || "",
       config: r2Config(),
       collections: { "private-files": { prefix: "private" } },

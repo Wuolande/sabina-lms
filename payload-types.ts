@@ -238,6 +238,8 @@ export interface Media {
    */
   alt: string;
   uploadedBy?: (number | null) | User;
+  prefix?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -511,6 +513,8 @@ export interface PrivateFile {
   id: number;
   owner: number | User;
   kind: 'identity' | 'degree' | 'certificate' | 'other';
+  prefix?: string | null;
+  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -1967,6 +1971,8 @@ export interface TimezonesSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   uploadedBy?: T;
+  prefix?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -2020,6 +2026,8 @@ export interface MediaSelect<T extends boolean = true> {
 export interface PrivateFilesSelect<T extends boolean = true> {
   owner?: T;
   kind?: T;
+  prefix?: T;
+  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
