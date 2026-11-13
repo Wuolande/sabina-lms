@@ -56,7 +56,7 @@ export function RichTextArea({ label, hint, error, value, onChange, maxLength, m
         </span>
       }
     >
-      <RichTextEditor id={id} value={value} onChange={onChange} onLength={setLen} placeholder={placeholder} disabled={disabled} minHeight={minHeight} />
+      <RichTextEditor id={id} aria-label={label} value={value} onChange={onChange} onLength={setLen} placeholder={placeholder} disabled={disabled} minHeight={minHeight} />
     </Field>
   );
 }

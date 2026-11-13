@@ -84,6 +84,7 @@ export function RichTextEditor({
   minHeight = 140,
   onLength,
   "aria-describedby": describedBy,
+  "aria-label": ariaLabel,
 }: {
   id?: string;
   value: unknown;
@@ -93,6 +94,8 @@ export function RichTextEditor({
   minHeight?: number;
   onLength?: (n: number) => void;
   "aria-describedby"?: string;
+  /** Needed for screen readers: a <label for> can't name an editable area. */
+  "aria-label"?: string;
 }) {
   // Read the starting value once; after that the editor owns its state.
   const initial = useMemo(() => {
@@ -122,6 +125,7 @@ export function RichTextEditor({
               <ContentEditable
                 id={id}
                 aria-describedby={describedBy}
+                ariaLabel={ariaLabel}
                 aria-placeholder={placeholder ?? ""}
                 placeholder={<div className="pointer-events-none absolute left-4 top-3 text-[15px] text-slate-400">{placeholder}</div>}
                 style={{ minHeight }}

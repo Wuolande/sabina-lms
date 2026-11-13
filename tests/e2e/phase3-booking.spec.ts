@@ -113,7 +113,7 @@ test("tutor hours → student books → tutor accepts → student cancels; no do
   await sp.goto("/student");
   await expect(sp.getByRole("heading", { name: "Next lessons" })).toBeVisible();
   await sp.goto("/student/calendar");
-  await expect(sp.getByRole("combobox", { name: "Time zone" })).toContainText("London");
+  await expect(sp.getByText("Times in Europe/London")).toBeVisible();
   await sp.goto("/student/lessons");
   await expect(card.getByText("Confirmed")).toBeVisible();
   await card.getByRole("button", { name: "Cancel lesson" }).click();

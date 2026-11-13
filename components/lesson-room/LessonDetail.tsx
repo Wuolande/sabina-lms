@@ -110,7 +110,7 @@ function NotesEditor({ id, initial, done }: { id: number; initial: Lexical | nul
       <div className="block">
         <label htmlFor={`notes-${id}`} className="text-sm font-semibold text-slate-800">Notes for your student</label>
         <div className="mt-1.5">
-          <RichTextEditor id={`notes-${id}`} value={notes} onChange={setNotes} placeholder="What you covered, and what to practise before next time" minHeight={130} />
+          <RichTextEditor id={`notes-${id}`} aria-label="Notes for your student" value={notes} onChange={setNotes} placeholder="What you covered, and what to practise before next time" minHeight={130} />
         </div>
       </div>
       {error && <p className="mt-2 text-sm font-medium text-rose-600">{error}</p>}
