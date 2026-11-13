@@ -1,9 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useChat, useConnectionState, useIsSpeaking, useLocalParticipant, useParticipants, useTrackToggle, useTracks, type TrackReferenceOrPlaceholder } from "@livekit/components-react";
+import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useChat, useConnectionState, useDataChannel, useIsSpeaking, useLocalParticipant, useParticipants, useTrackToggle, useTracks, type TrackReferenceOrPlaceholder } from "@livekit/components-react";
 import { ConnectionState, Track, type Participant } from "livekit-client";
-import { ArrowLeft, Loader2, MessageSquare, Mic, MicOff, MonitorUp, PhoneOff, Send, Video, VideoOff, WifiOff, X } from "lucide-react";
+import { ArrowLeft, Disc, Loader2, MessageSquare, Mic, MicOff, MonitorUp, Paperclip, PenLine, PhoneOff, Send, Square, Video, VideoOff, WifiOff, X } from "lucide-react";
+import { Whiteboard, type BoardChannel, type BoardMsg } from "./Whiteboard";
+import { LessonFiles } from "./LessonFiles";
 import { fmtDay, fmtTime } from "@/lib/time";
 
 export type RoomLesson = {
@@ -18,6 +20,33 @@ export type RoomLesson = {
   joinClosesAt: string;
   tz: string;
 };
+export type RoomRecording = { available: boolean; status: string; consent: { student: boolean; tutor: boolean }; startedAt: string | null; ready: boolean };
+/** Classroom events shared over the "room" data topic. */
+type RoomMsg = { t: "board"; open: boolean } | { t: "files" } | { t: "rec-ask"; by: string } | { t: "rec"; state: RoomRecording } | { t: "rec-decline"; by: string };
+
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+/** The whiteboard's channel over LiveKit data messages (reliable delivery). */
+function useBoardChannel(): BoardChannel {
+  const subs = useRef(new Set<(m: BoardMsg) => void>());
+  const { send } = useDataChannel("wb", (msg) => {
+    try {
+      const m = JSON.parse(dec.decode(msg.payload)) as BoardMsg;
+      subs.current.forEach((cb) => cb(m));
+    } catch {}
+  });
+  return useMemo(
+    () => ({
+      send: (m) => void send(enc.encode(JSON.stringify(m)), { reliable: true }).catch(() => undefined),
+      subscribe: (cb) => {
+        subs.current.add(cb);
+        return () => subs.current.delete(cb);
+      },
+    }),
+    [send],
+  );
+}
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -70,7 +99,7 @@ function RoundButton({ on = true, danger, label, onClick, children, disabled, ba
       aria-pressed={danger ? undefined : !on}
       onClick={onClick}
       disabled={disabled}
-      className={`relative grid h-12 w-12 shrink-0 place-items-center rounded-full transition active:scale-95 disabled:opacity-40 sm:h-14 sm:w-14 ${
+      className={`relative grid h-11 w-11 shrink-0 place-items-center rounded-full transition active:scale-95 disabled:opacity-40 sm:h-14 sm:w-14 ${
         danger ? "bg-[#ff3b30] text-white hover:bg-[#ff453a]" : on ? "bg-white/15 text-white hover:bg-white/25" : "bg-white text-[#1c1c1e] hover:bg-white/90"
       }`}
     >
@@ -258,6 +287,47 @@ function Chat({ onClose, me }: { onClose: () => void; me: string }) {
   );
 }
 
+function FilesPanel({ lessonId, onClose, refreshKey, onShared }: { lessonId: number; onClose: () => void; refreshKey: number; onShared: () => void }) {
+  return (
+    <aside className="fixed inset-0 z-40 flex flex-col bg-[#1c1c1e]/95 backdrop-blur-2xl sm:inset-y-4 sm:left-auto sm:right-4 sm:w-[22rem] sm:rounded-[24px] sm:ring-1 sm:ring-white/10" aria-label="Lesson files">
+      <div className="flex items-center justify-between px-5 py-4">
+        <h2 className="text-[17px] font-semibold">Lesson files</h2>
+        <button type="button" onClick={onClose} aria-label="Close files" className="grid h-8 w-8 place-items-center rounded-full bg-white/10 hover:bg-white/20">
+          <X size={16} />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <LessonFiles lessonId={lessonId} dark refreshKey={refreshKey} onShared={onShared} />
+      </div>
+    </aside>
+  );
+}
+
+/** Asked to agree to recording (both people must agree before anything is recorded). */
+function RecordAsk({ by, onAnswer, busy }: { by: string; onAnswer: (yes: boolean) => void; busy: boolean }) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="rec-ask-title">
+      <div className="w-full max-w-sm rounded-[28px] bg-[#1c1c1e] p-6 text-center ring-1 ring-white/10">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#ff453a]/15 text-[#ff453a]">
+          <Disc size={26} />
+        </span>
+        <h2 id="rec-ask-title" className="mt-4 text-lg font-semibold">
+          {by} would like to record this lesson
+        </h2>
+        <p className="mt-2 text-sm text-white/60">The recording is kept privately for the two of you to watch again. Nothing is recorded unless you agree, and either of you can stop it.</p>
+        <div className="mt-6 grid gap-2">
+          <button type="button" disabled={busy} onClick={() => onAnswer(true)} className="h-12 rounded-full bg-[#ff453a] font-semibold text-white disabled:opacity-60">
+            Allow recording
+          </button>
+          <button type="button" disabled={busy} onClick={() => onAnswer(false)} className="h-12 rounded-full bg-white/10 font-semibold text-white hover:bg-white/15">
+            Not now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LeaveSheet({ lesson, onLeave, onClose }: { lesson: RoomLesson; onLeave: (finished: boolean) => void; onClose: () => void }) {
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -305,7 +375,7 @@ function LeaveSheet({ lesson, onLeave, onClose }: { lesson: RoomLesson; onLeave:
   );
 }
 
-function Stage({ lesson, onLeave }: { lesson: RoomLesson; onLeave: (finished: boolean) => void }) {
+function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLeave: (finished: boolean) => void; initialRecording: RoomRecording }) {
   const state = useConnectionState();
   const now = useNow();
   const participants = useParticipants();
@@ -322,6 +392,60 @@ function Stage({ lesson, onLeave }: { lesson: RoomLesson; onLeave: (finished: bo
   );
   const { chatMessages } = useChat();
   const [chatOpen, setChatOpen] = useState(false);
+  const [filesOpen, setFilesOpen] = useState(false);
+  const [filesKey, setFilesKey] = useState(0);
+  const [filesNew, setFilesNew] = useState(false);
+  const [boardOpen, setBoardOpen] = useState(false);
+  const [rec, setRec] = useState<RoomRecording>(initialRecording);
+  const [askFrom, setAskFrom] = useState<string | null>(null);
+  const [recBusy, setRecBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const board = useBoardChannel();
+  const myName = lesson.me.name.split(" ")[0] ?? "Someone";
+  const { send: sendRoom } = useDataChannel("room", (msg) => {
+    let m: RoomMsg;
+    try {
+      m = JSON.parse(dec.decode(msg.payload)) as RoomMsg;
+    } catch {
+      return;
+    }
+    if (m.t === "board") setBoardOpen(m.open);
+    else if (m.t === "files") {
+      setFilesKey((k) => k + 1);
+      setFilesNew(true);
+    } else if (m.t === "rec-ask") setAskFrom(m.by);
+    else if (m.t === "rec") {
+      setRec(m.state);
+      setAskFrom(null);
+    } else if (m.t === "rec-decline") setNotice(`${m.by} would rather not record this lesson.`);
+  });
+  const room = useCallback((m: RoomMsg) => void sendRoom(enc.encode(JSON.stringify(m)), { reliable: true }).catch(() => undefined), [sendRoom]);
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 5000);
+    return () => clearTimeout(t);
+  }, [notice]);
+
+  async function recCall(action: "consent" | "decline" | "stop") {
+    setRecBusy(true);
+    const res = await fetch(`/api/lessons/${lesson.id}/recording`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) }).catch(() => null);
+    const d = (await res?.json().catch(() => ({}))) as RoomRecording & { error?: string };
+    setRecBusy(false);
+    if (!res?.ok) {
+      setNotice(d.error || "Recording didn't work. The lesson carries on as normal.");
+      return null;
+    }
+    setRec(d);
+    room({ t: "rec", state: d });
+    return d;
+  }
+  async function askToRecord() {
+    const d = await recCall("consent");
+    if (d && d.status !== "recording") {
+      room({ t: "rec-ask", by: myName });
+      setNotice(`Asked ${lesson.other.name.split(" ")[0]} to agree. Recording starts when they do.`);
+    }
+  }
   const [seen, setSeen] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const unread = !chatOpen && chatMessages.length > seen;
@@ -347,6 +471,11 @@ function Stage({ lesson, onLeave }: { lesson: RoomLesson; onLeave: (finished: bo
           <span className="min-w-0 truncate text-sm font-medium">{lesson.title}</span>
         </div>
         <div className="pointer-events-auto flex items-center gap-2">
+          {rec.status === "recording" && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ff453a]/20 px-3 py-1.5 text-sm font-semibold text-[#ff6961] backdrop-blur-xl" role="status">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#ff453a]" /> Recording
+            </span>
+          )}
           {state === ConnectionState.Reconnecting && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ff9f0a]/20 px-3 py-1.5 text-sm text-[#ffd60a] backdrop-blur-xl">
               <WifiOff size={14} /> Reconnecting…
@@ -358,7 +487,28 @@ function Stage({ lesson, onLeave }: { lesson: RoomLesson; onLeave: (finished: bo
 
       {/* Stage */}
       <div className="flex min-h-0 flex-1 gap-3 p-3 pb-28 pt-16 sm:p-5 sm:pb-32 sm:pt-20">
-        {share ? (
+        {boardOpen ? (
+          <>
+            <div className="min-w-0 flex-1">
+              <Whiteboard
+                channel={board}
+                me={`${lesson.role}`}
+                onClose={() => {
+                  setBoardOpen(false);
+                  room({ t: "board", open: false });
+                }}
+              />
+            </div>
+            <div className="hidden w-56 shrink-0 flex-col gap-3 lg:flex">
+              <div className="aspect-video">
+                <Tile track={remoteCam} name={lesson.other.name} avatar={lesson.other.avatar} />
+              </div>
+              <div className="aspect-video">
+                <Tile track={localCam} name="You" avatar={lesson.me.avatar} mirror />
+              </div>
+            </div>
+          </>
+        ) : share ? (
           <>
             <div className="min-w-0 flex-1">
               <Tile track={share} name={`${share.participant.isLocal ? "You" : share.participant.name} · screen`} avatar={null} big />
@@ -394,7 +544,7 @@ function Stage({ lesson, onLeave }: { lesson: RoomLesson; onLeave: (finished: bo
 
       {/* Controls */}
       <div className="absolute inset-x-0 bottom-0 z-30 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-6">
-        <div className="flex items-center gap-2.5 rounded-full bg-[#1c1c1e]/80 p-2.5 shadow-2xl ring-1 ring-white/10 backdrop-blur-2xl sm:gap-3 sm:p-3">
+        <div className="flex items-center gap-1.5 rounded-full bg-[#1c1c1e]/80 p-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-2xl sm:gap-3 sm:p-3">
           <RoundButton label={mic.enabled ? "Turn mic off" : "Turn mic on"} on={mic.enabled} onClick={() => void mic.toggle()}>
             {mic.enabled ? <Mic size={22} /> : <MicOff size={22} />}
           </RoundButton>
@@ -408,7 +558,33 @@ function Stage({ lesson, onLeave }: { lesson: RoomLesson; onLeave: (finished: bo
               </RoundButton>
             </span>
           )}
-          <RoundButton label="Chat" onClick={() => setChatOpen(!chatOpen)} badge={unread}>
+          <RoundButton
+            label={boardOpen ? "Close whiteboard" : "Whiteboard"}
+            on={!boardOpen}
+            onClick={() => {
+              setBoardOpen(!boardOpen);
+              room({ t: "board", open: !boardOpen });
+            }}
+          >
+            <PenLine size={21} />
+          </RoundButton>
+          <RoundButton
+            label="Lesson files"
+            onClick={() => {
+              setFilesOpen(!filesOpen);
+              setChatOpen(false);
+              setFilesNew(false);
+            }}
+            badge={filesNew && !filesOpen}
+          >
+            <Paperclip size={21} />
+          </RoundButton>
+          {rec.available && (
+            <RoundButton label={rec.status === "recording" ? "Stop recording" : "Record lesson"} on={rec.status !== "recording"} disabled={recBusy} onClick={() => void (rec.status === "recording" ? recCall("stop") : askToRecord())}>
+              {rec.status === "recording" ? <Square size={19} className="fill-current" /> : <Disc size={21} />}
+            </RoundButton>
+          )}
+          <RoundButton label="Chat" onClick={() => (setChatOpen(!chatOpen), setFilesOpen(false))} badge={unread}>
             <MessageSquare size={21} />
           </RoundButton>
           <RoundButton label="Leave" danger onClick={() => setLeaving(true)}>
@@ -418,6 +594,26 @@ function Stage({ lesson, onLeave }: { lesson: RoomLesson; onLeave: (finished: bo
       </div>
 
       {chatOpen && <Chat onClose={() => setChatOpen(false)} me={localParticipant.name || "you"} />}
+      {filesOpen && <FilesPanel lessonId={lesson.id} refreshKey={filesKey} onClose={() => setFilesOpen(false)} onShared={() => room({ t: "files" })} />}
+      {askFrom && (
+        <RecordAsk
+          by={askFrom}
+          busy={recBusy}
+          onAnswer={async (yes) => {
+            if (yes) await recCall("consent");
+            else {
+              await recCall("decline");
+              room({ t: "rec-decline", by: myName });
+            }
+            setAskFrom(null);
+          }}
+        />
+      )}
+      {notice && (
+        <div className="pointer-events-none fixed inset-x-0 top-20 z-50 flex justify-center px-4" role="status">
+          <p className="rounded-full bg-[#1c1c1e]/90 px-4 py-2 text-sm text-white shadow-2xl ring-1 ring-white/10 backdrop-blur-xl">{notice}</p>
+        </div>
+      )}
       {leaving && <LeaveSheet lesson={lesson} onClose={() => setLeaving(false)} onLeave={onLeave} />}
       <RoomAudioRenderer />
     </div>
@@ -457,7 +653,7 @@ export function LessonRoom({ lesson }: { lesson: RoomLesson }) {
   const [stage, setStage] = useState<"lobby" | "room" | "left">("lobby");
   const [mic, setMic] = useState(true);
   const [cam, setCam] = useState(true);
-  const [conn, setConn] = useState<{ token: string; url: string } | null>(null);
+  const [conn, setConn] = useState<{ token: string; url: string; recording: RoomRecording } | null>(null);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [finished, setFinished] = useState(false);
@@ -466,10 +662,10 @@ export function LessonRoom({ lesson }: { lesson: RoomLesson }) {
     setJoining(true);
     setError(null);
     const res = await fetch(`/api/lessons/${lesson.id}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "join" }) }).catch(() => null);
-    const d = (await res?.json().catch(() => ({}))) as { token?: string; url?: string; error?: string };
+    const d = (await res?.json().catch(() => ({}))) as { token?: string; url?: string; recording?: RoomRecording; error?: string };
     setJoining(false);
     if (!res?.ok || !d.token || !d.url) return setError(d.error || "We couldn't open the classroom. Check your connection and try again.");
-    setConn({ token: d.token, url: d.url });
+    setConn({ token: d.token, url: d.url, recording: d.recording ?? { available: false, status: "none", consent: { student: false, tutor: false }, startedAt: null, ready: false } });
     setStage("room");
   }, [lesson.id]);
 
@@ -494,6 +690,7 @@ export function LessonRoom({ lesson }: { lesson: RoomLesson }) {
       >
         <Stage
           lesson={lesson}
+          initialRecording={conn.recording}
           onLeave={(done) => {
             setFinished(done);
             setStage("left");

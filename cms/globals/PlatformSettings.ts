@@ -21,6 +21,7 @@ export const PLATFORM_DEFAULTS = {
   packagesEnabled: true,
   packageMaxDiscountPercent: 25,
   packageValidityDays: 180,
+  recordingEnabled: false,
 } as const;
 
 /** Fees, price limits and booking policies. Read by the tutor application, marketplace and checkout. */
@@ -55,8 +56,9 @@ export const PlatformSettings: GlobalConfig = {
     {
       type: "row",
       fields: [
-        { name: "cancellationRefundHours", type: "number", min: 0, defaultValue: PLATFORM_DEFAULTS.cancellationRefundHours, label: "Free cancellation up to (hours before)", admin: { width: "50%" } },
-        { name: "classroomEarlyJoinMinutes", type: "number", min: 0, max: 60, defaultValue: PLATFORM_DEFAULTS.classroomEarlyJoinMinutes, label: "Classroom opens (minutes before)", admin: { width: "50%" } },
+        { name: "cancellationRefundHours", type: "number", min: 0, defaultValue: PLATFORM_DEFAULTS.cancellationRefundHours, label: "Free cancellation up to (hours before)", admin: { width: "34%" } },
+        { name: "recordingEnabled", type: "checkbox", defaultValue: PLATFORM_DEFAULTS.recordingEnabled, label: "Allow lesson recording", admin: { width: "33%", description: "Only when both people agree in the classroom. Needs your own LiveKit project and the private R2 bucket." } },
+        { name: "classroomEarlyJoinMinutes", type: "number", min: 0, max: 60, defaultValue: PLATFORM_DEFAULTS.classroomEarlyJoinMinutes, label: "Classroom opens (minutes before)", admin: { width: "33%" } },
       ],
     },
     {

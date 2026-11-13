@@ -6,13 +6,28 @@ import { hasRole, isStaffUser } from "../access";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * Owner or the staff who verify tutors. Tutors can also open the files their own students
- * handed in as homework (and nothing else).
+ * Owner or the staff who verify tutors. Both people in a lesson can open the files shared in it,
+ * and tutors can open the homework files their own students handed in. Nothing else.
  */
 const ownerOrReviewer: Access = async ({ req }): Promise<boolean | Where> => {
   if (!req.user) return false;
   if (hasRole(req, "admin", "manager", "support")) return true;
-  if ((req.user as { role?: string }).role === "tutor") {
+  // Files shared in a lesson are open to both people in it.
+  const role = (req.user as { role?: string }).role;
+  const shared: number[] = [];
+  if (role === "tutor" || role === "student") {
+    const lessons = await req.payload.find({
+      collection: "bookings",
+      where: { or: [{ student: { equals: req.user.id } }, { tutorUser: { equals: req.user.id } }] },
+      select: { materials: true },
+      limit: 2000,
+      depth: 0,
+      overrideAccess: true,
+      pagination: false,
+    });
+    for (const b of lessons.docs) for (const f of b.materials ?? []) shared.push(typeof f === "object" && f ? f.id : (f as number));
+  }
+  if (role === "tutor") {
     const handedIn = await req.payload.find({
       collection: "assignments",
       where: { and: [{ tutorUser: { equals: req.user.id } }, { status: { not_equals: "assigned" } }] },
@@ -23,8 +38,9 @@ const ownerOrReviewer: Access = async ({ req }): Promise<boolean | Where> => {
       pagination: false,
     });
     const ids = handedIn.docs.flatMap((a) => (a.files ?? []).map((f) => (typeof f === "object" && f ? f.id : f)));
-    if (ids.length) return { or: [{ owner: { equals: req.user.id } }, { id: { in: ids } }] as Where[] };
+    shared.push(...(ids as number[]));
   }
+  if (shared.length) return { or: [{ owner: { equals: req.user.id } }, { id: { in: shared } }] as Where[] };
   return { owner: { equals: req.user.id } };
 };
 
@@ -45,7 +61,12 @@ export const PrivateFiles: CollectionConfig = {
   },
   upload: {
     staticDir: path.resolve(dirname, "../../private-uploads"),
-    mimeTypes: ["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic"],
+    mimeTypes: [
+      "application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "text/plain",
+      "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-powerpoint", "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ],
     // Keep originals exactly as uploaded: these are evidence, not display images.
     disableLocalStorage: false,
   },
@@ -70,6 +91,7 @@ export const PrivateFiles: CollectionConfig = {
         { label: "Degree or diploma", value: "degree" },
         { label: "Certificate", value: "certificate" },
         { label: "Homework", value: "homework" },
+        { label: "Lesson file", value: "lesson" },
         { label: "Other", value: "other" },
       ],
     },

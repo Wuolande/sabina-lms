@@ -528,7 +528,7 @@ export interface Subject {
 export interface PrivateFile {
   id: number;
   owner: number | User;
-  kind: 'identity' | 'degree' | 'certificate' | 'homework' | 'other';
+  kind: 'identity' | 'degree' | 'certificate' | 'homework' | 'lesson' | 'other';
   prefix?: string | null;
   _objectKey?: string | null;
   updatedAt: string;
@@ -685,6 +685,22 @@ export interface Booking {
    * Who didn't turn up (set automatically from classroom attendance).
    */
   noShowBy?: ('tutor' | 'student') | null;
+  /**
+   * Files shared in the lesson. Only the student and tutor can open them.
+   */
+  materials?: (number | PrivateFile)[] | null;
+  /**
+   * Recorded only when both people agreed in the classroom.
+   */
+  recording?: {
+    status?: ('none' | 'requested' | 'recording' | 'ready' | 'failed') | null;
+    startedAt?: string | null;
+    endedAt?: string | null;
+    consentStudentAt?: string | null;
+    consentTutorAt?: string | null;
+    egressId?: string | null;
+    fileKey?: string | null;
+  };
   /**
    * Shared with the student after the lesson.
    */
@@ -1847,6 +1863,18 @@ export interface BookingsSelect<T extends boolean = true> {
   tutorJoinedAt?: T;
   completedAt?: T;
   noShowBy?: T;
+  materials?: T;
+  recording?:
+    | T
+    | {
+        status?: T;
+        startedAt?: T;
+        endedAt?: T;
+        consentStudentAt?: T;
+        consentTutorAt?: T;
+        egressId?: T;
+        fileKey?: T;
+      };
   tutorNotes?: T;
   issue?:
     | T
@@ -2481,6 +2509,10 @@ export interface PlatformSetting {
   trialLessonMinutes?: number | null;
   trialLessonDiscountPercent?: number | null;
   cancellationRefundHours?: number | null;
+  /**
+   * Only when both people agree in the classroom. Needs your own LiveKit project and the private R2 bucket.
+   */
+  recordingEnabled?: boolean | null;
   classroomEarlyJoinMinutes?: number | null;
   bookingWindowDays?: number | null;
   /**
@@ -2736,6 +2768,7 @@ export interface PlatformSettingsSelect<T extends boolean = true> {
   trialLessonMinutes?: T;
   trialLessonDiscountPercent?: T;
   cancellationRefundHours?: T;
+  recordingEnabled?: T;
   classroomEarlyJoinMinutes?: T;
   bookingWindowDays?: T;
   instantBookingEnabled?: T;

@@ -49,7 +49,8 @@ export async function joinLesson(payload: Payload, user: User, id: number) {
     ttl: Math.max(600, Math.ceil((w.closes - now) / 1000)),
   });
   at.addGrant({ room: `lesson-${b.id}`, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true });
-  return { token: await at.toJwt(), url: process.env.NEXT_PUBLIC_LIVEKIT_URL!, role, endsAt: b.endsAt };
+  const { recordingAvailable, recordingState } = await import("./classroom");
+  return { token: await at.toJwt(), url: process.env.NEXT_PUBLIC_LIVEKIT_URL!, role, endsAt: b.endsAt, recording: recordingState(b, await recordingAvailable(payload)) };
 }
 
 /**
@@ -314,6 +315,8 @@ export async function lessonDetail(payload: Payload, user: User, id: number) {
     refunded: b.refundedAmount ?? 0,
     currency: b.currency,
     paymentId: payment?.id ?? null,
+    files: ["confirmed", "completed", "requested", "no_show"].includes(b.status),
+    recordingReady: b.recording?.status === "ready" && Boolean(b.recording?.fileKey),
   };
 }
 export type LessonDetailView = NonNullable<Awaited<ReturnType<typeof lessonDetail>>>;

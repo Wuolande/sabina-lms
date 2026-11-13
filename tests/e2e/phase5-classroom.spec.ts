@@ -114,6 +114,7 @@ test("classroom, attendance, reviews, notes and progress", async ({ browser }, i
   await tp.getByRole("button", { name: "Reply" }).click();
   await tp.getByLabel("Your reply").fill("Thank you, Baraka. See you next week!");
   await tp.getByRole("button", { name: "Post reply" }).click();
+  await expect(tp.getByLabel("Your reply")).toHaveCount(0); // closes once saved
   await expect(tp.getByText("Thank you, Baraka. See you next week!")).toBeVisible();
   await tp.goto(`/tutor/lessons/${lesson}`);
   await tp.getByRole("button", { name: /Add lesson notes/ }).click();

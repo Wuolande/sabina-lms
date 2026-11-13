@@ -110,6 +110,26 @@ export const Bookings: CollectionConfig = {
           ],
         },
         { name: "noShowBy", type: "select", options: ["tutor", "student"].map((v) => ({ label: v, value: v })), admin: { description: "Who didn't turn up (set automatically from classroom attendance)." } },
+        { name: "materials", type: "relationship", relationTo: "private-files", hasMany: true, maxRows: 30, label: "Lesson files", admin: { description: "Files shared in the lesson. Only the student and tutor can open them." } },
+        {
+          name: "recording",
+          type: "group",
+          admin: { description: "Recorded only when both people agreed in the classroom." },
+          fields: [
+            {
+              type: "row",
+              fields: [
+                { name: "status", type: "select", defaultValue: "none", options: ["none", "requested", "recording", "ready", "failed"].map((v) => ({ label: v, value: v })), admin: { width: "34%" } },
+                { name: "startedAt", type: "date", admin: { width: "33%", readOnly: true } },
+                { name: "endedAt", type: "date", admin: { width: "33%", readOnly: true } },
+              ],
+            },
+            { name: "consentStudentAt", type: "date", admin: { readOnly: true } },
+            { name: "consentTutorAt", type: "date", admin: { readOnly: true } },
+            { name: "egressId", type: "text", admin: { readOnly: true } },
+            { name: "fileKey", type: "text", admin: { readOnly: true } },
+          ],
+        },
         richDescription("tutorNotes", { maxChars: 2000, label: "Lesson notes from the tutor", description: "Shared with the student after the lesson." }),
         {
           name: "issue",

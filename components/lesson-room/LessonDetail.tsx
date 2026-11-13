@@ -1,8 +1,9 @@
 "use client";
+import { LessonFiles } from "./LessonFiles";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, CalendarClock, ChevronRight, Flag, Loader2, MessageSquare, NotebookPen, Receipt, Star, Video } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronRight, Flag, Loader2, MessageSquare, NotebookPen, Receipt, Star, Video, PlayCircle } from "lucide-react";
 import type { LessonDetailView } from "@/cms/lessons/server";
 import { PersonAvatar, StatusPill } from "@/components/scheduling/LessonCard";
 import { fmtDay, fmtRange, fmtTime } from "@/lib/time";
@@ -267,6 +268,19 @@ export function LessonDetail({ l, tz }: { l: LessonDetailView; tz: string }) {
           <p className="p-5 text-[15px] text-slate-700 sm:px-6">
             {l.noShowBy === "tutor" ? (l.role === "student" ? `${first} didn't join this lesson, so we've refunded you in full.` : "You didn't join this lesson, so the student was refunded.") : "Marked as missed."}
           </p>
+        </Group>
+      )}
+
+      {l.files && (
+        <Group title="Lesson files">
+          <div className="p-5 sm:px-6">
+            <LessonFiles lessonId={l.id} />
+          </div>
+          {l.recordingReady && (
+            <a href={`/api/lessons/${l.id}/recording`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 border-t border-slate-100 px-5 py-4 text-[15px] font-semibold text-brand-700 hover:bg-slate-50 sm:px-6">
+              <PlayCircle size={20} /> Watch the recording
+            </a>
+          )}
         </Group>
       )}
 
