@@ -3,6 +3,27 @@ import { useEffect, useMemo, useState } from "react";
 import { useRef } from "react";
 import { Whiteboard, type BoardChannel, type BoardMsg, type WhiteboardHandle } from "./Whiteboard";
 import { MiniBoardPanel, useMiniBoard, type MiniChannel, type MiniMsg } from "./MiniBoard";
+import { SelfView } from "./LessonRoom";
+import { SplitHandle, usePersisted } from "./resize";
+
+/** Development only: the classroom's resizable layout with placeholder videos. */
+function Layout() {
+  const [sideW, setSideW] = usePersisted("sabina.room.sideW", 224);
+  const [self, setSelf] = usePersisted("sabina.room.self", { corner: "br" as "tl" | "tr" | "bl" | "br", w: 240, hidden: false });
+  const area = useRef<HTMLDivElement>(null);
+  return (
+    <div className="flex h-screen gap-1.5 bg-black p-4 text-white">
+      <div ref={area} data-testid="stage" className="relative min-w-0 flex-1 rounded-[28px] bg-[#1c1c1e]">
+        <SelfView track={null} avatar={null} state={self} onChange={setSelf} area={area} />
+      </div>
+      <SplitHandle value={sideW} onChange={setSideW} min={160} max={480} reset={224} label="Resize video column" grow={-1} />
+      <div data-testid="side" className="flex shrink-0 flex-col gap-3" style={{ width: sideW }}>
+        <div className="aspect-video rounded-2xl bg-[#2c2c2e]" />
+        <div className="aspect-video rounded-2xl bg-[#2c2c2e]" />
+      </div>
+    </div>
+  );
+}
 import { ClassStatus, ClassToolsMenu, useClassTools, type ToolsChannel, type ToolsMsg } from "./ClassTools";
 
 function useTabChannel<M>(name: string) {
@@ -49,13 +70,14 @@ function Room({ board, tools, miniBoard, miniCtl, me, role }: { board: BoardChan
 }
 
 /** Development only: the real board and class tools, synced between browser tabs instead of LiveKit. */
-export function WhiteboardHarness({ room, me }: { room: string; me: string }) {
+export function WhiteboardHarness({ room, me, layout = false }: { room: string; me: string; layout?: boolean }) {
   const [ready, setReady] = useState(false);
   const board = useTabChannel<BoardMsg>(`wb-${room}`) as BoardChannel | null;
   const tools = useTabChannel<ToolsMsg>(`tools-${room}`) as ToolsChannel | null;
   const miniBoard = useTabChannel<BoardMsg>(`mini-${room}`) as BoardChannel | null;
   const miniCtl = useTabChannel<MiniMsg>(`minictl-${room}`) as MiniChannel | null;
   useEffect(() => setReady(true), []);
+  if (ready && layout) return <Layout />;
   if (!ready || !board || !tools || !miniBoard || !miniCtl) return null;
   const role = me === "student" || me === "late" ? "student" : "tutor";
   return <Room board={board} tools={tools} miniBoard={miniBoard} miniCtl={miniCtl} me={me} role={role} />;

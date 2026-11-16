@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { CheckCircle2, CopyPlus, Send, X } from "lucide-react";
+import { CheckCircle2, CopyPlus, GripHorizontal, Send, X } from "lucide-react";
+import { useFloatingBox, useWide } from "./resize";
 import { Whiteboard, type BoardChannel, type WhiteboardHandle } from "./Whiteboard";
 
 /**
@@ -63,6 +64,9 @@ export function useMiniBoard(ctl: MiniChannel, role: "tutor" | "student", board:
 /** The floating mini board. Always mounted so its drawings and messages aren't lost while closed. */
 export function MiniBoardPanel({ mini, channel, me, onCopy, light = false }: { mini: Mini; channel: BoardChannel; me: string; onCopy?: () => void; light?: boolean }) {
   const tutor = mini.role === "tutor";
+  const wide = useWide(640);
+  const float = useFloatingBox("sabina.room.mini", () => ({ x: 20, y: Math.max(16, window.innerHeight - 128 - 416), w: 480, h: 416 }), { minW: 320, minH: 300, maxW: 1000, maxH: 800 });
+  const placed = wide && float.box ? { left: float.box.x, top: float.box.y, width: float.box.w, height: float.box.h, right: "auto", bottom: "auto" } : undefined;
   const panel = light ? "bg-white text-slate-900 ring-1 ring-slate-200 shadow-2xl" : "bg-[#1c1c1e]/95 text-white ring-1 ring-white/10 shadow-2xl backdrop-blur-2xl";
   const pill = light ? "bg-slate-100 hover:bg-slate-200" : "bg-white/10 hover:bg-white/20";
   return (
@@ -72,8 +76,10 @@ export function MiniBoardPanel({ mini, channel, me, onCopy, light = false }: { m
         data-testid="mini-board"
         data-open={mini.open}
         className={`${mini.open ? "flex" : "hidden"} fixed inset-x-2 bottom-[5.5rem] top-16 z-30 flex-col gap-2 rounded-[24px] p-3 sm:inset-x-auto sm:bottom-32 sm:left-5 sm:top-auto sm:h-[26rem] sm:w-[30rem] ${panel}`}
+        style={placed}
       >
-        <header className="flex items-start gap-2">
+        <header className={`flex items-start gap-2 ${wide ? "cursor-grab touch-none active:cursor-grabbing" : ""}`} {...(wide ? float.handle : {})} title={wide ? "Drag to move" : undefined} onDoubleClick={wide ? float.reset : undefined}>
+          {wide && <GripHorizontal size={16} className={`mt-1 shrink-0 ${light ? "text-slate-400" : "text-white/40"}`} aria-hidden="true" />}
           <div className="min-w-0 flex-1">
             <h2 className="text-[15px] font-semibold">Mini blackboard</h2>
             <p className={`text-sm ${light ? "text-slate-600" : "text-white/70"}`}>{mini.prompt || (tutor ? "Watch the student work here." : "Work out your answer here.")}</p>
@@ -103,6 +109,7 @@ export function MiniBoardPanel({ mini, channel, me, onCopy, light = false }: { m
             </button>
           )}
         </footer>
+        {wide && <span role="separator" aria-label="Resize mini blackboard" title="Drag to resize" {...float.grip} className={`absolute bottom-1.5 right-1.5 h-4 w-4 cursor-se-resize touch-none rounded-br-[18px] border-b-2 border-r-2 ${light ? "border-slate-400" : "border-white/50"}`} />}
       </section>
       {mini.note && (
         <p role="status" className={`pointer-events-none fixed left-1/2 top-40 z-50 -translate-x-1/2 rounded-full px-4 py-2 text-sm font-medium ${panel}`}>

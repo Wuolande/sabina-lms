@@ -3,8 +3,9 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useChat, useConnectionQualityIndicator, useConnectionState, useDataChannel, useIsSpeaking, useLocalParticipant, useMediaDeviceSelect, useParticipants, useTrackToggle, useTracks, type TrackReferenceOrPlaceholder } from "@livekit/components-react";
 import { ConnectionQuality, ConnectionState, RemoteTrackPublication, ScreenSharePresets, Track, type Participant } from "livekit-client";
-import { ArrowLeft, Disc, Ellipsis, Maximize2, Loader2, MessageSquare, Mic, MicOff, MonitorUp, Paperclip, PenLine, PhoneOff, Save, Send, Settings2, Signal, SignalLow, Square, Video, VideoOff, WifiOff, X } from "lucide-react";
+import { ArrowLeft, Disc, Ellipsis, EyeOff, Maximize2, UserRound, Loader2, MessageSquare, Mic, MicOff, MonitorUp, Paperclip, PenLine, PhoneOff, Save, Send, Settings2, Signal, SignalLow, Square, Video, VideoOff, WifiOff, X } from "lucide-react";
 import { Whiteboard, type BoardChannel, type BoardMsg, type WhiteboardHandle } from "./Whiteboard";
+import { SplitHandle, usePersisted, useWide } from "./resize";
 import { MiniBoardPanel, useMiniBoard, type MiniChannel, type MiniMsg } from "./MiniBoard";
 import { ClassStatus, ClassToolsIcon, ClassToolsMenu, useClassTools, type ToolsChannel, type ToolsMsg } from "./ClassTools";
 import { LessonFiles } from "./LessonFiles";
@@ -263,19 +264,33 @@ function TileView({ track, name, avatar, big, mirror, speaking, quality }: TileP
   );
 }
 
+/** Chat and lesson files panels: a fixed sheet on phones, a side panel you can widen elsewhere. */
+function SidePanel({ label, onClose, children }: { label: string; onClose: () => void; children: React.ReactNode }) {
+  const [w, setW] = usePersisted("sabina.room.panelW", 352);
+  const wide = useWide(640);
+  return (
+    <aside className="fixed inset-0 z-40 flex bg-[#1c1c1e]/95 backdrop-blur-2xl sm:inset-y-4 sm:left-auto sm:right-4 sm:rounded-[24px] sm:ring-1 sm:ring-white/10" style={wide ? { width: w } : undefined} aria-label={label}>
+      {wide && <SplitHandle value={w} onChange={setW} min={280} max={Math.min(640, typeof window === "undefined" ? 640 : window.innerWidth - 360)} reset={352} label={`Resize ${label.toLowerCase()}`} grow={-1} className="-ml-1.5" />}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-center justify-between px-5 py-4">
+          <h2 className="text-[17px] font-semibold">{label}</h2>
+          <button type="button" onClick={onClose} aria-label={`Close ${label.toLowerCase()}`} className="grid h-8 w-8 place-items-center rounded-full bg-white/10 hover:bg-white/20">
+            <X size={16} />
+          </button>
+        </div>
+        {children}
+      </div>
+    </aside>
+  );
+}
+
 function Chat({ onClose, me }: { onClose: () => void; me: string }) {
   const { chatMessages, send, isSending } = useChat();
   const [text, setText] = useState("");
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => end.current?.scrollIntoView({ behavior: "smooth" }), [chatMessages.length]);
   return (
-    <aside className="fixed inset-0 z-40 flex flex-col bg-[#1c1c1e]/95 backdrop-blur-2xl sm:inset-y-4 sm:left-auto sm:right-4 sm:w-[22rem] sm:rounded-[24px] sm:ring-1 sm:ring-white/10" aria-label="Chat">
-      <div className="flex items-center justify-between px-5 py-4">
-        <h2 className="text-[17px] font-semibold">Chat</h2>
-        <button type="button" onClick={onClose} aria-label="Close chat" className="grid h-8 w-8 place-items-center rounded-full bg-white/10 hover:bg-white/20">
-          <X size={16} />
-        </button>
-      </div>
+    <SidePanel label="Chat" onClose={onClose}>
       <div className="flex-1 space-y-2 overflow-y-auto px-4">
         {chatMessages.length === 0 && <p className="px-2 pt-6 text-center text-sm text-white/40">Messages here are only seen by people in this lesson.</p>}
         {chatMessages.map((m) => {
@@ -303,7 +318,7 @@ function Chat({ onClose, me }: { onClose: () => void; me: string }) {
           <Send size={17} />
         </button>
       </form>
-    </aside>
+    </SidePanel>
   );
 }
 
@@ -346,17 +361,11 @@ function DevicesPanel({ onClose }: { onClose: () => void }) {
 
 function FilesPanel({ lessonId, onClose, refreshKey, onShared }: { lessonId: number; onClose: () => void; refreshKey: number; onShared: () => void }) {
   return (
-    <aside className="fixed inset-0 z-40 flex flex-col bg-[#1c1c1e]/95 backdrop-blur-2xl sm:inset-y-4 sm:left-auto sm:right-4 sm:w-[22rem] sm:rounded-[24px] sm:ring-1 sm:ring-white/10" aria-label="Lesson files">
-      <div className="flex items-center justify-between px-5 py-4">
-        <h2 className="text-[17px] font-semibold">Lesson files</h2>
-        <button type="button" onClick={onClose} aria-label="Close files" className="grid h-8 w-8 place-items-center rounded-full bg-white/10 hover:bg-white/20">
-          <X size={16} />
-        </button>
-      </div>
+    <SidePanel label="Lesson files" onClose={onClose}>
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         <LessonFiles lessonId={lessonId} dark refreshKey={refreshKey} onShared={onShared} />
       </div>
-    </aside>
+    </SidePanel>
   );
 }
 
@@ -432,6 +441,96 @@ function LeaveSheet({ lesson, onLeave, onClose }: { lesson: RoomLesson; onLeave:
   );
 }
 
+type SelfState = { corner: "tl" | "tr" | "bl" | "br"; w: number; hidden: boolean };
+
+/**
+ * Your own video in the corner: drag it to any corner (it snaps there), resize it from the grip,
+ * or hide it. Phones keep a small fixed size.
+ */
+export function SelfView({ track, avatar, state, onChange, area }: { track: TrackReferenceOrPlaceholder | null; avatar: string | null; state: SelfState; onChange: (s: SelfState) => void; area: React.RefObject<HTMLDivElement | null> }) {
+  const wide = useWide(640);
+  const box = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ mode: "move" | "size"; x: number; y: number; w: number; left: number; top: number } | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const [w, setW] = useState(state.w);
+  useEffect(() => setW(state.w), [state.w]);
+  const width = wide ? w : 112;
+  const place: Record<SelfState["corner"], string> = { tl: "left-3 top-3", tr: "right-3 top-3", bl: "bottom-3 left-3", br: "bottom-3 right-3" };
+
+  if (state.hidden)
+    return (
+      <button type="button" onClick={() => onChange({ ...state, hidden: false })} className={`absolute ${place[state.corner]} inline-flex h-10 items-center gap-2 rounded-full bg-[#1c1c1e]/85 px-3.5 text-sm font-medium text-white ring-1 ring-white/10 backdrop-blur-xl hover:bg-[#2c2c2e]`}>
+        <UserRound size={16} /> Show my video
+      </button>
+    );
+
+  const start = (mode: "move" | "size") => (e: React.PointerEvent) => {
+    if (!wide || (e.target as HTMLElement).closest("button")) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const r = box.current!.getBoundingClientRect();
+    const a = area.current!.getBoundingClientRect();
+    drag.current = { mode, x: e.clientX, y: e.clientY, w: r.width, left: r.left - a.left, top: r.top - a.top };
+    if (mode === "move") setPos({ left: r.left - a.left, top: r.top - a.top });
+  };
+  const move = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const a = area.current!.getBoundingClientRect();
+    if (d.mode === "size") {
+      // The grip sits on the inner corner, so growing goes towards the middle of the screen.
+      const sx = state.corner.endsWith("r") ? -1 : 1;
+      setW(Math.round(Math.min(Math.max(140, d.w + sx * (e.clientX - d.x)), Math.min(480, a.width * 0.5))));
+    } else setPos({ left: d.left + e.clientX - d.x, top: d.top + e.clientY - d.y });
+  };
+  const end = () => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d) return;
+    if (d.mode === "size") return onChange({ ...state, w });
+    // Snap to the nearest corner.
+    const a = area.current!.getBoundingClientRect();
+    const r = box.current!.getBoundingClientRect();
+    const cx = r.left - a.left + r.width / 2, cy = r.top - a.top + r.height / 2;
+    const corner = `${cy < a.height / 2 ? "t" : "b"}${cx < a.width / 2 ? "l" : "r"}` as SelfState["corner"];
+    setPos(null);
+    onChange({ ...state, corner });
+  };
+  const grip: Record<SelfState["corner"], string> = { tl: "bottom-1 right-1 cursor-se-resize", tr: "bottom-1 left-1 cursor-sw-resize", bl: "right-1 top-1 cursor-ne-resize", br: "left-1 top-1 cursor-nw-resize" };
+
+  return (
+    <div
+      ref={box}
+      data-testid="self-view"
+      data-corner={state.corner}
+      className={`group absolute aspect-[3/4] shadow-2xl sm:aspect-video ${pos ? "" : place[state.corner]} ${wide ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
+      style={{ width, ...(pos ? { left: pos.left, top: pos.top } : {}) }}
+      onPointerDown={start("move")}
+      onPointerMove={move}
+      onPointerUp={end}
+      onPointerCancel={end}
+      title={wide ? "Drag to move, drag the corner to resize" : undefined}
+    >
+      <Tile track={track} name="You" avatar={avatar} mirror />
+      <button type="button" onClick={() => onChange({ ...state, hidden: true })} aria-label="Hide my video" title="Hide my video (the other person still sees you)" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-black/55 text-white opacity-0 backdrop-blur-md transition hover:bg-black/70 focus:opacity-100 group-hover:opacity-100">
+        <EyeOff size={15} />
+      </button>
+      {wide && (
+        <span
+          role="separator"
+          aria-label="Resize my video"
+          onPointerDown={start("size")}
+          onPointerMove={move}
+          onPointerUp={end}
+          onPointerCancel={end}
+          className={`absolute ${grip[state.corner]} h-5 w-5 rounded-full border-2 border-white/80 bg-black/40 opacity-0 transition group-hover:opacity-100`}
+        />
+      )}
+    </div>
+  );
+}
+
 function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLeave: (finished: boolean) => void; initialRecording: RoomRecording }) {
   const state = useConnectionState();
   const now = useNow();
@@ -446,6 +545,11 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
     onDeviceError: () => setNotice("Screen sharing didn't start. Allow it in your browser, then try again."),
   });
   const shareBox = useRef<HTMLDivElement>(null);
+  // Sizes this person chose, kept on this device.
+  const [sideW, setSideW] = usePersisted("sabina.room.sideW", 224);
+  const [self, setSelf] = usePersisted("sabina.room.self", { corner: "br" as "tl" | "tr" | "bl" | "br", w: 240, hidden: false });
+  const stageBox = useRef<HTMLDivElement>(null);
+  const sideMax = () => (typeof window === "undefined" ? 480 : Math.max(200, Math.min(520, window.innerWidth * 0.4)));
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -651,7 +755,7 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
       {/* Stage */}
       <div className="flex min-h-0 flex-1 gap-3 p-3 pb-28 pt-16 sm:p-5 sm:pb-32 sm:pt-20 [@media(max-height:500px)]:!pb-[4.75rem] [@media(max-height:500px)]:!pt-12">
         {/* The board stays mounted while closed so nothing drawn is lost. */}
-        <div className={boardOpen ? "relative flex min-w-0 flex-1 gap-3" : "hidden"}>
+        <div className={boardOpen ? "relative flex min-w-0 flex-1 gap-1.5" : "hidden"}>
           <div className="min-w-0 flex-1">
             <Whiteboard
               ref={boardRef}
@@ -669,11 +773,12 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
               }}
             />
           </div>
-          <div className="hidden w-56 shrink-0 flex-col gap-3 lg:flex">
-            <div className="aspect-video">
+          <SplitHandle value={sideW} onChange={setSideW} min={160} max={sideMax()} reset={224} label="Resize video column" grow={-1} className="hidden lg:flex" />
+          <div className="hidden shrink-0 flex-col gap-3 overflow-y-auto lg:flex" style={{ width: sideW }}>
+            <div className="aspect-video shrink-0">
               <Tile track={remoteCam} name={lesson.other.name} avatar={lesson.other.avatar} />
             </div>
-            <div className="aspect-video">
+            <div className="aspect-video shrink-0">
               <Tile track={localCam} name="You" avatar={lesson.me.avatar} mirror />
             </div>
             <button type="button" onClick={() => void saveBoard()} disabled={savingBoard} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white/10 text-sm font-semibold text-white hover:bg-white/15 disabled:opacity-60">
@@ -707,17 +812,18 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
                 <Tile track={remoteCam} name={lesson.other.name.split(" ")[0] ?? ""} avatar={lesson.other.avatar} />
               </div>
             </div>
-            <div className="hidden w-56 shrink-0 flex-col gap-3 md:flex">
-              <div className="aspect-video">
+            <SplitHandle value={sideW} onChange={setSideW} min={160} max={sideMax()} reset={224} label="Resize video column" grow={-1} className="hidden md:flex" />
+            <div className="hidden shrink-0 flex-col gap-3 overflow-y-auto md:flex" style={{ width: sideW }}>
+              <div className="aspect-video shrink-0">
                 <Tile track={remoteCam} name={lesson.other.name} avatar={lesson.other.avatar} />
               </div>
-              <div className="aspect-video">
+              <div className="aspect-video shrink-0">
                 <Tile track={localCam} name="You" avatar={lesson.me.avatar} mirror />
               </div>
             </div>
           </>
         ) : (
-          <div className="relative min-w-0 flex-1">
+          <div ref={stageBox} className="relative min-w-0 flex-1">
             {otherHere ? (
               <Tile track={remoteCam} name={lesson.other.name} avatar={lesson.other.avatar} big />
             ) : (
@@ -729,9 +835,7 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
                 </div>
               </div>
             )}
-            <div className="absolute bottom-3 right-3 aspect-[3/4] w-28 shadow-2xl sm:aspect-video sm:w-60">
-              <Tile track={localCam} name="You" avatar={lesson.me.avatar} mirror />
-            </div>
+            <SelfView track={localCam} avatar={lesson.me.avatar} state={self} onChange={setSelf} area={stageBox} />
           </div>
         )}
       </div>

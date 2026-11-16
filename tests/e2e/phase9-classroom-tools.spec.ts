@@ -288,3 +288,106 @@ test("PDF pages on the board, mini blackboard, and the board on a phone", async 
     await phone.close();
   }
 });
+
+test("resizable classroom: video column, my video, mini blackboard; sizes are remembered", async ({ browser }, info) => {
+  test.skip(info.project.name !== "desktop", "Runs once, on desktop");
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const p = await ctx.newPage();
+  await p.goto("/dev/whiteboard?layout=1");
+  const side = p.getByTestId("side");
+  await expect(side).toBeVisible();
+  const w0 = (await side.boundingBox())!.width;
+  expect(Math.round(w0)).toBe(224);
+
+  // Drag the divider left: the video column gets wider, within its limits.
+  const handle = p.getByRole("separator", { name: "Resize video column" });
+  const dragBy = async (dx: number) => {
+    const h = (await handle.boundingBox())!;
+    const x = h.x + h.width / 2, y = h.y + h.height / 2;
+    await p.mouse.move(x, y);
+    await p.mouse.down();
+    await p.mouse.move(x + dx, y, { steps: 8 });
+    await p.mouse.up();
+  };
+  await dragBy(-120);
+  expect(Math.round((await side.boundingBox())!.width)).toBe(344);
+  await dragBy(-900);
+  expect(Math.round((await side.boundingBox())!.width)).toBe(480); // max
+  // Keyboard works too, and double-click resets.
+  await handle.focus();
+  await p.keyboard.press("ArrowRight");
+  expect(Math.round((await side.boundingBox())!.width)).toBe(464);
+  await handle.dblclick();
+  expect(Math.round((await side.boundingBox())!.width)).toBe(224);
+  await handle.focus();
+  await p.keyboard.press("ArrowLeft");
+  await p.keyboard.press("ArrowLeft");
+  expect(Math.round((await side.boundingBox())!.width)).toBe(256);
+
+  // My video: drag to the top-left and it snaps there; resize from the grip; hide and show.
+  const self = p.getByTestId("self-view");
+  await expect(self).toHaveAttribute("data-corner", "br");
+  const s = (await self.boundingBox())!;
+  const stage = (await p.getByTestId("stage").boundingBox())!;
+  await p.mouse.move(s.x + s.width / 2, s.y + s.height / 2);
+  await p.mouse.down();
+  await p.mouse.move(stage.x + 150, stage.y + 120, { steps: 10 });
+  await p.mouse.up();
+  await expect(self).toHaveAttribute("data-corner", "tl");
+  const s2 = (await self.boundingBox())!;
+  expect(s2.x - stage.x).toBeLessThan(30);
+  expect(s2.y - stage.y).toBeLessThan(30);
+  await self.hover();
+  const grip = self.getByRole("separator", { name: "Resize my video" });
+  const g = (await grip.boundingBox())!;
+  await p.mouse.move(g.x + g.width / 2, g.y + g.height / 2);
+  await p.mouse.down();
+  await p.mouse.move(g.x + 100, g.y + 60, { steps: 8 });
+  await p.mouse.up();
+  expect(Math.round((await self.boundingBox())!.width)).toBeGreaterThan(320);
+  await self.hover();
+  await self.getByRole("button", { name: "Hide my video" }).click();
+  await expect(self).toHaveCount(0);
+  await p.getByRole("button", { name: "Show my video" }).click();
+  await expect(self).toBeVisible();
+
+  // Remembered after a reload (this device only).
+  await p.reload();
+  await expect(p.getByTestId("self-view")).toHaveAttribute("data-corner", "tl");
+  expect(Math.round((await p.getByTestId("side").boundingBox())!.width)).toBe(256);
+
+  // Mini blackboard: move it by its header and resize it from the corner; it stays on screen.
+  const room = `z${Math.random().toString(36).slice(2, 7)}`;
+  const t = await ctx.newPage();
+  await t.goto(`/dev/whiteboard?room=${room}&me=tutor`);
+  await t.getByRole("button", { name: "Hand out" }).click();
+  const mini = t.getByTestId("mini-board");
+  await expect(mini).toHaveAttribute("data-open", "true");
+  const m = (await mini.boundingBox())!;
+  const head = mini.getByRole("heading", { name: "Mini blackboard" });
+  const hb = (await head.boundingBox())!;
+  await t.mouse.move(hb.x + 10, hb.y + 5);
+  await t.mouse.down();
+  await t.mouse.move(hb.x + 310, hb.y - 195, { steps: 10 });
+  await t.mouse.up();
+  const m2 = (await mini.boundingBox())!;
+  expect(Math.round(m2.x - m.x)).toBe(300);
+  expect(Math.round(m2.y - m.y)).toBe(-200);
+  const rg = (await mini.getByRole("separator", { name: "Resize mini blackboard" }).boundingBox())!;
+  await t.mouse.move(rg.x + 4, rg.y + 4);
+  await t.mouse.down();
+  await t.mouse.move(rg.x + 204, rg.y + 104, { steps: 8 });
+  await t.mouse.up();
+  const m3 = (await mini.boundingBox())!;
+  expect(Math.round(m3.width - m2.width)).toBe(200);
+  expect(Math.round(m3.height - m2.height)).toBe(100);
+  // Dragged far off the edge, it stops at the window.
+  await t.mouse.move(hb.x + 310, hb.y - 195);
+  await t.mouse.down();
+  await t.mouse.move(5000, 5000, { steps: 4 });
+  await t.mouse.up();
+  const m4 = (await mini.boundingBox())!;
+  expect(m4.x + m4.width).toBeLessThanOrEqual(1280);
+  expect(m4.y + m4.height).toBeLessThanOrEqual(800);
+  await ctx.close();
+});
