@@ -2,8 +2,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useChat, useConnectionState, useDataChannel, useIsSpeaking, useLocalParticipant, useParticipants, useTrackToggle, useTracks, type TrackReferenceOrPlaceholder } from "@livekit/components-react";
-import { ConnectionState, Track, type Participant } from "livekit-client";
-import { ArrowLeft, Disc, Loader2, MessageSquare, Mic, MicOff, MonitorUp, Paperclip, PenLine, PhoneOff, Send, Square, Video, VideoOff, WifiOff, X } from "lucide-react";
+import { ConnectionQuality, ConnectionState, RemoteTrackPublication, Track, type Participant } from "livekit-client";
+import { ArrowLeft, Disc, Loader2, MessageSquare, Mic, MicOff, MonitorUp, Paperclip, PenLine, PhoneOff, Send, Signal, SignalLow, Square, Video, VideoOff, WifiOff, X } from "lucide-react";
 import { Whiteboard, type BoardChannel, type BoardMsg } from "./Whiteboard";
 import { LessonFiles } from "./LessonFiles";
 import { fmtDay, fmtTime } from "@/lib/time";
@@ -400,6 +400,40 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
   const [askFrom, setAskFrom] = useState<string | null>(null);
   const [recBusy, setRecBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  // Weak connection: audio only (no camera video either way; screen share and whiteboard stay).
+  const [saver, setSaver] = useState(false);
+  const [weak, setWeak] = useState(false);
+  const weakSince = useRef<number | null>(null);
+  const weakAsked = useRef(false);
+  useEffect(() => {
+    for (const p of participants) {
+      if (p.isLocal) continue;
+      for (const pub of p.trackPublications.values()) if (pub instanceof RemoteTrackPublication && pub.source === Track.Source.Camera) pub.setEnabled(!saver);
+    }
+  }, [saver, participants, tracks.length]);
+  useEffect(() => {
+    const t = setInterval(() => {
+      const q = localParticipant.connectionQuality;
+      const bad = q === ConnectionQuality.Poor || q === ConnectionQuality.Lost;
+      if (!bad) {
+        weakSince.current = null;
+        return setWeak(false);
+      }
+      weakSince.current ??= Date.now();
+      // Poor for 8 seconds: offer audio only, once.
+      if (Date.now() - weakSince.current > 8000 && !weakAsked.current) {
+        weakAsked.current = true;
+        setWeak(true);
+      }
+    }, 2000);
+    return () => clearInterval(t);
+  }, [localParticipant]);
+  async function setSaverMode(on: boolean) {
+    setSaver(on);
+    setWeak(false);
+    if (on && cam.enabled) await cam.toggle();
+    setNotice(on ? "Audio only is on. Turn it off when your connection improves." : "Video is back on. Turn your camera on when you're ready.");
+  }
   const board = useBoardChannel();
   const myName = lesson.me.name.split(" ")[0] ?? "Someone";
   const { send: sendRoom } = useDataChannel("room", (msg) => {
@@ -544,7 +578,7 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
 
       {/* Controls */}
       <div className="absolute inset-x-0 bottom-0 z-30 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:p-6">
-        <div className="flex items-center gap-1.5 rounded-full bg-[#1c1c1e]/80 p-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-2xl sm:gap-3 sm:p-3">
+        <div className="flex max-w-full items-center gap-1.5 overflow-x-auto rounded-full bg-[#1c1c1e]/80 p-2 shadow-2xl ring-1 ring-white/10 backdrop-blur-2xl [scrollbar-width:none] sm:gap-3 sm:p-3">
           <RoundButton label={mic.enabled ? "Turn mic off" : "Turn mic on"} on={mic.enabled} onClick={() => void mic.toggle()}>
             {mic.enabled ? <Mic size={22} /> : <MicOff size={22} />}
           </RoundButton>
@@ -579,6 +613,9 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
           >
             <Paperclip size={21} />
           </RoundButton>
+          <RoundButton label={saver ? "Turn video back on" : "Audio only (saves data)"} on={!saver} onClick={() => void setSaverMode(!saver)}>
+            {saver ? <SignalLow size={21} /> : <Signal size={21} />}
+          </RoundButton>
           {rec.available && (
             <RoundButton label={rec.status === "recording" ? "Stop recording" : "Record lesson"} on={rec.status !== "recording"} disabled={recBusy} onClick={() => void (rec.status === "recording" ? recCall("stop") : askToRecord())}>
               {rec.status === "recording" ? <Square size={19} className="fill-current" /> : <Disc size={21} />}
@@ -608,6 +645,22 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
             setAskFrom(null);
           }}
         />
+      )}
+      {(weak || saver) && (
+        <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center px-4 sm:bottom-32" role="status">
+          <div className="flex items-center gap-3 rounded-2xl bg-[#1c1c1e]/95 py-2 pl-4 pr-2 text-sm shadow-2xl ring-1 ring-white/10 backdrop-blur-xl">
+            <SignalLow size={17} className="shrink-0 text-[#ffd60a]" />
+            <span>{saver ? "Audio only is on to save data." : "Your connection is weak."}</span>
+            <button type="button" onClick={() => void setSaverMode(!saver)} className="h-9 rounded-full bg-white px-3.5 text-sm font-semibold text-black">
+              {saver ? "Turn video on" : "Switch to audio only"}
+            </button>
+            {!saver && (
+              <button type="button" onClick={() => setWeak(false)} aria-label="Dismiss" className="grid h-9 w-9 place-items-center rounded-full hover:bg-white/10">
+                <X size={15} />
+              </button>
+            )}
+          </div>
+        </div>
       )}
       {notice && (
         <div className="pointer-events-none fixed inset-x-0 top-20 z-50 flex justify-center px-4" role="status">

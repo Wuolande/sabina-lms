@@ -1,4 +1,5 @@
 "use client";
+import { InstallCard, OfflineBar, useServiceWorker } from "@/components/app/AppSetup";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -147,6 +148,7 @@ function AccountMenu({ user, role }: { user: PortalUser; role: PortalRole }) {
 }
 
 export function PortalShell({ user, role, children }: { user: PortalUser; role: PortalRole; children: ReactNode }) {
+  useServiceWorker();
   const path = usePathname() ?? "";
   const [drawer, setDrawer] = useState(false);
   const current = itemFor(role, path);
@@ -235,7 +237,9 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
             </div>
           </header>
 
+          <OfflineBar />
           <main className="mx-auto w-full max-w-[1280px] px-4 py-6 pb-28 sm:px-6 lg:px-8 lg:py-8 lg:pb-10">
+            <InstallCard />
             {children}
           </main>
         </div>

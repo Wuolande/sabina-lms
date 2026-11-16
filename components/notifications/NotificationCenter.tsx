@@ -1,4 +1,5 @@
 "use client";
+import { usePush } from "@/components/app/PushToggle";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, CalendarCheck, CalendarX, Clock, CreditCard, GraduationCap, RotateCcw, Star, Wallet } from "lucide-react";
@@ -51,6 +52,7 @@ export function NotificationCenter({ initial, prefs: initialPrefs }: { initial: 
   const router = useRouter();
   const [items, setItems] = useState(initial);
   const [prefs, setPrefs] = useState(initialPrefs);
+  const push = usePush();
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const unread = items.filter((n) => !n.read).length;
@@ -145,6 +147,34 @@ export function NotificationCenter({ initial, prefs: initialPrefs }: { initial: 
           </section>
         ))
       )}
+
+      <section aria-labelledby="push-settings">
+        <h2 id="push-settings" className="mb-2 px-4 text-[13px] font-medium uppercase tracking-wide text-slate-500">
+          On this device
+        </h2>
+        <div className="rounded-3xl bg-white ring-1 ring-slate-200/70">
+          <div className="flex items-center gap-4 px-4 py-3.5">
+            <div className="min-w-0 flex-1">
+              <p className="text-[15px] font-medium text-slate-900">Push notifications</p>
+              <p className="text-sm text-slate-500">
+                {push.state === "unsupported"
+                  ? "This browser can't show notifications. On iPhone, add Sabina to your home screen first."
+                  : push.state === "blocked"
+                    ? "Notifications are blocked for Sabina. Allow them in your browser's site settings, then come back."
+                    : push.state === "on"
+                      ? "On. Lesson reminders, messages and homework show up here even when Sabina is closed."
+                      : "Get lesson reminders, messages and homework on this phone or computer."}
+              </p>
+            </div>
+            {(push.state === "on" || push.state === "off") && <Switch checked={push.state === "on"} onChange={(v) => !push.busy && void (v ? push.turnOn() : push.turnOff())} label="Push notifications" />}
+          </div>
+        </div>
+        {push.error && (
+          <p role="alert" className="mt-2 px-4 text-sm text-red-600">
+            {push.error}
+          </p>
+        )}
+      </section>
 
       <section aria-labelledby="email-settings">
         <h2 id="email-settings" className="mb-2 px-4 text-[13px] font-medium uppercase tracking-wide text-slate-500">

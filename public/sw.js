@@ -4,7 +4,7 @@
  * - Static files (_next/static, icons, fonts): cache first (they're versioned).
  * - Never caches the API, the admin, the classroom or checkout.
  */
-const VERSION = "sabina-v1";
+const VERSION = "sabina-v2";
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 const OFFLINE = "/offline";
@@ -26,8 +26,13 @@ const skip = (url) => url.origin !== self.location.origin || /^\/(api|admin|chec
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
-  if (req.method !== "GET") return;
   const url = new URL(req.url);
+  // Signing out: forget the saved pages, so the next person on this device can't open them.
+  if (req.method === "POST" && url.origin === self.location.origin && url.pathname === "/api/auth/logout") {
+    event.waitUntil(caches.delete(PAGES).then(() => caches.open(PAGES)).then((c) => c.add(OFFLINE)));
+    return;
+  }
+  if (req.method !== "GET") return;
   if (skip(url)) return;
 
   if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/") || /\.(woff2?|png|svg|ico|webp)$/.test(url.pathname)) {
@@ -49,10 +54,14 @@ self.addEventListener("fetch", (event) => {
       fetch(req)
         .then((res) => {
           // Keep a copy of portal pages so they open on a bad connection.
-          if (res.ok && /^\/(student|tutor)(\/|$)/.test(url.pathname)) caches.open(PAGES).then((c) => c.put(req, res.clone()));
+          if (res.ok && /^\/(student|tutor)(\/|$)/.test(url.pathname)) {
+            const copy = res.clone();
+            event.waitUntil(caches.open(PAGES).then((c) => c.put(url.pathname + url.search, copy)));
+          }
           return res;
         })
-        .catch(() => caches.match(req).then((hit) => hit || caches.match(OFFLINE))),
+        // Match by address only: page responses carry Vary headers that would otherwise miss.
+        .catch(() => caches.open(PAGES).then((c) => c.match(url.pathname + url.search, { ignoreVary: true })).then((hit) => hit || caches.match(OFFLINE, { ignoreVary: true }))),
     );
   }
 });
