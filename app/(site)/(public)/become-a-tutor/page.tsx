@@ -1,88 +1,100 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  DollarSign,
-  Globe,
-  Video,
-} from "lucide-react";
+import { CalendarClock, ClipboardCheck, UserRoundPlus, Video, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { BecomeTutorEarningsCalculator } from "@/components/tutor/BecomeTutorEarningsCalculator";
+import { maybePayload, siteChrome } from "@/cms/content/server";
+import { getPolicies } from "@/cms/tutors/server";
+import { PLATFORM_DEFAULTS } from "@/cms/globals/PlatformSettings";
+
+export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: "Become a Verified Tutor — Teach Online & Earn Globally",
-  description:
-    "Apply to become an online tutor on Sabina. Set your own hourly rate, teach motivated global students in our HD browser classroom, and enjoy automated bi-weekly payouts.",
-  alternates: {
-    canonical: "/become-a-tutor",
-  },
+  title: "Become a tutor",
+  description: "Teach live 1-on-1 lessons online. Set your own rate and hours, teach in our browser classroom, and withdraw your earnings to M-Pesa, PayPal or your bank.",
+  alternates: { canonical: "/become-a-tutor" },
 };
 
-export default function BecomeATutorPage() {
-  return (
-    <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12 sm:space-y-16">
-      {/* Hero */}
-      <div className="text-center max-w-3xl mx-auto space-y-4 w-full min-w-0">
-        <Badge variant="secondary" size="sm" className="bg-accent-400 text-slate-950 font-bold">
-          Join 250+ Certified Mentors
-        </Badge>
-        <h1 className="text-2xl sm:text-5xl font-black text-slate-900 tracking-tight font-heading">
-          Teach global students on your terms.
-        </h1>
-        <p className="text-sm sm:text-base text-slate-600">
-          Set your own hourly rate, build your professional brand, teach through our live browser classroom, and enjoy automated bi-weekly payouts.
-        </p>
+export default async function BecomeATutorPage() {
+  const payload = await maybePayload();
+  const [p, site] = await Promise.all([payload ? getPolicies(payload) : Promise.resolve(PLATFORM_DEFAULTS), siteChrome()]);
+  const currency = String(p.currency);
+  const fee = Number(p.platformFeePercent);
+  const money = new Intl.NumberFormat("en", { style: "currency", currency, maximumFractionDigits: 0 });
 
+  const reasons = [
+    { icon: Wallet, title: `Keep ${100 - fee}% of every lesson`, text: `Students pay before the lesson, so there's nothing to chase. Earnings are ready to withdraw ${Number(p.earningsHoldDays)} days after a lesson, to M-Pesa, PayPal or your bank, once you have at least ${money.format(Number(p.minimumPayout))}.` },
+    { icon: CalendarClock, title: "Your rate, your hours", text: `Charge between ${money.format(Number(p.tutorMinHourlyRate))} and ${money.format(Number(p.tutorMaxHourlyRate))} an hour and open only the times that suit you. Students see them in their own time zone.` },
+    { icon: Video, title: "A classroom that's ready", text: "Video, a shared whiteboard, screen sharing, chat and lesson files in one place in the browser. No Zoom links or extra subscriptions." },
+  ];
+  const steps = [
+    { icon: UserRoundPlus, title: "Create your account", text: "It's free to apply." },
+    { icon: ClipboardCheck, title: "Tell us about your teaching", text: "Subjects, qualifications, an ID document and a short intro video." },
+    { icon: Video, title: "Get approved and start teaching", text: "Our team reviews every application by hand. Once you're approved, your profile goes live." },
+  ];
+
+  return (
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-12 px-4 py-8 sm:space-y-16 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto w-full min-w-0 max-w-3xl space-y-4 text-center">
+        <Badge variant="secondary" size="sm" className="bg-accent-400 font-bold text-slate-950">
+          Teach on {site.name}
+        </Badge>
+        <h1 className="font-heading text-3xl font-black tracking-tight text-slate-900 sm:text-5xl">Teach what you know, on your schedule.</h1>
+        <p className="text-sm text-slate-600 sm:text-base">Set your own rate and hours, teach live 1-on-1 lessons in your browser, and get paid for every lesson you teach.</p>
         <div className="pt-4">
-          <Link href="/register?role=TUTOR" className="inline-block w-full sm:w-auto">
-            <Button variant="default" size="lg" className="w-full sm:w-auto font-extrabold bg-brand hover:brightness-90 text-white px-8 shadow-elevation min-h-[48px]">
-              Start Tutor Application (Free)
+          <Link href="/register?role=tutor" className="inline-block w-full sm:w-auto">
+            <Button size="lg" className="min-h-[48px] w-full bg-brand px-8 font-extrabold text-white shadow-elevation hover:brightness-90 sm:w-auto">
+              Apply to teach
             </Button>
           </Link>
         </div>
       </div>
 
-      {/* Interactive Earnings Calculator */}
-      <BecomeTutorEarningsCalculator />
+      <BecomeTutorEarningsCalculator currency={currency} feePercent={fee} minRate={Number(p.tutorMinHourlyRate)} maxRate={Number(p.tutorMaxHourlyRate)} />
 
-      {/* Why teach with Sabina */}
-      <div className="space-y-6 sm:space-y-8 w-full min-w-0">
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 text-center font-heading">
-          Why tutors choose Sabina
+      <section className="w-full min-w-0 space-y-6 sm:space-y-8" aria-labelledby="why">
+        <h2 id="why" className="text-center font-heading text-2xl font-black text-slate-900 sm:text-3xl">
+          Why teach with us
         </h2>
-
-        <div className="w-full max-w-full min-w-0 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-          <div className="w-full max-w-full min-w-0 rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-card space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
-              <DollarSign className="h-5 w-5" />
+        <div className="grid w-full min-w-0 max-w-full grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
+          {reasons.map(({ icon: Icon, title, text }) => (
+            <div key={title} className="w-full min-w-0 max-w-full space-y-3 rounded-2xl border border-slate-200/90 bg-white p-5 shadow-card sm:p-6">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">{title}</h3>
+              <p className="text-sm leading-relaxed text-slate-600">{text}</p>
             </div>
-            <h3 className="text-base font-bold text-slate-900">Guaranteed & On-Time Payouts</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Never chase student payments. Students prepay when booking, and funds are automatically transferred directly to your bank account via Stripe Connect.
-            </p>
-          </div>
-
-          <div className="w-full max-w-full min-w-0 rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-card space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
-              <Video className="h-5 w-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900">Built-in Teaching Tools</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              No Zoom links or extra subscriptions. Video, screen sharing, chat and lesson notes are all in one place, in the browser.
-            </p>
-          </div>
-
-          <div className="w-full max-w-full min-w-0 rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-card space-y-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand">
-              <Globe className="h-5 w-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900">Global Student Base</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Connect with students eager to learn English, math, science, programming, and foreign languages across North America, Europe, Asia, and the Middle East.
-            </p>
-          </div>
+          ))}
         </div>
-      </div>
+      </section>
+
+      <section className="w-full min-w-0 space-y-6 sm:space-y-8" aria-labelledby="apply">
+        <h2 id="apply" className="text-center font-heading text-2xl font-black text-slate-900 sm:text-3xl">
+          How to apply
+        </h2>
+        <ol className="grid w-full min-w-0 grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
+          {steps.map(({ icon: Icon, title, text }, i) => (
+            <li key={title} className="flex min-w-0 gap-4 rounded-2xl bg-slate-50 p-5 sm:p-6">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-black text-white">{i + 1}</span>
+              <div className="min-w-0 space-y-1">
+                <h3 className="flex items-center gap-2 text-base font-bold text-slate-900">
+                  <Icon className="h-4 w-4 text-brand" aria-hidden="true" /> {title}
+                </h3>
+                <p className="text-sm text-slate-600">{text}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <p className="text-center text-sm text-slate-600">
+          Questions first?{" "}
+          <Link href="/contact" className="font-semibold text-brand underline underline-offset-2">
+            Contact us
+          </Link>
+          .
+        </p>
+      </section>
     </div>
   );
 }

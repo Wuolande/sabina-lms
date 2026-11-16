@@ -86,6 +86,7 @@ export interface Config {
     'email-templates': EmailTemplate;
     'email-log': EmailLog;
     'text-log': TextLog;
+    'contact-messages': ContactMessage;
     posts: Post;
     'blog-categories': BlogCategory;
     pages: Page;
@@ -123,6 +124,7 @@ export interface Config {
     'email-templates': EmailTemplatesSelect<false> | EmailTemplatesSelect<true>;
     'email-log': EmailLogSelect<false> | EmailLogSelect<true>;
     'text-log': TextLogSelect<false> | TextLogSelect<true>;
+    'contact-messages': ContactMessagesSelect<false> | ContactMessagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'blog-categories': BlogCategoriesSelect<false> | BlogCategoriesSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
@@ -1217,6 +1219,28 @@ export interface TextLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contact-messages".
+ */
+export interface ContactMessage {
+  id: number;
+  status: 'new' | 'replied' | 'closed';
+  /**
+   * Set when the sender was signed in.
+   */
+  user?: (number | null) | User;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  /**
+   * Only staff see this.
+   */
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
  */
 export interface Post {
@@ -1590,6 +1614,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'text-log';
         value: number | TextLog;
+      } | null)
+    | ({
+        relationTo: 'contact-messages';
+        value: number | ContactMessage;
       } | null)
     | ({
         relationTo: 'posts';
@@ -2242,6 +2270,21 @@ export interface TextLogSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contact-messages_select".
+ */
+export interface ContactMessagesSelect<T extends boolean = true> {
+  status?: T;
+  user?: T;
+  name?: T;
+  email?: T;
+  subject?: T;
+  message?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts_select".
  */
 export interface PostsSelect<T extends boolean = true> {
@@ -2539,6 +2582,17 @@ export interface SiteSetting {
   tagline?: string | null;
   supportEmail?: string | null;
   supportPhone?: string | null;
+  /**
+   * Full web addresses. Leave empty to hide an icon in the footer.
+   */
+  social?: {
+    x?: string | null;
+    facebook?: string | null;
+    instagram?: string | null;
+    linkedin?: string | null;
+    youtube?: string | null;
+    tiktok?: string | null;
+  };
   brand?: {
     logo?: (number | null) | Media;
     logoDark?: (number | null) | Media;
@@ -2804,6 +2858,16 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   tagline?: T;
   supportEmail?: T;
   supportPhone?: T;
+  social?:
+    | T
+    | {
+        x?: T;
+        facebook?: T;
+        instagram?: T;
+        linkedin?: T;
+        youtube?: T;
+        tiktok?: T;
+      };
   brand?:
     | T
     | {

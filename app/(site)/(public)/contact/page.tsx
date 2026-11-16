@@ -1,61 +1,85 @@
 import type { Metadata } from "next";
-import { Mail, MessageSquare, MapPin } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, Mail, MessageSquare, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { ContactFormClient } from "@/components/contact/ContactFormClient";
+import { siteChrome } from "@/cms/content/server";
+import { getSessionUser } from "@/cms/auth/session";
 
 export const metadata: Metadata = {
-  title: "Contact Us & Support Helpdesk",
-  description:
-    "Get in touch with the Sabina support team for inquiries about lesson bookings, tutor applications, institutional accounts, or technical assistance.",
-  alternates: {
-    canonical: "/contact",
-  },
+  title: "Contact us",
+  description: "Questions about lessons, payments or teaching on Sabina? Send us a message and our team will reply by email.",
+  alternates: { canonical: "/contact" },
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const [site, user] = await Promise.all([siteChrome(), getSessionUser().catch(() => null)]);
+  const inbox = user?.role === "tutor" ? "/tutor/messages" : user?.role === "student" ? "/student/messages" : null;
+  const name = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : "";
   return (
-    <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 sm:space-y-16">
-      <div className="text-center max-w-2xl mx-auto space-y-3 sm:space-y-4 w-full min-w-0">
-        <Badge variant="subtle" size="sm" className="bg-brand-50 text-brand-800 font-bold">
-          Get in Touch
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-10 px-4 py-8 sm:space-y-16 sm:px-6 sm:py-12 lg:px-8">
+      <div className="mx-auto w-full min-w-0 max-w-2xl space-y-3 text-center sm:space-y-4">
+        <Badge variant="subtle" size="sm" className="bg-brand-50 font-bold text-brand-800">
+          Contact us
         </Badge>
-        <h1 className="text-2xl sm:text-5xl font-black text-slate-900 tracking-tight font-heading">
-          How can our support team help you?
-        </h1>
-        <p className="text-sm sm:text-base text-slate-600">
-          Have a question about booking, tutor onboarding, payments, or live video classrooms? We respond within 2 hours.
-        </p>
+        <h1 className="font-heading text-3xl font-black tracking-tight text-slate-900 sm:text-5xl">How can we help?</h1>
+        <p className="text-sm text-slate-600 sm:text-base">Ask about booking, payments, the classroom or teaching on {site.name}. A member of our team will reply by email.</p>
       </div>
 
-      <div className="w-full max-w-5xl min-w-0 mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-        {/* Contact Info */}
-        <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl bg-slate-900 p-6 sm:p-8 text-white space-y-6 flex flex-col justify-between">
+      <div className="mx-auto grid w-full min-w-0 max-w-5xl grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
+        <aside className="flex w-full min-w-0 max-w-full flex-col justify-between gap-6 rounded-2xl bg-slate-900 p-6 text-white sm:rounded-3xl sm:p-8">
           <div className="space-y-6">
-            <h3 className="text-xl font-bold font-heading">Support Channels</h3>
-            <div className="space-y-4 text-sm text-slate-300">
-              <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-accent-400 shrink-0" />
-                <span className="truncate">support@sabinaedge.com</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <MessageSquare className="h-5 w-5 text-accent-400 shrink-0" />
-                <span>Live Chat: 24/7 in dashboard</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="h-5 w-5 text-accent-400 shrink-0" />
-                <span>London • New York • Singapore</span>
-              </div>
-            </div>
+            <h2 className="font-heading text-xl font-bold">Other ways to reach us</h2>
+            <ul className="space-y-4 text-sm text-slate-300">
+              {site.supportEmail && (
+                <li className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 shrink-0 text-accent-400" aria-hidden="true" />
+                  <a href={`mailto:${site.supportEmail}`} className="min-w-0 break-all hover:text-white">
+                    {site.supportEmail}
+                  </a>
+                </li>
+              )}
+              {site.supportPhone && (
+                <li className="flex items-center gap-3">
+                  <Phone className="h-5 w-5 shrink-0 text-accent-400" aria-hidden="true" />
+                  <a href={`tel:${site.supportPhone.replace(/[^\d+]/g, "")}`} className="hover:text-white">
+                    {site.supportPhone}
+                  </a>
+                </li>
+              )}
+              <li className="flex items-start gap-3">
+                <MessageSquare className="mt-0.5 h-5 w-5 shrink-0 text-accent-400" aria-hidden="true" />
+                {inbox ? (
+                  <span>
+                    For a question about a lesson, message your tutor or student from{" "}
+                    <Link href={inbox} className="font-semibold text-white underline underline-offset-2">
+                      your messages
+                    </Link>
+                    .
+                  </span>
+                ) : (
+                  <span>Once you have an account, you can message your tutor directly from your dashboard.</span>
+                )}
+              </li>
+              <li className="flex items-start gap-3">
+                <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-accent-400" aria-hidden="true" />
+                <span>
+                  Quick answers:{" "}
+                  <Link href="/how-it-works" className="font-semibold text-white underline underline-offset-2">
+                    how it works
+                  </Link>{" "}
+                  and our{" "}
+                  <Link href="/refund-policy" className="font-semibold text-white underline underline-offset-2">
+                    refund policy
+                  </Link>
+                  .
+                </span>
+              </li>
+            </ul>
           </div>
+        </aside>
 
-          <div className="p-4 rounded-2xl bg-white/10 text-xs text-slate-300 space-y-1 border border-white/10">
-            <strong className="text-white block font-bold">Response Guarantee</strong>
-            <span>All student and tutor tickets answered by human specialists within 2 business hours.</span>
-          </div>
-        </div>
-
-        {/* Contact Form */}
-        <ContactFormClient />
+        <ContactFormClient defaults={{ name, email: user?.email ?? "" }} />
       </div>
     </div>
   );

@@ -33,13 +33,20 @@ const LEVELS = [
   { value: "adult", label: "Adults" },
   { value: "exam", label: "Exam prep" },
 ];
-const PRICES: { label: string; min?: number; max?: number }[] = [
-  { label: "Any price" },
-  { label: "Under 15", max: 15 },
-  { label: "15 – 30", min: 15, max: 30 },
-  { label: "30 – 50", min: 30, max: 50 },
-  { label: "50+", min: 50 },
-];
+/** Round to 1, 2 or 5 times a power of ten, so price bands read naturally in any currency. */
+const nice = (n: number) => {
+  const k = 10 ** Math.floor(Math.log10(Math.max(1, n)));
+  return [1, 2, 5, 10].map((m) => m * k).reduce((best, v) => (Math.abs(v - n) < Math.abs(best - n) ? v : best));
+};
+/** Four price bands spread across the hourly rates tutors are allowed to charge. */
+function priceBands(min: number, max: number): { label: string; min?: number; max?: number }[] {
+  const span = Math.max(1, max - min);
+  const cuts = [...new Set([0.05, 0.15, 0.35].map((f) => nice(min + span * f)))].sort((a, b) => a - b);
+  const bands: { label: string; min?: number; max?: number }[] = [{ label: "Any price" }, { label: `Under ${cuts[0]}`, max: cuts[0] }];
+  for (let k = 1; k < cuts.length; k++) bands.push({ label: `${cuts[k - 1]} – ${cuts[k]}`, min: cuts[k - 1], max: cuts[k] });
+  bands.push({ label: `${cuts[cuts.length - 1]}+`, min: cuts[cuts.length - 1] });
+  return bands;
+}
 
 
 export default async function FindTutorsPage({ searchParams }: Props) {
@@ -53,6 +60,7 @@ export default async function FindTutorsPage({ searchParams }: Props) {
   ]);
   const { tutors, total, page, pages, subject, policies } = result;
   const currency = policies.currency;
+  const PRICES = priceBands(Number(policies.tutorMinHourlyRate), Number(policies.tutorMaxHourlyRate));
   const priceKey = PRICES.findIndex((p) => String(p.min ?? "") === (sp.min ?? "") && String(p.max ?? "") === (sp.max ?? ""));
 
   const href = (patch: Partial<SearchParams>) => {

@@ -6,7 +6,7 @@ import { lexicalToText } from "@/cms/content/rich";
 export { DEFAULT_HERO_IMAGE } from "./constants";
 
 export interface HomepageServerData {
-  cms: Awaited<ReturnType<typeof homeContent>> | null;
+  cms: Awaited<ReturnType<typeof homeContent>>;
   featuredTutors: PublicTutor[];
   currency: string;
   popularSubjects: Subject[];

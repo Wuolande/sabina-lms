@@ -15,6 +15,7 @@ import * as migration_20261113_085028_progress_homework_goals from './20261113_0
 import * as migration_20261113_090219_classroom_files_recording from './20261113_090219_classroom_files_recording';
 import * as migration_20261116_104415_push_subscriptions from './20261116_104415_push_subscriptions';
 import * as migration_20261116_105627_text_reminders from './20261116_105627_text_reminders';
+import * as migration_20261116_120638_contact_and_social from './20261116_120638_contact_and_social';
 
 export const migrations = [
   {
@@ -100,6 +101,11 @@ export const migrations = [
   {
     up: migration_20261116_105627_text_reminders.up,
     down: migration_20261116_105627_text_reminders.down,
-    name: '20261116_105627_text_reminders'
+    name: '20261116_105627_text_reminders',
+  },
+  {
+    up: migration_20261116_120638_contact_and_social.up,
+    down: migration_20261116_120638_contact_and_social.down,
+    name: '20261116_120638_contact_and_social'
   },
 ];

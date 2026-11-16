@@ -44,9 +44,11 @@ import { HomeBlogSection } from "@/components/home/HomeBlogSection";
 import { DEFAULT_HERO_IMAGE } from "@/src/modules/homepage/constants";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import type { PostCard } from "@/cms/content/types";
+import type { homeContent } from "@/cms/content/server";
+type HomeContent = Awaited<ReturnType<typeof homeContent>>;
 
 interface HomePageClientProps {
-  initialCms: any | null;
+  initialCms: HomeContent;
   initialFeaturedTutors: PublicTutor[];
   initialPopularSubjects: Subject[];
   currency: string;
@@ -86,14 +88,12 @@ export function HomePageClient({
     router.push(`/find-tutors?q=${encodeURIComponent(quickQuery.trim())}`);
   };
 
+  // Tabs only for categories that have subjects on show.
   const categories = [
-    { id: "all", label: "All Disciplines" },
-    { id: "languages", label: "Languages" },
-    { id: "mathematics", label: "Mathematics" },
-    { id: "sciences", label: "Sciences" },
-    { id: "coding", label: "Coding & Tech" },
-    { id: "exam-prep", label: "Exam Prep" },
-    { id: "business", label: "Business" },
+    { id: "all", label: "All" },
+    ...Object.entries(CATEGORY_LABEL)
+      .filter(([id]) => popularSubjects.some((s) => s.category === id))
+      .map(([id, label]) => ({ id, label })),
   ];
 
   const filteredSubjects = selectedCategory === "all"
@@ -101,118 +101,21 @@ export function HomePageClient({
     : popularSubjects.filter((s) => s.category === selectedCategory);
 
   // ── CMS Content Fallbacks (Using Real Uploaded Cloudinary Image) ──
-  const hero = cms?.heroSection || {
-    pretitle: "YOUR JOURNEY BEGINS HERE",
-    typewriterHeadlines: [
-      "Grow Your Knowledge with Leading Online Courses",
-      "Master Any Language with Native 1-on-1 Tutors",
-      "Ace Your STEM Exams with Certified Professors",
-      "Level Up Your Coding with FAANG Industry Mentors",
-      "Pass IELTS & TOEFL with Master Test Prep Coaches",
-    ],
-    subheading: "Start learning today with top-rated courses and instructors. Take your skills, confidence, and academic journey to new heights with structured 1-on-1 sessions.",
-    searchPlaceholder: "Search subject, language or goal (e.g. IELTS, Calculus)...",
-    popularTags: [
-      { label: "English", slug: "english" },
-      { label: "Calculus", slug: "mathematics" },
-      { label: "Python", slug: "python-data-science" },
-      { label: "IELTS Prep", slug: "ielts-toefl-prep" },
-    ],
-    socialProofCount: "+2,000 students worldwide",
-    socialProofRating: "5.0",
-    heroStudentImage: DEFAULT_HERO_IMAGE,
-    floatingCard1: { value: 20, suffix: "+", label: "Creative Subjects" },
-    floatingCard2: { value: 10, suffix: "k+", label: "Students" },
-    floatingCard3: { value: 480, suffix: "+", label: "Hours Course Time" },
-  };
+  const hero = cms.heroSection;
 
-  const stats = cms?.statsSection || {
-    stat1: { value: 250, suffix: "+", decimals: 0, label: "Verified Instructors" },
-    stat2: { value: 15000, suffix: "+", decimals: 0, label: "Enrolled Students" },
-    stat3: { value: 98.9, suffix: "%", decimals: 1, label: "Lesson Success Rate" },
-    stat4: { value: 4.98, suffix: "", decimals: 2, label: "Average Student Rating" },
-  };
+  const stats = cms.statsSection;
 
-  const catSection = cms?.categoriesSection || {
-    pretitle: "POPULAR CATEGORIES",
-    title: "Find the perfect tutor for your subject",
-    ctaText: "View All 16+ Disciplines",
-  };
+  const catSection = cms.categoriesSection;
 
-  const tutSection = cms?.featuredTutorsSection || {
-    pretitle: "VERIFIED EDUCATORS",
-    title: "Learn 1-on-1 with accredited tutors",
-    ctaText: "View All Tutors",
-  };
+  const tutSection = cms.featuredTutorsSection;
 
-  const classroom = cms?.classroomTourSection || {
-    badge: "In-Browser Live LMS • Zero Downloads",
-    title: "A live video classroom built for mastery.",
-    subtitle: "HD video, screen sharing and chat in one place, with nothing to install.",
-  };
+  const classroom = cms.classroomTourSection;
 
-  const howItWorks = cms?.howItWorksSection || {
-    pretitle: "HOW IT WORKS",
-    title: "Simple 3-step learning journey",
-    steps: [
-      {
-        num: "01",
-        title: "Discover Your Tutor",
-        desc: "Filter by subject specialty, rate, and languages. Watch video introductions to find the right teaching style.",
-      },
-      {
-        num: "02",
-        title: "Book in Your Timezone",
-        desc: "Times show in your own time zone. Start with a trial, or book a full lesson.",
-      },
-      {
-        num: "03",
-        title: "Learn Live & Level Up",
-        desc: "Join from your browser on any device. Nothing to install.",
-      },
-    ],
-  };
+  const howItWorks = cms.howItWorksSection;
 
-  const becomeTutor = cms?.becomeTutorSection || {
-    badge: "Join Our Global Teaching Faculty",
-    title: "Teach what you love. Earn $40 – $120 / hr.",
-    subtitle: "Set your own hourly rate, teach motivated 1-on-1 students globally from home, and receive reliable automated weekly payouts. Zero upfront costs.",
-    rateRange: "$40 – $120 / hr",
-    bulletPoints: [
-      "Set your own rate",
-      "100% flexible schedule",
-      "Browser video classroom included",
-    ],
-    ctaButtonText: "Apply as a Tutor",
-    secondaryButtonText: "How It Works for Tutors",
-  };
+  const becomeTutor = cms.becomeTutorSection;
 
-  const faqSection = cms?.faqSection || {
-    pretitle: "COMMON QUESTIONS",
-    title: "Frequently Asked Questions",
-    faqs: [
-      {
-        q: "How does 1-on-1 online tutoring work on Sabina?",
-        a: "You browse verified tutors by subject, specialty, price, and language. Once you find a tutor, book an available time slot converted to your local timezone. When class starts, simply join our dedicated in-browser video classroom with video, chat and screen sharing.",
-      },
-      {
-        q: "What is the 100% Satisfaction Guarantee?",
-        a: "If you are not completely satisfied with your first trial lesson, let us know within 24 hours. We will either issue a full refund or transfer your credit to another tutor of your choice with zero hassle.",
-      },
-      {
-        q: "Do I need to install any external software like Zoom or Skype?",
-        a: "No downloads or extra accounts required! The Sabina Classroom runs entirely inside modern web browsers on desktop, tablet, and mobile with crystal-clear HD audio/video and collaborative tools.",
-      },
-      {
-        q: "How do tutor payments and cancellations work?",
-        a: "You only pay per lesson booked — there are zero monthly subscription lock-ins. You can reschedule or cancel any lesson free of charge up to 24 hours before the scheduled start time.",
-      },
-      {
-        q: "How are tutors vetted and approved on Sabina?",
-        a: "Every tutor undergoes a rigorous 7-step credential verification process, including identity checks, certified university degree review, teaching certifications, and a recorded video interview audit before being approved.",
-      },
-    ],
-  };
+  const faqSection = cms.faqSection;
 
   const faqs = faqSection.faqs || [];
 
@@ -220,7 +123,7 @@ export function HomePageClient({
   const typewriterTitles = React.useMemo(() => {
     return hero.typewriterHeadlines && hero.typewriterHeadlines.length > 0
       ? hero.typewriterHeadlines
-      : ["Grow Your Knowledge with Leading Online Courses"];
+      : [""];
   }, [hero.typewriterHeadlines]);
 
   const [currentTitleIndex, setCurrentTitleIndex] = React.useState(0);
@@ -429,10 +332,10 @@ export function HomePageClient({
                   </div>
                   <div>
                     <strong className="text-base font-black text-slate-900 block leading-tight font-heading">
-                      <CountUp to={hero.floatingCard1?.value ?? 20} suffix={hero.floatingCard1?.suffix || "+"} duration={1400} />
+                      <CountUp to={hero.floatingCard1?.value ?? 0} suffix={hero.floatingCard1?.suffix ?? ""} duration={1400} />
                     </strong>
                     <span className="text-[11px] font-semibold text-slate-500">
-                      {hero.floatingCard1?.label || "Creative Subjects"}
+                      {hero.floatingCard1?.label}
                     </span>
                   </div>
                 </div>
@@ -459,11 +362,11 @@ export function HomePageClient({
                       />
                     </svg>
                     <span className="absolute text-[11px] font-black text-slate-900 font-heading">
-                      <CountUp to={hero.floatingCard2?.value ?? 10} suffix={hero.floatingCard2?.suffix || "k+"} duration={1400} />
+                      <CountUp to={hero.floatingCard2?.value ?? 0} suffix={hero.floatingCard2?.suffix ?? ""} duration={1400} />
                     </span>
                   </div>
                   <span className="text-[10px] font-bold text-slate-500 mt-1 uppercase tracking-wider">
-                    {hero.floatingCard2?.label || "Students"}
+                    {hero.floatingCard2?.label}
                   </span>
                 </div>
 
@@ -474,10 +377,10 @@ export function HomePageClient({
                   </div>
                   <div>
                     <strong className="text-base font-black text-slate-900 block leading-tight font-heading">
-                      <CountUp to={hero.floatingCard3?.value ?? 480} suffix={hero.floatingCard3?.suffix || "+"} duration={1600} />
+                      <CountUp to={hero.floatingCard3?.value ?? 0} suffix={hero.floatingCard3?.suffix ?? ""} duration={1600} />
                     </strong>
                     <span className="text-[11px] font-semibold text-slate-500">
-                      {hero.floatingCard3?.label || "Hours Course Time"}
+                      {hero.floatingCard3?.label}
                     </span>
                   </div>
                 </div>
@@ -488,7 +391,7 @@ export function HomePageClient({
               <div className="sm:hidden grid grid-cols-3 gap-2 w-full max-w-[340px] mt-4 p-3 rounded-2xl bg-slate-50/90 border border-slate-100 text-center shadow-xs">
                 <div className="space-y-0.5">
                   <span className="text-sm font-black text-slate-950 font-heading block">
-                    <CountUp to={hero.floatingCard1?.value ?? 20} suffix={hero.floatingCard1?.suffix || "+"} duration={1400} />
+                    <CountUp to={hero.floatingCard1?.value ?? 0} suffix={hero.floatingCard1?.suffix ?? ""} duration={1400} />
                   </span>
                   <span className="text-[10px] font-semibold text-slate-500 block leading-tight truncate">
                     {hero.floatingCard1?.label || "Subjects"}
@@ -496,15 +399,15 @@ export function HomePageClient({
                 </div>
                 <div className="space-y-0.5 border-x border-slate-200">
                   <span className="text-sm font-black text-brand font-heading block">
-                    <CountUp to={hero.floatingCard2?.value ?? 10} suffix={hero.floatingCard2?.suffix || "k+"} duration={1400} />
+                    <CountUp to={hero.floatingCard2?.value ?? 0} suffix={hero.floatingCard2?.suffix ?? ""} duration={1400} />
                   </span>
                   <span className="text-[10px] font-semibold text-slate-500 block leading-tight truncate">
-                    {hero.floatingCard2?.label || "Students"}
+                    {hero.floatingCard2?.label}
                   </span>
                 </div>
                 <div className="space-y-0.5">
                   <span className="text-sm font-black text-slate-950 font-heading block">
-                    <CountUp to={hero.floatingCard3?.value ?? 480} suffix={hero.floatingCard3?.suffix || "+"} duration={1600} />
+                    <CountUp to={hero.floatingCard3?.value ?? 0} suffix={hero.floatingCard3?.suffix ?? ""} duration={1600} />
                   </span>
                   <span className="text-[10px] font-semibold text-slate-500 block leading-tight truncate">
                     {hero.floatingCard3?.label || "Hours"}
@@ -524,38 +427,38 @@ export function HomePageClient({
         <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/80 p-4 sm:p-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-center">
           <div className="space-y-0.5 sm:space-y-1">
             <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
-              <CountUp to={stats.stat1?.value ?? 250} suffix={stats.stat1?.suffix || "+"} duration={1800} />
+              <CountUp to={stats.stat1?.value ?? 0} suffix={stats.stat1?.suffix ?? ""} duration={1800} />
             </h3>
             <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
-              {stats.stat1?.label || "Verified Instructors"}
+              {stats.stat1?.label}
             </p>
           </div>
 
           <div className="space-y-0.5 sm:space-y-1">
             <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
-              <CountUp to={stats.stat2?.value ?? 15000} suffix={stats.stat2?.suffix || "+"} duration={2000} />
+              <CountUp to={stats.stat2?.value ?? 0} suffix={stats.stat2?.suffix ?? ""} duration={2000} />
             </h3>
             <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
-              {stats.stat2?.label || "Enrolled Students"}
+              {stats.stat2?.label}
             </p>
           </div>
 
           <div className="space-y-0.5 sm:space-y-1">
             <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
-              <CountUp to={stats.stat3?.value ?? 98.9} decimals={stats.stat3?.decimals ?? 1} suffix={stats.stat3?.suffix || "%"} duration={1900} />
+              <CountUp to={stats.stat3?.value ?? 0} decimals={stats.stat3?.decimals ?? 0} suffix={stats.stat3?.suffix ?? ""} duration={1900} />
             </h3>
             <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
-              {stats.stat3?.label || "Lesson Success Rate"}
+              {stats.stat3?.label}
             </p>
           </div>
 
           <div className="space-y-0.5 sm:space-y-1">
             <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading inline-flex items-center justify-center gap-1 sm:gap-1.5">
-              <CountUp to={stats.stat4?.value ?? 4.98} decimals={stats.stat4?.decimals ?? 2} duration={1800} />
-              <Star className="h-4 w-4 sm:h-7 sm:w-7 text-amber-400 fill-amber-400 inline-block mb-0.5 sm:mb-1 shrink-0" />
+              <CountUp to={stats.stat4?.value ?? 0} decimals={stats.stat4?.decimals ?? 0} suffix={(stats.stat4?.suffix ?? "").replace("★", "").trimEnd()} duration={1800} />
+              {(stats.stat4?.suffix ?? "").includes("★") && <Star aria-label="stars" className="h-4 w-4 sm:h-7 sm:w-7 text-amber-400 fill-amber-400 inline-block mb-0.5 sm:mb-1 shrink-0" />}
             </h3>
             <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
-              {stats.stat4?.label || "Average Rating"}
+              {stats.stat4?.label}
             </p>
           </div>
         </div>
@@ -640,7 +543,7 @@ export function HomePageClient({
                 </div>
 
                 <div className="mt-4 sm:mt-6 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-brand">
-                  <span>From $25/hr</span>
+                  <span>{sub.tutorCount ? "See tutors" : "Explore subject"}</span>
                   <span className="flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                     Explore <ArrowRight className="h-3.5 w-3.5" />
                   </span>
@@ -769,20 +672,8 @@ export function HomePageClient({
                 <div className="h-3 w-3 rounded-full bg-emerald-500/80" />
               </div>
 
-              <div className="hidden sm:flex items-center gap-2 bg-slate-950/80 px-4 py-1 rounded-xl border border-slate-800 text-[11px] text-slate-400 font-mono">
-                <span className="text-accent font-bold">🔒</span>
-                <span>sabinaedge.com/classroom/les-884920</span>
-              </div>
-
-              <div className="flex items-center gap-3 text-xs font-semibold">
-                <span className="inline-flex items-center gap-1.5 text-rose-400 bg-rose-950/60 border border-rose-800/80 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
-                  REC 24:18
-                </span>
-                <span className="hidden md:inline-flex text-[11px] text-accent bg-accent/10 border border-accent/30 px-2.5 py-0.5 rounded-full font-mono">
-                  ● 1080p 60fps • 24ms
-                </span>
-              </div>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Example lesson</span>
+              <span className="w-[52px]" aria-hidden="true" />
             </div>
 
             <div className="p-4 sm:p-6 min-h-[380px] sm:min-h-[440px] flex flex-col justify-between bg-gradient-to-b from-slate-950 to-[#0B132B]">
@@ -797,7 +688,7 @@ export function HomePageClient({
                     <div className="relative z-10 flex items-center justify-between">
                       <span className="bg-slate-950/80 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-white border border-white/10 flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-                        Dr. Elena Rostova (Tutor)
+                        Tutor
                       </span>
                       <span className="bg-accent text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded-md">
                         Speaking
@@ -827,7 +718,7 @@ export function HomePageClient({
                       />
                       <div className="relative z-10 flex justify-between">
                         <span className="bg-slate-950/80 px-2 py-0.5 rounded-md text-[10px] font-bold text-white">
-                          Alex Rivera (You)
+                          You
                         </span>
                         <Mic className="h-3.5 w-3.5 text-accent" />
                       </div>
@@ -839,7 +730,7 @@ export function HomePageClient({
                       </span>
                       <div className="space-y-2">
                         <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 text-[11px]">
-                          <strong className="text-accent block font-semibold">Dr. Elena Rostova:</strong>
+                          <strong className="text-accent block font-semibold">Tutor:</strong>
                           <span>I'll put practice questions in your lesson notes.</span>
                         </div>
                         <div className="bg-brand-950/40 p-2 rounded-xl border border-brand-800/50 text-[11px]">
@@ -881,12 +772,12 @@ export function HomePageClient({
                     <div className="space-y-2">
                       <h4 className="text-sm font-bold text-white">Tutor Feedback</h4>
                       <p className="text-xs text-slate-300 leading-relaxed">
-                        “Alex showed outstanding comprehension of multi-variable gradients today. Focus on 3D surface visualizations before Thursday.”
+                        “Good work on gradients today. Try the 3D surface questions before Thursday.”
                       </p>
                     </div>
-                    <Button variant="default" size="sm" className="w-full font-bold bg-accent hover:opacity-90 text-slate-950 rounded-xl min-h-[44px]">
-                      Download Lesson Summary Notes
-                    </Button>
+                    <span aria-hidden="true" className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-accent text-sm font-bold text-slate-950">
+                      Lesson notes
+                    </span>
                   </div>
                 </div>
               )}

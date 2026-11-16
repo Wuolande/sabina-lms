@@ -129,3 +129,32 @@ export const TextLog: CollectionConfig = {
     { name: "error", type: "textarea" },
   ],
 };
+
+/** Messages sent through the public contact form. Support replies by email and marks them handled. */
+export const ContactMessages: CollectionConfig = {
+  slug: "contact-messages",
+  labels: { singular: "Contact message", plural: "Contact messages" },
+  admin: { group: "Messages", useAsTitle: "subject", defaultColumns: ["subject", "name", "email", "status", "createdAt"] },
+  access: { read: staffRead, create: () => false, update: ({ req }) => hasRole(req, "admin", "manager", "support"), delete: isAdmin },
+  defaultSort: "-createdAt",
+  fields: [
+    {
+      name: "status",
+      type: "select",
+      required: true,
+      defaultValue: "new",
+      index: true,
+      options: [
+        { label: "New", value: "new" },
+        { label: "Replied", value: "replied" },
+        { label: "Closed", value: "closed" },
+      ],
+      admin: { position: "sidebar" },
+    },
+    { name: "user", type: "relationship", relationTo: "users", admin: { position: "sidebar", readOnly: true, description: "Set when the sender was signed in." } },
+    { type: "row", fields: [{ name: "name", type: "text", required: true, admin: { width: "50%", readOnly: true } }, { name: "email", type: "email", required: true, index: true, admin: { width: "50%", readOnly: true } }] },
+    { name: "subject", type: "text", required: true, admin: { readOnly: true } },
+    { name: "message", type: "textarea", required: true, admin: { readOnly: true } },
+    { name: "notes", type: "textarea", label: "Staff notes", admin: { description: "Only staff see this." } },
+  ],
+};

@@ -215,3 +215,39 @@ export const siteSeo = cache(async () => {
     index: seo.allowIndexing !== false,
   };
 });
+
+/* ------------------------------------------------------------------ site chrome (header, footer, contact) */
+
+const SOCIAL_LABELS = { x: "X (Twitter)", facebook: "Facebook", instagram: "Instagram", linkedin: "LinkedIn", youtube: "YouTube", tiktok: "TikTok" } as const;
+export type SocialKey = keyof typeof SOCIAL_LABELS;
+
+/** Platform name, contact details, social links and the subjects listed in the footer. */
+export const siteChrome = cache(async () => {
+  const payload = await maybePayload();
+  const g = (payload && (await payload.findGlobal({ slug: "site-settings", depth: 0, overrideAccess: true }).catch(() => null))) as {
+    platformName?: string | null;
+    tagline?: string | null;
+    supportEmail?: string | null;
+    supportPhone?: string | null;
+    social?: Partial<Record<SocialKey, string | null>> | null;
+  } | null;
+  const social = (Object.keys(SOCIAL_LABELS) as SocialKey[])
+    .map((key) => ({ key, label: SOCIAL_LABELS[key], href: String(g?.social?.[key] ?? "").trim() }))
+    .filter((s) => /^https?:\/\/\S+$/i.test(s.href));
+  const subjects = payload
+    ? await (await import("../marketplace/public")).subjectsWithCounts(payload).catch(() => [])
+    : [];
+  const footerSubjects = [...subjects]
+    .sort((a, b) => Number(b.tutorCount > 0) - Number(a.tutorCount > 0) || Number(b.isFeatured) - Number(a.isFeatured) || b.tutorCount - a.tutorCount)
+    .slice(0, 5)
+    .map((s) => ({ name: s.name, slug: s.slug }));
+  return {
+    name: g?.platformName || "Sabina Education",
+    tagline: g?.tagline || "",
+    supportEmail: g?.supportEmail || null,
+    supportPhone: g?.supportPhone || null,
+    social,
+    footerSubjects,
+    subjectCount: subjects.length,
+  };
+});

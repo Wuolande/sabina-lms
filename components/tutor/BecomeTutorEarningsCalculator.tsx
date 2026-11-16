@@ -3,94 +3,80 @@
 import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
-import { formatCurrency } from "@/lib/utils";
 
-export function BecomeTutorEarningsCalculator() {
-  const [hourlyRate, setHourlyRate] = React.useState<number>(45);
-  const [hoursPerWeek, setHoursPerWeek] = React.useState<number>(15);
+type Props = { currency: string; feePercent: number; minRate: number; maxRate: number };
 
-  const monthlyGross = hourlyRate * hoursPerWeek * 4.33;
-  const platformFee = monthlyGross * 0.18; // 18% fee
-  const monthlyNet = monthlyGross - platformFee;
+const nice = (n: number, step: number) => Math.round(n / step) * step;
+
+/** Monthly estimate from the platform's real fee and allowed rates. */
+export function BecomeTutorEarningsCalculator({ currency, feePercent, minRate, maxRate }: Props) {
+  const money = React.useMemo(() => new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }), [currency]);
+  const step = maxRate - minRate > 200 ? 5 : 1;
+  const [rate, setRate] = React.useState(() => Math.min(maxRate, Math.max(minRate, nice(minRate + (maxRate - minRate) * 0.15, step))));
+  const [hours, setHours] = React.useState(10);
+  const net = rate * hours * (52 / 12) * (1 - feePercent / 100);
+  const mid = nice((minRate + maxRate) / 2, step);
 
   return (
-    <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-gradient-to-br from-slate-900 to-brand-950 text-white p-5 sm:p-12 shadow-elevation">
-      <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 w-full min-w-0">
-        <div className="text-center space-y-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-accent-400">
-            Interactive Calculator
-          </span>
-          <h2 className="text-xl sm:text-4xl font-black text-white font-heading">
-            Estimate your monthly teaching income
+    <section aria-labelledby="calc-title" className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-900 to-brand-950 p-5 text-white shadow-elevation sm:rounded-3xl sm:p-12">
+      <div className="mx-auto w-full min-w-0 max-w-3xl space-y-6 sm:space-y-8">
+        <div className="space-y-2 text-center">
+          <p className="text-xs font-bold uppercase tracking-wider text-accent-400">Earnings estimate</p>
+          <h2 id="calc-title" className="font-heading text-xl font-black text-white sm:text-4xl">
+            What could you earn in a month?
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center pt-2 sm:pt-4">
-          {/* Sliders */}
+        <div className="grid grid-cols-1 items-center gap-6 pt-2 sm:gap-8 sm:pt-4 md:grid-cols-2">
           <div className="space-y-5 sm:space-y-6">
             <div>
-              <div className="flex justify-between items-center text-xs sm:text-sm font-bold mb-2">
-                <span className="text-slate-300">Your Hourly Rate:</span>
-                <span className="text-accent-400 text-base sm:text-lg font-extrabold">${hourlyRate}/hr</span>
+              <div className="mb-2 flex items-center justify-between text-xs font-bold sm:text-sm">
+                <label htmlFor="calc-rate" className="text-slate-300">
+                  Your hourly rate
+                </label>
+                <span className="text-base font-extrabold text-accent-400 sm:text-lg">{money.format(rate)}/h</span>
               </div>
-              <input
-                type="range"
-                min="20"
-                max="120"
-                step="5"
-                value={hourlyRate}
-                onChange={(e) => setHourlyRate(Number(e.target.value))}
-                className="w-full accent-accent-400 cursor-pointer h-2"
-              />
-              <div className="flex justify-between text-[10px] text-slate-400 font-bold mt-1">
-                <span>$20/hr</span>
-                <span>$70/hr</span>
-                <span>$120/hr</span>
+              <input id="calc-rate" type="range" min={minRate} max={maxRate} step={step} value={rate} onChange={(e) => setRate(Number(e.target.value))} className="h-2 w-full cursor-pointer accent-accent-400" />
+              <div className="mt-1 flex justify-between text-[11px] font-bold text-slate-400" aria-hidden="true">
+                <span>{money.format(minRate)}</span>
+                <span>{money.format(mid)}</span>
+                <span>{money.format(maxRate)}</span>
               </div>
             </div>
 
             <div>
-              <div className="flex justify-between items-center text-xs sm:text-sm font-bold mb-2">
-                <span className="text-slate-300">Lessons per week:</span>
-                <span className="text-accent-400 text-base sm:text-lg font-extrabold">{hoursPerWeek} hrs/week</span>
+              <div className="mb-2 flex items-center justify-between text-xs font-bold sm:text-sm">
+                <label htmlFor="calc-hours" className="text-slate-300">
+                  Hours of lessons a week
+                </label>
+                <span className="text-base font-extrabold text-accent-400 sm:text-lg">{hours} h</span>
               </div>
-              <input
-                type="range"
-                min="5"
-                max="40"
-                step="1"
-                value={hoursPerWeek}
-                onChange={(e) => setHoursPerWeek(Number(e.target.value))}
-                className="w-full accent-accent-400 cursor-pointer h-2"
-              />
-              <div className="flex justify-between text-[10px] text-slate-400 font-bold mt-1">
-                <span>5 hrs</span>
-                <span>20 hrs</span>
-                <span>40 hrs (Full-time)</span>
+              <input id="calc-hours" type="range" min={1} max={40} step={1} value={hours} onChange={(e) => setHours(Number(e.target.value))} className="h-2 w-full cursor-pointer accent-accent-400" />
+              <div className="mt-1 flex justify-between text-[11px] font-bold text-slate-400" aria-hidden="true">
+                <span>1 h</span>
+                <span>20 h</span>
+                <span>40 h</span>
               </div>
             </div>
           </div>
 
-          {/* Income Output Box */}
-          <div className="rounded-2xl bg-white/10 p-5 sm:p-6 backdrop-blur-md border border-white/10 text-center space-y-3 sm:space-y-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Estimated Net Earnings
-            </span>
-            <div className="text-3xl sm:text-5xl font-black text-accent-400 font-heading">
-              {formatCurrency(Math.round(monthlyNet))}
-              <span className="text-xs sm:text-sm font-semibold text-slate-300 block mt-0.5">/ month</span>
-            </div>
-            <p className="text-[11px] sm:text-xs text-slate-300">
-              Based on {hoursPerWeek} lessons/week at ${hourlyRate}/hr after Sabina's 18% service fee.
+          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/10 p-5 text-center backdrop-blur-md sm:space-y-4 sm:p-6">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">You&apos;d keep about</p>
+            <p className="font-heading text-3xl font-black text-accent-400 sm:text-5xl" aria-live="polite">
+              {money.format(Math.round(net))}
+              <span className="mt-0.5 block text-xs font-semibold text-slate-300 sm:text-sm">a month</span>
             </p>
-            <Link href="/register?role=TUTOR" className="block pt-2">
-              <Button variant="secondary" size="lg" className="w-full font-bold bg-accent-400 hover:bg-accent-500 text-slate-950 h-11 min-h-[44px]">
-                Apply to Teach Now
+            <p className="text-xs text-slate-300">
+              {hours} hours a week at {money.format(rate)}/h, after the {feePercent}% platform fee. An estimate, not a promise: what you earn depends on the lessons you teach.
+            </p>
+            <Link href="/register?role=tutor" className="block pt-2">
+              <Button variant="secondary" size="lg" className="h-11 min-h-[44px] w-full bg-accent-400 font-bold text-slate-950 hover:bg-accent-500">
+                Apply to teach
               </Button>
             </Link>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

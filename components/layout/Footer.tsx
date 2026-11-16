@@ -1,224 +1,128 @@
-"use client";
-
-import * as React from "react";
 import Link from "next/link";
-import { ShieldCheck, Globe, Lock } from "lucide-react";
+import { CalendarClock, Lock, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
+import { siteChrome, type SocialKey } from "@/cms/content/server";
 
-const footerLinks = {
-  subjects: [
-    { href: "/find-tutors?subject=english", label: "English Tutors" },
-    { href: "/find-tutors?subject=mathematics", label: "Math & Calculus" },
-    { href: "/find-tutors?subject=spanish", label: "Spanish Tutors" },
-    { href: "/find-tutors?subject=python-data-science", label: "Python & Coding" },
-    { href: "/find-tutors?subject=ielts-toefl-prep", label: "IELTS / TOEFL Prep" },
-    { href: "/subjects", label: "All 16+ Subjects →", accent: true },
-  ],
-  platform: [
-    { href: "/find-tutors", label: "Find a Tutor" },
-    { href: "/become-a-tutor", label: "Become a Tutor" },
-    { href: "/blog", label: "Learning Hub & Blog" },
-    { href: "/how-it-works", label: "How It Works" },
-    { href: "/student", label: "Student Dashboard" },
-    { href: "/tutor", label: "Tutor Dashboard" },
-  ],
-  company: [
-    { href: "/about", label: "About Us" },
-    { href: "/contact", label: "Contact Support" },
-    { href: "/privacy", label: "Privacy Policy" },
-    { href: "/terms", label: "Terms of Service" },
-    { href: "/refund-policy", label: "Refund Policy" },
-    { href: "/cookies", label: "Cookie Policy" },
-  ],
+const ICONS: Record<SocialKey, string> = {
+  x: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
+  facebook: "M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07",
+  instagram: "M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.64-.07-4.85s.01-3.58.07-4.85C2.38 3.92 3.9 2.38 7.15 2.23 8.42 2.17 8.8 2.16 12 2.16zM12 0C8.74 0 8.33.01 7.05.07 2.7.27.27 2.69.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98 1.28.06 1.69.07 4.95.07s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.4-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z",
+  linkedin: "M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.68 1.68 0 1 0 0-3.36 1.68 1.68 0 0 0 0 3.36m1.39 9.74v-8.37H5.07v8.37z",
+  youtube: "M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.87.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z",
+  tiktok: "M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z",
 };
 
-const socials = [
-  {
-    href: "#",
-    label: "X (Twitter)",
-    icon: () => (
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-      </svg>
-    ),
-  },
-  {
-    href: "#",
-    label: "LinkedIn",
-    icon: () => (
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.68 1.68 0 1 0 0-3.36 1.68 1.68 0 0 0 0 3.36m1.39 9.74v-8.37H5.07v8.37z" />
-      </svg>
-    ),
-  },
-  {
-    href: "#",
-    label: "YouTube",
-    icon: () => (
-      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-      </svg>
-    ),
-  },
-  {
-    href: "#",
-    label: "Instagram",
-    icon: () => (
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-      </svg>
-    ),
-  },
-];
-
 const trustItems = [
-  { icon: ShieldCheck, label: "100% Verified Tutors" },
-  { icon: Lock, label: "SSL Encrypted" },
-  { icon: Globe, label: "Global Timezone Sync" },
+  { icon: ShieldCheck, label: "Every tutor checked by our team" },
+  { icon: Lock, label: "Secure payments" },
+  { icon: CalendarClock, label: "Times shown in your time zone" },
 ];
 
-export function Footer() {
+const platformLinks = [
+  { href: "/find-tutors", label: "Find a tutor" },
+  { href: "/match", label: "Get matched" },
+  { href: "/become-a-tutor", label: "Become a tutor" },
+  { href: "/how-it-works", label: "How it works" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/blog", label: "Blog" },
+];
+
+const companyLinks = [
+  { href: "/about", label: "About us" },
+  { href: "/contact", label: "Contact us" },
+  { href: "/privacy", label: "Privacy policy" },
+  { href: "/terms", label: "Terms of service" },
+  { href: "/refund-policy", label: "Refund policy" },
+  { href: "/cookies", label: "Cookie policy" },
+];
+
+function Column({ title, links }: { title: string; links: { href: string; label: string; accent?: boolean }[] }) {
+  return (
+    <div className="min-w-0 space-y-4">
+      <h2 className="text-xs font-extrabold uppercase tracking-widest text-white">{title}</h2>
+      <ul className="space-y-2.5">
+        {links.map(({ href, label, accent }) => (
+          <li key={href}>
+            <Link href={href} className={`text-sm transition-colors ${accent ? "font-semibold text-accent hover:brightness-110" : "text-slate-400 hover:text-white"}`}>
+              {label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export async function Footer() {
+  const site = await siteChrome();
+  const subjectLinks = [
+    ...site.footerSubjects.map((s) => ({ href: `/subjects/${s.slug}`, label: s.name })),
+    { href: "/subjects", label: site.subjectCount > 5 ? `All ${site.subjectCount} subjects →` : "All subjects →", accent: true },
+  ];
   return (
     <footer className="bg-slate-950 text-slate-300">
-      {/* ─── Trust Banner ─── */}
       <div className="border-b border-slate-800/60">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Logo */}
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
           <Logo size="default" variant="dark" href="/" />
-
-          {/* Trust Items */}
-          <div className="flex flex-wrap items-center justify-center gap-5">
+          <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
             {trustItems.map(({ icon: Icon, label }) => (
-              <div
-                key={label}
-                className="flex items-center gap-2 text-xs font-semibold text-slate-400"
-              >
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800">
-                  <Icon className="h-3.5 w-3.5 text-accent" />
-                </div>
+              <li key={label} className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800">
+                  <Icon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
+                </span>
                 {label}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </div>
 
-      {/* ─── Main Footer Body ─── */}
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-14">
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 sm:gap-10 md:grid-cols-4 lg:grid-cols-5">
-          {/* Brand Column */}
-          <div className="col-span-2 lg:col-span-2 space-y-5">
-            <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              Live 1-on-1 lessons with tutors our team has checked. Book a
-              time that suits you and learn in your browser.
+          <div className="col-span-2 space-y-5">
+            <p className="max-w-sm text-sm leading-relaxed text-slate-400">
+              {site.tagline || "Live 1-on-1 lessons with tutors our team has checked. Book a time that suits you and learn in your browser."}
             </p>
-
-            {/* Newsletter */}
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-white uppercase tracking-widest">
-                Stay in the loop
-              </p>
-              <form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Your email address"
-                  className="flex-1 min-w-0 h-11 rounded-xl border border-slate-700 bg-slate-900 px-3.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
-                />
-                <button
-                  type="submit"
-                  className="h-11 px-5 shrink-0 rounded-xl bg-brand text-xs font-bold text-white hover:brightness-90 transition-all shadow-subtle min-h-[44px]"
-                >
-                  Subscribe
-                </button>
-              </form>
-            </div>
-
-            {/* Social Links */}
-            <div className="flex items-center gap-2">
-              {socials.map(({ href, icon: IconComponent, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  aria-label={label}
-                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-600 hover:text-white transition-all"
-                >
-                  <IconComponent />
-                </a>
-              ))}
-            </div>
+            {(site.supportEmail || site.supportPhone) && (
+              <ul className="space-y-1.5 text-sm">
+                {site.supportEmail && (
+                  <li>
+                    <a href={`mailto:${site.supportEmail}`} className="break-all text-slate-300 hover:text-white">
+                      {site.supportEmail}
+                    </a>
+                  </li>
+                )}
+                {site.supportPhone && (
+                  <li>
+                    <a href={`tel:${site.supportPhone.replace(/[^\d+]/g, "")}`} className="text-slate-300 hover:text-white">
+                      {site.supportPhone}
+                    </a>
+                  </li>
+                )}
+              </ul>
+            )}
+            {site.social.length > 0 && (
+              <ul className="flex flex-wrap items-center gap-2">
+                {site.social.map((s) => (
+                  <li key={s.key}>
+                    <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 transition-all hover:border-slate-600 hover:text-white">
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d={ICONS[s.key]} />
+                      </svg>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-
-          {/* Subjects */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-extrabold uppercase tracking-widest text-white">
-              Popular Subjects
-            </h4>
-            <ul className="space-y-2.5">
-              {footerLinks.subjects.map(({ href, label, accent }) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className={`text-sm transition-colors ${
-                      accent
-                        ? "text-accent hover:brightness-110 font-semibold"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Platform */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-extrabold uppercase tracking-widest text-white">
-              Platform
-            </h4>
-            <ul className="space-y-2.5">
-              {footerLinks.platform.map(({ href, label }) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="text-sm text-slate-400 hover:text-white transition-colors"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-extrabold uppercase tracking-widest text-white">
-              Company
-            </h4>
-            <ul className="space-y-2.5">
-              {footerLinks.company.map(({ href, label }) => (
-                <li key={label}>
-                  <Link
-                    href={href}
-                    className="text-sm text-slate-400 hover:text-white transition-colors"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {site.footerSubjects.length > 0 && <Column title="Subjects" links={subjectLinks} />}
+          <Column title="Learn and teach" links={platformLinks} />
+          <Column title="Company" links={companyLinks} />
         </div>
 
-        {/* ─── Bottom Bar ─── */}
-        <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-800 pt-6">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-800 pt-6 sm:flex-row">
           <p className="text-xs text-slate-500">
-            © {new Date().getFullYear()} Sabina Education. All rights reserved.
-          </p>
-          <p className="text-xs text-slate-600">
-            Built for high-trust live online learning
+            © {new Date().getFullYear()} {site.name}. All rights reserved.
           </p>
         </div>
       </div>

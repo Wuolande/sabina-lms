@@ -29,6 +29,17 @@ export const SiteSettings: GlobalConfig = {
             { name: "tagline", type: "text", defaultValue: "Learn from verified tutors, live." },
             { name: "supportEmail", type: "email" },
             { name: "supportPhone", type: "text" },
+            {
+              name: "social",
+              type: "group",
+              label: "Social links",
+              admin: { description: "Full web addresses. Leave empty to hide an icon in the footer." },
+              fields: [
+                { type: "row", fields: [{ name: "x", type: "text", label: "X (Twitter)", admin: { width: "50%" } }, { name: "facebook", type: "text", admin: { width: "50%" } }] },
+                { type: "row", fields: [{ name: "instagram", type: "text", admin: { width: "50%" } }, { name: "linkedin", type: "text", label: "LinkedIn", admin: { width: "50%" } }] },
+                { type: "row", fields: [{ name: "youtube", type: "text", label: "YouTube", admin: { width: "50%" } }, { name: "tiktok", type: "text", label: "TikTok", admin: { width: "50%" } }] },
+              ],
+            },
           ],
         },
         {

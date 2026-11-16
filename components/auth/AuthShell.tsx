@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { SabinaLogo } from "@/components/brand/SabinaMark";
 
-const QUOTES: Record<string, { quote: string; who: string; role: string }> = {
-  student: { quote: "My tutor explains maths the way my brain actually works. My grades went from C to A in one term.", who: "Wanjiku M.", role: "Form 4 student" },
-  tutor: { quote: "Sabina handles bookings, payments and the classroom. I just teach, and I'm paid on time every week.", who: "David O.", role: "Physics tutor" },
+// What each audience gets, in plain words. No invented quotes or people.
+const POINTS: Record<"student" | "tutor", string[]> = {
+  student: ["Every tutor's application is checked by our team", "Times shown in your own time zone", "Pay per lesson, no subscription"],
+  tutor: ["Students pay before the lesson", "You choose your rate and your hours", "Classroom, booking and payments handled for you"],
 };
 
 /**
@@ -11,7 +12,6 @@ const QUOTES: Record<string, { quote: string; who: string; role: string }> = {
  * (hidden on phones, where the form takes the full width).
  */
 export function AuthShell({ children, audience = "student", footer }: { children: ReactNode; audience?: "student" | "tutor"; footer?: ReactNode }) {
-  const q = QUOTES[audience];
   return (
     <div className="min-h-dvh grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] bg-white">
       <div className="flex flex-col px-5 py-6 sm:px-10 lg:px-16">
@@ -50,8 +50,8 @@ export function AuthShell({ children, audience = "student", footer }: { children
 
           <div className="grid grid-cols-3 gap-3 max-w-md">
             {[
-              ["100%", "Verified tutors"],
-              ["HD", "Live classroom"],
+              ["1-on-1", "Live lessons"],
+              ["0", "Apps to install"],
               ["24/7", "Book any time"],
             ].map(([n, l]) => (
               <div key={l} className="rounded-2xl bg-white/[0.07] ring-1 ring-white/10 p-4 backdrop-blur-sm">
@@ -61,16 +61,14 @@ export function AuthShell({ children, audience = "student", footer }: { children
             ))}
           </div>
 
-          <figure className="max-w-md rounded-3xl bg-white/[0.08] ring-1 ring-white/15 p-6 backdrop-blur-md">
-            <blockquote className="text-[15px] leading-relaxed text-white/90">“{q.quote}”</blockquote>
-            <figcaption className="mt-4 flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-accent-400 font-bold text-brand-950">{q.who[0]}</span>
-              <span>
-                <b className="block text-sm">{q.who}</b>
-                <span className="text-xs text-white/65">{q.role}</span>
-              </span>
-            </figcaption>
-          </figure>
+          <ul className="max-w-md space-y-3 rounded-3xl bg-white/[0.08] p-6 ring-1 ring-white/15 backdrop-blur-md">
+            {POINTS[audience].map((p) => (
+              <li key={p} className="flex items-start gap-3 text-[15px] leading-snug text-white/90">
+                <span aria-hidden="true" className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-accent-400 text-xs font-black text-brand-950">✓</span>
+                {p}
+              </li>
+            ))}
+          </ul>
         </div>
       </aside>
     </div>
