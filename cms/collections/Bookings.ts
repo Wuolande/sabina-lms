@@ -110,7 +110,7 @@ export const Bookings: CollectionConfig = {
           ],
         },
         { name: "noShowBy", type: "select", options: ["tutor", "student"].map((v) => ({ label: v, value: v })), admin: { description: "Who didn't turn up (set automatically from classroom attendance)." } },
-        { name: "materials", type: "relationship", relationTo: "private-files", hasMany: true, maxRows: 30, label: "Lesson files", admin: { description: "Files shared in the lesson. Only the student and tutor can open them." } },
+        { name: "materials", type: "relationship", relationTo: "private-files", hasMany: true, maxRows: 80, label: "Lesson files", admin: { description: "Files shared in the lesson. Only the student and tutor can open them." } },
         {
           name: "recording",
           type: "group",

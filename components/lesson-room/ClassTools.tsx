@@ -174,7 +174,8 @@ export function ClassStatus({ tools, studentName, light = false }: { tools: Clas
 }
 
 /** The pop-up with reactions, raise hand (student), and timer + star (tutor). */
-export function ClassToolsMenu({ tools, studentName, onClose, light = false }: { tools: ClassTools; studentName: string; onClose: () => void; light?: boolean }) {
+export function ClassToolsMenu({ tools, studentName, onClose, light = false, onMini }: { tools: ClassTools; studentName: string; onClose: () => void; light?: boolean; onMini?: (prompt: string) => void }) {
+  const [question, setQuestion] = useState("");
   const panel = light ? "bg-white text-slate-900 ring-1 ring-slate-200 shadow-xl" : "bg-[#1c1c1e]/95 text-white ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl";
   const pill = light ? "bg-slate-100 hover:bg-slate-200" : "bg-white/10 hover:bg-white/20";
   const muted = light ? "text-slate-500" : "text-white/50";
@@ -209,6 +210,25 @@ export function ClassToolsMenu({ tools, studentName, onClose, light = false }: {
               </button>
             ))}
           </div>
+          {onMini && (
+            <>
+              <p className={`mt-4 text-xs font-medium uppercase tracking-wide ${muted}`}>Mini blackboard</p>
+              <form
+                className="mt-1.5 flex gap-1.5"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  onMini(question);
+                  setQuestion("");
+                  onClose();
+                }}
+              >
+                <input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={200} aria-label="Question for the mini blackboard" placeholder="Question (optional)" className={`h-10 min-w-0 flex-1 rounded-xl border-0 px-3 text-sm outline-none ${light ? "bg-slate-100 text-slate-900 placeholder:text-slate-400" : "bg-white/10 text-white placeholder:text-white/40"}`} />
+                <button type="submit" className={`h-10 shrink-0 rounded-xl px-3 text-sm font-semibold ${pill}`}>
+                  Hand out
+                </button>
+              </form>
+            </>
+          )}
           <button type="button" onClick={tools.giveStar} className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#ffd60a] text-sm font-semibold text-black hover:brightness-95">
             <Star size={17} className="fill-current" /> Give {first} a star
           </button>

@@ -21,7 +21,7 @@ async function sql<T = Record<string, unknown>>(q: string, params: unknown[] = [
 }
 
 async function drawLine(page: Page, from: [number, number], to: [number, number]) {
-  const box = (await page.getByTestId("whiteboard").boundingBox())!;
+  const box = (await page.getByTestId("whiteboard").first().boundingBox())!;
   await page.mouse.move(box.x + box.width * from[0], box.y + box.height * from[1]);
   await page.mouse.down();
   for (let i = 1; i <= 8; i++) await page.mouse.move(box.x + box.width * (from[0] + ((to[0] - from[0]) * i) / 8), box.y + box.height * (from[1] + ((to[1] - from[1]) * i) / 8));
@@ -36,7 +36,7 @@ test("whiteboard syncs between two people, late joiners get the board", async ({
   const b = await ctx.newPage();
   await a.goto(`/dev/whiteboard?room=${room}&me=tutor`);
   await b.goto(`/dev/whiteboard?room=${room}&me=student`);
-  const strokes = (p: Page) => p.getByTestId("whiteboard");
+  const strokes = (p: Page) => p.getByTestId("whiteboard").first();
 
   await drawLine(a, [0.1, 0.2], [0.5, 0.6]);
   await expect(strokes(a)).toHaveAttribute("data-strokes", "1");
@@ -80,7 +80,7 @@ test("whiteboard syncs between two people, late joiners get the board", async ({
   // Pages follow the tutor; each page keeps its own drawings.
   await a.getByRole("button", { name: "Add a page" }).click();
   await expect(strokes(b)).toHaveAttribute("data-page", "2");
-  await expect(b.getByText("Page 2 of 2")).toBeVisible();
+  await expect(strokes(b)).toHaveAttribute("data-pages", "2");
   await expect(strokes(b)).toHaveAttribute("data-strokes", "0");
   await a.getByRole("button", { name: "Pen", exact: true }).click();
   await drawLine(a, [0.2, 0.2], [0.6, 0.4]);
@@ -203,4 +203,88 @@ test("lesson files: shared on the lesson page, private to the two people", async
   expect(String(rec.data.error)).toContain("isn't available");
   await tctx.close();
   await sctx.close();
+});
+
+test("PDF pages on the board, mini blackboard, and the board on a phone", async ({ browser }, info) => {
+  test.skip(info.project.name !== "desktop", "Runs once, on desktop");
+  test.setTimeout(180_000);
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const room = `p${Math.random().toString(36).slice(2, 7)}`;
+  const a = await ctx.newPage();
+  const b = await ctx.newPage();
+  await a.goto(`/dev/whiteboard?room=${room}&me=tutor`);
+  await b.goto(`/dev/whiteboard?room=${room}&me=student`);
+  const main = (p: Page) => p.getByTestId("whiteboard").first();
+
+  // A 3-page PDF becomes 3 board pages for both people; the tutor lands on its first page.
+  const maker = await ctx.newPage();
+  await maker.setContent(`<h1>Page one</h1><div style="page-break-after:always"></div><h1>Page two</h1><div style="page-break-after:always"></div><h1>Page three</h1>`);
+  const pdf = await maker.pdf({ format: "A4" });
+  await maker.close();
+  await a.locator('input[type="file"][aria-label="Add a PDF"]').setInputFiles({ name: "Past paper.pdf", mimeType: "application/pdf", buffer: pdf });
+  await expect(main(a)).toHaveAttribute("data-pages", "3", { timeout: 30_000 });
+  await expect(main(a)).toHaveAttribute("data-page", "1");
+  await expect(main(a)).toHaveAttribute("data-strokes", "1");
+  await expect(main(b)).toHaveAttribute("data-pages", "3");
+  await expect(main(b)).toHaveAttribute("data-page", "1");
+  await expect(b.getByRole("button", { name: "Add a PDF" })).toHaveCount(0); // tutors add slides
+  // Draw on page 2 of the PDF; the student follows and sees it.
+  await a.getByRole("button", { name: "Next page" }).click();
+  await drawLine(a, [0.2, 0.3], [0.7, 0.3]);
+  await expect(main(b)).toHaveAttribute("data-page", "2");
+  await expect(main(b)).toHaveAttribute("data-strokes", "2");
+  // A broken PDF gets a clear message.
+  await a.locator('input[type="file"][aria-label="Add a PDF"]').setInputFiles({ name: "broken.pdf", mimeType: "application/pdf", buffer: Buffer.from("not a pdf") });
+  await expect(a.getByText("We couldn't open that PDF.")).toBeVisible();
+
+  // Mini blackboard: handed out with a question, the student answers, the tutor copies it over.
+  await expect(b.getByTestId("mini-board")).toHaveAttribute("data-open", "false");
+  await a.getByLabel("Question for the mini blackboard").fill("Solve 3x + 2 = 11");
+  await a.getByRole("button", { name: "Hand out" }).click();
+  const miniB = b.getByTestId("mini-board");
+  await expect(miniB).toHaveAttribute("data-open", "true");
+  await expect(miniB).toContainText("Solve 3x + 2 = 11");
+  const miniCanvas = (p: Page) => p.getByTestId("mini-board").getByTestId("whiteboard");
+  const box = (await miniCanvas(b).boundingBox())!;
+  await b.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.4);
+  await b.mouse.down();
+  await b.mouse.move(box.x + box.width * 0.7, box.y + box.height * 0.6, { steps: 6 });
+  await b.mouse.up();
+  await expect(miniCanvas(a)).toHaveAttribute("data-strokes", "1"); // the tutor watches live
+  await b.getByRole("button", { name: "Hand in" }).click();
+  await expect(a.getByTestId("mini-board")).toContainText("Handed in");
+  const before = Number(await main(a).getAttribute("data-strokes"));
+  await a.getByRole("button", { name: "Copy to the board" }).click();
+  await expect(main(a)).toHaveAttribute("data-strokes", String(before + 1));
+  await expect(main(b)).toHaveAttribute("data-strokes", String(before + 1));
+  await a.getByRole("button", { name: "Close mini blackboard" }).click();
+  await expect(miniB).toHaveAttribute("data-open", "false");
+  // A new mini board starts clean.
+  await a.getByRole("button", { name: "Hand out" }).click();
+  await expect(miniCanvas(b)).toHaveAttribute("data-strokes", "0");
+  await ctx.close();
+
+  // Phone, upright and sideways: the board fits, nothing spills sideways, and touch draws.
+  for (const vp of [{ width: 390, height: 844 }, { width: 844, height: 390 }]) {
+    const phone = await browser.newContext({ viewport: vp, hasTouch: true, isMobile: true });
+    const p = await phone.newPage();
+    await p.goto(`/dev/whiteboard?room=${room}m${vp.width}&me=tutor`);
+    const c = p.getByTestId("whiteboard").first();
+    await expect(c).toBeVisible();
+    expect(await p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `no sideways scroll at ${vp.width}`).toBe(true);
+    const r = (await c.boundingBox())!;
+    expect(r.width, `board width at ${vp.width}`).toBeGreaterThan(vp.width > vp.height ? 300 : 340);
+    expect(r.x).toBeGreaterThanOrEqual(0);
+    expect(r.x + r.width).toBeLessThanOrEqual(vp.width + 1);
+    // A finger stroke (touch pointer events) draws a line.
+    await c.dispatchEvent("pointerdown", { pointerType: "touch", pointerId: 7, isPrimary: true, buttons: 1, clientX: r.x + r.width * 0.2, clientY: r.y + r.height * 0.3, bubbles: true });
+    for (let i = 1; i <= 6; i++) await c.dispatchEvent("pointermove", { pointerType: "touch", pointerId: 7, isPrimary: true, buttons: 1, clientX: r.x + r.width * (0.2 + 0.1 * i), clientY: r.y + r.height * 0.5, bubbles: true });
+    await c.dispatchEvent("pointerup", { pointerType: "touch", pointerId: 7, isPrimary: true, clientX: r.x + r.width * 0.8, clientY: r.y + r.height * 0.5, bubbles: true });
+    await expect(c).toHaveAttribute("data-strokes", "1");
+    // Every tool can be reached (the toolbar scrolls).
+    await p.getByRole("button", { name: "Eraser" }).scrollIntoViewIfNeeded();
+    await p.getByRole("button", { name: "Eraser" }).tap();
+    await expect(p.getByRole("button", { name: "Eraser" })).toHaveAttribute("aria-pressed", "true");
+    await phone.close();
+  }
 });

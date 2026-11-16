@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
-import { ChevronLeft, ChevronRight, Circle, Download, Eraser, Grid3x3, Highlighter, ImagePlus, Lock, LockOpen, Minus, Pencil, Plus, Pointer, Square, Trash2, Type, Undo2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Circle, Download, Eraser, FileUp, Grid3x3, Highlighter, ImagePlus, Loader2, Lock, LockOpen, Minus, Pencil, Plus, Pointer, Square, Trash2, Type, Undo2, X } from "lucide-react";
 
 /**
  * The lesson board: several pages, pen, highlighter, shapes, text, pictures, a laser pointer and
@@ -23,10 +23,19 @@ export type BoardMsg =
   | { t: "sync-req" }
   | { t: "sync"; strokes: Stroke[]; grid: boolean; page: number; pages: number; locked: boolean; part: number; parts: number };
 export type BoardChannel = { send: (m: BoardMsg) => void; subscribe: (cb: (m: BoardMsg) => void) => () => void };
-export type WhiteboardHandle = { exportPages: () => Promise<Blob[]> };
+export type WhiteboardHandle = {
+  exportPages: () => Promise<Blob[]>;
+  /** Everything on the current page. */
+  snapshot: () => Stroke[];
+  /** Copy strokes onto the current page, squeezed into a box (board units), and share them. */
+  paste: (strokes: Stroke[], box: { x: number; y: number; w: number; h: number }) => void;
+  /** Wipe every page for everyone (used when a fresh mini blackboard is handed out). */
+  reset: () => void;
+};
 
 const RATIO = 10 / 16;
-const MAX_PAGES = 20;
+const MAX_PAGES = 40;
+const MAX_PDF_PAGES = 20;
 const COLORS = ["#0f172a", "#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#9333ea"];
 const SIZES = [2, 4, 8];
 const round = (n: number) => Math.round(n * 10000) / 10000;
@@ -138,12 +147,16 @@ type Props = {
   light?: boolean;
   /** Upload a picture and return an address both people can load. Without it, the button is hidden. */
   onInsertImage?: (file: File) => Promise<string | null>;
+  /** A small board: just pens, colours, eraser, undo and clear; one page. */
+  compact?: boolean;
 };
 
-export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboard({ channel, me, role = "tutor", onClose, light = false, onInsertImage }, ref) {
+export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboard({ channel, me, role = "tutor", onClose, light = false, onInsertImage, compact = false }, ref) {
   const wrap = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const pdfInput = useRef<HTMLInputElement>(null);
+  const [pdfNote, setPdfNote] = useState<string | null>(null);
   const [size, setSize] = useState({ w: 800, h: 500 });
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [live, setLive] = useState<Record<string, Stroke>>({});
@@ -171,7 +184,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
     if (!el) return;
     const fit = () => {
       const r = el.getBoundingClientRect();
-      const w = Math.max(200, Math.min(r.width, r.height / RATIO));
+      const w = Math.max(120, Math.min(r.width, r.height / RATIO));
       setSize({ w: Math.floor(w), h: Math.floor(w * RATIO) });
     };
     fit();
@@ -308,7 +321,9 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
     if (!canDraw) return;
     const [x, y] = at(e);
     if (tool === "text") return; // opened on click, once the press has finished
-    e.currentTarget.setPointerCapture(e.pointerId);
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId); // keep the stroke going if the finger slides off the board
+    } catch {}
     if (tool === "laser") return laser(x, y);
     if (tool === "eraser") return eraseAt(x, y);
     current.current = { id: uid(), by: me, page, tool, color, size: width, pts: [x, y] };
@@ -378,6 +393,63 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
     img.src = src;
   }
 
+  /** Each PDF page becomes a board page with the page as its background, for both people. */
+  async function importPdf(file: File) {
+    if (!onInsertImage) return;
+    if (pdfInput.current) pdfInput.current.value = "";
+    setBusy(true);
+    setPdfNote("Opening the PDF…");
+    try {
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+      const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+      const room = MAX_PAGES - latest.current.pages;
+      const count = Math.min(doc.numPages, MAX_PDF_PAGES, Math.max(0, room));
+      if (!count) throw new Error("full");
+      const base = file.name.replace(/\.pdf$/i, "").replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 40) || "slides";
+      // Start on a fresh page unless the current one is empty.
+      let n = latest.current.strokes.some((s) => s.page === latest.current.page) ? latest.current.pages : latest.current.page;
+      let total = Math.max(latest.current.pages, n + 1);
+      const first = n;
+      for (let i = 1; i <= count; i++) {
+        setPdfNote(`Adding page ${i} of ${count}…`);
+        const pg = await doc.getPage(i);
+        const vp0 = pg.getViewport({ scale: 1 });
+        const vp = pg.getViewport({ scale: Math.min(2.5, 1500 / vp0.width) });
+        const c = document.createElement("canvas");
+        c.width = Math.round(vp.width);
+        c.height = Math.round(vp.height);
+        const cx = c.getContext("2d")!;
+        cx.fillStyle = "#fff";
+        cx.fillRect(0, 0, c.width, c.height);
+        await pg.render({ canvasContext: cx, viewport: vp }).promise;
+        const blob = await new Promise<Blob | null>((r) => c.toBlob(r, "image/jpeg", 0.85));
+        if (!blob) continue;
+        const src = await onInsertImage(new File([blob], `${base}-page-${i}.jpg`, { type: "image/jpeg" }));
+        if (!src) throw new Error("upload");
+        // Fit the page inside the board, centred.
+        const ar = c.width / c.height / (1 / RATIO);
+        const w = ar >= 1 ? 1 : ar;
+        const h = ar >= 1 ? 1 / ar : 1;
+        total = Math.max(total, n + 1);
+        channel.send({ t: "page", page: n, pages: total });
+        const s: Stroke = { id: uid(), by: me, page: n, tool: "image", color: "", size: 0, pts: [round(0.5 - w / 2), round(0.5 - h / 2), round(0.5 + w / 2), round(0.5 + h / 2)], src };
+        setStrokes((cur) => [...cur, s]);
+        channel.send({ t: "stroke", s });
+        setPages(total);
+        n++;
+      }
+      setPage(first);
+      channel.send({ t: "page", page: first, pages: total });
+      setPdfNote(doc.numPages > count ? `Added the first ${count} pages.` : null);
+    } catch (err) {
+      setPdfNote((err as Error).message === "full" ? "The board is full. Clear some pages first." : "We couldn't open that PDF. Check it opens on your device, then try again.");
+    } finally {
+      setBusy(false);
+      setTimeout(() => setPdfNote(null), 5000);
+    }
+  }
+
   const render = useCallback(
     (n: number) =>
       new Promise<Blob | null>((resolve) => {
@@ -401,8 +473,27 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
         }
         return out;
       },
+      snapshot: () => latest.current.strokes.filter((s) => s.page === latest.current.page),
+      paste: (list, box) => {
+        const copies = list.map((s) => ({
+          ...s,
+          id: uid(),
+          by: me,
+          page: latest.current.page,
+          // Lines and text get smaller with the box.
+          size: s.tool === "image" ? 0 : Math.max(1, Math.round(s.size * box.w * 10) / 10),
+          pts: s.pts.map((v, i) => round(i % 2 === 0 ? box.x + v * box.w : box.y + v * box.h)),
+        }));
+        setStrokes((cur) => [...cur, ...copies]);
+        copies.forEach((c) => channel.send({ t: "stroke", s: c }));
+      },
+      reset: () => {
+        setStrokes([]);
+        setLive({});
+        for (let n = 0; n < latest.current.pages; n++) channel.send({ t: "clear", page: n });
+      },
     }),
-    [render],
+    [render, channel, me],
   );
   async function save() {
     const b = await render(page);
@@ -415,7 +506,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
   }
 
   const btn = (on: boolean) => `grid h-10 w-10 shrink-0 place-items-center rounded-xl transition disabled:opacity-35 ${on ? (light ? "bg-slate-900 text-white" : "bg-white text-black") : light ? "text-slate-600 hover:bg-slate-100" : "text-white/80 hover:bg-white/10"}`;
-  const bar = `flex max-w-full items-center gap-1 overflow-x-auto rounded-2xl p-1.5 [scrollbar-width:none] ${light ? "bg-white shadow-sm ring-1 ring-slate-200" : "bg-[#1c1c1e]/90 ring-1 ring-white/10 backdrop-blur-xl"}`;
+  const bar = `flex max-w-full items-center gap-1 overflow-x-auto rounded-2xl p-1.5 [scrollbar-width:none] [@media(max-height:500px)]:max-h-full [@media(max-height:500px)]:flex-col [@media(max-height:500px)]:overflow-y-auto [@media(max-height:500px)]:overflow-x-hidden [@media(max-height:500px)]:p-1 ${light ? "bg-white shadow-sm ring-1 ring-slate-200" : "bg-[#1c1c1e]/90 ring-1 ring-white/10 backdrop-blur-xl"}`;
   const TOOLS: { t: Tool; label: string; icon: React.ReactNode }[] = [
     { t: "pen", label: "Pen", icon: <Pencil size={18} /> },
     { t: "highlighter", label: "Highlighter", icon: <Highlighter size={18} /> },
@@ -426,13 +517,13 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
     { t: "laser", label: "Pointer", icon: <Pointer size={18} /> },
     { t: "eraser", label: "Eraser", icon: <Eraser size={18} /> },
   ];
-  const sep = <span aria-hidden="true" className={`mx-0.5 h-6 w-px shrink-0 ${light ? "bg-slate-200" : "bg-white/15"}`} />;
+  const sep = <span aria-hidden="true" className={`mx-0.5 h-6 w-px shrink-0 [@media(max-height:500px)]:my-0.5 [@media(max-height:500px)]:h-px [@media(max-height:500px)]:w-6 ${light ? "bg-slate-200" : "bg-white/15"}`} />;
   const fontPx = (width * 5 + 8) * (size.w / 1000);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2 sm:gap-3" aria-label="Whiteboard">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-2 sm:gap-3 [@media(max-height:500px)]:flex-row [@media(max-height:500px)]:gap-2" aria-label="Whiteboard">
       <div role="toolbar" aria-label="Whiteboard tools" className={`${bar} self-center`}>
-        {TOOLS.map((x) => (
+        {TOOLS.filter((x) => !compact || ["pen", "highlighter", "text", "eraser"].includes(x.t)).map((x) => (
           <button key={x.t} type="button" aria-label={x.label} title={x.label} aria-pressed={tool === x.t} disabled={!canDraw} onClick={() => (setTool(x.t), typing && commitText())} className={btn(tool === x.t)}>
             {x.icon}
           </button>
@@ -444,33 +535,41 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
           </button>
         ))}
         {sep}
-        {SIZES.map((s) => (
+        {(compact ? [] : SIZES).map((s) => (
           <button key={s} type="button" aria-label={`Line ${s === 2 ? "thin" : s === 4 ? "medium" : "thick"}`} aria-pressed={width === s} disabled={!canDraw} onClick={() => setWidth(s)} className={btn(width === s)}>
             <span className="rounded-full bg-current" style={{ width: s + 3, height: s + 3 }} />
           </button>
         ))}
         {sep}
-        {onInsertImage && (
+        {onInsertImage && !compact && (
           <>
+            <input ref={pdfInput} type="file" accept="application/pdf" className="hidden" aria-label="Add a PDF" onChange={(e) => e.target.files?.[0] && importPdf(e.target.files[0])} />
+            {tutor && (
+              <button type="button" aria-label="Add a PDF" title="Add a PDF (each page becomes a board page)" disabled={busy} onClick={() => pdfInput.current?.click()} className={btn(false)}>
+                {busy && pdfNote ? <Loader2 size={18} className="animate-spin" /> : <FileUp size={18} />}
+              </button>
+            )}
             <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" aria-label="Add a picture" onChange={(e) => e.target.files?.[0] && insert(e.target.files[0])} />
             <button type="button" aria-label="Add a picture" title="Add a picture" disabled={!canDraw || busy} onClick={() => fileInput.current?.click()} className={btn(false)}>
               <ImagePlus size={18} />
             </button>
           </>
         )}
-        <button type="button" aria-label="Squared paper" title="Squared paper" aria-pressed={grid} disabled={!canDraw} onClick={() => (setGrid(!grid), channel.send({ t: "grid", on: !grid }))} className={btn(grid)}>
+        {!compact && <button type="button" aria-label="Squared paper" title="Squared paper" aria-pressed={grid} disabled={!canDraw} onClick={() => (setGrid(!grid), channel.send({ t: "grid", on: !grid }))} className={btn(grid)}>
           <Grid3x3 size={18} />
-        </button>
+        </button>}
         <button type="button" aria-label="Undo my last line" title="Undo" disabled={!canDraw} onClick={undo} className={btn(false)}>
           <Undo2 size={18} />
         </button>
         <button type="button" aria-label="Clear page" title="Clear page" disabled={!canDraw} onClick={clear} className={btn(false)}>
           <Trash2 size={18} />
         </button>
-        <button type="button" aria-label="Save as image" title="Save as image" onClick={save} className={btn(false)}>
-          <Download size={18} />
-        </button>
-        {tutor && (
+        {!compact && (
+          <button type="button" aria-label="Save as image" title="Save as image" onClick={save} className={btn(false)}>
+            <Download size={18} />
+          </button>
+        )}
+        {tutor && !compact && (
           <button type="button" aria-label={locked ? "Let the student draw" : "Lock the board"} title={locked ? "Let the student draw" : "Lock the board (only you can draw)"} aria-pressed={locked} onClick={() => (setLocked(!locked), channel.send({ t: "lock", on: !locked }))} className={btn(locked)}>
             {locked ? <Lock size={18} /> : <LockOpen size={18} />}
           </button>
@@ -485,8 +584,9 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
         )}
       </div>
 
-      <div ref={wrap} className="relative grid min-h-0 flex-1 place-items-center">
-        <div className="relative" style={{ width: size.w, height: size.h }}>
+      {/* The canvas is positioned, not laid out, so its size can never push its own container wider. */}
+      <div ref={wrap} className="relative min-h-0 w-full min-w-0 flex-1 overflow-hidden">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={{ width: size.w, height: size.h }}>
           <canvas
             ref={canvas}
             data-testid="whiteboard"
@@ -531,12 +631,21 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
         </div>
       </div>
 
-      <div className={`${bar} self-center`} aria-label="Pages">
+      {pdfNote && (
+        <p role="status" className={`self-center rounded-full px-3 py-1 text-xs font-medium ${light ? "bg-slate-900 text-white" : "bg-white text-black"}`}>
+          {pdfNote}
+        </p>
+      )}
+      <div className={`${bar} self-center ${compact ? "hidden" : ""}`} aria-label="Pages">
         <button type="button" aria-label="Previous page" disabled={page === 0 || (!tutor && locked)} onClick={() => goTo(page - 1)} className={btn(false)}>
           <ChevronLeft size={18} />
         </button>
-        <span className={`min-w-[4.5rem] text-center text-sm font-medium tabular-nums ${light ? "text-slate-700" : "text-white/90"}`} aria-live="polite">
-          Page {page + 1} of {pages}
+        <span className={`min-w-[4.5rem] text-center text-sm font-medium tabular-nums [@media(max-height:500px)]:min-w-0 [@media(max-height:500px)]:text-xs ${light ? "text-slate-700" : "text-white/90"}`} aria-live="polite">
+          <span className="[@media(max-height:500px)]:hidden">Page </span>
+          {page + 1}
+          <span className="[@media(max-height:500px)]:hidden"> of </span>
+          <span className="hidden [@media(max-height:500px)]:inline">/</span>
+          {pages}
         </span>
         <button type="button" aria-label="Next page" disabled={page >= pages - 1 || (!tutor && locked)} onClick={() => goTo(page + 1)} className={btn(false)}>
           <ChevronRight size={18} />

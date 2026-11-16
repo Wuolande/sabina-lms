@@ -2,9 +2,10 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useChat, useConnectionQualityIndicator, useConnectionState, useDataChannel, useIsSpeaking, useLocalParticipant, useMediaDeviceSelect, useParticipants, useTrackToggle, useTracks, type TrackReferenceOrPlaceholder } from "@livekit/components-react";
-import { ConnectionQuality, ConnectionState, RemoteTrackPublication, Track, type Participant } from "livekit-client";
-import { ArrowLeft, Disc, Loader2, MessageSquare, Mic, MicOff, MonitorUp, Paperclip, PenLine, PhoneOff, Save, Send, Settings2, Signal, SignalLow, Square, Video, VideoOff, WifiOff, X } from "lucide-react";
+import { ConnectionQuality, ConnectionState, RemoteTrackPublication, ScreenSharePresets, Track, type Participant } from "livekit-client";
+import { ArrowLeft, Disc, Ellipsis, Maximize2, Loader2, MessageSquare, Mic, MicOff, MonitorUp, Paperclip, PenLine, PhoneOff, Save, Send, Settings2, Signal, SignalLow, Square, Video, VideoOff, WifiOff, X } from "lucide-react";
 import { Whiteboard, type BoardChannel, type BoardMsg, type WhiteboardHandle } from "./Whiteboard";
+import { MiniBoardPanel, useMiniBoard, type MiniChannel, type MiniMsg } from "./MiniBoard";
 import { ClassStatus, ClassToolsIcon, ClassToolsMenu, useClassTools, type ToolsChannel, type ToolsMsg } from "./ClassTools";
 import { LessonFiles } from "./LessonFiles";
 import { fmtDay, fmtTime } from "@/lib/time";
@@ -438,7 +439,13 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
   const { localParticipant } = useLocalParticipant();
   const mic = useTrackToggle({ source: Track.Source.Microphone });
   const cam = useTrackToggle({ source: Track.Source.Camera });
-  const screen = useTrackToggle({ source: Track.Source.ScreenShare });
+  // Screen sharing tuned for reading: sharp text over smooth motion, with the tab's sound when offered.
+  const screen = useTrackToggle({
+    source: Track.Source.ScreenShare,
+    captureOptions: { audio: true, contentHint: "detail", resolution: ScreenSharePresets.h1080fps15.resolution, selfBrowserSurface: "include", surfaceSwitching: "include" },
+    onDeviceError: () => setNotice("Screen sharing didn't start. Allow it in your browser, then try again."),
+  });
+  const shareBox = useRef<HTMLDivElement>(null);
   const tracks = useTracks(
     [
       { source: Track.Source.Camera, withPlaceholder: true },
@@ -494,6 +501,10 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
   const boardRef = useRef<WhiteboardHandle>(null);
   const tools = useClassTools(useTopicChannel<ToolsMsg>("tools") as ToolsChannel, lesson.role, { student: lesson.role === "student" ? lesson.me.name : lesson.other.name });
   const studentName = lesson.role === "student" ? lesson.me.name : lesson.other.name;
+  const miniChannel = useTopicChannel<BoardMsg>("mini") as BoardChannel;
+  const miniRef = useRef<WhiteboardHandle>(null);
+  const mini = useMiniBoard(useTopicChannel<MiniMsg>("mini-ctl") as MiniChannel, lesson.role, miniRef);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
   const [savingBoard, setSavingBoard] = useState(false);
@@ -511,6 +522,12 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
     },
     [lesson.id],
   );
+  const openFiles = () => {
+    setFilesOpen((o) => !o);
+    setChatOpen(false);
+    setFilesNew(false);
+  };
+  const toggleRecording = () => void (rec.status === "recording" ? recCall("stop") : askToRecord());
   async function saveBoard() {
     setSavingBoard(true);
     const pages = (await boardRef.current?.exportPages()) ?? [];
@@ -581,6 +598,19 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
   }, [chatOpen, chatMessages.length]);
 
   const share = tracks.find((t) => t.source === Track.Source.ScreenShare);
+  // When someone starts sharing, bring it to the front (the board is still there to go back to).
+  const sharing = Boolean(share);
+  useEffect(() => {
+    if (sharing) setBoardOpen(false);
+  }, [sharing]);
+  function fullScreen() {
+    const el = shareBox.current;
+    if (!el) return;
+    const video = el.querySelector("video") as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else if (el.requestFullscreen) void el.requestFullscreen().catch(() => video?.webkitEnterFullscreen?.());
+    else video?.webkitEnterFullscreen?.(); // iPhone
+  }
   const remoteCam = tracks.find((t) => t.source === Track.Source.Camera && !t.participant.isLocal) ?? null;
   const localCam = tracks.find((t) => t.source === Track.Source.Camera && t.participant.isLocal) ?? null;
   const otherHere = participants.some((p) => !p.isLocal);
@@ -619,7 +649,7 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
       </div>
 
       {/* Stage */}
-      <div className="flex min-h-0 flex-1 gap-3 p-3 pb-28 pt-16 sm:p-5 sm:pb-32 sm:pt-20">
+      <div className="flex min-h-0 flex-1 gap-3 p-3 pb-28 pt-16 sm:p-5 sm:pb-32 sm:pt-20 [@media(max-height:500px)]:!pb-[4.75rem] [@media(max-height:500px)]:!pt-12">
         {/* The board stays mounted while closed so nothing drawn is lost. */}
         <div className={boardOpen ? "relative flex min-w-0 flex-1 gap-3" : "hidden"}>
           <div className="min-w-0 flex-1">
@@ -657,8 +687,25 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
         </div>
         {boardOpen ? null : share ? (
           <>
-            <div className="min-w-0 flex-1">
+            <div ref={shareBox} className="relative min-w-0 flex-1 bg-black">
               <Tile track={share} name={`${share.participant.isLocal ? "You" : share.participant.name} · screen`} avatar={null} big />
+              <button type="button" onClick={fullScreen} aria-label="Full screen" title="Full screen" className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-black/55 text-white backdrop-blur-md hover:bg-black/70">
+                <Maximize2 size={18} />
+              </button>
+              {share.participant.isLocal && (
+                <div className="absolute inset-x-0 bottom-3 flex justify-center px-3">
+                  <p className="flex items-center gap-3 rounded-full bg-[#1c1c1e]/90 py-1.5 pl-4 pr-1.5 text-sm ring-1 ring-white/10 backdrop-blur-xl">
+                    You&apos;re sharing your screen
+                    <button type="button" onClick={() => void screen.toggle()} className="h-8 rounded-full bg-[#ff453a] px-3 text-sm font-semibold text-white">
+                      Stop
+                    </button>
+                  </p>
+                </div>
+              )}
+              {/* Phones: keep the other person in view over the shared screen. */}
+              <div className="pointer-events-none absolute left-2 top-2 aspect-[3/4] w-20 shadow-2xl sm:w-28 md:hidden">
+                <Tile track={remoteCam} name={lesson.other.name.split(" ")[0] ?? ""} avatar={lesson.other.avatar} />
+              </div>
             </div>
             <div className="hidden w-56 shrink-0 flex-col gap-3 md:flex">
               <div className="aspect-video">
@@ -698,13 +745,6 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
           <RoundButton label={cam.enabled ? "Turn camera off" : "Turn camera on"} on={cam.enabled} onClick={() => void cam.toggle()}>
             {cam.enabled ? <Video size={22} /> : <VideoOff size={22} />}
           </RoundButton>
-          {canShare && (
-            <span className="hidden sm:block">
-              <RoundButton label={screen.enabled ? "Stop sharing" : "Share screen"} on={!screen.enabled} onClick={() => void screen.toggle()}>
-                <MonitorUp size={22} />
-              </RoundButton>
-            </span>
-          )}
           <RoundButton
             label={boardOpen ? "Close whiteboard" : "Whiteboard"}
             on={!boardOpen}
@@ -715,44 +755,92 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
           >
             <PenLine size={21} />
           </RoundButton>
-          <RoundButton label="Class tools" on={!toolsOpen} onClick={() => (setToolsOpen(!toolsOpen), setDevicesOpen(false))} badge={tools.hand && tools.role === "tutor"}>
-            <ClassToolsIcon size={21} />
-          </RoundButton>
-          <RoundButton
-            label="Lesson files"
-            onClick={() => {
-              setFilesOpen(!filesOpen);
-              setChatOpen(false);
-              setFilesNew(false);
-            }}
-            badge={filesNew && !filesOpen}
-          >
-            <Paperclip size={21} />
-          </RoundButton>
-          <RoundButton label={saver ? "Turn video back on" : "Audio only (saves data)"} on={!saver} onClick={() => void setSaverMode(!saver)}>
-            {saver ? <SignalLow size={21} /> : <Signal size={21} />}
-          </RoundButton>
-          {rec.available && (
-            <RoundButton label={rec.status === "recording" ? "Stop recording" : "Record lesson"} on={rec.status !== "recording"} disabled={recBusy} onClick={() => void (rec.status === "recording" ? recCall("stop") : askToRecord())}>
-              {rec.status === "recording" ? <Square size={19} className="fill-current" /> : <Disc size={21} />}
-            </RoundButton>
-          )}
           <RoundButton label="Chat" onClick={() => (setChatOpen(!chatOpen), setFilesOpen(false))} badge={unread}>
             <MessageSquare size={21} />
           </RoundButton>
-          <RoundButton label="Camera and sound" on={!devicesOpen} onClick={() => (setDevicesOpen(!devicesOpen), setToolsOpen(false))}>
-            <Settings2 size={21} />
-          </RoundButton>
+          {/* Computers and tablets: everything in the bar. Phones: the rest lives under More. */}
+          <span className="hidden items-center gap-3 sm:flex">
+            {canShare && (
+              <RoundButton label={screen.enabled ? "Stop sharing" : "Share screen"} on={!screen.enabled} onClick={() => void screen.toggle()}>
+                <MonitorUp size={22} />
+              </RoundButton>
+            )}
+            <RoundButton label="Class tools" on={!toolsOpen} onClick={() => (setToolsOpen(!toolsOpen), setDevicesOpen(false))} badge={tools.hand && tools.role === "tutor"}>
+              <ClassToolsIcon size={21} />
+            </RoundButton>
+            <RoundButton label="Lesson files" onClick={openFiles} badge={filesNew && !filesOpen}>
+              <Paperclip size={21} />
+            </RoundButton>
+            <RoundButton label={saver ? "Turn video back on" : "Audio only (saves data)"} on={!saver} onClick={() => void setSaverMode(!saver)}>
+              {saver ? <SignalLow size={21} /> : <Signal size={21} />}
+            </RoundButton>
+            {rec.available && (
+              <RoundButton label={rec.status === "recording" ? "Stop recording" : "Record lesson"} on={rec.status !== "recording"} disabled={recBusy} onClick={toggleRecording}>
+                {rec.status === "recording" ? <Square size={19} className="fill-current" /> : <Disc size={21} />}
+              </RoundButton>
+            )}
+            <RoundButton label="Camera and sound" on={!devicesOpen} onClick={() => (setDevicesOpen(!devicesOpen), setToolsOpen(false))}>
+              <Settings2 size={21} />
+            </RoundButton>
+          </span>
+          <span className="sm:hidden">
+            <RoundButton label="More" on={!moreOpen} onClick={() => setMoreOpen(!moreOpen)} badge={(filesNew && !filesOpen) || (tools.hand && tools.role === "tutor")}>
+              <Ellipsis size={22} />
+            </RoundButton>
+          </span>
           <RoundButton label="Leave" danger onClick={() => setLeaving(true)}>
             <PhoneOff size={22} />
           </RoundButton>
         </div>
       </div>
 
+      {moreOpen && (
+        <div className="fixed inset-0 z-40 flex items-end bg-black/50 sm:hidden" onClick={() => setMoreOpen(false)}>
+          <div role="dialog" aria-label="More" className="w-full rounded-t-[28px] bg-[#1c1c1e] p-3 pb-[max(1rem,env(safe-area-inset-bottom))] ring-1 ring-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-white/20" />
+            {(
+              [
+                { icon: <ClassToolsIcon size={20} />, label: tools.role === "tutor" ? "Class tools: timer, stars, mini blackboard" : "Class tools: raise hand, react", run: () => setToolsOpen(true) },
+                { icon: <Paperclip size={20} />, label: "Lesson files", run: openFiles },
+                { icon: saver ? <SignalLow size={20} /> : <Signal size={20} />, label: saver ? "Turn video back on" : "Audio only (saves data)", run: () => void setSaverMode(!saver) },
+                { icon: <Settings2 size={20} />, label: "Camera and sound", run: () => setDevicesOpen(true) },
+                ...(rec.available ? [{ icon: <Disc size={20} />, label: rec.status === "recording" ? "Stop recording" : "Record lesson", run: toggleRecording }] : []),
+                ...(canShare ? [{ icon: <MonitorUp size={20} />, label: screen.enabled ? "Stop sharing" : "Share screen", run: () => void screen.toggle() }] : []),
+              ] as { icon: React.ReactNode; label: string; run: () => void }[]
+            ).map((r) => (
+              <button
+                key={r.label}
+                type="button"
+                onClick={() => {
+                  setMoreOpen(false);
+                  r.run();
+                }}
+                className="flex h-14 w-full items-center gap-4 rounded-2xl px-4 text-left text-[16px] font-medium text-white active:bg-white/10"
+              >
+                <span className="text-white/70">{r.icon}</span> {r.label}
+              </button>
+            ))}
+            {!canShare && <p className="px-4 pb-1 pt-2 text-sm text-white/45">Sharing your screen needs a computer. You can still watch a screen your tutor shares, and tap it to go full screen.</p>}
+          </div>
+        </div>
+      )}
+      <MiniBoardPanel
+        mini={mini}
+        channel={miniChannel}
+        me={lesson.role}
+        onCopy={() => {
+          const strokes = miniRef.current?.snapshot() ?? [];
+          if (!strokes.length) return setNotice("There's nothing on the mini blackboard yet.");
+          boardRef.current?.paste(strokes, { x: 0.52, y: 0.52, w: 0.44, h: 0.44 });
+          setBoardOpen(true);
+          room({ t: "board", open: true });
+          setNotice("Copied onto the board.");
+        }}
+      />
       {chatOpen && <Chat onClose={() => setChatOpen(false)} me={localParticipant.name || "you"} />}
       {toolsOpen && (
         <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center px-3 sm:bottom-32">
-          <ClassToolsMenu tools={tools} studentName={studentName} onClose={() => setToolsOpen(false)} />
+          <ClassToolsMenu tools={tools} studentName={studentName} onClose={() => setToolsOpen(false)} onMini={lesson.role === "tutor" ? mini.start : undefined} />
         </div>
       )}
       {devicesOpen && <DevicesPanel onClose={() => setDevicesOpen(false)} />}

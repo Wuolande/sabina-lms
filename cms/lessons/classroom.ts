@@ -28,7 +28,7 @@ export const MATERIAL_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ]);
 export const MATERIAL_MAX = 20 * 1024 * 1024;
-const MAX_FILES = 30;
+const MAX_FILES = 80;
 
 const fileView = (f: PrivateFile, me: number) => ({
   id: f.id,
