@@ -167,6 +167,8 @@ export async function submitReview(payload: Payload, user: User, id: number, rat
 }
 
 /** Day-before and hour-before reminders for confirmed lessons. Each is claimed before sending, so it goes once. */
+const siteUrlOf = () => (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+
 export async function sendReminders(payload: Payload) {
   const now = Date.now();
   const iso = (ms: number) => new Date(ms).toISOString();
@@ -192,6 +194,16 @@ export async function sendReminders(payload: Payload) {
       const lesson = { ...ctx.lesson, id: b.id };
       await deliver(payload, ctx.student, lessonReminder(lesson, personOf(ctx.student), "student", j.soon));
       await deliver(payload, ctx.tutorUser, lessonReminder(lesson, personOf(ctx.tutorUser), "tutor", j.soon));
+      // SMS / WhatsApp for people who asked for it (short, with the time in their own zone).
+      const { sendText } = await import("../notify/text");
+      const { fmtDay, fmtTime, safeTz } = await import("@/lib/time");
+      for (const [who, other] of [[ctx.student, ctx.lesson.tutorName], [ctx.tutorUser, ctx.lesson.studentName]] as const) {
+        if (!who.textReminders || who.emailPrefs?.reminders === false) continue;
+        const tz = safeTz(who.timezone);
+        const when = j.soon ? `today at ${fmtTime(b.startsAt, tz)}` : `tomorrow, ${fmtDay(b.startsAt, tz, { weekday: "short", day: "numeric", month: "short" })} at ${fmtTime(b.startsAt, tz)}`;
+        const role = who.id === ctx.student.id ? "student" : "tutor";
+        await sendText(payload, who, `Sabina: your ${ctx.lesson.subject ?? ""} lesson with ${other} is ${when}. Join: ${siteUrlOf()}/${role}/lessons/${b.id}`.replace(/\s+/g, " "), j.soon ? "lesson_reminder_hour" : "lesson_reminder_day");
+      }
     }
   }
 }

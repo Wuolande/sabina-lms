@@ -48,11 +48,23 @@ function Switch({ checked, onChange, label }: { checked: boolean; onChange: (v: 
   );
 }
 
-export function NotificationCenter({ initial, prefs: initialPrefs }: { initial: NotificationView[]; prefs: { messages: boolean; reminders: boolean } }) {
+export function NotificationCenter({ initial, prefs: initialPrefs, text }: { initial: NotificationView[]; prefs: { messages: boolean; reminders: boolean }; text?: { available: boolean; on: boolean; whatsapp: boolean; settingsHref: string } }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
   const [prefs, setPrefs] = useState(initialPrefs);
   const push = usePush();
+  const [textOn, setTextOn] = useState(Boolean(text?.on));
+  const [textError, setTextError] = useState<string | null>(null);
+  async function saveText(v: boolean) {
+    setTextOn(v);
+    setTextError(null);
+    const res = await fetch("/api/notifications/prefs", { method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: v }) }).catch(() => null);
+    if (!res?.ok) {
+      setTextOn(!v);
+      const d = (await res?.json().catch(() => ({}))) as { error?: string };
+      setTextError(d.error ?? "We couldn't save that. Please try again.");
+    }
+  }
   const [saved, setSaved] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const unread = items.filter((n) => !n.read).length;
@@ -175,6 +187,31 @@ export function NotificationCenter({ initial, prefs: initialPrefs }: { initial: 
           </p>
         )}
       </section>
+
+      {text?.available && (
+        <section aria-labelledby="text-settings">
+          <h2 id="text-settings" className="mb-2 px-4 text-[13px] font-medium uppercase tracking-wide text-slate-500">
+            {text.whatsapp ? "WhatsApp and SMS" : "SMS"}
+          </h2>
+          <div className="rounded-3xl bg-white ring-1 ring-slate-200/70">
+            <div className="flex items-center gap-4 px-4 py-3.5">
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-medium text-slate-900">Lesson reminders on my phone</p>
+                <p className="text-sm text-slate-500">The day before and an hour before each lesson, by {text.whatsapp ? "WhatsApp (or SMS)" : "SMS"}. Free for you.</p>
+              </div>
+              <Switch checked={textOn} onChange={saveText} label="Lesson reminders on my phone" />
+            </div>
+          </div>
+          {textError && (
+            <p role="alert" className="mt-2 px-4 text-sm text-red-600">
+              {textError}{" "}
+              <a href={text.settingsHref} className="font-semibold underline">
+                Account settings
+              </a>
+            </p>
+          )}
+        </section>
+      )}
 
       <section aria-labelledby="email-settings">
         <h2 id="email-settings" className="mb-2 px-4 text-[13px] font-medium uppercase tracking-wide text-slate-500">

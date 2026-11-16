@@ -111,3 +111,21 @@ export const EmailTemplates: CollectionConfig = {
     { name: "note", type: "textarea", maxLength: 600, admin: { description: "Optional. Plain text shown above the button, e.g. a holiday notice. Leave a blank line between paragraphs." } },
   ],
 };
+
+/** Every SMS and WhatsApp reminder we tried to send. Written by the server. */
+export const TextLog: CollectionConfig = {
+  slug: "text-log",
+  labels: { singular: "Text message", plural: "Text log" },
+  admin: { group: "Messages", useAsTitle: "to", defaultColumns: ["to", "channel", "kind", "status", "createdAt"], description: "SMS and WhatsApp reminders, newest first." },
+  access: { read: ({ req }) => hasRole(req, "admin", "support"), create: () => false, update: () => false, delete: isAdmin },
+  defaultSort: "-createdAt",
+  fields: [
+    { name: "user", type: "relationship", relationTo: "users", index: true },
+    { name: "to", type: "text", required: true, index: true },
+    { name: "channel", type: "select", required: true, options: [{ label: "SMS", value: "sms" }, { label: "WhatsApp", value: "whatsapp" }] },
+    { name: "kind", type: "text" },
+    { name: "body", type: "textarea" },
+    { name: "status", type: "select", required: true, options: [{ label: "Sent", value: "sent" }, { label: "Failed", value: "failed" }], index: true },
+    { name: "error", type: "textarea" },
+  ],
+};

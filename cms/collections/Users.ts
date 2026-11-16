@@ -154,6 +154,7 @@ export const Users: CollectionConfig = {
     { name: "legacyId", type: "text", index: true, hidden: true },
     { name: "legacyPasswordHash", type: "text", hidden: true },
     { name: "legacyAvatarUrl", type: "text", hidden: true },
+    { name: "textReminders", type: "checkbox", defaultValue: false, label: "Lesson reminders by SMS or WhatsApp", admin: { description: "The person turns this on themselves. Needs a phone number with a country code." } },
     {
       name: "emailPrefs",
       type: "group",

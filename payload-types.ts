@@ -85,6 +85,7 @@ export interface Config {
     'push-subscriptions': PushSubscription;
     'email-templates': EmailTemplate;
     'email-log': EmailLog;
+    'text-log': TextLog;
     posts: Post;
     'blog-categories': BlogCategory;
     pages: Page;
@@ -121,6 +122,7 @@ export interface Config {
     'push-subscriptions': PushSubscriptionsSelect<false> | PushSubscriptionsSelect<true>;
     'email-templates': EmailTemplatesSelect<false> | EmailTemplatesSelect<true>;
     'email-log': EmailLogSelect<false> | EmailLogSelect<true>;
+    'text-log': TextLogSelect<false> | TextLogSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     'blog-categories': BlogCategoriesSelect<false> | BlogCategoriesSelect<true>;
     pages: PagesSelect<false> | PagesSelect<true>;
@@ -206,6 +208,10 @@ export interface User {
   legacyId?: string | null;
   legacyPasswordHash?: string | null;
   legacyAvatarUrl?: string | null;
+  /**
+   * The person turns this on themselves. Needs a phone number with a country code.
+   */
+  textReminders?: boolean | null;
   /**
    * Booking, payment and account emails are always sent.
    */
@@ -1192,6 +1198,24 @@ export interface EmailLog {
   createdAt: string;
 }
 /**
+ * SMS and WhatsApp reminders, newest first.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "text-log".
+ */
+export interface TextLog {
+  id: number;
+  user?: (number | null) | User;
+  to: string;
+  channel: 'sms' | 'whatsapp';
+  kind?: string | null;
+  body?: string | null;
+  status: 'sent' | 'failed';
+  error?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "posts".
  */
@@ -1564,6 +1588,10 @@ export interface PayloadLockedDocument {
         value: number | EmailLog;
       } | null)
     | ({
+        relationTo: 'text-log';
+        value: number | TextLog;
+      } | null)
+    | ({
         relationTo: 'posts';
         value: number | Post;
       } | null)
@@ -1667,6 +1695,7 @@ export interface UsersSelect<T extends boolean = true> {
   legacyId?: T;
   legacyPasswordHash?: T;
   legacyAvatarUrl?: T;
+  textReminders?: T;
   emailPrefs?:
     | T
     | {
@@ -2191,6 +2220,21 @@ export interface EmailLogSelect<T extends boolean = true> {
   to?: T;
   subject?: T;
   template?: T;
+  status?: T;
+  error?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "text-log_select".
+ */
+export interface TextLogSelect<T extends boolean = true> {
+  user?: T;
+  to?: T;
+  channel?: T;
+  kind?: T;
+  body?: T;
   status?: T;
   error?: T;
   updatedAt?: T;

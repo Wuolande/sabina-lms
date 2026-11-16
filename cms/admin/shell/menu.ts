@@ -79,6 +79,8 @@ export const MENU: MenuSection[] = [
       { kind: "collection", slug: "notifications", label: "Notifications", icon: "Bell" },
       { kind: "collection", slug: "email-templates", label: "Emails", icon: "Mail" },
       { kind: "collection", slug: "email-log", label: "Email log", icon: "MailCheck" },
+      { kind: "collection", slug: "text-log", label: "Text log (SMS/WhatsApp)", icon: "MessageSquare" },
+      { kind: "collection", slug: "push-subscriptions", label: "Push devices", icon: "Bell" },
     ],
   },
   {
