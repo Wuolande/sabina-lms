@@ -305,7 +305,7 @@ export function HomePageClient({
                 <div className="absolute inset-0 rounded-full border-2 border-brand/70 -rotate-12 scale-100 sm:scale-105 pointer-events-none transition-transform duration-700 hover:rotate-0" />
 
                 {/* Dynamic Brand Circular Backdrop */}
-                <div className="absolute inset-2 sm:inset-3 rounded-full bg-gradient-to-br from-brand via-brand/90 to-brand-950 shadow-2xl overflow-hidden" />
+                <div className="absolute inset-2 sm:inset-3 rounded-full bg-gradient-to-br from-accent-300 via-accent-500 to-brand-700 shadow-2xl overflow-hidden" />
 
                 {/* Dynamic Accent Circle Accent */}
                 <div className="absolute right-1 sm:right-0 top-1/2 -translate-y-1/2 sm:translate-x-3 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-accent shadow-md z-20 animate-float" />
@@ -619,7 +619,7 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           5. THE LIVE VIDEO CLASSROOM (Dynamic CMS Product Tour)
       ───────────────────────────────────────────────────────────── */}
-      <section className="w-full max-w-full min-w-0 bg-gradient-to-b from-brand-950 via-brand-950 to-brand-900 py-14 sm:py-24 text-white relative overflow-hidden">
+      <section className="w-full max-w-full min-w-0 bg-brand-950 py-14 sm:py-24 text-white relative overflow-hidden">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 relative z-10 space-y-8 sm:space-y-10">
@@ -652,7 +652,7 @@ export function HomePageClient({
                   onClick={() => setActiveTourTab(tab.id as any)}
                   className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer shrink-0 whitespace-nowrap min-h-[44px] ${
                     isActive
-                      ? "bg-accent text-slate-950 shadow-glow font-extrabold"
+                      ? "bg-white text-brand-800 shadow-md font-extrabold"
                       : "bg-slate-900/90 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800"
                   }`}
                 >
@@ -690,7 +690,7 @@ export function HomePageClient({
                         <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
                         Tutor
                       </span>
-                      <span className="bg-accent text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded-md">
+                      <span className="bg-white/90 text-brand-800 text-[10px] font-black uppercase px-2 py-0.5 rounded-md">
                         Speaking
                       </span>
                     </div>
@@ -775,7 +775,7 @@ export function HomePageClient({
                         “Good work on gradients today. Try the 3D surface questions before Thursday.”
                       </p>
                     </div>
-                    <span aria-hidden="true" className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-accent text-sm font-bold text-slate-950">
+                    <span aria-hidden="true" className="flex min-h-[44px] w-full items-center justify-center rounded-xl bg-white/10 text-sm font-bold text-white ring-1 ring-white/15">
                       Lesson notes
                     </span>
                   </div>
@@ -826,7 +826,7 @@ export function HomePageClient({
 
                 <div className="flex items-center justify-center">
                   <Link href="/find-tutors" className="w-full sm:w-auto">
-                    <Button variant="default" size="sm" className="w-full sm:w-auto font-extrabold bg-accent hover:opacity-90 text-slate-950 rounded-xl px-5 cursor-pointer h-11 min-h-[44px]">
+                    <Button variant="default" size="sm" className="w-full sm:w-auto font-extrabold bg-white hover:bg-brand-50 text-brand-700 rounded-xl px-5 cursor-pointer h-11 min-h-[44px]">
                       Try a Live Lesson Now
                     </Button>
                   </Link>
@@ -886,7 +886,7 @@ export function HomePageClient({
           7. BECOME A TUTOR CALLOUT (Dynamic CMS)
       ───────────────────────────────────────────────────────────── */}
       <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-brand-950 via-brand-900 to-brand-700 p-5 sm:p-14 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sm:gap-8 border border-slate-800/90 shadow-2xl relative overflow-hidden">
+        <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 p-5 sm:p-14 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sm:gap-8 border border-slate-800/90 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="space-y-3 sm:space-y-4 max-w-2xl text-left relative z-10 w-full min-w-0">
@@ -915,7 +915,7 @@ export function HomePageClient({
               <Button
                 variant="default"
                 size="lg"
-                className="w-full sm:w-auto font-extrabold bg-accent hover:opacity-90 text-slate-950 px-6 sm:px-8 py-3.5 shadow-glow rounded-xl text-sm cursor-pointer h-12 min-h-[44px]"
+                className="w-full sm:w-auto font-extrabold bg-white hover:bg-brand-50 text-brand-700 px-6 sm:px-8 py-3.5 shadow-lg rounded-xl text-sm cursor-pointer h-12 min-h-[44px]"
                 rightIcon={<ArrowRight className="h-4 w-4" />}
               >
                 {becomeTutor.ctaButtonText || "Apply as a Tutor"}

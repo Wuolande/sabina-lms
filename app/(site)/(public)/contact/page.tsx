@@ -28,7 +28,7 @@ export default async function ContactPage() {
       </div>
 
       <div className="mx-auto grid w-full min-w-0 max-w-5xl grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
-        <aside className="flex w-full min-w-0 max-w-full flex-col justify-between gap-6 rounded-2xl bg-gradient-to-br from-brand-700 to-brand-950 p-6 text-white sm:rounded-3xl sm:p-8">
+        <aside className="flex w-full min-w-0 max-w-full flex-col justify-between gap-6 rounded-2xl bg-gradient-to-br from-brand-800 to-brand-950 p-6 text-white sm:rounded-3xl sm:p-8">
           <div className="space-y-6">
             <h2 className="font-heading text-xl font-bold">{t.sideTitle}</h2>
             <ul className="space-y-4 text-sm text-slate-300">

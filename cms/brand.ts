@@ -37,10 +37,12 @@ const rgb = (hex: string): RGB => [1, 3, 5].map((i) => parseInt(hex.slice(i, i +
 const mix = (a: RGB, b: RGB, t: number): RGB => a.map((v, i) => Math.round(v + (b[i]! - v) * t)) as RGB;
 const WHITE: RGB = [255, 255, 255];
 const BLACK: RGB = [0, 0, 0];
+/** A deep, slightly grey ink. Mixing the primary into it gives calm navies instead of an electric blue-black. */
+const INK: RGB = [14, 21, 48];
 const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
 /**
- * The brand scale: dark shades are the primary blue deepened, the middle runs from the primary
+ * The brand scale: dark shades are the primary blue deepened into navy, the middle runs from the primary
  * towards the sky blue, and light shades are the sky blue softened with white. So brand-700 is
  * the primary, and tints such as brand-50 still read as "our blue".
  */
@@ -55,9 +57,9 @@ export function brandScale(c: BrandColours): Record<(typeof STEPS)[number], RGB>
     500: mix(p, a, 0.55),
     600: mix(p, a, 0.28),
     700: p,
-    800: mix(p, BLACK, 0.25),
-    900: mix(p, BLACK, 0.48),
-    950: mix(p, BLACK, 0.7),
+    800: mix(p, INK, 0.38),
+    900: mix(p, INK, 0.72),
+    950: mix(p, INK, 0.88),
   };
 }
 

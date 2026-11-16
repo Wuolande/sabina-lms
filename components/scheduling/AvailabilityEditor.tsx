@@ -204,11 +204,11 @@ export function AvailabilityEditor({ initial, todayKey }: { initial: ScheduleVie
       </Card>
 
       <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 px-4 lg:bottom-6 lg:left-auto lg:right-8 lg:px-0">
-        <div className="mx-auto flex max-w-xl items-center justify-between gap-3 rounded-2xl bg-slate-900 px-4 py-3 text-white shadow-2xl lg:mx-0">
+        <div className="mx-auto flex max-w-xl items-center justify-between gap-3 rounded-2xl bg-brand-950 px-4 py-3 text-white shadow-2xl lg:mx-0">
           <p className={`text-sm ${msg && !msg.ok ? "text-rose-300" : "text-slate-300"}`} role="status">
             {msg && (!msg.ok || !dirty) ? msg.text : dirty ? "You have unsaved changes." : "All changes saved."}
           </p>
-          <button type="button" onClick={save} disabled={busy || !dirty} className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-accent-400 px-4 text-sm font-semibold text-brand-950 hover:bg-accent-300 disabled:opacity-50">
+          <button type="button" onClick={save} disabled={busy || !dirty} className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl bg-white px-4 text-sm font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-50">
             {busy ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />} Save changes
           </button>
         </div>

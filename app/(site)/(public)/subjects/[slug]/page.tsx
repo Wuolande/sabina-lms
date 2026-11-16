@@ -55,7 +55,7 @@ export default async function SubjectPage({ params }: Props) {
           </div>
           <RichText data={subject.description} className="mt-4 max-w-2xl text-white/80 sm:text-lg [&_*]:!text-inherit [&_strong]:!text-white" />
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link href={`/find-tutors?subject=${subject.slug}`} className="inline-flex h-12 items-center gap-2 rounded-xl bg-accent-400 px-5 font-semibold text-brand-950 hover:bg-accent-300">
+            <Link href={`/find-tutors?subject=${subject.slug}`} className="inline-flex h-12 items-center gap-2 rounded-xl bg-white px-5 font-semibold text-brand-700 hover:bg-brand-50">
               See all {subject.name} tutors <ArrowRight size={17} />
             </Link>
           </div>

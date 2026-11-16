@@ -18,7 +18,7 @@ export function BecomeTutorEarningsCalculator({ currency, feePercent, minRate, m
   const mid = nice((minRate + maxRate) / 2, step);
 
   return (
-    <section aria-labelledby="calc-title" className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200/90 bg-gradient-to-br from-brand-700 to-brand-950 p-5 text-white shadow-elevation sm:rounded-3xl sm:p-12">
+    <section aria-labelledby="calc-title" className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200/90 bg-gradient-to-br from-brand-800 to-brand-950 p-5 text-white shadow-elevation sm:rounded-3xl sm:p-12">
       <div className="mx-auto w-full min-w-0 max-w-3xl space-y-6 sm:space-y-8">
         <div className="space-y-2 text-center">
           <p className="text-xs font-bold uppercase tracking-wider text-accent-300">{eyebrow}</p>
@@ -70,7 +70,7 @@ export function BecomeTutorEarningsCalculator({ currency, feePercent, minRate, m
               {hours} hours a week at {money.format(rate)}/h, after the {feePercent}% platform fee. An estimate, not a promise: what you earn depends on the lessons you teach.
             </p>
             <Link href="/register?role=tutor" className="block pt-2">
-              <Button variant="secondary" size="lg" className="h-11 min-h-[44px] w-full bg-accent-400 font-bold text-slate-950 hover:bg-accent-500">
+              <Button variant="secondary" size="lg" className="h-11 min-h-[44px] w-full bg-white font-bold text-brand-700 hover:bg-brand-50">
                 {cta}
               </Button>
             </Link>

@@ -22,7 +22,7 @@ const badgeVariants = cva(
         dark:        "border-slate-800 bg-slate-900 text-white",
         "emerald-solid": "border-transparent bg-emerald-600 text-white shadow-xs",
         "brand-solid":   "border-transparent bg-brand-700 text-white shadow-xs",
-        "gold-solid":    "border-transparent bg-accent-400 text-slate-950 font-bold shadow-xs",
+        "gold-solid":    "border-transparent bg-brand-700 text-white font-bold shadow-xs",
       },
       size: {
         xs:      "px-2 py-0.5 text-[10px]",

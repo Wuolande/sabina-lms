@@ -177,7 +177,7 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
             {role === "student" && (
               <Link
                 href="/find-tutors"
-                className="mb-5 flex items-center justify-center gap-2 rounded-xl bg-accent-400 px-4 py-2.5 text-sm font-semibold text-brand-950 shadow-sm transition hover:bg-accent-300"
+                className="mb-5 flex items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-800"
               >
                 <Search size={16} /> Find a tutor
               </Link>

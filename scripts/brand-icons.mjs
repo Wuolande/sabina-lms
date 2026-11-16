@@ -5,7 +5,7 @@ import sharp from "sharp";
 import { writeFileSync } from "node:fs";
 
 const [primary = "#0000FE", accent = "#009EFF"] = process.argv.slice(2);
-const deep = "#00004C";
+const deep = "#0C1249";
 
 /** The Sabina mark: an open book on the primary blue with a sky-blue spark. */
 const mark = (size, { pad = 0, radius = 9 } = {}) => {

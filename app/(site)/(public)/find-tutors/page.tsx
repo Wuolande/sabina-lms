@@ -135,7 +135,7 @@ export default async function FindTutorsPage({ searchParams }: Props) {
               <span className="sr-only">Search tutors</span>
               <input name="q" defaultValue={sp.q ?? ""} placeholder="Try “KCSE maths” or “IELTS”" className="h-11 w-full bg-transparent text-[15px] text-slate-900 placeholder:text-slate-400 focus:outline-none" />
             </label>
-            <button type="submit" className="h-11 shrink-0 rounded-xl bg-accent-400 px-5 text-sm font-semibold text-brand-950 hover:bg-accent-300">
+            <button type="submit" className="h-11 shrink-0 rounded-xl bg-brand-700 px-5 text-sm font-semibold text-white hover:bg-brand-800">
               Search
             </button>
           </form>

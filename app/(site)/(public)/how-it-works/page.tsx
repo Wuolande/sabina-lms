@@ -47,7 +47,7 @@ export default async function HowItWorksPage() {
 
       <section aria-labelledby="pay" className="flex w-full min-w-0 max-w-full flex-col items-start justify-between gap-6 rounded-2xl border border-brand-900 bg-gradient-to-br from-brand-950 to-brand-800 p-5 text-white shadow-xl sm:gap-8 sm:rounded-3xl sm:p-12 md:flex-row md:items-center">
         <div className="w-full min-w-0 max-w-xl space-y-3">
-          <Badge variant="secondary" size="sm" className="bg-accent-400 font-bold text-slate-950">
+          <Badge variant="secondary" size="sm" className="bg-white/10 font-bold text-accent-300 ring-1 ring-white/15">
             <CreditCard className="mr-1 h-3.5 w-3.5" aria-hidden="true" /> {t.payBadge}
           </Badge>
           <h2 id="pay" className="font-heading text-xl font-black sm:text-3xl">
@@ -63,7 +63,7 @@ export default async function HowItWorksPage() {
         </div>
         <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto">
           <Link href="/find-tutors" className="w-full sm:w-auto">
-            <Button variant="secondary" size="lg" className="h-12 min-h-[44px] w-full bg-accent-400 px-8 font-extrabold text-slate-950 hover:bg-accent-500 sm:w-auto">
+            <Button variant="secondary" size="lg" className="h-12 min-h-[44px] w-full bg-white px-8 font-extrabold text-brand-700 hover:bg-brand-50 sm:w-auto">
               {t.cta}
             </Button>
           </Link>

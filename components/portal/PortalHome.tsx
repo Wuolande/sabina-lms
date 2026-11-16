@@ -139,7 +139,7 @@ function Hero({ user, line, cta }: { user: PortalUser; line: string; cta?: { hre
           <p className="mt-2 max-w-lg text-white/75">{line}</p>
         </div>
         {cta && Cta && (
-          <Link href={cta.href} className="inline-flex h-12 shrink-0 items-center gap-2 self-start rounded-xl bg-accent-400 px-5 font-semibold text-brand-950 shadow-lg shadow-black/10 transition hover:bg-accent-300 sm:self-auto">
+          <Link href={cta.href} className="inline-flex h-12 shrink-0 items-center gap-2 self-start rounded-xl bg-white px-5 font-semibold text-brand-700 shadow-lg shadow-black/10 transition hover:bg-brand-50 sm:self-auto">
             <Cta size={18} /> {cta.label}
           </Link>
         )}
