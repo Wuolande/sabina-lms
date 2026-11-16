@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useChat, useConnectionState, useDataChannel, useIsSpeaking, useLocalParticipant, useParticipants, useTrackToggle, useTracks, type TrackReferenceOrPlaceholder } from "@livekit/components-react";
+import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useChat, useConnectionQualityIndicator, useConnectionState, useDataChannel, useIsSpeaking, useLocalParticipant, useMediaDeviceSelect, useParticipants, useTrackToggle, useTracks, type TrackReferenceOrPlaceholder } from "@livekit/components-react";
 import { ConnectionQuality, ConnectionState, RemoteTrackPublication, Track, type Participant } from "livekit-client";
-import { ArrowLeft, Disc, Loader2, MessageSquare, Mic, MicOff, MonitorUp, Paperclip, PenLine, PhoneOff, Send, Signal, SignalLow, Square, Video, VideoOff, WifiOff, X } from "lucide-react";
-import { Whiteboard, type BoardChannel, type BoardMsg } from "./Whiteboard";
+import { ArrowLeft, Disc, Loader2, MessageSquare, Mic, MicOff, MonitorUp, Paperclip, PenLine, PhoneOff, Save, Send, Settings2, Signal, SignalLow, Square, Video, VideoOff, WifiOff, X } from "lucide-react";
+import { Whiteboard, type BoardChannel, type BoardMsg, type WhiteboardHandle } from "./Whiteboard";
+import { ClassStatus, ClassToolsIcon, ClassToolsMenu, useClassTools, type ToolsChannel, type ToolsMsg } from "./ClassTools";
 import { LessonFiles } from "./LessonFiles";
 import { fmtDay, fmtTime } from "@/lib/time";
 
@@ -27,21 +28,23 @@ type RoomMsg = { t: "board"; open: boolean } | { t: "files" } | { t: "rec-ask"; 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
-/** The whiteboard's channel over LiveKit data messages (reliable delivery). */
-function useBoardChannel(): BoardChannel {
-  const subs = useRef(new Set<(m: BoardMsg) => void>());
-  const { send } = useDataChannel("wb", (msg) => {
+/** A typed channel over LiveKit data messages on one topic (reliable delivery). */
+function useTopicChannel<M>(topic: string): { send: (m: M) => void; subscribe: (cb: (m: M) => void) => () => void } {
+  const subs = useRef(new Set<(m: M) => void>());
+  const { send } = useDataChannel(topic, (msg) => {
     try {
-      const m = JSON.parse(dec.decode(msg.payload)) as BoardMsg;
+      const m = JSON.parse(dec.decode(msg.payload)) as M;
       subs.current.forEach((cb) => cb(m));
     } catch {}
   });
   return useMemo(
     () => ({
-      send: (m) => void send(enc.encode(JSON.stringify(m)), { reliable: true }).catch(() => undefined),
-      subscribe: (cb) => {
+      send: (m: M) => void send(enc.encode(JSON.stringify(m)), { reliable: true }).catch(() => undefined),
+      subscribe: (cb: (m: M) => void) => {
         subs.current.add(cb);
-        return () => subs.current.delete(cb);
+        return () => {
+          subs.current.delete(cb);
+        };
       },
     }),
     [send],
@@ -220,10 +223,25 @@ function Tile(props: TileProps) {
   return props.track?.participant ? <SpeakingTile {...props} participant={props.track.participant} /> : <TileView {...props} speaking={false} />;
 }
 function SpeakingTile({ participant, ...props }: TileProps & { participant: Participant }) {
-  return <TileView {...props} speaking={useIsSpeaking(participant)} />;
+  const { quality } = useConnectionQualityIndicator({ participant });
+  return <TileView {...props} speaking={useIsSpeaking(participant)} quality={quality} />;
 }
 
-function TileView({ track, name, avatar, big, mirror, speaking }: TileProps & { speaking: boolean }) {
+/** Signal bars: 3 = excellent, 2 = good, 1 = poor. */
+function Bars({ quality }: { quality?: string }) {
+  if (!quality || quality === "unknown") return null;
+  const n = quality === "excellent" ? 3 : quality === "good" ? 2 : quality === "poor" ? 1 : 0;
+  const tone = n >= 2 ? "bg-[#30d158]" : n === 1 ? "bg-[#ff9f0a]" : "bg-[#ff453a]";
+  return (
+    <span className="inline-flex shrink-0 items-end gap-[2px]" role="img" aria-label={`Connection: ${quality}`} title={`Connection: ${quality}`}>
+      {[1, 2, 3].map((i) => (
+        <span key={i} className={`w-[3px] rounded-sm ${i <= Math.max(n, 1) ? tone : "bg-white/30"}`} style={{ height: 3 + i * 3 }} />
+      ))}
+    </span>
+  );
+}
+
+function TileView({ track, name, avatar, big, mirror, speaking, quality }: TileProps & { speaking: boolean; quality?: string }) {
   const live = track && "publication" in track && track.publication && !track.publication.isMuted;
   const micOff = track?.participant && !track.participant.isMicrophoneEnabled;
   return (
@@ -238,6 +256,7 @@ function TileView({ track, name, avatar, big, mirror, speaking }: TileProps & { 
       <span className={`absolute bottom-3 left-3 inline-flex max-w-[80%] items-center gap-1.5 truncate rounded-full bg-black/45 px-2.5 py-1 font-medium text-white backdrop-blur-md ${big ? "text-sm" : "text-xs"}`}>
         {micOff && <MicOff size={12} className="shrink-0 text-[#ff453a]" />}
         {name}
+        <Bars quality={quality} />
       </span>
     </div>
   );
@@ -283,6 +302,43 @@ function Chat({ onClose, me }: { onClose: () => void; me: string }) {
           <Send size={17} />
         </button>
       </form>
+    </aside>
+  );
+}
+
+function DeviceSelect({ kind, label }: { kind: MediaDeviceKind; label: string }) {
+  const { devices, activeDeviceId, setActiveMediaDevice } = useMediaDeviceSelect({ kind, requestPermissions: false });
+  if (!devices.length) return null;
+  return (
+    <label className="block">
+      <span className="text-xs font-medium uppercase tracking-wide text-white/50">{label}</span>
+      <select value={activeDeviceId} onChange={(e) => void setActiveMediaDevice(e.target.value)} className="mt-1 h-11 w-full rounded-xl border-0 bg-white/10 px-3 text-[15px] text-white focus:outline-none focus:ring-2 focus:ring-[#0a84ff]">
+        {devices.map((d, i) => (
+          <option key={d.deviceId} value={d.deviceId} className="text-black">
+            {d.label || `${label} ${i + 1}`}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/** Switch microphone, camera or speaker without leaving the lesson. */
+function DevicesPanel({ onClose }: { onClose: () => void }) {
+  return (
+    <aside className="fixed inset-x-3 bottom-24 z-40 rounded-[24px] bg-[#1c1c1e]/95 p-4 ring-1 ring-white/10 backdrop-blur-2xl sm:inset-x-auto sm:bottom-32 sm:left-1/2 sm:w-[22rem] sm:-translate-x-1/2" aria-label="Camera and sound">
+      <div className="flex items-center justify-between">
+        <h2 className="text-[15px] font-semibold">Camera and sound</h2>
+        <button type="button" onClick={onClose} aria-label="Close camera and sound" className="grid h-8 w-8 place-items-center rounded-full bg-white/10 hover:bg-white/20">
+          <X size={15} />
+        </button>
+      </div>
+      <div className="mt-3 space-y-3">
+        <DeviceSelect kind="audioinput" label="Microphone" />
+        <DeviceSelect kind="videoinput" label="Camera" />
+        <DeviceSelect kind="audiooutput" label="Speaker" />
+      </div>
+      <p className="mt-3 text-xs text-white/50">Can&apos;t hear each other? Check the speaker here, and that the mic isn&apos;t muted on your headset.</p>
     </aside>
   );
 }
@@ -434,7 +490,44 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
     if (on && cam.enabled) await cam.toggle();
     setNotice(on ? "Audio only is on. Turn it off when your connection improves." : "Video is back on. Turn your camera on when you're ready.");
   }
-  const board = useBoardChannel();
+  const board = useTopicChannel<BoardMsg>("wb") as BoardChannel;
+  const boardRef = useRef<WhiteboardHandle>(null);
+  const tools = useClassTools(useTopicChannel<ToolsMsg>("tools") as ToolsChannel, lesson.role, { student: lesson.role === "student" ? lesson.me.name : lesson.other.name });
+  const studentName = lesson.role === "student" ? lesson.me.name : lesson.other.name;
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [devicesOpen, setDevicesOpen] = useState(false);
+  const [savingBoard, setSavingBoard] = useState(false);
+  const uploadFile = useCallback(
+    async (file: File) => {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/lessons/${lesson.id}/files`, { method: "POST", credentials: "include", body: fd }).catch(() => null);
+      const d = (await res?.json().catch(() => ({}))) as { url?: string | null; error?: string };
+      if (!res?.ok || !d.url) {
+        setNotice(d.error || "We couldn't add that file.");
+        return null;
+      }
+      return d.url;
+    },
+    [lesson.id],
+  );
+  async function saveBoard() {
+    setSavingBoard(true);
+    const pages = (await boardRef.current?.exportPages()) ?? [];
+    if (!pages.length) {
+      setSavingBoard(false);
+      return setNotice("There's nothing on the board to save yet.");
+    }
+    const stamp = new Date().toISOString().slice(11, 16).replace(":", "");
+    let ok = 0;
+    for (const [i, blob] of pages.entries()) if (await uploadFile(new File([blob], `board-${stamp}-page-${i + 1}.png`, { type: "image/png" }))) ok++;
+    setSavingBoard(false);
+    if (ok) {
+      setFilesKey((k) => k + 1);
+      room({ t: "files" });
+      setNotice(`Saved ${ok} board ${ok === 1 ? "page" : "pages"} to the lesson files.`);
+    }
+  }
   const myName = lesson.me.name.split(" ")[0] ?? "Someone";
   const { send: sendRoom } = useDataChannel("room", (msg) => {
     let m: RoomMsg;
@@ -519,30 +612,50 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
         </div>
       </div>
 
+      <div className="pointer-events-none absolute inset-x-0 top-14 z-20 flex justify-center px-3 sm:top-5">
+        <div className="pointer-events-auto">
+          <ClassStatus tools={tools} studentName={studentName} />
+        </div>
+      </div>
+
       {/* Stage */}
       <div className="flex min-h-0 flex-1 gap-3 p-3 pb-28 pt-16 sm:p-5 sm:pb-32 sm:pt-20">
-        {boardOpen ? (
-          <>
-            <div className="min-w-0 flex-1">
-              <Whiteboard
-                channel={board}
-                me={`${lesson.role}`}
-                onClose={() => {
-                  setBoardOpen(false);
-                  room({ t: "board", open: false });
-                }}
-              />
+        {/* The board stays mounted while closed so nothing drawn is lost. */}
+        <div className={boardOpen ? "relative flex min-w-0 flex-1 gap-3" : "hidden"}>
+          <div className="min-w-0 flex-1">
+            <Whiteboard
+              ref={boardRef}
+              channel={board}
+              me={lesson.role}
+              role={lesson.role}
+              onInsertImage={async (file) => {
+                const url = await uploadFile(file);
+                if (url) (setFilesKey((k) => k + 1), room({ t: "files" }));
+                return url;
+              }}
+              onClose={() => {
+                setBoardOpen(false);
+                room({ t: "board", open: false });
+              }}
+            />
+          </div>
+          <div className="hidden w-56 shrink-0 flex-col gap-3 lg:flex">
+            <div className="aspect-video">
+              <Tile track={remoteCam} name={lesson.other.name} avatar={lesson.other.avatar} />
             </div>
-            <div className="hidden w-56 shrink-0 flex-col gap-3 lg:flex">
-              <div className="aspect-video">
-                <Tile track={remoteCam} name={lesson.other.name} avatar={lesson.other.avatar} />
-              </div>
-              <div className="aspect-video">
-                <Tile track={localCam} name="You" avatar={lesson.me.avatar} mirror />
-              </div>
+            <div className="aspect-video">
+              <Tile track={localCam} name="You" avatar={lesson.me.avatar} mirror />
             </div>
-          </>
-        ) : share ? (
+            <button type="button" onClick={() => void saveBoard()} disabled={savingBoard} className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white/10 text-sm font-semibold text-white hover:bg-white/15 disabled:opacity-60">
+              {savingBoard ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save board to lesson files
+            </button>
+          </div>
+          {/* Phones and tablets: keep the other person in view over the board. */}
+          <div className="pointer-events-none absolute right-1 top-14 aspect-[3/4] w-20 shadow-2xl sm:w-28 lg:hidden">
+            <Tile track={remoteCam} name={lesson.other.name.split(" ")[0] ?? ""} avatar={lesson.other.avatar} />
+          </div>
+        </div>
+        {boardOpen ? null : share ? (
           <>
             <div className="min-w-0 flex-1">
               <Tile track={share} name={`${share.participant.isLocal ? "You" : share.participant.name} · screen`} avatar={null} big />
@@ -602,6 +715,9 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
           >
             <PenLine size={21} />
           </RoundButton>
+          <RoundButton label="Class tools" on={!toolsOpen} onClick={() => (setToolsOpen(!toolsOpen), setDevicesOpen(false))} badge={tools.hand && tools.role === "tutor"}>
+            <ClassToolsIcon size={21} />
+          </RoundButton>
           <RoundButton
             label="Lesson files"
             onClick={() => {
@@ -624,6 +740,9 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
           <RoundButton label="Chat" onClick={() => (setChatOpen(!chatOpen), setFilesOpen(false))} badge={unread}>
             <MessageSquare size={21} />
           </RoundButton>
+          <RoundButton label="Camera and sound" on={!devicesOpen} onClick={() => (setDevicesOpen(!devicesOpen), setToolsOpen(false))}>
+            <Settings2 size={21} />
+          </RoundButton>
           <RoundButton label="Leave" danger onClick={() => setLeaving(true)}>
             <PhoneOff size={22} />
           </RoundButton>
@@ -631,6 +750,12 @@ function Stage({ lesson, onLeave, initialRecording }: { lesson: RoomLesson; onLe
       </div>
 
       {chatOpen && <Chat onClose={() => setChatOpen(false)} me={localParticipant.name || "you"} />}
+      {toolsOpen && (
+        <div className="fixed inset-x-0 bottom-24 z-40 flex justify-center px-3 sm:bottom-32">
+          <ClassToolsMenu tools={tools} studentName={studentName} onClose={() => setToolsOpen(false)} />
+        </div>
+      )}
+      {devicesOpen && <DevicesPanel onClose={() => setDevicesOpen(false)} />}
       {filesOpen && <FilesPanel lessonId={lesson.id} refreshKey={filesKey} onClose={() => setFilesOpen(false)} onShared={() => room({ t: "files" })} />}
       {askFrom && (
         <RecordAsk

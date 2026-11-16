@@ -66,8 +66,73 @@ test("whiteboard syncs between two people, late joiners get the board", async ({
   await drawLine(b, [0.2, 0.7], [0.4, 0.8]);
   await expect(strokes(a)).toHaveAttribute("data-strokes", "1");
   a.once("dialog", (d) => d.accept());
-  await a.getByRole("button", { name: "Clear board" }).click();
+  await a.getByRole("button", { name: "Clear page" }).click();
   await expect(strokes(b)).toHaveAttribute("data-strokes", "0");
+
+  // Text: click, type, Enter.
+  await a.getByRole("button", { name: "Text", exact: true }).click();
+  const box = (await strokes(a).boundingBox())!;
+  await a.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.3);
+  await a.getByRole("textbox", { name: "Text to add" }).fill("F = ma");
+  await a.keyboard.press("Enter");
+  await expect(strokes(b)).toHaveAttribute("data-strokes", "1");
+
+  // Pages follow the tutor; each page keeps its own drawings.
+  await a.getByRole("button", { name: "Add a page" }).click();
+  await expect(strokes(b)).toHaveAttribute("data-page", "2");
+  await expect(b.getByText("Page 2 of 2")).toBeVisible();
+  await expect(strokes(b)).toHaveAttribute("data-strokes", "0");
+  await a.getByRole("button", { name: "Pen", exact: true }).click();
+  await drawLine(a, [0.2, 0.2], [0.6, 0.4]);
+  await expect(strokes(b)).toHaveAttribute("data-strokes", "1");
+  await a.getByRole("button", { name: "Previous page" }).click();
+  await expect(strokes(b)).toHaveAttribute("data-page", "1");
+  await expect(strokes(b)).toHaveAttribute("data-strokes", "1");
+  await expect(b.getByRole("button", { name: "Add a page" })).toHaveCount(0); // students don't add pages
+
+  // The tutor locks the board: the student can't draw until it's unlocked.
+  await a.getByRole("button", { name: "Lock the board" }).click();
+  await expect(b.getByText("Your tutor is using the board")).toBeVisible();
+  await expect(b.getByRole("button", { name: "Pen", exact: true })).toBeDisabled();
+  await drawLine(b, [0.5, 0.5], [0.8, 0.8]);
+  await expect(strokes(a)).toHaveAttribute("data-strokes", "1");
+  await a.getByRole("button", { name: "Let the student draw" }).click();
+  await expect(b.getByRole("button", { name: "Pen", exact: true })).toBeEnabled();
+  await b.getByRole("button", { name: "Pen", exact: true }).click();
+  await drawLine(b, [0.5, 0.5], [0.8, 0.8]);
+  await expect(strokes(a)).toHaveAttribute("data-strokes", "2");
+
+  // A picture goes onto the board.
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfz0AEYBxVSF+FABJADveWkH6oAAAAAElFTkSuQmCC", "base64");
+  await a.locator('input[type="file"][aria-label="Add a picture"]').setInputFiles({ name: "diagram.png", mimeType: "image/png", buffer: png });
+  await expect(strokes(a)).toHaveAttribute("data-strokes", "3");
+
+  // Someone joining now gets the pages, the lock state and the current page.
+  const d = await ctx.newPage();
+  await d.goto(`/dev/whiteboard?room=${room}&me=late`);
+  await expect(strokes(d)).toHaveAttribute("data-pages", "2");
+  await expect(strokes(d)).toHaveAttribute("data-strokes", "3");
+
+  // Class tools: timer and stars from the tutor, raised hand and reactions from the student.
+  await a.getByRole("button", { name: "Start a 2 minute timer" }).click();
+  await expect(b.getByTestId("class-timer")).toContainText(/^\s*(2:00|1:5\d)/);
+  await expect(b.getByRole("button", { name: /Start a \d+ minute timer/ })).toHaveCount(0);
+  await a.getByRole("button", { name: /Give Amani a star/ }).click();
+  await a.getByRole("button", { name: /Give Amani a star/ }).click();
+  await expect(b.getByTestId("class-stars")).toHaveText(/2/);
+  await expect(b.getByRole("status").filter({ hasText: "You earned a star!" })).toBeVisible();
+  await b.getByRole("button", { name: "Raise hand" }).click();
+  await expect(a.getByTestId("class-hand")).toContainText("Amani L. has a question");
+  await a.getByRole("button", { name: "Lower hand" }).click();
+  await expect(b.getByTestId("class-hand")).toHaveCount(0);
+  await b.getByRole("button", { name: "React 👏" }).click();
+  await expect(a.locator(".sb-float", { hasText: "👏" })).toBeVisible();
+  await a.getByRole("button", { name: "Stop timer" }).click();
+  await expect(b.getByTestId("class-timer")).toHaveCount(0);
+  // A late joiner sees the stars so far.
+  const e = await ctx.newPage();
+  await e.goto(`/dev/whiteboard?room=${room}&me=student`);
+  await expect(e.getByTestId("class-stars")).toHaveText(/2/);
 
   // Squared paper is shared too, and the board saves as an image.
   await a.getByRole("button", { name: "Squared paper" }).click();
