@@ -56,6 +56,8 @@ const log = (payload: Payload, to: string, mail: Mail, status: "sent" | "failed"
 /** In-app notification only. */
 export async function notify(payload: Payload, userId: number, n: { kind: string; title: string; body?: string | null; href?: string | null }) {
   await payload.create({ collection: "notifications", data: { user: userId, kind: n.kind, title: n.title, body: n.body ?? null, href: n.href ?? null }, overrideAccess: true }).catch((err) => payload.logger.error({ err }, "[notify] failed"));
+  // Also to their phone/computer, if they turned push on. Never holds up the request.
+  void import("./push").then(({ sendPush }) => sendPush(payload, userId, { title: n.title, body: n.body, href: n.href, tag: n.kind })).catch((err) => payload.logger.warn({ err }, "[push] failed"));
 }
 
 import type { NotificationView } from "./types";

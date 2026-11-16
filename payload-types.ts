@@ -82,6 +82,7 @@ export interface Config {
     conversations: Conversation;
     messages: Message;
     notifications: Notification;
+    'push-subscriptions': PushSubscription;
     'email-templates': EmailTemplate;
     'email-log': EmailLog;
     posts: Post;
@@ -117,6 +118,7 @@ export interface Config {
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     messages: MessagesSelect<false> | MessagesSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    'push-subscriptions': PushSubscriptionsSelect<false> | PushSubscriptionsSelect<true>;
     'email-templates': EmailTemplatesSelect<false> | EmailTemplatesSelect<true>;
     'email-log': EmailLogSelect<false> | EmailLogSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
@@ -1116,6 +1118,23 @@ export interface Notification {
   createdAt: string;
 }
 /**
+ * Devices that get push notifications. Removed automatically when a browser stops accepting them.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "push-subscriptions".
+ */
+export interface PushSubscription {
+  id: number;
+  user: number | User;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  device?: string | null;
+  lastSentAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Every email Sabina sends. Turn one off, or add a note that appears above its button.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1531,6 +1550,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'notifications';
         value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'push-subscriptions';
+        value: number | PushSubscription;
       } | null)
     | ({
         relationTo: 'email-templates';
@@ -2129,6 +2152,20 @@ export interface NotificationsSelect<T extends boolean = true> {
   body?: T;
   href?: T;
   readAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "push-subscriptions_select".
+ */
+export interface PushSubscriptionsSelect<T extends boolean = true> {
+  user?: T;
+  endpoint?: T;
+  p256dh?: T;
+  auth?: T;
+  device?: T;
+  lastSentAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
