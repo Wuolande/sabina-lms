@@ -98,7 +98,7 @@ export function LessonFiles({ lessonId, dark = false, refreshKey = 0, onShared }
         type="button"
         onClick={() => input.current?.click()}
         disabled={busy}
-        className={`inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold disabled:opacity-60 ${dark ? "bg-[#0a84ff] text-white" : "bg-brand-700 text-white hover:bg-brand-800"}`}
+        className={`inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold disabled:opacity-60 ${dark ? "bg-brand-700 text-white" : "bg-brand-700 text-white hover:bg-brand-800"}`}
       >
         {busy ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />} {busy ? "Sharing…" : "Share a file"}
       </button>

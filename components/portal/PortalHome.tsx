@@ -59,7 +59,7 @@ function greeting(tz: string) {
 const profileDone = (u: PortalUser) => Boolean(u.phone && u.country && u.avatarUrl);
 
 function Stat({ icon: Icon, label, value, note, tone }: { icon: LucideIcon; label: string; value: string; note: string; tone: "brand" | "accent" | "emerald" | "slate" }) {
-  const chip = { brand: "bg-brand-50 text-brand-700", accent: "bg-accent-50 text-accent-700", emerald: "bg-emerald-50 text-emerald-700", slate: "bg-slate-100 text-slate-600" }[tone];
+  const chip = { brand: "bg-brand-50 text-brand-700", accent: "bg-accent-100 text-accent-800", emerald: "bg-brand-100 text-brand-800", slate: "bg-slate-100 text-slate-600" }[tone];
   return (
     <div className="rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/70">
       <span className={`grid h-10 w-10 place-items-center rounded-xl ${chip}`}>
@@ -90,7 +90,7 @@ function Checklist({ steps }: { steps: Step[] }) {
       <ol className="mt-5 space-y-2">
         {steps.map((s) => (
           <li key={s.title} className={`flex items-center gap-4 rounded-2xl p-3.5 ${s.done ? "bg-slate-50/70" : "bg-white ring-1 ring-slate-200/80"}`}>
-            {s.done ? <CheckCircle2 className="shrink-0 text-emerald-500" size={24} /> : <Circle className="shrink-0 text-slate-300" size={24} />}
+            {s.done ? <CheckCircle2 className="shrink-0 text-brand-700" size={24} /> : <Circle className="shrink-0 text-slate-300" size={24} />}
             <div className="min-w-0 flex-1">
               <p className={`font-semibold ${s.done ? "text-slate-500 line-through decoration-slate-300" : "text-slate-900"}`}>{s.title}</p>
               <p className="text-sm text-slate-500">{s.sub}</p>

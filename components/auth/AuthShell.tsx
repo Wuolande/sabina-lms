@@ -1,17 +1,15 @@
+"use client";
 import type { ReactNode } from "react";
 import { SabinaLogo } from "@/components/brand/SabinaMark";
-
-// What each audience gets, in plain words. No invented quotes or people.
-const POINTS: Record<"student" | "tutor", string[]> = {
-  student: ["Every tutor's application is checked by our team", "Times shown in your own time zone", "Pay per lesson, no subscription"],
-  tutor: ["Students pay before the lesson", "You choose your rate and your hours", "Classroom, booking and payments handled for you"],
-};
+import { useSignInText } from "./SignInText";
 
 /**
  * Split-screen layout for sign-in and sign-up: the form on the left, a brand panel on the right
  * (hidden on phones, where the form takes the full width).
  */
 export function AuthShell({ children, audience = "student", footer }: { children: ReactNode; audience?: "student" | "tutor"; footer?: ReactNode }) {
+  const all = useSignInText();
+  const t = all[audience];
   return (
     <div className="min-h-dvh grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] bg-white">
       <div className="flex flex-col px-5 py-6 sm:px-10 lg:px-16">
@@ -23,7 +21,7 @@ export function AuthShell({ children, audience = "student", footer }: { children
         </main>
         <footer className="text-xs text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
           {footer}
-          <span>© {new Date().getFullYear()} Sabina Education</span>
+          <span>© {new Date().getFullYear()} {all.siteName}</span>
           <a href="/privacy" className="hover:text-slate-700">Privacy</a>
           <a href="/terms" className="hover:text-slate-700">Terms</a>
         </footer>
@@ -36,24 +34,18 @@ export function AuthShell({ children, audience = "student", footer }: { children
         <div className="relative z-10 flex flex-col justify-between p-12 xl:p-16 w-full">
           <div className="space-y-6 max-w-md">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide uppercase ring-1 ring-white/15">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent-400" /> Live 1-to-1 lessons
+              <span className="h-1.5 w-1.5 rounded-full bg-accent-400" /> {t.badge}
             </span>
             <h2 className="font-heading text-4xl xl:text-5xl font-bold leading-[1.08] tracking-tight">
-              {audience === "tutor" ? "Teach on your schedule. Get paid on time." : "Learn from verified tutors, live."}
+              {t.title}
             </h2>
             <p className="text-white/75 text-lg leading-relaxed">
-              {audience === "tutor"
-                ? "Set your hours and rates. Students book, pay and join the classroom in one place."
-                : "Book a lesson in minutes, meet in our built-in classroom, and track your progress."}
+              {t.text}
             </p>
           </div>
 
           <div className="grid grid-cols-3 gap-3 max-w-md">
-            {[
-              ["1-on-1", "Live lessons"],
-              ["0", "Apps to install"],
-              ["24/7", "Book any time"],
-            ].map(([n, l]) => (
+            {all.chips.map(({ value: n, label: l }) => (
               <div key={l} className="rounded-2xl bg-white/[0.07] ring-1 ring-white/10 p-4 backdrop-blur-sm">
                 <div className="font-heading text-2xl font-bold">{n}</div>
                 <div className="text-xs text-white/70 mt-0.5">{l}</div>
@@ -62,7 +54,7 @@ export function AuthShell({ children, audience = "student", footer }: { children
           </div>
 
           <ul className="max-w-md space-y-3 rounded-3xl bg-white/[0.08] p-6 ring-1 ring-white/15 backdrop-blur-md">
-            {POINTS[audience].map((p) => (
+            {t.points.map((p) => (
               <li key={p} className="flex items-start gap-3 text-[15px] leading-snug text-white/90">
                 <span aria-hidden="true" className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-accent-400 text-xs font-black text-brand-950">✓</span>
                 {p}

@@ -22,10 +22,10 @@ function BrandStyle({ s }: { s: Settings | null }) {
 /** Sabina mark: an open book with a spark, in brand blue and gold. */
 const Mark = ({ size = 28 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-    <rect width="32" height="32" rx="9" style={{ fill: "var(--brand-primary, #14209C)" }} />
+    <rect width="32" height="32" rx="9" style={{ fill: "var(--brand-primary, #0000FE)" }} />
     <path d="M7 11.5c3.2-1.4 6.2-1.2 9 .8v11c-2.8-2-5.8-2.2-9-.8v-11Z" style={{ fill: "#fff" }} opacity="0.95" />
     <path d="M25 11.5c-3.2-1.4-6.2-1.2-9 .8v11c2.8-2 5.8-2.2 9-.8v-11Z" style={{ fill: "#fff" }} opacity="0.75" />
-    <circle cx="23.5" cy="7.5" r="2.6" style={{ fill: "var(--brand-accent, #F9C31C)" }} />
+    <circle cx="23.5" cy="7.5" r="2.6" style={{ fill: "var(--brand-accent, #009EFF)" }} />
   </svg>
 );
 

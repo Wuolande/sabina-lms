@@ -86,7 +86,7 @@ function SidebarNav({ role, onNavigate }: { role: PortalRole; onNavigate?: () =>
             onClick={onNavigate}
             aria-current={active ? "page" : undefined}
             className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14.5px] font-medium transition ${
-              active ? "bg-brand-700 text-white shadow-[0_6px_18px_-8px_rgba(20,32,156,0.7)]" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              active ? "bg-brand-700 text-white shadow-[0_6px_18px_-8px_rgb(var(--brand-700)/0.7)]" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
             <NavIcon name={item.icon} className={active ? "text-white" : "text-slate-400 group-hover:text-slate-600"} />

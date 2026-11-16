@@ -77,7 +77,7 @@ export function SubmitButton({ busy, children, busyText }: { busy?: boolean; chi
     <button
       type="submit"
       disabled={busy}
-      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 text-[15px] font-semibold text-white shadow-[0_8px_24px_-8px_rgba(20,32,156,0.55)] transition hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-600/30 disabled:opacity-70"
+      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-700 px-5 text-[15px] font-semibold text-white shadow-[0_8px_24px_-8px_rgb(var(--brand-700)/0.55)] transition hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-600/30 disabled:opacity-70"
     >
       {busy && <Loader2 size={18} className="animate-spin" />}
       {busy ? busyText ?? "Please wait…" : children}

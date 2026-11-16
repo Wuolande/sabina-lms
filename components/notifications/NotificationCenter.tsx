@@ -9,11 +9,11 @@ const ICONS: { test: RegExp; icon: typeof Bell; tint: string }[] = [
   { test: /reminder/, icon: Clock, tint: "bg-amber-100 text-amber-700" },
   { test: /cancel|declined/, icon: CalendarX, tint: "bg-rose-100 text-rose-700" },
   { test: /booking|request/, icon: CalendarCheck, tint: "bg-brand-100 text-brand-700" },
-  { test: /refund/, icon: RotateCcw, tint: "bg-violet-100 text-violet-700" },
+  { test: /refund/, icon: RotateCcw, tint: "bg-accent-100 text-accent-800" },
   { test: /payment/, icon: CreditCard, tint: "bg-emerald-100 text-emerald-700" },
   { test: /payout/, icon: Wallet, tint: "bg-emerald-100 text-emerald-700" },
   { test: /review/, icon: Star, tint: "bg-yellow-100 text-yellow-700" },
-  { test: /application/, icon: GraduationCap, tint: "bg-sky-100 text-sky-700" },
+  { test: /application/, icon: GraduationCap, tint: "bg-accent-100 text-accent-800" },
 ];
 const iconFor = (kind: string) => ICONS.find((i) => i.test.test(kind)) ?? { icon: Bell, tint: "bg-slate-100 text-slate-600" };
 

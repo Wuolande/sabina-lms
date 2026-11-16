@@ -13,7 +13,7 @@ export function DevCheckout({ reference, amount, currency }: { reference: string
   }
   return (
     <div className="mx-auto max-w-md rounded-3xl bg-white p-8 ring-1 ring-slate-200/70">
-      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-violet-50 text-violet-600">
+      <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 text-brand-700">
         <FlaskConical size={26} />
       </span>
       <h1 className="mt-4 font-heading text-2xl font-bold text-slate-900">Test checkout</h1>

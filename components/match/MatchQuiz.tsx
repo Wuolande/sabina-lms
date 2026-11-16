@@ -120,7 +120,7 @@ export function MatchQuiz({
 
         <ol className="mt-10 grid gap-5 md:grid-cols-3">
           {result.matches.map((m, i) => (
-            <li key={m.tutor.id} className={`relative flex flex-col rounded-3xl bg-white p-5 ring-1 sm:p-6 ${i === 0 ? "shadow-[0_20px_50px_-30px_rgba(20,32,156,0.5)] ring-2 ring-brand-600" : "ring-slate-200/70"}`}>
+            <li key={m.tutor.id} className={`relative flex flex-col rounded-3xl bg-white p-5 ring-1 sm:p-6 ${i === 0 ? "shadow-[0_20px_50px_-30px_rgb(var(--brand-700)/0.5)] ring-2 ring-brand-600" : "ring-slate-200/70"}`}>
               {i === 0 && <span className="absolute -top-3 left-5 rounded-full bg-brand-700 px-3 py-1 text-xs font-semibold text-white">Best match</span>}
               <div className="flex items-center gap-3">
                 {m.tutor.photo ? (

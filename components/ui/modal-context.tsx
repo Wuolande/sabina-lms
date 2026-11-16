@@ -236,14 +236,14 @@ export function ModalProvider({ children }: ModalProviderProps) {
         );
       case 'primary':
         return (
-          <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-[#14209C] dark:text-indigo-400 ring-8 ring-indigo-500/10 border border-indigo-200/80 dark:border-indigo-900/50 shrink-0">
+          <div className="p-3 rounded-2xl bg-brand-50 dark:bg-brand-950/50 text-brand-700 dark:text-brand-400 ring-8 ring-brand-500/10 border border-brand-200/80 dark:border-brand-900/50 shrink-0">
             <HelpCircle className="w-6 h-6 stroke-[2.2]" />
           </div>
         );
       case 'info':
       default:
         return (
-          <div className="p-3 rounded-2xl bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 ring-8 ring-sky-500/10 border border-sky-200/80 dark:border-sky-900/50 shrink-0">
+          <div className="p-3 rounded-2xl bg-accent-50 dark:bg-accent-950/50 text-accent-600 dark:text-accent-400 ring-8 ring-accent-500/10 border border-accent-200/80 dark:border-accent-900/50 shrink-0">
             <Info className="w-6 h-6 stroke-[2.2]" />
           </div>
         );
@@ -260,7 +260,7 @@ export function ModalProvider({ children }: ModalProviderProps) {
         return 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-md shadow-emerald-600/20 focus:ring-emerald-500';
       case 'primary':
       default:
-        return 'bg-[#14209C] hover:bg-[#0f1877] active:bg-[#0b1259] text-white shadow-md shadow-indigo-950/20 focus:ring-indigo-500';
+        return 'bg-brand-700 hover:bg-brand-800 active:bg-brand-900 text-white shadow-md shadow-brand-950/20 focus:ring-brand-500';
     }
   };
 
@@ -640,14 +640,14 @@ function ToastItemView({ toast, onDismiss }: ToastItemViewProps) {
         );
       case 'primary':
         return (
-          <div className="p-2 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-[#14209C] dark:text-indigo-400 shrink-0">
+          <div className="p-2 rounded-xl bg-brand-100 dark:bg-brand-950/60 text-brand-700 dark:text-brand-400 shrink-0">
             <HelpCircle className="w-4.5 h-4.5 stroke-[2.5]" />
           </div>
         );
       case 'info':
       default:
         return (
-          <div className="p-2 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 shrink-0">
+          <div className="p-2 rounded-xl bg-accent-100 dark:bg-accent-950/60 text-accent-600 dark:text-accent-400 shrink-0">
             <Info className="w-4.5 h-4.5 stroke-[2.5]" />
           </div>
         );
@@ -663,10 +663,10 @@ function ToastItemView({ toast, onDismiss }: ToastItemViewProps) {
       case 'warning':
         return 'bg-amber-500';
       case 'primary':
-        return 'bg-[#14209C]';
+        return 'bg-brand-700';
       case 'info':
       default:
-        return 'bg-sky-500';
+        return 'bg-accent-500';
     }
   };
 

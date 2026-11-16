@@ -25,42 +25,25 @@ import {
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/Logo";
 
-const mainNavLinks = [
-  { href: "/find-tutors", label: "Find Tutors" },
-  { href: "/subjects", label: "Subjects" },
-  { href: "/how-it-works", label: "How It Works" },
-  { href: "/become-a-tutor", label: "Become a Tutor" },
-  { href: "/about", label: "About Us" },
-  { href: "/blog", label: "Blog" },
-];
+export type MenuText = {
+  links: { label: string; href: string }[];
+  portalsLabel: string;
+  studentLabel: string;
+  studentText: string;
+  tutorLabel: string;
+  tutorText: string;
+  secondary: { label: string; href: string }[];
+};
 
-const portalItems = [
-  {
-    href: "/student",
-    label: "Student Portal",
-    sub: "Manage lessons, streak & messages",
-    icon: GraduationCap,
-    badge: "Student",
-    color: "text-brand",
-    bg: "bg-brand/10 group-hover:bg-brand/20",
-  },
-  {
-    href: "/tutor",
-    label: "Tutor Portal",
-    sub: "Calendar, availability & earnings",
-    icon: Briefcase,
-    badge: "Tutor",
-    color: "text-emerald-700",
-    bg: "bg-emerald-50 group-hover:bg-emerald-100",
-  },
-];
+const SECONDARY_ICONS = [Info, LifeBuoy];
 
-const secondaryLinks = [
-  { href: "/about", label: "About Us", icon: Info },
-  { href: "/contact", label: "Contact Support", icon: LifeBuoy },
-];
-
-export function Navbar() {
+export function Navbar({ menu }: { menu: MenuText }) {
+  const mainNavLinks = menu.links;
+  const portalItems = [
+    { href: "/student", label: menu.studentLabel, sub: menu.studentText, icon: GraduationCap, badge: "Student", color: "text-brand-700", bg: "bg-brand-50 group-hover:bg-brand-100" },
+    { href: "/tutor", label: menu.tutorLabel, sub: menu.tutorText, icon: Briefcase, badge: "Tutor", color: "text-accent-700", bg: "bg-accent-50 group-hover:bg-accent-100" },
+  ];
+  const secondaryLinks = menu.secondary.map((l, i) => ({ ...l, icon: SECONDARY_ICONS[i % SECONDARY_ICONS.length]! }));
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [portalsOpen, setPortalsOpen] = React.useState(false);
@@ -170,7 +153,7 @@ export function Navbar() {
               )}
               aria-expanded={portalsOpen}
             >
-              <span>Portals & Hubs</span>
+              <span>{menu.portalsLabel}</span>
               <ChevronDown
                 className={cn(
                   "h-3.5 w-3.5 transition-transform duration-200",
@@ -184,7 +167,7 @@ export function Navbar() {
               <div className="absolute left-0 top-full pt-2 z-50 w-72 animate-fade-in-scale">
                 <div className="rounded-2xl border border-slate-100 bg-white p-2 shadow-elevation-lg">
                   <div className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">
-                    Application Workspaces
+                    {menu.portalsLabel}
                   </div>
 
                   <div className="space-y-1">

@@ -177,7 +177,7 @@ export default async function FindTutorsPage({ searchParams }: Props) {
                     key={key}
                     href={href({ sort: key === "recommended" ? undefined : key })}
                     aria-current={result.sort === key ? "true" : undefined}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ${result.sort === key ? "bg-slate-900 text-white ring-slate-900" : "bg-white text-slate-600 ring-slate-200 hover:text-slate-900"}`}
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ring-1 ${result.sort === key ? "bg-brand-700 text-white ring-brand-700" : "bg-white text-slate-600 ring-slate-200 hover:text-slate-900"}`}
                   >
                     {s.label}
                   </Link>

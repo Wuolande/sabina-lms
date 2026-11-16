@@ -122,7 +122,7 @@ export function SplitHandle({
       className={`group relative z-10 flex w-3 shrink-0 cursor-col-resize touch-none select-none items-center justify-center outline-none ${className}`}
     >
       <span
-        className={`h-12 w-1 rounded-full transition ${active ? "bg-[#0a84ff]" : light ? "bg-slate-300 group-hover:bg-slate-400 group-focus-visible:bg-[#0a84ff]" : "bg-white/20 group-hover:bg-white/50 group-focus-visible:bg-[#0a84ff]"}`}
+        className={`h-12 w-1 rounded-full transition ${active ? "bg-accent-400" : light ? "bg-slate-300 group-hover:bg-slate-400 group-focus-visible:bg-accent-400" : "bg-white/20 group-hover:bg-white/50 group-focus-visible:bg-accent-400"}`}
       />
     </div>
   );

@@ -3,8 +3,9 @@ import { Plus_Jakarta_Sans, Outfit } from "next/font/google";
 import "./globals.css";
 import { ModalProvider } from "@/components/ui/modal-context";
 import { LogoProvider } from "@/components/ui/LogoContext";
-import { ThemeSynchronizer } from "@/components/ui/ThemeSynchronizer";
 import { getPlatformSeo } from "@/src/shared/seo/platformSeo";
+import { brandCss } from "@/cms/brand";
+import { siteChrome } from "@/cms/content/server";
 
 const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -20,13 +21,10 @@ const heading = Outfit({
   display: "swap",
 });
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  maximumScale: 5,
-  viewportFit: "cover",
-  themeColor: "#14209C",
-};
+export async function generateViewport(): Promise<Viewport> {
+  const seo = await getPlatformSeo();
+  return { width: "device-width", initialScale: 1, maximumScale: 5, viewportFit: "cover", themeColor: seo.colours.primary };
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
@@ -40,14 +38,14 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(baseUrl),
     title: {
       default: seo.metaTitle,
-      template: "%s | Sabina Education",
+      template: `%s | ${seo.siteName}`,
     },
     description: seo.metaDescription,
     keywords: seo.keywords,
-    authors: [{ name: "Sabina Education", url: baseUrl }],
-    creator: "Sabina Education",
-    publisher: "Sabina Education",
-    applicationName: "Sabina",
+    authors: [{ name: seo.siteName, url: baseUrl }],
+    creator: seo.siteName,
+    publisher: seo.siteName,
+    applicationName: seo.siteName,
     formatDetection: {
       email: false,
       address: false,
@@ -72,7 +70,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       locale: "en_US",
       url: baseUrl,
-      siteName: "Sabina Education",
+      siteName: seo.siteName,
       title: seo.metaTitle,
       description: seo.metaDescription,
       images: [
@@ -88,7 +86,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: "summary_large_image",
       title: seo.metaTitle,
       description: seo.metaDescription,
-      creator: seo.twitterHandle || "@SabinaLMS",
+      ...(seo.twitterHandle ? { creator: seo.twitterHandle } : {}),
       images: [ogImage],
     },
     verification: {
@@ -125,34 +123,27 @@ export default async function RootLayout({
   const seo = await getPlatformSeo();
   const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
 
-  const cssVars = `:root{--color-primary:${seo.primaryColor};--color-secondary:${seo.secondaryColor};}`;
+  const cssVars = brandCss(seo.colours, "site");
+  const site = await siteChrome();
   const favicon = seo.faviconUrl || "/favicon.svg";
   const appleIcon = seo.appleTouchIconUrl || "/apple-touch-icon.png";
 
+  // Only facts we hold: name, address, logo and the social profiles set in Site settings.
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
-    name: "Sabina Education",
+    name: site.name,
     url: baseUrl,
     logo: seo.logoUrl || `${baseUrl}/images/og-default.png`,
     description: seo.metaDescription,
-    sameAs: [
-      seo.twitterHandle ? `https://twitter.com/${seo.twitterHandle.replace('@', '')}` : "https://twitter.com/SabinaLMS",
-      "https://www.linkedin.com/company/sabina-education",
-    ],
-    offers: {
-      "@type": "AggregateOffer",
-      priceCurrency: "USD",
-      lowPrice: "15",
-      highPrice: "120",
-      offerCount: "500",
-    },
+    ...(site.social.length ? { sameAs: site.social.map((s) => s.href) } : {}),
+    ...(site.supportEmail ? { email: site.supportEmail } : {}),
   };
 
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Sabina Education",
+    name: site.name,
     url: baseUrl,
     potentialAction: {
       "@type": "SearchAction",
@@ -170,8 +161,8 @@ export default async function RootLayout({
         <link rel="icon" href={favicon} />
         <link rel="apple-touch-icon" href={appleIcon} />
         {/* RSS 2.0 & Atom Feed Alternate Links */}
-        <link rel="alternate" type="application/rss+xml" title="Sabina Education RSS Feed" href={`${baseUrl}/rss.xml`} />
-        <link rel="alternate" type="application/atom+xml" title="Sabina Education Atom Feed" href={`${baseUrl}/feed.xml`} />
+        <link rel="alternate" type="application/rss+xml" title={`${site.name} RSS feed`} href={`${baseUrl}/rss.xml`} />
+        <link rel="alternate" type="application/atom+xml" title={`${site.name} Atom feed`} href={`${baseUrl}/feed.xml`} />
         {/* Schema.org Organization & WebSite JSON-LD */}
         <script
           type="application/ld+json"
@@ -183,7 +174,6 @@ export default async function RootLayout({
         />
       </head>
       <body suppressHydrationWarning className="flex min-h-full w-full max-w-[100vw] overflow-x-clip flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-100 selection:text-brand-900">
-        <ThemeSynchronizer initialPrimary={seo.primaryColor} initialSecondary={seo.secondaryColor} />
         <LogoProvider initialLogoUrl={seo.logoUrl}>
           <ModalProvider>
             {children}

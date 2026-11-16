@@ -149,11 +149,13 @@ export interface Config {
     'site-settings': SiteSetting;
     'platform-settings': PlatformSetting;
     'home-page': HomePage;
+    'site-text': SiteText;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     'platform-settings': PlatformSettingsSelect<false> | PlatformSettingsSelect<true>;
     'home-page': HomePageSelect<false> | HomePageSelect<true>;
+    'site-text': SiteTextSelect<false> | SiteTextSelect<true>;
   };
   locale: null;
   widgets: {
@@ -2850,6 +2852,188 @@ export interface HomePage {
   createdAt?: string | null;
 }
 /**
+ * Change the wording on these pages. Tags in braces are filled in with your live settings: {siteName} {cancelHours} {trialMinutes} {lessonLengths} {earlyJoin} {tutorShare} {fee} {minRate} {maxRate} {payoutDays} {minPayout} {lateRefundSentence}.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-text".
+ */
+export interface SiteText {
+  id: number;
+  menu?: {
+    /**
+     * Leave empty to use the default shown in grey. Default: Find tutors, Subjects, How it works, Become a tutor, About us, Blog.
+     */
+    links?:
+      | {
+          label: string;
+          /**
+           * A page on this site, e.g. /find-tutors
+           */
+          href: string;
+          id?: string | null;
+        }[]
+      | null;
+    portalsLabel?: string | null;
+    studentLabel?: string | null;
+    studentText?: string | null;
+    tutorLabel?: string | null;
+    tutorText?: string | null;
+    /**
+     * Leave empty to use the default shown in grey. Default: About us, Contact us.
+     */
+    secondary?:
+      | {
+          label: string;
+          /**
+           * A page on this site, e.g. /find-tutors
+           */
+          href: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  footer?: {
+    /**
+     * Leave empty to use the default shown in grey. Default: Every tutor checked by our team · Secure payments · Times shown in your time zone
+     */
+    trust?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    subjectsTitle?: string | null;
+    learnTitle?: string | null;
+    companyTitle?: string | null;
+    /**
+     * Leave empty to use the default shown in grey. Default: Find a tutor, Get matched, Become a tutor, How it works, Pricing, Blog.
+     */
+    learnLinks?:
+      | {
+          label: string;
+          /**
+           * A page on this site, e.g. /find-tutors
+           */
+          href: string;
+          id?: string | null;
+        }[]
+      | null;
+    /**
+     * Leave empty to use the default shown in grey. Default: About us, Contact us, Privacy policy, Terms of service, Refund policy, Cookie policy.
+     */
+    companyLinks?:
+      | {
+          label: string;
+          /**
+           * A page on this site, e.g. /find-tutors
+           */
+          href: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  howItWorks?: {
+    badge?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    /**
+     * Leave empty to use the default shown in grey. Default: Find your tutor · Book a time · Learn live in your browser · Keep track of progress
+     */
+    steps?:
+      | {
+          title: string;
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    payBadge?: string | null;
+    payTitle?: string | null;
+    payText?: string | null;
+    cta?: string | null;
+    secondaryCta?: string | null;
+  };
+  becomeTutor?: {
+    badge?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    cta?: string | null;
+    calcEyebrow?: string | null;
+    calcTitle?: string | null;
+    reasonsTitle?: string | null;
+    /**
+     * Leave empty to use the default shown in grey. Default: Keep {tutorShare}% of every lesson · Your rate, your hours · A classroom that's ready
+     */
+    reasons?:
+      | {
+          title: string;
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    stepsTitle?: string | null;
+    /**
+     * Leave empty to use the default shown in grey. Default: Create your account · Tell us about your teaching · Get approved and start teaching
+     */
+    steps?:
+      | {
+          title: string;
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  contact?: {
+    badge?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    sideTitle?: string | null;
+    sentTitle?: string | null;
+    sentText?: string | null;
+  };
+  signIn?: {
+    student?: {
+      badge?: string | null;
+      title?: string | null;
+      text?: string | null;
+      /**
+       * Leave empty to use the default shown in grey. Default: Every tutor's application is checked by our team · Times shown in your own time zone · Pay per lesson, no subscription
+       */
+      points?:
+        | {
+            text: string;
+            id?: string | null;
+          }[]
+        | null;
+    };
+    tutor?: {
+      badge?: string | null;
+      title?: string | null;
+      text?: string | null;
+      /**
+       * Leave empty to use the default shown in grey. Default: Students pay before the lesson · You choose your rate and your hours · Classroom, booking and payments handled for you
+       */
+      points?:
+        | {
+            text: string;
+            id?: string | null;
+          }[]
+        | null;
+    };
+    /**
+     * Leave empty to use the default shown in grey. Default: 1-on-1 Live lessons · 0 Apps to install · 24/7 Book any time
+     */
+    chips?:
+      | {
+          value: string;
+          label: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
@@ -3080,6 +3264,157 @@ export interface HomePageSelect<T extends boolean = true> {
                     a?: T;
                     id?: T;
                   };
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-text_select".
+ */
+export interface SiteTextSelect<T extends boolean = true> {
+  menu?:
+    | T
+    | {
+        links?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              id?: T;
+            };
+        portalsLabel?: T;
+        studentLabel?: T;
+        studentText?: T;
+        tutorLabel?: T;
+        tutorText?: T;
+        secondary?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              id?: T;
+            };
+      };
+  footer?:
+    | T
+    | {
+        trust?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        subjectsTitle?: T;
+        learnTitle?: T;
+        companyTitle?: T;
+        learnLinks?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              id?: T;
+            };
+        companyLinks?:
+          | T
+          | {
+              label?: T;
+              href?: T;
+              id?: T;
+            };
+      };
+  howItWorks?:
+    | T
+    | {
+        badge?: T;
+        title?: T;
+        intro?: T;
+        steps?:
+          | T
+          | {
+              title?: T;
+              text?: T;
+              id?: T;
+            };
+        payBadge?: T;
+        payTitle?: T;
+        payText?: T;
+        cta?: T;
+        secondaryCta?: T;
+      };
+  becomeTutor?:
+    | T
+    | {
+        badge?: T;
+        title?: T;
+        intro?: T;
+        cta?: T;
+        calcEyebrow?: T;
+        calcTitle?: T;
+        reasonsTitle?: T;
+        reasons?:
+          | T
+          | {
+              title?: T;
+              text?: T;
+              id?: T;
+            };
+        stepsTitle?: T;
+        steps?:
+          | T
+          | {
+              title?: T;
+              text?: T;
+              id?: T;
+            };
+      };
+  contact?:
+    | T
+    | {
+        badge?: T;
+        title?: T;
+        intro?: T;
+        sideTitle?: T;
+        sentTitle?: T;
+        sentText?: T;
+      };
+  signIn?:
+    | T
+    | {
+        student?:
+          | T
+          | {
+              badge?: T;
+              title?: T;
+              text?: T;
+              points?:
+                | T
+                | {
+                    text?: T;
+                    id?: T;
+                  };
+            };
+        tutor?:
+          | T
+          | {
+              badge?: T;
+              title?: T;
+              text?: T;
+              points?:
+                | T
+                | {
+                    text?: T;
+                    id?: T;
+                  };
+            };
+        chips?:
+          | T
+          | {
+              value?: T;
+              label?: T;
+              id?: T;
             };
       };
   updatedAt?: T;

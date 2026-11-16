@@ -100,11 +100,11 @@ export function MiniBoardPanel({ mini, channel, me, onCopy, light = false }: { m
         </div>
         <footer className="flex flex-wrap gap-2">
           {tutor ? (
-            <button type="button" onClick={onCopy} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#0a84ff] px-4 text-sm font-semibold text-white">
+            <button type="button" onClick={onCopy} className="inline-flex h-10 items-center gap-2 rounded-full bg-brand-700 px-4 text-sm font-semibold text-white">
               <CopyPlus size={16} /> Copy to the board
             </button>
           ) : (
-            <button type="button" onClick={mini.handIn} disabled={mini.done} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#0a84ff] px-4 text-sm font-semibold text-white disabled:opacity-50">
+            <button type="button" onClick={mini.handIn} disabled={mini.done} className="inline-flex h-10 items-center gap-2 rounded-full bg-brand-700 px-4 text-sm font-semibold text-white disabled:opacity-50">
               <Send size={15} /> {mini.done ? "Handed in" : "Hand in"}
             </button>
           )}

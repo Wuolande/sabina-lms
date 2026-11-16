@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarClock, Lock, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
-import { siteChrome, type SocialKey } from "@/cms/content/server";
+import { siteChrome, siteText, type SocialKey } from "@/cms/content/server";
 
 const ICONS: Record<SocialKey, string> = {
   x: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
@@ -12,29 +12,7 @@ const ICONS: Record<SocialKey, string> = {
   tiktok: "M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z",
 };
 
-const trustItems = [
-  { icon: ShieldCheck, label: "Every tutor checked by our team" },
-  { icon: Lock, label: "Secure payments" },
-  { icon: CalendarClock, label: "Times shown in your time zone" },
-];
-
-const platformLinks = [
-  { href: "/find-tutors", label: "Find a tutor" },
-  { href: "/match", label: "Get matched" },
-  { href: "/become-a-tutor", label: "Become a tutor" },
-  { href: "/how-it-works", label: "How it works" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/blog", label: "Blog" },
-];
-
-const companyLinks = [
-  { href: "/about", label: "About us" },
-  { href: "/contact", label: "Contact us" },
-  { href: "/privacy", label: "Privacy policy" },
-  { href: "/terms", label: "Terms of service" },
-  { href: "/refund-policy", label: "Refund policy" },
-  { href: "/cookies", label: "Cookie policy" },
-];
+const TRUST_ICONS = [ShieldCheck, Lock, CalendarClock];
 
 function Column({ title, links }: { title: string; links: { href: string; label: string; accent?: boolean }[] }) {
   return (
@@ -54,25 +32,29 @@ function Column({ title, links }: { title: string; links: { href: string; label:
 }
 
 export async function Footer() {
-  const site = await siteChrome();
+  const [site, all] = await Promise.all([siteChrome(), siteText()]);
+  const t = all.footer;
   const subjectLinks = [
     ...site.footerSubjects.map((s) => ({ href: `/subjects/${s.slug}`, label: s.name })),
     { href: "/subjects", label: site.subjectCount > 5 ? `All ${site.subjectCount} subjects →` : "All subjects →", accent: true },
   ];
   return (
-    <footer className="bg-slate-950 text-slate-300">
-      <div className="border-b border-slate-800/60">
+    <footer className="bg-brand-950 text-slate-300">
+      <div className="border-b border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
           <Logo size="default" variant="dark" href="/" />
           <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
-            {trustItems.map(({ icon: Icon, label }) => (
+            {t.trust.map((label, i) => {
+              const Icon = TRUST_ICONS[i % TRUST_ICONS.length]!;
+              return (
               <li key={label} className="flex items-center gap-2 text-xs font-semibold text-slate-400">
-                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-800">
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-white/10">
                   <Icon className="h-3.5 w-3.5 text-accent" aria-hidden="true" />
                 </span>
                 {label}
               </li>
-            ))}
+              );
+            })}
           </ul>
         </div>
       </div>
@@ -105,7 +87,7 @@ export async function Footer() {
               <ul className="flex flex-wrap items-center gap-2">
                 {site.social.map((s) => (
                   <li key={s.key}>
-                    <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900 text-slate-400 transition-all hover:border-slate-600 hover:text-white">
+                    <a href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 transition-all hover:border-white/30 hover:text-white">
                       <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path d={ICONS[s.key]} />
                       </svg>
@@ -115,13 +97,13 @@ export async function Footer() {
               </ul>
             )}
           </div>
-          {site.footerSubjects.length > 0 && <Column title="Subjects" links={subjectLinks} />}
-          <Column title="Learn and teach" links={platformLinks} />
-          <Column title="Company" links={companyLinks} />
+          {site.footerSubjects.length > 0 && <Column title={t.subjectsTitle} links={subjectLinks} />}
+          <Column title={t.learnTitle} links={t.learnLinks} />
+          <Column title={t.companyTitle} links={t.companyLinks} />
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-800 pt-6 sm:flex-row">
-          <p className="text-xs text-slate-500">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
+          <p className="text-xs text-slate-400">
             © {new Date().getFullYear()} {site.name}. All rights reserved.
           </p>
         </div>

@@ -16,6 +16,8 @@ import * as migration_20261113_090219_classroom_files_recording from './20261113
 import * as migration_20261116_104415_push_subscriptions from './20261116_104415_push_subscriptions';
 import * as migration_20261116_105627_text_reminders from './20261116_105627_text_reminders';
 import * as migration_20261116_120638_contact_and_social from './20261116_120638_contact_and_social';
+import * as migration_20261116_123512_brand_colours from './20261116_123512_brand_colours';
+import * as migration_20261116_124104_page_wording from './20261116_124104_page_wording';
 
 export const migrations = [
   {
@@ -106,6 +108,16 @@ export const migrations = [
   {
     up: migration_20261116_120638_contact_and_social.up,
     down: migration_20261116_120638_contact_and_social.down,
-    name: '20261116_120638_contact_and_social'
+    name: '20261116_120638_contact_and_social',
+  },
+  {
+    up: migration_20261116_123512_brand_colours.up,
+    down: migration_20261116_123512_brand_colours.down,
+    name: '20261116_123512_brand_colours',
+  },
+  {
+    up: migration_20261116_124104_page_wording.up,
+    down: migration_20261116_124104_page_wording.down,
+    name: '20261116_124104_page_wording'
   },
 ];

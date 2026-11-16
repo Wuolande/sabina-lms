@@ -67,13 +67,13 @@ export async function DashboardView({ initPageResult, searchParams }: AdminViewS
             <Sparkline data={d.signups.spark} color="#FFFFFF" height={56} />
             <div className="ep-hero__split" aria-label={`${d.totals.students} students, ${d.totals.tutors} tutors, ${d.totals.staff} staff`}>
               <div className="ep-hero__bar" aria-hidden="true">
-                <i style={{ width: share(d.totals.students), background: "#7B95F0" }} />
-                <i style={{ width: share(d.totals.tutors), background: "var(--brand-accent, #F9C31C)" }} />
+                <i style={{ width: share(d.totals.students), background: "var(--brand-primary, #0000FE)" }} />
+                <i style={{ width: share(d.totals.tutors), background: "var(--brand-accent, #009EFF)" }} />
                 <i style={{ width: share(d.totals.staff), background: "#34D399" }} />
               </div>
               <div className="ep-hero__legend">
-                <span><i style={{ background: "#7B95F0" }} />Students <b>{d.totals.students}</b></span>
-                <span><i style={{ background: "var(--brand-accent, #F9C31C)" }} />Tutors <b>{d.totals.tutors}</b></span>
+                <span><i style={{ background: "var(--brand-primary, #0000FE)" }} />Students <b>{d.totals.students}</b></span>
+                <span><i style={{ background: "var(--brand-accent, #009EFF)" }} />Tutors <b>{d.totals.tutors}</b></span>
                 <span><i style={{ background: "#34D399" }} />Staff <b>{d.totals.staff}</b></span>
               </div>
             </div>

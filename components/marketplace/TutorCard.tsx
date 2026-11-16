@@ -37,7 +37,7 @@ export function Rating({ tutor }: { tutor: Pick<PublicTutor, "rating" | "reviewC
 /** Marketplace card: photo, name, headline, subjects, languages, price. The whole card links to the profile. */
 export function TutorCard({ tutor, currency, saved, signedIn, showSave = true }: { tutor: PublicTutor; currency: string; saved?: boolean; signedIn: boolean; showSave?: boolean }) {
   return (
-    <article className="group relative flex flex-col rounded-3xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgba(20,32,156,0.35)] hover:ring-brand-200">
+    <article className="group relative flex flex-col rounded-3xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-20px_rgb(var(--brand-700)/0.35)] hover:ring-brand-200">
       <div className="flex gap-4">
         <div className="relative shrink-0">
           <TutorAvatar tutor={tutor} size={84} />

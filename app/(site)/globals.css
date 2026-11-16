@@ -13,18 +13,18 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 8%;
 
-    /* Brand: #14209C */
-    --primary: 234 77% 35%;
+    /* Brand: #0000FE */
+    --primary: 240 100% 50%;
     --primary-foreground: 0 0% 100%;
 
-    /* Accent: #F9C31C */
-    --secondary: 45 95% 54%;
+    /* Accent: #009EFF */
+    --secondary: 203 100% 50%;
     --secondary-foreground: 222 47% 8%;
 
     --muted: 220 14% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 45 95% 54%;
+    --accent: 203 100% 50%;
     --accent-foreground: 222 47% 8%;
 
     --destructive: 0 84% 60%;
@@ -32,7 +32,40 @@
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 234 77% 35%;
+    --ring: 240 100% 50%;
+
+    /* Brand defaults (cms/brand.ts). The layout overrides these with the colours saved in Site settings. */
+    --brand-primary:#0000FE;
+    --brand-primary-light:#009EFF;
+    --brand-primary-dark:#00007A;
+    --brand-accent:#009EFF;
+    --brand-accent-dark:#0077C2;
+    --brand-success:#10B981;
+    --brand-50:237 248 255;
+    --brand-100:214 239 255;
+    --brand-200:173 224 255;
+    --brand-300:115 202 255;
+    --brand-400:0 126 255;
+    --brand-500:0 87 255;
+    --brand-600:0 44 254;
+    --brand-700:0 0 254;
+    --brand-800:0 0 191;
+    --brand-900:0 0 132;
+    --brand-950:0 0 76;
+    --accent-50:237 248 255;
+    --accent-100:209 238 255;
+    --accent-200:163 220 255;
+    --accent-300:92 193 255;
+    --accent-400:0 158 255;
+    --accent-500:0 139 224;
+    --accent-600:0 119 191;
+    --accent-700:0 95 153;
+    --accent-800:0 71 115;
+    --accent-900:0 51 82;
+    --accent-950:0 32 51;
+    --color-primary:#0000FE;
+    --color-secondary:#009EFF;
+
 
     --radius: 0.75rem;
 
@@ -118,12 +151,12 @@
   /* Gradient text */
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, var(--color-primary) 0%, #2a4ed6 50%, #10B981 100%);
+    background-image: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
   }
 
   .text-gradient-gold {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #e9a706 0%, var(--color-secondary) 60%, #fef489 100%);
+    background-image: linear-gradient(135deg, var(--brand-accent-dark) 0%, var(--brand-accent) 100%);
   }
 
   /* Glass card */

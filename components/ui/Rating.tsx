@@ -61,9 +61,9 @@ export function Rating({
                   starSize,
                   "transition-colors",
                   isFilled
-                    ? "fill-accent-400 text-accent-500"
+                    ? "fill-amber-400 text-amber-500"
                     : isHalf
-                    ? "fill-accent-200 text-accent-500"
+                    ? "fill-amber-200 text-amber-500"
                     : "fill-slate-100 text-slate-300"
                 )}
               />

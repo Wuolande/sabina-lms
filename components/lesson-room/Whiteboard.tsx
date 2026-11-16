@@ -36,7 +36,7 @@ export type WhiteboardHandle = {
 const RATIO = 10 / 16;
 const MAX_PAGES = 40;
 const MAX_PDF_PAGES = 20;
-const COLORS = ["#0f172a", "#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#9333ea"];
+const COLORS = ["#0f172a", "#0000FE", "#009EFF", "#dc2626", "#16a34a", "#f59e0b"];
 const SIZES = [2, 4, 8];
 const round = (n: number) => Math.round(n * 10000) / 10000;
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -619,7 +619,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, Props>(function Whiteboar
                 if (e.key === "Escape") setTyping(null);
               }}
               placeholder="Type, then press Enter"
-              className="absolute resize-none rounded-md border border-dashed border-sky-500 bg-white/90 px-1 outline-none"
+              className="absolute resize-none rounded-md border border-dashed border-accent-400 bg-white/90 px-1 outline-none"
               style={{ left: typing.x * size.w - 5, top: typing.y * size.h - 3, color, fontSize: fontPx, lineHeight: 1.25, minWidth: 160, maxWidth: size.w - typing.x * size.w }}
             />
           )}

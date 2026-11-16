@@ -109,7 +109,7 @@ function RoundButton({ on = true, danger, label, onClick, children, disabled, ba
       }`}
     >
       {children}
-      {badge && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-[#0a84ff] ring-2 ring-[#1c1c1e]" />}
+      {badge && <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-accent-400 ring-2 ring-[#1c1c1e]" />}
     </button>
   );
 }
@@ -201,7 +201,7 @@ function Lobby({ lesson, mic, cam, setMic, setCam, onJoin, joining, error }: { l
               type="button"
               onClick={onJoin}
               disabled={!open || joining}
-              className="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#0a84ff] text-[17px] font-semibold text-white transition hover:bg-[#409cff] active:scale-[0.99] disabled:bg-white/10 disabled:text-white/40"
+              className="inline-flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-brand-700 text-[17px] font-semibold text-white transition hover:bg-brand-600 active:scale-[0.99] disabled:bg-white/10 disabled:text-white/40"
             >
               {joining && <Loader2 size={18} className="animate-spin" />}
               {open ? "Join lesson" : `Opens at ${fmtTime(opens, lesson.tz)}`}
@@ -247,7 +247,7 @@ function TileView({ track, name, avatar, big, mirror, speaking, quality }: TileP
   const live = track && "publication" in track && track.publication && !track.publication.isMuted;
   const micOff = track?.participant && !track.participant.isMicrophoneEnabled;
   return (
-    <div className={`relative h-full w-full overflow-hidden bg-[#1c1c1e] ${big ? "rounded-[28px]" : "rounded-2xl"} ring-2 transition ${speaking ? "ring-[#30d158]" : "ring-white/5"}`}>
+    <div className={`relative h-full w-full overflow-hidden bg-[#1c1c1e] ${big ? "rounded-[28px]" : "rounded-2xl"} ring-2 transition ${speaking ? "ring-accent-400" : "ring-white/5"}`}>
       {live ? (
         <VideoTrack trackRef={track as never} className={`h-full w-full ${track!.source === Track.Source.ScreenShare ? "object-contain" : "object-cover"} ${mirror ? "-scale-x-100" : ""}`} />
       ) : (
@@ -298,7 +298,7 @@ function Chat({ onClose, me }: { onClose: () => void; me: string }) {
           return (
             <div key={m.id ?? m.timestamp} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
               {!mine && <span className="mb-0.5 px-3 text-xs text-white/40">{m.from?.name ?? "Guest"}</span>}
-              <p className={`max-w-[85%] whitespace-pre-wrap break-words rounded-[20px] px-3.5 py-2 text-[15px] ${mine ? "bg-[#0a84ff] text-white" : "bg-white/10 text-white"}`}>{m.message}</p>
+              <p className={`max-w-[85%] whitespace-pre-wrap break-words rounded-[20px] px-3.5 py-2 text-[15px] ${mine ? "bg-brand-700 text-white" : "bg-white/10 text-white"}`}>{m.message}</p>
             </div>
           );
         })}
@@ -313,8 +313,8 @@ function Chat({ onClose, me }: { onClose: () => void; me: string }) {
           setText("");
         }}
       >
-        <input value={text} onChange={(e) => setText(e.target.value)} placeholder={`Message as ${me}`} aria-label="Message" className="h-11 min-w-0 flex-1 rounded-full border-0 bg-white/10 px-4 text-[15px] text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#0a84ff]" />
-        <button type="submit" disabled={!text.trim() || isSending} aria-label="Send" className="grid h-11 w-11 place-items-center rounded-full bg-[#0a84ff] disabled:opacity-40">
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder={`Message as ${me}`} aria-label="Message" className="h-11 min-w-0 flex-1 rounded-full border-0 bg-white/10 px-4 text-[15px] text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-accent-400" />
+        <button type="submit" disabled={!text.trim() || isSending} aria-label="Send" className="grid h-11 w-11 place-items-center rounded-full bg-brand-700 disabled:opacity-40">
           <Send size={17} />
         </button>
       </form>
@@ -328,7 +328,7 @@ function DeviceSelect({ kind, label }: { kind: MediaDeviceKind; label: string })
   return (
     <label className="block">
       <span className="text-xs font-medium uppercase tracking-wide text-white/50">{label}</span>
-      <select value={activeDeviceId} onChange={(e) => void setActiveMediaDevice(e.target.value)} className="mt-1 h-11 w-full rounded-xl border-0 bg-white/10 px-3 text-[15px] text-white focus:outline-none focus:ring-2 focus:ring-[#0a84ff]">
+      <select value={activeDeviceId} onChange={(e) => void setActiveMediaDevice(e.target.value)} className="mt-1 h-11 w-full rounded-xl border-0 bg-white/10 px-3 text-[15px] text-white focus:outline-none focus:ring-2 focus:ring-accent-400">
         {devices.map((d, i) => (
           <option key={d.deviceId} value={d.deviceId} className="text-black">
             {d.label || `${label} ${i + 1}`}
@@ -414,7 +414,7 @@ function LeaveSheet({ lesson, onLeave, onClose }: { lesson: RoomLesson; onLeave:
           <div className="p-5">
             <h2 className="text-[17px] font-semibold">Finish the lesson?</h2>
             <p className="mt-1 text-sm text-white/60">Add a few notes for {lesson.other.name.split(" ")[0]}: what you covered and what to practise.</p>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} maxLength={2000} placeholder="Today we worked on…" aria-label="Notes for the student" className="mt-3 w-full rounded-2xl border-0 bg-white/10 px-3.5 py-3 text-[15px] text-white placeholder:text-white/35 focus:ring-2 focus:ring-[#0a84ff]" />
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} maxLength={2000} placeholder="Today we worked on…" aria-label="Notes for the student" className="mt-3 w-full rounded-2xl border-0 bg-white/10 px-3.5 py-3 text-[15px] text-white placeholder:text-white/35 focus:ring-2 focus:ring-accent-400" />
             {error && <p className="mt-2 text-sm text-[#ff9f9a]">{error}</p>}
           </div>
         ) : (
@@ -425,7 +425,7 @@ function LeaveSheet({ lesson, onLeave, onClose }: { lesson: RoomLesson; onLeave:
         )}
         <div className="divide-y divide-white/10 border-t border-white/10 text-[17px]">
           {lesson.role === "tutor" && (
-            <button type="button" onClick={finish} disabled={busy} className="flex h-14 w-full items-center justify-center gap-2 font-semibold text-[#0a84ff] hover:bg-white/5 disabled:opacity-50">
+            <button type="button" onClick={finish} disabled={busy} className="flex h-14 w-full items-center justify-center gap-2 font-semibold text-accent-400 hover:bg-white/5 disabled:opacity-50">
               {busy && <Loader2 size={17} className="animate-spin" />} Finish lesson
             </button>
           )}
@@ -1004,7 +1004,7 @@ function Left({ lesson, finished, onRejoin }: { lesson: RoomLesson; finished: bo
         <p className="mt-2 text-white/60">{finished ? `Your notes have been sent to ${lesson.other.name.split(" ")[0]}.` : canRejoin ? `You can go back in until ${fmtTime(lesson.joinClosesAt, lesson.tz)}.` : "The classroom is now closed."}</p>
         <div className="mt-8 space-y-3">
           {canRejoin && (
-            <button type="button" onClick={onRejoin} className="h-[52px] w-full rounded-full bg-[#0a84ff] text-[17px] font-semibold hover:bg-[#409cff]">
+            <button type="button" onClick={onRejoin} className="h-[52px] w-full rounded-full bg-brand-700 text-[17px] font-semibold hover:bg-brand-600">
               Rejoin
             </button>
           )}

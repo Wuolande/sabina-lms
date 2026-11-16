@@ -5,6 +5,7 @@ import type { BlogCategory, HomePage, Media, Page, Post, User } from "@/payload-
 import { getPayloadClient } from "../auth/session";
 import { getPolicies } from "../tutors/server";
 import { DEFAULT_PAGES, HOME_DEFAULTS } from "./defaults";
+import { TEXT_DEFAULTS, type SiteText } from "./text-defaults";
 import { PLATFORM_DEFAULTS } from "../globals/PlatformSettings";
 
 /* ------------------------------------------------------------------ rules in copy */
@@ -21,10 +22,26 @@ export async function maybePayload(): Promise<Payload | null> {
 
 export async function contentRules(payload: Payload | null) {
   const p = payload ? await getPolicies(payload) : (PLATFORM_DEFAULTS as typeof PLATFORM_DEFAULTS & Record<string, unknown>);
+  const g = payload ? ((await payload.findGlobal({ slug: "site-settings", depth: 0, overrideAccess: true }).catch(() => null)) as { platformName?: string | null } | null) : null;
+  const money = (n: unknown) => {
+    try {
+      return new Intl.NumberFormat("en", { style: "currency", currency: String(p.currency || "USD"), maximumFractionDigits: 0 }).format(Number(n));
+    } catch {
+      return `${p.currency} ${n}`;
+    }
+  };
+  const lengths = [...((p.regularLessonMinutes as number[] | undefined) ?? [])].sort((a, b) => a - b);
   return {
+    siteName: g?.platformName || "Sabina Education",
     cancelHours: Number(p.cancellationRefundHours),
     trialMinutes: Number(p.trialLessonMinutes),
+    lessonLengths: lengths.length < 2 ? String(lengths[0] ?? 60) : `${lengths.slice(0, -1).join(", ")} or ${lengths[lengths.length - 1]}`,
     tutorShare: 100 - Number(p.platformFeePercent),
+    fee: Number(p.platformFeePercent),
+    minRate: money(p.tutorMinHourlyRate),
+    maxRate: money(p.tutorMaxHourlyRate),
+    payoutDays: Number(p.earningsHoldDays),
+    minPayout: money(p.minimumPayout),
     earlyJoin: Number(p.classroomEarlyJoinMinutes),
     lateRefund: Number(p.lateCancellationRefundPercent ?? 0),
     lateRefundSentence: Number(p.lateCancellationRefundPercent ?? 0) > 0 ? `${Number(p.lateCancellationRefundPercent)}% of the price is refunded` : "the lesson isn't refunded",
@@ -34,7 +51,7 @@ type Rules = Awaited<ReturnType<typeof contentRules>>;
 
 /** Replace {tokens} in every string inside a value (works on Lexical JSON too). */
 export function fill<T>(value: T, rules: Rules): T {
-  if (typeof value === "string") return value.replace(/\{(cancelHours|trialMinutes|tutorShare|earlyJoin|lateRefundSentence|lateRefund)\}/g, (_, k: keyof Rules) => String(rules[k])) as T;
+  if (typeof value === "string") return value.replace(/\{(\w+)\}/g, (all, k: string) => (k in rules ? String(rules[k as keyof Rules]) : all)) as T;
   if (Array.isArray(value)) return value.map((v) => fill(v, rules)) as T;
   if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, fill(v, rules)])) as T;
   return value;
@@ -250,4 +267,50 @@ export const siteChrome = cache(async () => {
     footerSubjects,
     subjectCount: subjects.length,
   };
+});
+
+/* ------------------------------------------------------------------ page wording */
+
+type TextRow = { text?: string | null };
+type LinkRow = { label?: string | null; href?: string | null };
+type ItemRow = { title?: string | null; text?: string | null };
+const str = (v: unknown, d: string) => (typeof v === "string" && v.trim() ? v.trim() : d);
+const linkList = (v: unknown, d: { label: string; href: string }[]) => {
+  const rows = ((v as LinkRow[] | null) ?? []).filter((r) => r.label?.trim() && r.href?.trim()).map((r) => ({ label: r.label!.trim(), href: r.href!.trim() }));
+  return rows.length ? rows : d;
+};
+const lineList = (v: unknown, d: string[]) => {
+  const rows = ((v as TextRow[] | null) ?? []).map((r) => r.text?.trim() ?? "").filter(Boolean);
+  return rows.length ? rows : d;
+};
+const itemList = (v: unknown, d: { title: string; text: string }[]) => {
+  const rows = ((v as ItemRow[] | null) ?? []).filter((r) => r.title?.trim()).map((r) => ({ title: r.title!.trim(), text: r.text?.trim() ?? "" }));
+  return rows.length ? rows : d;
+};
+
+/** Wording from Settings › Page wording, with defaults for empty fields and the live rules filled in. */
+export const siteText = cache(async (): Promise<SiteText> => {
+  const payload = await maybePayload();
+  const [g, rules] = await Promise.all([
+    payload ? (payload.findGlobal({ slug: "site-text" as never, depth: 0, overrideAccess: true }).catch(() => null) as Promise<Record<string, Record<string, unknown>> | null>) : Promise.resolve(null),
+    contentRules(payload),
+  ]);
+  const D = TEXT_DEFAULTS;
+  const m = g?.menu ?? {}, f = g?.footer ?? {}, h = g?.howItWorks ?? {}, b = g?.becomeTutor ?? {}, c = g?.contact ?? {}, si = (g?.signIn ?? {}) as Record<string, Record<string, unknown> | unknown>;
+  const who = (k: "student" | "tutor") => {
+    const x = (si[k] ?? {}) as Record<string, unknown>;
+    return { badge: str(x.badge, D.signIn[k].badge), title: str(x.title, D.signIn[k].title), text: str(x.text, D.signIn[k].text), points: lineList(x.points, D.signIn[k].points) };
+  };
+  const chips = (((si.chips as { value?: string; label?: string }[] | undefined) ?? []).filter((x) => x.value?.trim() && x.label?.trim()) as { value: string; label: string }[]);
+  return fill(
+    {
+      menu: { links: linkList(m.links, D.menu.links), portalsLabel: str(m.portalsLabel, D.menu.portalsLabel), studentLabel: str(m.studentLabel, D.menu.studentLabel), studentText: str(m.studentText, D.menu.studentText), tutorLabel: str(m.tutorLabel, D.menu.tutorLabel), tutorText: str(m.tutorText, D.menu.tutorText), secondary: linkList(m.secondary, D.menu.secondary) },
+      footer: { trust: lineList(f.trust, D.footer.trust), subjectsTitle: str(f.subjectsTitle, D.footer.subjectsTitle), learnTitle: str(f.learnTitle, D.footer.learnTitle), learnLinks: linkList(f.learnLinks, D.footer.learnLinks), companyTitle: str(f.companyTitle, D.footer.companyTitle), companyLinks: linkList(f.companyLinks, D.footer.companyLinks) },
+      howItWorks: { badge: str(h.badge, D.howItWorks.badge), title: str(h.title, D.howItWorks.title), intro: str(h.intro, D.howItWorks.intro), steps: itemList(h.steps, D.howItWorks.steps), payBadge: str(h.payBadge, D.howItWorks.payBadge), payTitle: str(h.payTitle, D.howItWorks.payTitle), payText: str(h.payText, D.howItWorks.payText), cta: str(h.cta, D.howItWorks.cta), secondaryCta: str(h.secondaryCta, D.howItWorks.secondaryCta) },
+      becomeTutor: { badge: str(b.badge, D.becomeTutor.badge), title: str(b.title, D.becomeTutor.title), intro: str(b.intro, D.becomeTutor.intro), cta: str(b.cta, D.becomeTutor.cta), calcEyebrow: str(b.calcEyebrow, D.becomeTutor.calcEyebrow), calcTitle: str(b.calcTitle, D.becomeTutor.calcTitle), reasonsTitle: str(b.reasonsTitle, D.becomeTutor.reasonsTitle), reasons: itemList(b.reasons, D.becomeTutor.reasons), stepsTitle: str(b.stepsTitle, D.becomeTutor.stepsTitle), steps: itemList(b.steps, D.becomeTutor.steps) },
+      contact: { badge: str(c.badge, D.contact.badge), title: str(c.title, D.contact.title), intro: str(c.intro, D.contact.intro), sideTitle: str(c.sideTitle, D.contact.sideTitle), sentTitle: str(c.sentTitle, D.contact.sentTitle), sentText: str(c.sentText, D.contact.sentText) },
+      signIn: { student: who("student"), tutor: who("tutor"), chips: chips.length ? chips : D.signIn.chips },
+    },
+    rules,
+  );
 });

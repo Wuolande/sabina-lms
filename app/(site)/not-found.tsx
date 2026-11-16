@@ -71,7 +71,7 @@ export default function NotFound() {
               className="p-4 rounded-2xl border border-slate-200/80 bg-white hover:border-brand hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-brand group-hover:scale-110 transition-transform">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand group-hover:scale-110 transition-transform">
                   <BookOpen className="h-5 w-5" />
                 </div>
                 <div>

@@ -37,12 +37,13 @@ const statusColors = {
 
 // Deterministic gradient based on name
 const gradients = [
+  // Brand blues only, in a few depths so people are still easy to tell apart.
   "from-brand-400 to-brand-700",
-  "from-emerald-400 to-teal-700",
-  "from-violet-400 to-purple-700",
-  "from-orange-400 to-red-600",
-  "from-sky-400 to-blue-700",
-  "from-pink-400 to-rose-700",
+  "from-accent-300 to-accent-600",
+  "from-brand-500 to-brand-900",
+  "from-accent-400 to-brand-700",
+  "from-brand-300 to-brand-600",
+  "from-accent-500 to-brand-950",
 ];
 
 function getGradient(name?: string): string {

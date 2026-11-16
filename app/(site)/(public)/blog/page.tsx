@@ -21,7 +21,7 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
     if (o.page && o.page > 1) sp.set("page", String(o.page));
     return `/blog${sp.size ? `?${sp}` : ""}`;
   };
-  const chip = (active: boolean) => `inline-flex h-9 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition ${active ? "bg-slate-900 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"}`;
+  const chip = (active: boolean) => `inline-flex h-9 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition ${active ? "bg-brand-700 text-white" : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"}`;
 
   return (
     <div className="bg-[#F6F7FB]">

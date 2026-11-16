@@ -426,7 +426,7 @@ export function HomePageClient({
       <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/80 p-4 sm:p-8 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-center">
           <div className="space-y-0.5 sm:space-y-1">
-            <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
+            <h3 className="text-2xl sm:text-4xl font-black text-brand-700 font-heading">
               <CountUp to={stats.stat1?.value ?? 0} suffix={stats.stat1?.suffix ?? ""} duration={1800} />
             </h3>
             <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
@@ -435,7 +435,7 @@ export function HomePageClient({
           </div>
 
           <div className="space-y-0.5 sm:space-y-1">
-            <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
+            <h3 className="text-2xl sm:text-4xl font-black text-brand-700 font-heading">
               <CountUp to={stats.stat2?.value ?? 0} suffix={stats.stat2?.suffix ?? ""} duration={2000} />
             </h3>
             <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
@@ -444,7 +444,7 @@ export function HomePageClient({
           </div>
 
           <div className="space-y-0.5 sm:space-y-1">
-            <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading">
+            <h3 className="text-2xl sm:text-4xl font-black text-brand-700 font-heading">
               <CountUp to={stats.stat3?.value ?? 0} decimals={stats.stat3?.decimals ?? 0} suffix={stats.stat3?.suffix ?? ""} duration={1900} />
             </h3>
             <p className="text-[11px] sm:text-sm font-semibold text-slate-500 truncate">
@@ -453,7 +453,7 @@ export function HomePageClient({
           </div>
 
           <div className="space-y-0.5 sm:space-y-1">
-            <h3 className="text-2xl sm:text-4xl font-black text-slate-950 font-heading inline-flex items-center justify-center gap-1 sm:gap-1.5">
+            <h3 className="text-2xl sm:text-4xl font-black text-brand-700 font-heading inline-flex items-center justify-center gap-1 sm:gap-1.5">
               <CountUp to={stats.stat4?.value ?? 0} decimals={stats.stat4?.decimals ?? 0} suffix={(stats.stat4?.suffix ?? "").replace("★", "").trimEnd()} duration={1800} />
               {(stats.stat4?.suffix ?? "").includes("★") && <Star aria-label="stars" className="h-4 w-4 sm:h-7 sm:w-7 text-amber-400 fill-amber-400 inline-block mb-0.5 sm:mb-1 shrink-0" />}
             </h3>
@@ -619,7 +619,7 @@ export function HomePageClient({
       {/* ─────────────────────────────────────────────────────────────
           5. THE LIVE VIDEO CLASSROOM (Dynamic CMS Product Tour)
       ───────────────────────────────────────────────────────────── */}
-      <section className="w-full max-w-full min-w-0 bg-[#050B18] py-14 sm:py-24 text-white relative overflow-hidden">
+      <section className="w-full max-w-full min-w-0 bg-gradient-to-b from-brand-950 via-brand-950 to-brand-900 py-14 sm:py-24 text-white relative overflow-hidden">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-accent/10 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8 relative z-10 space-y-8 sm:space-y-10">
@@ -664,7 +664,7 @@ export function HomePageClient({
           </div>
 
           {/* Classroom Stage Simulation Container */}
-          <div className="w-full max-w-5xl min-w-0 mx-auto rounded-2xl sm:rounded-3xl border border-slate-800 bg-[#0B132B] shadow-2xl overflow-hidden">
+          <div className="w-full max-w-5xl min-w-0 mx-auto rounded-2xl sm:rounded-3xl border border-white/10 bg-brand-950 shadow-2xl overflow-hidden">
             <div className="bg-slate-900/95 px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-rose-500/80" />
@@ -676,7 +676,7 @@ export function HomePageClient({
               <span className="w-[52px]" aria-hidden="true" />
             </div>
 
-            <div className="p-4 sm:p-6 min-h-[380px] sm:min-h-[440px] flex flex-col justify-between bg-gradient-to-b from-slate-950 to-[#0B132B]">
+            <div className="p-4 sm:p-6 min-h-[380px] sm:min-h-[440px] flex flex-col justify-between bg-gradient-to-b from-brand-950 to-brand-900">
               {activeTourTab === "video" && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in flex-1">
                   <div className="md:col-span-2 relative rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden flex flex-col justify-between p-4 min-h-[260px]">
@@ -886,7 +886,7 @@ export function HomePageClient({
           7. BECOME A TUTOR CALLOUT (Dynamic CMS)
       ───────────────────────────────────────────────────────────── */}
       <section className="mx-auto w-full max-w-7xl min-w-0 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-[#081533] p-5 sm:p-14 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sm:gap-8 border border-slate-800/90 shadow-2xl relative overflow-hidden">
+        <div className="w-full max-w-full min-w-0 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-brand-950 via-brand-900 to-brand-700 p-5 sm:p-14 text-white flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sm:gap-8 border border-slate-800/90 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-80 h-80 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
 
           <div className="space-y-3 sm:space-y-4 max-w-2xl text-left relative z-10 w-full min-w-0">

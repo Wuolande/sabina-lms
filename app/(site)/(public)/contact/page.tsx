@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BookOpen, Mail, MessageSquare, Phone } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { ContactFormClient } from "@/components/contact/ContactFormClient";
-import { siteChrome } from "@/cms/content/server";
+import { siteChrome, siteText } from "@/cms/content/server";
 import { getSessionUser } from "@/cms/auth/session";
 
 export const metadata: Metadata = {
@@ -13,23 +13,24 @@ export const metadata: Metadata = {
 };
 
 export default async function ContactPage() {
-  const [site, user] = await Promise.all([siteChrome(), getSessionUser().catch(() => null)]);
+  const [site, user, all] = await Promise.all([siteChrome(), getSessionUser().catch(() => null), siteText()]);
+  const t = all.contact;
   const inbox = user?.role === "tutor" ? "/tutor/messages" : user?.role === "student" ? "/student/messages" : null;
   const name = user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : "";
   return (
     <div className="mx-auto w-full min-w-0 max-w-7xl space-y-10 px-4 py-8 sm:space-y-16 sm:px-6 sm:py-12 lg:px-8">
       <div className="mx-auto w-full min-w-0 max-w-2xl space-y-3 text-center sm:space-y-4">
         <Badge variant="subtle" size="sm" className="bg-brand-50 font-bold text-brand-800">
-          Contact us
+          {t.badge}
         </Badge>
-        <h1 className="font-heading text-3xl font-black tracking-tight text-slate-900 sm:text-5xl">How can we help?</h1>
-        <p className="text-sm text-slate-600 sm:text-base">Ask about booking, payments, the classroom or teaching on {site.name}. A member of our team will reply by email.</p>
+        <h1 className="font-heading text-3xl font-black tracking-tight text-slate-900 sm:text-5xl">{t.title}</h1>
+        <p className="text-sm text-slate-600 sm:text-base">{t.intro}</p>
       </div>
 
       <div className="mx-auto grid w-full min-w-0 max-w-5xl grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
-        <aside className="flex w-full min-w-0 max-w-full flex-col justify-between gap-6 rounded-2xl bg-slate-900 p-6 text-white sm:rounded-3xl sm:p-8">
+        <aside className="flex w-full min-w-0 max-w-full flex-col justify-between gap-6 rounded-2xl bg-gradient-to-br from-brand-700 to-brand-950 p-6 text-white sm:rounded-3xl sm:p-8">
           <div className="space-y-6">
-            <h2 className="font-heading text-xl font-bold">Other ways to reach us</h2>
+            <h2 className="font-heading text-xl font-bold">{t.sideTitle}</h2>
             <ul className="space-y-4 text-sm text-slate-300">
               {site.supportEmail && (
                 <li className="flex items-center gap-3">
@@ -79,7 +80,7 @@ export default async function ContactPage() {
           </div>
         </aside>
 
-        <ContactFormClient defaults={{ name, email: user?.email ?? "" }} />
+        <ContactFormClient defaults={{ name, email: user?.email ?? "" }} sent={{ title: t.sentTitle, text: t.sentText }} />
       </div>
     </div>
   );

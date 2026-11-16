@@ -1511,7 +1511,7 @@
 .ep-bp__tile--dark { background: #000; color: #F5F5F7; }
 .ep-bp__tile--icon { background: var(--ep-surface-2); }
 .ep-bp__text { font: 800 22px/1 var(--ep-font-display); letter-spacing: -.04em; }
-.ep-bp__text b { color: #14209C; }
+.ep-bp__text b { color: var(--brand-primary, #0000FE); }
 @media (max-width: 768px) { .ep-bp__grid { grid-template-columns: 1fr; } }
 
 /* ---------- Layout fixes for fields inside the editor card ----------

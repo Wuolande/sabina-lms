@@ -26,12 +26,12 @@
   --ep-line-subtle: #F1F5F9;
 
   /* Brand + Semantics */
-  --ep-accent: #14209C;
-  --ep-accent-hover: #0B123E;
-  --ep-accent-fill: #14209C;
-  --ep-accent-fill-hover: #0B123E;
+  --ep-accent: #0000FE;
+  --ep-accent-hover: #00007A;
+  --ep-accent-fill: #0000FE;
+  --ep-accent-fill-hover: #00007A;
   --ep-accent-soft: #EEF1FC;
-  --ep-accent-ink: #0B123E;
+  --ep-accent-ink: #00007A;
 
   --ep-alert: #EF4444;
   --ep-alert-soft: #FEE2E2;
@@ -54,16 +54,16 @@
 
   /* Dataviz charts */
   --ep-chart-new: #EF4444;
-  --ep-chart-progress: #14209C;
+  --ep-chart-progress: #0000FE;
   --ep-chart-done: #10B981;
-  --ep-chart-single: #14209C;
+  --ep-chart-single: #0000FE;
   --ep-chart-track: #E2E8F0;
 
   /* Elevation: layered multi-stage shadows with subtle ambient border */
   --ep-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 0 0 1px rgba(15, 23, 42, 0.04);
   --ep-shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.04);
   --ep-shadow-lg: 0 12px 32px -4px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.05);
-  --ep-focus: 0 0 0 3px rgba(20, 32, 156, 0.28);
+  --ep-focus: 0 0 0 3px rgb(var(--brand-700, 0 0 254) / 0.28);
   --ep-focus-ring: 0 0 0 2px var(--ep-surface), 0 0 0 4px var(--ep-accent);
 
   /* Glassmorphism */
@@ -94,12 +94,12 @@ html[data-theme="dark"] {
   --ep-line-subtle: rgba(255, 255, 255, 0.04);
 
   /* Brand + Semantics */
-  --ep-accent: #7B95F0;
+  --ep-accent: #009EFF;
   --ep-accent-hover: #8FD47F;
-  --ep-accent-fill: #14209C;
-  --ep-accent-fill-hover: #0B123E;
+  --ep-accent-fill: #0000FE;
+  --ep-accent-fill-hover: #00007A;
   --ep-accent-soft: rgba(116, 195, 101, 0.15);
-  --ep-accent-ink: #9EDB8F;
+  --ep-accent-ink: #009EFF;
 
   --ep-alert: #F87171;
   --ep-alert-soft: rgba(239, 68, 68, 0.16);
@@ -122,9 +122,9 @@ html[data-theme="dark"] {
 
   /* Dataviz charts */
   --ep-chart-new: #F87171;
-  --ep-chart-progress: #7B95F0;
+  --ep-chart-progress: #009EFF;
   --ep-chart-done: #34D399;
-  --ep-chart-single: #7B95F0;
+  --ep-chart-single: #009EFF;
   --ep-chart-track: rgba(255, 255, 255, 0.08);
 
   /* Elevation */

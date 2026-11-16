@@ -41,7 +41,7 @@ export default async function SubjectsPage() {
             <h2 className="font-heading text-2xl font-bold text-slate-900">{CATEGORY_LABEL[g.cat]}</h2>
             <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {g.items.map((s) => (
-                <Link key={s.id} href={`/subjects/${s.slug}`} className="group flex flex-col rounded-3xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgba(20,32,156,0.45)] hover:ring-brand-200">
+                <Link key={s.id} href={`/subjects/${s.slug}`} className="group flex flex-col rounded-3xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/70 transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-24px_rgb(var(--brand-700)/0.45)] hover:ring-brand-200">
                   <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-700 group-hover:text-white">
                     <SubjectIcon name={s.icon} />
                   </span>

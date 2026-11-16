@@ -26,13 +26,14 @@ export async function Nav({ payload, visibleEntities, user }: Props) {
       return 0;
     }
   };
-  const [applications, disputes, reviews, flagged] = await Promise.all([
+  const [applications, disputes, reviews, flagged, contact] = await Promise.all([
     count("tutor-profiles", { status: { equals: "submitted" } }),
     count("bookings", { and: [{ "issue.reportedAt": { exists: true } }, { "issue.resolved": { not_equals: true } }] }),
     count("lesson-reviews", { status: { equals: "pending" } }),
     count("conversations", { flagged: { equals: true } }),
+    count("contact-messages", { status: { equals: "new" } }),
   ]);
-  const badges: Record<string, number> = { applications, disputes, reviews, flagged };
+  const badges: Record<string, number> = { applications, disputes, reviews, flagged, contact };
 
   const extra = [
     ...payload.config.collections.map((c) => ({ kind: "collection" as const, slug: c.slug, label: String((c.labels?.plural as string) ?? c.slug) })),

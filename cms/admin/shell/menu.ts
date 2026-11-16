@@ -10,7 +10,7 @@ export type MenuItem = {
   label: string;
   icon: string;
   href?: string;
-  badge?: "applications" | "disputes" | "reviews" | "flagged";
+  badge?: "applications" | "disputes" | "reviews" | "flagged" | "contact";
   adminOnly?: boolean;
 };
 export type MenuSection = { title?: string; collapsible?: boolean; items: MenuItem[] };
@@ -73,6 +73,7 @@ export const MENU: MenuSection[] = [
     title: "Communication",
     collapsible: true,
     items: [
+      { kind: "collection", slug: "contact-messages", label: "Contact messages", icon: "Inbox", badge: "contact" },
       { kind: "collection", slug: "conversations", label: "Conversations", icon: "MessagesSquare" },
       { kind: "view", slug: "flagged-conversations", label: "Flagged for review", icon: "ShieldAlert", badge: "flagged", href: "/admin/collections/conversations?where[or][0][and][0][flagged][equals]=true" },
       { kind: "collection", slug: "messages", label: "All messages", icon: "MessageSquare" },
@@ -88,6 +89,7 @@ export const MENU: MenuSection[] = [
     collapsible: true,
     items: [
       { kind: "global", slug: "home-page", label: "Homepage", icon: "House" },
+      { kind: "global", slug: "site-text", label: "Page wording", icon: "Type" },
       { kind: "collection", slug: "pages", label: "Pages", icon: "ScrollText" },
       { kind: "collection", slug: "posts", label: "Blog posts", icon: "Newspaper" },
       { kind: "collection", slug: "blog-categories", label: "Blog categories", icon: "Tags" },

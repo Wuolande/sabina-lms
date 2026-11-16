@@ -63,6 +63,62 @@ test("footer, marketing pages and contact form use real data", async ({ page }) 
     expect(session.status()).toBe(200);
     expect((await session.json()).authenticated).toBe(false);
   } finally {
-    await api("/api/cms/globals/site-settings", { method: "POST", cookie: admin, body: JSON.stringify({ supportEmail: before.supportEmail ?? null, social: before.social ?? {} }) });
+    const social = (before.social ?? {}) as Record<string, string | null>;
+    const keys = ["x", "facebook", "instagram", "linkedin", "youtube", "tiktok"];
+    await api("/api/cms/globals/site-settings", { method: "POST", cookie: admin, body: JSON.stringify({ supportEmail: before.supportEmail ?? null, social: Object.fromEntries(keys.map((k) => [k, social[k] ?? null])) }) });
+  }
+});
+
+test("page wording and brand colours are managed in the admin", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "Runs once, on desktop");
+  test.setTimeout(240_000);
+  const tag = Math.random().toString(36).slice(2, 7);
+  const admin = (await api("/api/auth/login", { method: "POST", body: JSON.stringify(ADMIN) })).cookie!;
+  const saved = (await api("/api/cms/globals/site-settings", { cookie: admin })).data as { brand?: { colours?: Record<string, string> } };
+  try {
+    // Defaults: the brand colours drive buttons, and every shade comes from them.
+    await page.goto("/how-it-works");
+    const vars = await page.evaluate(() => {
+      const css = getComputedStyle(document.documentElement);
+      return { primary: css.getPropertyValue("--brand-primary").trim(), accent: css.getPropertyValue("--brand-accent").trim(), b700: css.getPropertyValue("--brand-700").trim(), a400: css.getPropertyValue("--accent-400").trim() };
+    });
+    expect(vars).toEqual({ primary: (saved.brand?.colours?.primary ?? "#0000FE"), accent: (saved.brand?.colours?.accent ?? "#009EFF"), b700: expect.any(String), a400: expect.any(String) });
+    // Wording: change it in the admin and it shows on the site, with rule tags filled in.
+    const edit = await api("/api/cms/globals/site-text", {
+      method: "POST",
+      cookie: admin,
+      body: JSON.stringify({
+        menu: { links: [{ label: `Tutors ${tag}`, href: "/find-tutors" }] },
+        footer: { trust: [{ text: `Promise ${tag}` }] },
+        howItWorks: { title: `Learning ${tag} works`, payTitle: "Cancel up to {cancelHours} hours before." },
+        becomeTutor: { reasonsTitle: `Reasons ${tag}` },
+        contact: { title: `Talk to us ${tag}` },
+        signIn: { student: { title: `Welcome ${tag}` } },
+      }),
+    });
+    expect(edit.res.ok, JSON.stringify(edit.data)).toBe(true);
+    await page.goto("/how-it-works");
+    await expect(page.getByRole("heading", { level: 1, name: `Learning ${tag} works` })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Cancel up to \d+ hours before\./ })).toBeVisible();
+    await expect(page.getByRole("link", { name: `Tutors ${tag}` }).first()).toBeVisible();
+    await expect(page.locator("footer").getByText(`Promise ${tag}`)).toBeVisible();
+    await page.goto("/become-a-tutor");
+    await expect(page.getByRole("heading", { name: `Reasons ${tag}` })).toBeVisible();
+    await page.goto("/contact");
+    await expect(page.getByRole("heading", { level: 1, name: `Talk to us ${tag}` })).toBeVisible();
+    await page.goto("/login");
+    await expect(page.getByRole("heading", { name: `Welcome ${tag}` })).toBeVisible();
+
+    // Colours: a new primary colour reaches the page's buttons and every shade.
+    await api("/api/cms/globals/site-settings", { method: "POST", cookie: admin, body: JSON.stringify({ brand: { colours: { primary: "#112233", accent: "#00AA55" } } }) });
+    await page.goto("/login");
+    const after = await page.evaluate(() => {
+      const css = getComputedStyle(document.documentElement);
+      return { b700: css.getPropertyValue("--brand-700").trim(), a400: css.getPropertyValue("--accent-400").trim(), button: getComputedStyle(document.querySelector('button[type="submit"]')!).backgroundColor };
+    });
+    expect(after).toEqual({ b700: "17 34 51", a400: "0 170 85", button: "rgb(17, 34, 51)" });
+  } finally {
+    await api("/api/cms/globals/site-text", { method: "POST", cookie: admin, body: JSON.stringify({ menu: { links: [] }, footer: { trust: [] }, howItWorks: { title: null, payTitle: null }, becomeTutor: { reasonsTitle: null }, contact: { title: null }, signIn: { student: { title: null } } }) });
+    await api("/api/cms/globals/site-settings", { method: "POST", cookie: admin, body: JSON.stringify({ brand: { colours: { primary: saved.brand?.colours?.primary ?? "#0000FE", accent: saved.brand?.colours?.accent ?? "#009EFF" } } }) });
   }
 });

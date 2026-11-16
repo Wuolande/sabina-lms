@@ -4,12 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 
-type Props = { currency: string; feePercent: number; minRate: number; maxRate: number };
+type Props = { currency: string; feePercent: number; minRate: number; maxRate: number; eyebrow: string; title: string; cta: string };
 
 const nice = (n: number, step: number) => Math.round(n / step) * step;
 
 /** Monthly estimate from the platform's real fee and allowed rates. */
-export function BecomeTutorEarningsCalculator({ currency, feePercent, minRate, maxRate }: Props) {
+export function BecomeTutorEarningsCalculator({ currency, feePercent, minRate, maxRate, eyebrow, title, cta }: Props) {
   const money = React.useMemo(() => new Intl.NumberFormat(undefined, { style: "currency", currency, maximumFractionDigits: 0 }), [currency]);
   const step = maxRate - minRate > 200 ? 5 : 1;
   const [rate, setRate] = React.useState(() => Math.min(maxRate, Math.max(minRate, nice(minRate + (maxRate - minRate) * 0.15, step))));
@@ -18,12 +18,12 @@ export function BecomeTutorEarningsCalculator({ currency, feePercent, minRate, m
   const mid = nice((minRate + maxRate) / 2, step);
 
   return (
-    <section aria-labelledby="calc-title" className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200/90 bg-gradient-to-br from-slate-900 to-brand-950 p-5 text-white shadow-elevation sm:rounded-3xl sm:p-12">
+    <section aria-labelledby="calc-title" className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200/90 bg-gradient-to-br from-brand-700 to-brand-950 p-5 text-white shadow-elevation sm:rounded-3xl sm:p-12">
       <div className="mx-auto w-full min-w-0 max-w-3xl space-y-6 sm:space-y-8">
         <div className="space-y-2 text-center">
-          <p className="text-xs font-bold uppercase tracking-wider text-accent-400">Earnings estimate</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-accent-300">{eyebrow}</p>
           <h2 id="calc-title" className="font-heading text-xl font-black text-white sm:text-4xl">
-            What could you earn in a month?
+            {title}
           </h2>
         </div>
 
@@ -71,7 +71,7 @@ export function BecomeTutorEarningsCalculator({ currency, feePercent, minRate, m
             </p>
             <Link href="/register?role=tutor" className="block pt-2">
               <Button variant="secondary" size="lg" className="h-11 min-h-[44px] w-full bg-accent-400 font-bold text-slate-950 hover:bg-accent-500">
-                Apply to teach
+                {cta}
               </Button>
             </Link>
           </div>

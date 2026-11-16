@@ -7,7 +7,7 @@ const colour = (name: keyof typeof BRAND_COLOURS, label: string) => ({
   label,
   type: "text" as const,
   defaultValue: BRAND_COLOURS[name],
-  validate: (v: unknown) => (!v || /^#[0-9a-f]{6}$/i.test(String(v)) ? true : "Use a hex colour like #14209C"),
+  validate: (v: unknown) => (!v || /^#[0-9a-f]{6}$/i.test(String(v)) ? true : "Use a hex colour like #0000FE"),
   admin: { width: "33%" },
 });
 

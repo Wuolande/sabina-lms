@@ -751,7 +751,7 @@ export function TutorApplication() {
                       type="button"
                       onClick={submit}
                       disabled={saving || missing.length > 0}
-                      className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-6 font-semibold text-white shadow-[0_8px_24px_-8px_rgba(20,32,156,0.55)] hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                      className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand-700 px-6 font-semibold text-white shadow-[0_8px_24px_-8px_rgb(var(--brand-700)/0.55)] hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                     >
                       {saving ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                       {draft.status === "changes_requested" ? "Submit again" : "Submit application"}

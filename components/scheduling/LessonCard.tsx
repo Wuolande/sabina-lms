@@ -27,7 +27,7 @@ export function PersonAvatar({ name, src, size = 48 }: { name: string; src: stri
 }
 
 const STATUS: Record<string, { label: string; cls: string }> = {
-  pending_payment: { label: "Awaiting payment", cls: "bg-violet-50 text-violet-800 ring-violet-200" },
+  pending_payment: { label: "Awaiting payment", cls: "bg-accent-50 text-accent-800 ring-accent-200" },
   requested: { label: "Awaiting tutor", cls: "bg-amber-50 text-amber-800 ring-amber-200" },
   confirmed: { label: "Confirmed", cls: "bg-emerald-50 text-emerald-800 ring-emerald-200" },
   completed: { label: "Completed", cls: "bg-slate-100 text-slate-700 ring-slate-200" },
@@ -122,7 +122,7 @@ export function LessonCard({ lesson: l, role, tz, cancellationHours }: { lesson:
           )}
           {l.status === "cancelled" && l.lateCancellation && <p className="mt-1 text-xs font-medium text-amber-700">Cancelled inside the free-cancellation window.</p>}
           {l.refundedAmount > 0 && role === "student" && <p className="mt-1 text-xs font-medium text-emerald-700">Refunded {money(l.refundedAmount, l.currency)}</p>}
-          {l.phase === "payment" && <p className="mt-2 text-sm text-violet-800">Pay to {role === "student" ? "secure this time" : "confirm"}. We hold it for you for a few minutes.</p>}
+          {l.phase === "payment" && <p className="mt-2 text-sm text-accent-800">Pay to {role === "student" ? "secure this time" : "confirm"}. We hold it for you for a few minutes.</p>}
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm text-slate-500">

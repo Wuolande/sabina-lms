@@ -109,13 +109,13 @@ a.ep-card:hover {
   font-size: var(--ep-text-md);
 }
 .ep-btn--primary {
-  background: var(--ep-ink);
-  color: var(--ep-on-inverse);
-  border-color: var(--ep-ink);
+  background: var(--ep-accent-fill);
+  color: #fff;
+  border-color: var(--ep-accent-fill);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
 }
 .ep-btn--primary:hover:not(:disabled) {
-  background: color-mix(in oklab, var(--ep-ink) 88%, var(--ep-canvas));
+  background: var(--ep-accent-fill-hover);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
 }
 .ep-btn--secondary {
@@ -140,11 +140,11 @@ a.ep-card:hover {
   background: var(--ep-accent-fill);
   color: #fff;
   border-color: var(--ep-accent);
-  box-shadow: 0 1px 3px rgba(20, 32, 156, 0.28);
+  box-shadow: 0 1px 3px rgb(var(--brand-700, 0 0 254) / 0.28);
 }
 .ep-btn--accent:hover:not(:disabled) {
   background: var(--ep-accent-fill-hover);
-  box-shadow: 0 3px 12px rgba(20, 32, 156, 0.38);
+  box-shadow: 0 3px 12px rgb(var(--brand-700, 0 0 254) / 0.38);
 }
 .ep-btn--alert {
   background: var(--ep-alert);

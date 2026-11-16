@@ -72,7 +72,7 @@ export default async function TutorProfilePage({ params }: Props) {
   };
 
   const priceCard = (
-    <div className="rounded-3xl bg-white p-6 shadow-[0_20px_50px_-30px_rgba(20,32,156,0.45)] ring-1 ring-slate-200/70">
+    <div className="rounded-3xl bg-white p-6 shadow-[0_20px_50px_-30px_rgb(var(--brand-700)/0.45)] ring-1 ring-slate-200/70">
       <div className="flex items-baseline justify-between gap-3">
         <p className="font-heading text-3xl font-bold text-slate-900">{money(t.hourlyRate, currency)}</p>
         <span className="text-sm text-slate-500">per 60-min lesson</span>

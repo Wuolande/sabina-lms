@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/Textarea";
 const EMPTY = { name: "", email: "", subject: "", message: "", _hp_website: "" };
 const label = "mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700";
 
-export function ContactFormClient({ defaults }: { defaults?: { name?: string; email?: string } }) {
+export function ContactFormClient({ defaults, sent }: { defaults?: { name?: string; email?: string }; sent: { title: string; text: string } }) {
   const [f, setF] = React.useState({ ...EMPTY, name: defaults?.name ?? "", email: defaults?.email ?? "" });
   const [state, setState] = React.useState<"idle" | "sending" | "sent">("idle");
   const [error, setError] = React.useState<string | null>(null);
@@ -37,8 +37,8 @@ export function ContactFormClient({ defaults }: { defaults?: { name?: string; em
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
             <CheckCircle2 className="h-8 w-8" aria-hidden="true" />
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Message sent</h2>
-          <p className="mx-auto max-w-sm text-sm text-slate-500">Thanks for getting in touch. We&apos;ll reply to {f.email}.</p>
+          <h2 className="text-xl font-bold text-slate-900">{sent.title}</h2>
+          <p className="mx-auto max-w-sm text-sm text-slate-500">{sent.text}</p>
           <Button
             variant="outline"
             onClick={() => {

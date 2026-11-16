@@ -3,8 +3,11 @@
  * Kept with the old shape so the root layout keeps working.
  */
 import { maybePayload, mediaUrl, siteSeo } from "@/cms/content/server";
+import { brandColours, type BrandColours } from "@/cms/brand";
 
 export interface PlatformSeoConfig {
+  colours: BrandColours;
+  siteName: string;
   primaryColor: string;
   secondaryColor: string;
   logoUrl: string;
@@ -23,10 +26,13 @@ export interface PlatformSeoConfig {
 export async function getPlatformSeo(): Promise<PlatformSeoConfig> {
   const seo = await siteSeo();
   const payload = await maybePayload();
-  const g = (payload ? await payload.findGlobal({ slug: "site-settings", depth: 1, overrideAccess: true }).catch(() => null) : null) as { brand?: { logo?: unknown; icon?: unknown; colours?: { primary?: string; accent?: string } } } | null;
+  const g = (payload ? await payload.findGlobal({ slug: "site-settings", depth: 1, overrideAccess: true }).catch(() => null) : null) as { brand?: { logo?: unknown; icon?: unknown; colours?: Record<string, unknown> } } | null;
+  const colours = brandColours(g?.brand?.colours);
   return {
-    primaryColor: g?.brand?.colours?.primary || "#14209C",
-    secondaryColor: g?.brand?.colours?.accent || "#F9C31C",
+    colours,
+    siteName: seo.name,
+    primaryColor: colours.primary,
+    secondaryColor: colours.accent,
     logoUrl: mediaUrl(g?.brand?.logo) ?? "",
     faviconUrl: mediaUrl(g?.brand?.icon) ?? "",
     appleTouchIconUrl: mediaUrl(g?.brand?.icon) ?? "",
