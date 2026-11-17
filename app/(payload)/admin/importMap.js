@@ -26,6 +26,7 @@ import { ReviewActions as ReviewActions_5c2b8028f7ad4aa15f6405c6f3b089bf } from 
 import { RefundPackage as RefundPackage_98e502b96e4ed3dc5187c3bdbdee0ba0 } from '@/cms/admin/fields/RefundPackage'
 import { UploadFeatureClient as UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { RelationshipFeatureClient as RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { IntegrationPanel as IntegrationPanel_aa522078fa2056d9c1efb5adb4e3eb46 } from '../../../cms/admin/integrations/IntegrationPanel'
 import { Avatar as Avatar_b2f13f7166b151bab9a5bcf0e429c3b8 } from '../../../cms/admin/shell/Avatar'
 import { Nav as Nav_443b6b3499f049854d114c656e337d72 } from '../../../cms/admin/shell/Nav'
 import { Icon as Icon_30ebd91e9e497d4885819d35d826364a } from '../../../cms/admin/Brand'
@@ -70,6 +71,7 @@ export const importMap = {
   "@/cms/admin/fields/RefundPackage#RefundPackage": RefundPackage_98e502b96e4ed3dc5187c3bdbdee0ba0,
   "@payloadcms/richtext-lexical/client#UploadFeatureClient": UploadFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#RelationshipFeatureClient": RelationshipFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/cms/admin/integrations/IntegrationPanel#IntegrationPanel": IntegrationPanel_aa522078fa2056d9c1efb5adb4e3eb46,
   "/cms/admin/shell/Avatar#Avatar": Avatar_b2f13f7166b151bab9a5bcf0e429c3b8,
   "/cms/admin/shell/Nav#Nav": Nav_443b6b3499f049854d114c656e337d72,
   "/cms/admin/Brand#Icon": Icon_30ebd91e9e497d4885819d35d826364a,

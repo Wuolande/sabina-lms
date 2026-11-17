@@ -94,7 +94,6 @@ export const MENU: MenuSection[] = [
       { kind: "collection", slug: "posts", label: "Blog posts", icon: "Newspaper" },
       { kind: "collection", slug: "blog-categories", label: "Blog categories", icon: "Tags" },
       { kind: "collection", slug: "media", label: "Media library", icon: "Image" },
-      { kind: "collection", slug: "redirects", label: "Redirects", icon: "CornerDownRight" },
     ],
   },
   {
@@ -102,15 +101,11 @@ export const MENU: MenuSection[] = [
     collapsible: true,
     items: [
       { kind: "global", slug: "site-settings", label: "Site settings", icon: "Settings" },
+      { kind: "global", slug: "integrations", label: "Integrations & keys", icon: "Plug", adminOnly: true },
       { kind: "collection", slug: "countries", label: "Countries", icon: "Flag" },
       { kind: "collection", slug: "timezones", label: "Time zones", icon: "Globe2" },
       { kind: "view", slug: "jobs", label: "Scheduled jobs", icon: "Clock", href: "/admin/jobs", adminOnly: true },
-      { kind: "global", slug: "seo-settings", label: "SEO", icon: "Search", adminOnly: true },
       { kind: "global", slug: "platform-settings", label: "Fees & policies", icon: "Percent", adminOnly: true },
-      { kind: "global", slug: "payment-settings", label: "Payment gateways", icon: "Plug", adminOnly: true },
-      { kind: "global", slug: "video-settings", label: "Classroom & video", icon: "Video", adminOnly: true },
-      { kind: "global", slug: "email-settings", label: "Email", icon: "Mail", adminOnly: true },
-      { kind: "collection", slug: "audit-log", label: "Audit log", icon: "ScrollText", adminOnly: true },
     ],
   },
 ];

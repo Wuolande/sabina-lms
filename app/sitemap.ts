@@ -5,7 +5,7 @@ export const revalidate = 3600;
 
 /** Public pages, approved tutor profiles, subjects, published posts and pages. */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const base = (process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
   const now = new Date();
   const fixed: MetadataRoute.Sitemap = [
     { url: base, lastModified: now, changeFrequency: "daily", priority: 1 },

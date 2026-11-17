@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { buildConfig } from "payload";
 import { postgresAdapter } from "@payloadcms/db-postgres";
 import { fullEditor } from "./cms/fields/richtext";
-import { nodemailerAdapter } from "@payloadcms/email-nodemailer";
+import { smtpAdapter } from "./cms/email/adapter";
 import { s3Storage } from "@payloadcms/storage-s3";
 import sharp from "sharp";
 import { Users } from "./cms/collections/Users";
@@ -26,6 +26,7 @@ import { BlogCategories, Pages, Posts } from "./cms/collections/Content";
 import { TrainingCourses, TrainingProgress } from "./cms/collections/Academy";
 import { HomePage } from "./cms/globals/HomePage";
 import { SiteText } from "./cms/globals/SiteText";
+import { Integrations } from "./cms/globals/Integrations";
 import { Conversations, EmailLog, EmailTemplates, Messages, Notifications, TextLog, ContactMessages } from "./cms/collections/Messaging";
 import { PayoutMethods, Payouts } from "./cms/collections/Payouts";
 import { r2Config, r2PublicUrl, r2Ready } from "./cms/storage/r2";
@@ -47,8 +48,6 @@ const origins = [
     ].filter(Boolean) as string[],
   ),
 ];
-
-const smtpReady = Boolean(env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS);
 
 /**
  * Payload: Sabina's backend. Database, accounts, permissions, business rules, files, emails,
@@ -98,7 +97,7 @@ export default buildConfig({
     importMap: { baseDir: path.resolve(dirname) },
   },
   collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Assignments, Goals, Reviews, Payments, LessonPackages, Payouts, PayoutMethods, Conversations, Messages, Notifications, PushSubscriptions, EmailTemplates, EmailLog, TextLog, ContactMessages, Posts, BlogCategories, Pages, TrainingCourses, TrainingProgress, Subjects, Languages, Countries, Timezones, Media, PrivateFiles],
-  globals: [SiteSettings, PlatformSettings, HomePage, SiteText],
+  globals: [SiteSettings, PlatformSettings, HomePage, SiteText, Integrations],
   upload: { limits: { fileSize: 20 * 1024 * 1024 } },
   editor: fullEditor,
   db: postgresAdapter({
@@ -121,18 +120,8 @@ export default buildConfig({
     // Production applies pending migrations once, on the first request after a deploy (never during `next build`).
     prodMigrations: env.NEXT_PHASE === "phase-production-build" ? undefined : migrations,
   }),
-  email: smtpReady
-    ? nodemailerAdapter({
-        defaultFromAddress: env.EMAIL_FROM || "no-reply@sabina.education",
-        defaultFromName: env.EMAIL_FROM_NAME || "Sabina Education",
-        transportOptions: {
-          host: env.SMTP_HOST,
-          port: Number(env.SMTP_PORT || 587),
-          secure: Number(env.SMTP_PORT) === 465,
-          auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
-        },
-      })
-    : undefined,
+  // SMTP details come from Settings › Integrations & keys (or SMTP_* hosting settings), read at send time.
+  email: smtpAdapter,
   sharp,
   plugins: [
     // Cloudflare R2 for uploads. Without R2 variables (local development) files go to disk.
@@ -163,6 +152,8 @@ export default buildConfig({
   // Starter subjects and languages on an empty database (never during `next build`).
   onInit: async (payload) => {
     if (env.NEXT_PHASE === "phase-production-build") return;
+    // Keys saved in Settings › Integrations & keys.
+    await (await import("./cms/integrations/server")).applyIntegrations(payload, true);
     await seedCatalogue(payload).catch((err) => payload.logger.error({ err }, "Catalogue seed failed"));
   },
   typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },

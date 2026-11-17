@@ -21,7 +21,7 @@ export default function BlogRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://sabina.education').replace(/\/+$/, '');
+  const baseUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://sabina.education').replace(/\/+$/, '');
 
   const jsonLd = {
     '@context': 'https://schema.org',

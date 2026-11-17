@@ -55,7 +55,7 @@ export default async function TutorProfilePage({ params }: Props) {
   const currency = policies.currency;
   const embed = videoEmbedUrl(t.introVideoUrl);
   const canSave = !viewer.signedIn || viewer.isStudent;
-  const site = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const site = (process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
 
   const jsonLd = {
     "@context": "https://schema.org",

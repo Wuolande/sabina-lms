@@ -85,3 +85,19 @@ export async function sendText(payload: Payload, user: User, message: string, ki
     return "failed" as const;
   }
 }
+
+/** Send a test message from the admin (Settings › Integrations & keys). Throws with the reason if it fails. */
+export async function sendTestText(phone: string, message: string): Promise<"whatsapp" | "sms"> {
+  const to = toE164(phone);
+  if (!to) throw new Error("Enter the number with its country code, e.g. +254 712 345 678.");
+  if (whatsappConfigured()) {
+    try {
+      await viaWhatsApp(to, message);
+      return "whatsapp";
+    } catch {
+      // fall back to SMS
+    }
+  }
+  await viaSms(to, message);
+  return "sms";
+}

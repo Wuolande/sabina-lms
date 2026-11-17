@@ -11,7 +11,7 @@ const LATE_JOIN_MIN = 15; // the room stays open this long after the scheduled e
 const SETTLE_AFTER_MIN = 30; // attendance is settled this long after the end
 const REPORT_WINDOW_H = 48;
 
-export const videoConfigured = () => Boolean(process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET && process.env.NEXT_PUBLIC_LIVEKIT_URL);
+export const videoConfigured = () => Boolean(process.env.LIVEKIT_API_KEY && process.env.LIVEKIT_API_SECRET && (process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL));
 
 export function joinWindow(b: Pick<Booking, "startsAt" | "endsAt">, earlyMinutes: number) {
   return { opens: Date.parse(b.startsAt) - earlyMinutes * 60_000, closes: Date.parse(b.endsAt) + LATE_JOIN_MIN * 60_000 };
@@ -50,7 +50,7 @@ export async function joinLesson(payload: Payload, user: User, id: number) {
   });
   at.addGrant({ room: `lesson-${b.id}`, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true });
   const { recordingAvailable, recordingState } = await import("./classroom");
-  return { token: await at.toJwt(), url: process.env.NEXT_PUBLIC_LIVEKIT_URL!, role, endsAt: b.endsAt, recording: recordingState(b, await recordingAvailable(payload)) };
+  return { token: await at.toJwt(), url: (process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL)!, role, endsAt: b.endsAt, recording: recordingState(b, await recordingAvailable(payload)) };
 }
 
 /**
@@ -167,7 +167,7 @@ export async function submitReview(payload: Payload, user: User, id: number, rat
 }
 
 /** Day-before and hour-before reminders for confirmed lessons. Each is claimed before sending, so it goes once. */
-const siteUrlOf = () => (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
+const siteUrlOf = () => (process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
 
 export async function sendReminders(payload: Payload) {
   const now = Date.now();

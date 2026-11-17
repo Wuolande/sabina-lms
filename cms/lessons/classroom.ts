@@ -94,7 +94,7 @@ export async function removeMaterial(payload: Payload, user: User, id: number, f
 /** Recording needs the admin switch, our own LiveKit project (not the demo) and private R2 storage. */
 export async function recordingAvailable(payload: Payload) {
   const policies = await getPolicies(payload);
-  const url = process.env.NEXT_PUBLIC_LIVEKIT_URL ?? "";
+  const url = (process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL) ?? "";
   return Boolean(policies.recordingEnabled && videoConfigured() && !/demo\.livekit/.test(url) && process.env.LIVEKIT_API_KEY !== "devkey" && r2Ready() && process.env.R2_PRIVATE_BUCKET);
 }
 
@@ -105,7 +105,7 @@ export function recordingState(b: Booking, available: boolean): RecordingState {
   return { available, status: r.status ?? "none", consent: { student: Boolean(r.consentStudentAt), tutor: Boolean(r.consentTutorAt) }, startedAt: r.startedAt ?? null, ready: r.status === "ready" };
 }
 
-const egress = () => new EgressClient(String(process.env.NEXT_PUBLIC_LIVEKIT_URL).replace(/^wss:/, "https:").replace(/^ws:/, "http:"), process.env.LIVEKIT_API_KEY!, process.env.LIVEKIT_API_SECRET!);
+const egress = () => new EgressClient(String((process.env.LIVEKIT_URL || process.env.NEXT_PUBLIC_LIVEKIT_URL)).replace(/^wss:/, "https:").replace(/^ws:/, "http:"), process.env.LIVEKIT_API_KEY!, process.env.LIVEKIT_API_SECRET!);
 
 /**
  * Consent-first recording. Each person agrees ("consent"); recording only starts once both have.

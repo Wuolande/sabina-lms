@@ -27,7 +27,7 @@ export async function generateViewport(): Promise<Viewport> {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const baseUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
   const seo = await getPlatformSeo();
 
   const ogImage = seo.ogImageUrl || `${baseUrl}/images/og-default.png`;
@@ -121,7 +121,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const seo = await getPlatformSeo();
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const baseUrl = (process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
 
   const cssVars = brandCss(seo.colours, "site");
   const site = await siteChrome();

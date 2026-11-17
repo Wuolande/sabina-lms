@@ -26,7 +26,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const found = await postBySlug((await params).slug);
   if (!found) notFound();
   const { post, card, related } = found;
-  const base = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const base = (process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",

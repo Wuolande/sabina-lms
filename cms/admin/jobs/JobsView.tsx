@@ -11,7 +11,7 @@ export async function JobsView({ initPageResult, searchParams, params }: AdminVi
   if (!req.user) redirect("/admin/login");
   if ((req.user as { role?: string }).role !== "admin") redirect("/admin");
   const status = await jobStatus(req.payload);
-  const site = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const site = (process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
   return (
     <DefaultTemplate i18n={req.i18n} locale={locale} params={params} payload={req.payload} permissions={permissions} searchParams={searchParams} user={req.user ?? undefined} visibleEntities={visibleEntities}>
       <Gutter>

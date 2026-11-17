@@ -150,12 +150,14 @@ export interface Config {
     'platform-settings': PlatformSetting;
     'home-page': HomePage;
     'site-text': SiteText;
+    integrations: Integration;
   };
   globalsSelect: {
     'site-settings': SiteSettingsSelect<false> | SiteSettingsSelect<true>;
     'platform-settings': PlatformSettingsSelect<false> | PlatformSettingsSelect<true>;
     'home-page': HomePageSelect<false> | HomePageSelect<true>;
     'site-text': SiteTextSelect<false> | SiteTextSelect<true>;
+    integrations: IntegrationsSelect<false> | IntegrationsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -3035,6 +3037,93 @@ export interface SiteText {
   createdAt?: string | null;
 }
 /**
+ * Connect email, payments, live video, text messages and notifications. Changes apply within a minute, without redeploying. Each tab shows whether a service is ready and lets you send a test. Only the database address, the sign-in secret and file storage (R2) stay in your hosting settings, because the site needs them to start.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "integrations".
+ */
+export interface Integration {
+  id: number;
+  website?: {
+    /**
+     * Include https://. Leave empty to use the address in your hosting settings.
+     */
+    siteUrl?: string | null;
+  };
+  email?: {
+    smtpHost?: string | null;
+    /**
+     * Usually 587, or 465 for SSL.
+     */
+    smtpPort?: string | null;
+    smtpUser?: string | null;
+    /**
+     * Saved encrypted. Only the last 4 characters are shown again. Clear the box to remove it.
+     */
+    smtpPass?: string | null;
+    fromAddress?: string | null;
+    fromName?: string | null;
+  };
+  payments?: {
+    /**
+     * Saved encrypted. Only the last 4 characters are shown again. Clear the box to remove it. Stripe dashboard › Developers › API keys.
+     */
+    stripeSecretKey?: string | null;
+    /**
+     * Saved encrypted. Only the last 4 characters are shown again. Clear the box to remove it. Add a webhook in Stripe pointing to the address shown above, then copy its signing secret.
+     */
+    stripeWebhookSecret?: string | null;
+    /**
+     * Saved encrypted. Only the last 4 characters are shown again. Clear the box to remove it. Paystack dashboard › Settings › API keys & webhooks. Set the webhook address shown above there too.
+     */
+    paystackSecretKey?: string | null;
+  };
+  video?: {
+    livekitUrl?: string | null;
+    livekitApiKey?: string | null;
+    /**
+     * Saved encrypted. Only the last 4 characters are shown again. Clear the box to remove it.
+     */
+    livekitApiSecret?: string | null;
+    /**
+     * For tutors' intro videos (optional).
+     */
+    streamAccountId?: string | null;
+    streamCustomerCode?: string | null;
+    /**
+     * Saved encrypted. Only the last 4 characters are shown again. Clear the box to remove it.
+     */
+    streamApiToken?: string | null;
+  };
+  text?: {
+    /**
+     * Use "sandbox" to test without sending real messages.
+     */
+    atUsername?: string | null;
+    /**
+     * Saved encrypted. Only the last 4 characters are shown again. Clear the box to remove it.
+     */
+    atApiKey?: string | null;
+    /**
+     * Optional. Must be approved by Africa's Talking.
+     */
+    atSenderId?: string | null;
+    /**
+     * Optional. Leave empty to send SMS only.
+     */
+    atWhatsappNumber?: string | null;
+  };
+  push?: {
+    vapidPublicKey?: string | null;
+    /**
+     * Saved encrypted. Only the last 4 characters are shown again. Clear the box to remove it.
+     */
+    vapidPrivateKey?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings_select".
  */
@@ -3418,6 +3507,61 @@ export interface SiteTextSelect<T extends boolean = true> {
               label?: T;
               id?: T;
             };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "integrations_select".
+ */
+export interface IntegrationsSelect<T extends boolean = true> {
+  website?:
+    | T
+    | {
+        siteUrl?: T;
+      };
+  email?:
+    | T
+    | {
+        smtpHost?: T;
+        smtpPort?: T;
+        smtpUser?: T;
+        smtpPass?: T;
+        fromAddress?: T;
+        fromName?: T;
+      };
+  payments?:
+    | T
+    | {
+        stripeSecretKey?: T;
+        stripeWebhookSecret?: T;
+        paystackSecretKey?: T;
+      };
+  video?:
+    | T
+    | {
+        livekitUrl?: T;
+        livekitApiKey?: T;
+        livekitApiSecret?: T;
+        streamAccountId?: T;
+        streamCustomerCode?: T;
+        streamApiToken?: T;
+      };
+  text?:
+    | T
+    | {
+        atUsername?: T;
+        atApiKey?: T;
+        atSenderId?: T;
+        atWhatsappNumber?: T;
+      };
+  push?:
+    | T
+    | {
+        vapidPublicKey?: T;
+        vapidPrivateKey?: T;
       };
   updatedAt?: T;
   createdAt?: T;

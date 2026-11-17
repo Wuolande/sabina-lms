@@ -3,11 +3,17 @@ import { headers as nextHeaders } from "next/headers";
 import { redirect } from "next/navigation";
 import { getPayload } from "payload";
 import config from "@payload-config";
+import { applyIntegrations } from "../integrations/server";
 import type { User } from "@/payload-types";
 import type { Role } from "../access";
 import { STAFF_ROLES } from "../access";
 
-export const getPayloadClient = () => getPayload({ config });
+/** Payload, with the keys from Settings › Integrations & keys loaded (refreshed at most once a minute). */
+export const getPayloadClient = async () => {
+  const payload = await getPayload({ config });
+  await applyIntegrations(payload);
+  return payload;
+};
 
 /** The signed-in user for this request (verified by Payload: signature, expiry, session), or null. */
 export async function getSessionUser(): Promise<User | null> {

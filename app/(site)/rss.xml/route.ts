@@ -6,7 +6,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 
 /** RSS feed of the latest published blog posts (also served at /feed.xml). */
 export async function GET() {
-  const base = (process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
+  const base = (process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://sabina.education").replace(/\/+$/, "");
   const payload = await maybePayload();
   const [seo, { posts }] = await Promise.all([siteSeo(), payload ? listPosts(payload, { limit: 50 }) : Promise.resolve({ posts: [] as PostCard[] })]);
   const items = posts
