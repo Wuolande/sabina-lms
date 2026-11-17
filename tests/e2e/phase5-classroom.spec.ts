@@ -96,7 +96,7 @@ test("classroom, attendance, reviews, notes and progress", async ({ browser }, i
   await sp.getByRole("link", { name: "Write a review" }).click();
   await sp.getByRole("radio", { name: "5 stars" }).click();
   await sp.getByLabel(/What made it great\?/).fill("Clear explanations and lots of practice questions.");
-  await sp.getByRole("button", { name: "Post review" }).click();
+  await sp.getByRole("button", { name: "Post rating" }).click();
   await expect(sp.getByText("“Clear explanations and lots of practice questions.”")).toBeVisible();
   expect((await api(`/api/lessons/${lesson}`, { method: "POST", cookie: student.cookie, body: JSON.stringify({ action: "review", rating: 1 }) })).res.status).toBe(409);
   // Report a problem on it.
