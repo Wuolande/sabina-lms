@@ -90,6 +90,7 @@ async function markCompleted(payload: Payload, b: Booking, notes: Lexical | null
     } as never,
     overrideAccess: true,
   });
+  await (await import("../analytics/store")).track(payload, "lesson_completed", { userId: idOf(b.student), meta: { bookingId: b.id, tutor: idOf(b.tutor) } });
   // Tutor stats: lessons taught and distinct students.
   const tutorId = idOf(b.tutor)!;
   const done = await payload.find({ collection: "bookings", where: { and: [{ tutor: { equals: tutorId } }, { status: { equals: "completed" } }] }, limit: 10000, pagination: false, depth: 0, select: { student: true }, overrideAccess: true });
@@ -158,6 +159,7 @@ export async function submitReview(payload: Payload, user: User, id: number, rat
     },
     overrideAccess: true,
   });
+  await (await import("../analytics/store")).track(payload, "review_submitted", { userId: user.id, meta: { bookingId: b.id, rating: r } });
   const tutorUser = await payload.findByID({ collection: "users", id: idOf(b.tutorUser)!, depth: 0, overrideAccess: true }).catch(() => null);
   if (tutorUser) {
     const [{ deliver }, { reviewReceived }, { personOf }] = await Promise.all([import("../notify/server"), import("../email/notices"), import("../scheduling/server")]);

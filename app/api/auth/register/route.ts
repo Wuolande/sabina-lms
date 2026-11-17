@@ -1,3 +1,4 @@
+import { track } from "@/cms/analytics/store";
 import { NextResponse, type NextRequest } from "next/server";
 import { getPayloadClient } from "@/cms/auth/session";
 import { EMAIL_RE, fail, guard, normEmail, passwordProblem } from "@/cms/auth/http";
@@ -36,11 +37,12 @@ export async function POST(req: NextRequest) {
 
   try {
     // overrideAccess: false so the collection's rules apply (public sign-up can't pick a staff role).
-    await payload.create({
+    const created = await payload.create({
       collection: "users",
       overrideAccess: false,
       data: { email, password: String(body.password), firstName, lastName, role, timezone, status: "active" } as never,
     });
+    await track(payload, "signup", { userId: created.id, visitor: req.cookies.get("sb_vid")?.value ?? null, meta: { role } });
     return NextResponse.json({ success: true, requiresEmailConfirmation: true, email, role }, { status: 201 });
   } catch (err) {
     payload.logger.error({ err }, "[auth/register]");

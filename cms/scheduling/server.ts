@@ -231,6 +231,7 @@ export async function createBooking(
     },
   );
 
+  await (await import("../analytics/store")).track(payload, "booking_created", { userId: student.id, meta: { bookingId: booking.id, kind: booking.kind, fromPackage: Boolean(booking.package) } });
   if (booking.package) {
     await syncPackage(payload, idOf(booking.package)!);
     const ctx = await mailContext(payload, booking);

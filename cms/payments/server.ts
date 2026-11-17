@@ -104,6 +104,7 @@ export async function settlePayment(payload: Payload, reference: string, outcome
   }
 
   const paid = await payload.update({ collection: "payments", id: p.id, data: { status: "succeeded", paidAt: new Date().toISOString(), chargeRef: outcome.chargeRef || p.chargeRef, method: outcome.method || p.method }, overrideAccess: true });
+  await (await import("../analytics/store")).track(payload, "payment_succeeded", { userId: idOf(p.student), meta: { paymentId: p.id, amount: p.amount, currency: p.currency, provider: p.provider, package: Boolean(p.package) } });
   if (p.package) {
     const { activatePackage } = await import("../packages/server");
     const k = await payload.findByID({ collection: "lesson-packages", id: idOf(p.package)!, depth: 0, overrideAccess: true });

@@ -5,6 +5,8 @@ import { ModalProvider } from "@/components/ui/modal-context";
 import { LogoProvider } from "@/components/ui/LogoContext";
 import { getPlatformSeo } from "@/src/shared/seo/platformSeo";
 import { brandCss } from "@/cms/brand";
+import { Suspense } from "react";
+import { Tracker } from "@/components/analytics/Tracker";
 import { siteChrome } from "@/cms/content/server";
 
 const sans = Plus_Jakarta_Sans({
@@ -174,6 +176,10 @@ export default async function RootLayout({
         />
       </head>
       <body suppressHydrationWarning className="flex min-h-full w-full max-w-[100vw] overflow-x-clip flex-col bg-slate-50 text-slate-900 font-sans antialiased selection:bg-brand-100 selection:text-brand-900">
+        {/* Sabina's own privacy-friendly analytics (no third parties). */}
+        <Suspense fallback={null}>
+          <Tracker />
+        </Suspense>
         <LogoProvider initialLogoUrl={seo.logoUrl}>
           <ModalProvider>
             {children}

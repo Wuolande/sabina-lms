@@ -20,6 +20,7 @@ export const MENU: MenuSection[] = [
     items: [
       { kind: "view", slug: "dashboard", label: "Dashboard", icon: "LayoutDashboard", href: "/admin" },
       { kind: "view", slug: "reports", label: "Reports", icon: "BarChart3", href: "/admin/reports" },
+      { kind: "view", slug: "analytics", label: "Analytics", icon: "LineChart", href: "/admin/analytics" },
     ],
   },
   {
