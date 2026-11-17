@@ -1,6 +1,7 @@
 import "server-only";
+import { HIGHLIGHTS, highlightLabel } from "../reviews/highlights";
 import { AccessToken } from "livekit-server-sdk";
-import type { Payload } from "payload";
+import type { Payload, Where } from "payload";
 import type { Booking, Subject, TutorProfile, User } from "@/payload-types";
 import { getPolicies } from "../tutors/server";
 import { BookingError } from "../scheduling/server";
@@ -136,11 +137,20 @@ export async function reportProblem(payload: Payload, user: User, id: number, te
   await payload.update({ collection: "bookings", id: b.id, data: { issue: { text: `[${found.role}] ${clean}`, reportedAt: new Date().toISOString(), resolved: false } }, overrideAccess: true });
 }
 
-export async function submitReview(payload: Payload, user: User, id: number, rating: number, comment: string) {
+/**
+ * A student can rate a lesson once it's finished: when it's marked completed, or from 10 minutes
+ * before the end if both people joined (so they can rate straight from the classroom).
+ */
+export function reviewOpen(b: Pick<Booking, "status" | "endsAt" | "studentJoinedAt" | "tutorJoinedAt">, now = Date.now()) {
+  if (b.status === "completed") return true;
+  return b.status === "confirmed" && Boolean(b.studentJoinedAt && b.tutorJoinedAt) && now >= Date.parse(b.endsAt) - 10 * 60_000;
+}
+
+export async function submitReview(payload: Payload, user: User, id: number, rating: number, comment: string, highlights: string[] = []) {
   const found = await lessonFor(payload, user, id);
   if (!found || found.role !== "student") throw new BookingError("Lesson not found.", 404);
   const { b } = found;
-  if (b.status !== "completed") throw new BookingError("You can review a lesson once it's finished.", 409);
+  if (!reviewOpen(b)) throw new BookingError("You can rate a lesson once it's finished.", 409);
   const r = Math.round(Number(rating));
   if (!(r >= 1 && r <= 5)) throw new BookingError("Choose 1 to 5 stars.");
   const exists = await payload.count({ collection: "reviews", where: { booking: { equals: b.id } }, overrideAccess: true });
@@ -150,6 +160,7 @@ export async function submitReview(payload: Payload, user: User, id: number, rat
     data: {
       rating: r,
       comment: comment.trim().slice(0, 1500),
+      highlights: [...new Set(highlights)].filter((h) => HIGHLIGHTS.some((x) => x.value === h)) as never,
       status: "published",
       booking: b.id,
       tutor: idOf(b.tutor)!,
@@ -220,8 +231,70 @@ export async function replyToReview(payload: Payload, user: User, reviewId: numb
 /* ------------------------------------------------------------------ views */
 
 export async function publicReviews(payload: Payload, tutorId: number, limit = 6) {
-  const r = await payload.find({ collection: "reviews", where: { and: [{ tutor: { equals: tutorId } }, { status: { equals: "published" } }] }, sort: "-createdAt", limit, depth: 0, overrideAccess: true });
-  return { total: r.totalDocs, items: r.docs.map((d) => ({ id: d.id, rating: d.rating, comment: d.comment ?? "", reply: d.tutorReply ?? null, name: d.studentName ?? "Student", subject: d.subject ?? null, date: d.createdAt })) };
+  const where: Where = { and: [{ tutor: { equals: tutorId } }, { status: { equals: "published" } }] };
+  const [r, all] = await Promise.all([
+    payload.find({ collection: "reviews", where, sort: "-createdAt", limit, depth: 0, overrideAccess: true }),
+    payload.find({ collection: "reviews", where, limit: 5000, pagination: false, depth: 0, select: { rating: true, highlights: true }, overrideAccess: true }),
+  ]);
+  // How many reviews gave each star, 5 down to 1, and what students say stands out most.
+  const breakdown = [5, 4, 3, 2, 1].map((s) => all.docs.filter((d) => d.rating === s).length);
+  const counts = new Map<string, number>();
+  for (const d of all.docs) for (const h of (d.highlights as string[] | null) ?? []) counts.set(h, (counts.get(h) ?? 0) + 1);
+  const highlights = [...counts].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([value, count]) => ({ label: highlightLabel(value), count }));
+  return {
+    total: r.totalDocs,
+    breakdown,
+    highlights,
+    items: r.docs.map((d) => ({ id: d.id, rating: d.rating, comment: d.comment ?? "", reply: d.tutorReply ?? null, name: d.studentName ?? "Student", subject: d.subject ?? null, date: d.createdAt, highlights: ((d.highlights as string[] | null) ?? []).map(highlightLabel) })),
+  };
+}
+
+/** A student's finished lessons from the last 30 days that they haven't rated yet (newest first). */
+export async function unratedLessons(payload: Payload, user: User, limit = 3) {
+  const since = new Date(Date.now() - 30 * 86400_000).toISOString();
+  const done = await payload.find({
+    collection: "bookings",
+    where: { and: [{ student: { equals: user.id } }, { status: { in: ["completed", "confirmed"] } }, { endsAt: { greater_than: since } }, { endsAt: { less_than: new Date(Date.now() + 10 * 60_000).toISOString() } }] },
+    sort: "-endsAt",
+    limit: 20,
+    depth: 1,
+    overrideAccess: true,
+  });
+  const open = done.docs.filter((b) => reviewOpen(b));
+  if (!open.length) return [];
+  const reviewed = new Set((await payload.find({ collection: "reviews", where: { booking: { in: open.map((b) => b.id) } }, limit: 50, depth: 0, select: { booking: true }, overrideAccess: true })).docs.map((r) => idOf(r.booking)));
+  return open
+    .filter((b) => !reviewed.has(b.id))
+    .slice(0, limit)
+    .map((b) => {
+      const t = b.tutor as TutorProfile | null;
+      const photo = t?.photo && typeof t.photo === "object" ? ((t.photo as { sizes?: { thumb?: { url?: string } }; url?: string }).sizes?.thumb?.url ?? (t.photo as { url?: string }).url ?? null) : null;
+      return { id: b.id, tutor: t?.displayName ?? "your tutor", photo, subject: (b.subject as Subject | null)?.name ?? null, endsAt: b.endsAt };
+    });
+}
+
+/** Two hours after a finished lesson, ask once for a rating if the student hasn't given one. */
+export async function sendReviewPrompts(payload: Payload) {
+  const now = Date.now();
+  const iso = (ms: number) => new Date(ms).toISOString();
+  const claimed = await payload.update({
+    collection: "bookings",
+    where: { and: [{ status: { equals: "completed" } }, { endsAt: { less_than_equal: iso(now - 2 * 3600_000) } }, { endsAt: { greater_than: iso(now - 7 * 86400_000) } }, { reviewPromptedAt: { exists: false } }] },
+    data: { reviewPromptedAt: iso(now) },
+    overrideAccess: true,
+    depth: 1,
+    limit: 100,
+  });
+  if (!claimed.docs.length) return;
+  const reviewed = new Set((await payload.find({ collection: "reviews", where: { booking: { in: claimed.docs.map((b) => b.id) } }, limit: 200, depth: 0, select: { booking: true }, overrideAccess: true })).docs.map((r) => idOf(r.booking)));
+  const [{ deliver }, { rateLesson }, { personOf }] = await Promise.all([import("../notify/server"), import("../email/notices"), import("../scheduling/server")]);
+  for (const b of claimed.docs) {
+    if (reviewed.has(b.id)) continue;
+    const student = typeof b.student === "object" ? (b.student as User) : await payload.findByID({ collection: "users", id: idOf(b.student)!, depth: 0, overrideAccess: true }).catch(() => null);
+    if (!student) continue;
+    const tutor = b.tutor as TutorProfile | null;
+    await deliver(payload, student, rateLesson(personOf(student), { id: b.id, tutorName: tutor?.displayName ?? "your tutor", subject: (b.subject as Subject | null)?.name ?? null }));
+  }
 }
 
 export async function tutorReviews(payload: Payload, user: User) {
@@ -321,7 +394,7 @@ export async function lessonDetail(payload: Payload, user: User, id: number) {
     noShowBy: b.noShowBy ?? null,
     cancelReason: b.cancelReason ?? null,
     review: review ? { rating: review.rating, comment: review.comment ?? "", reply: review.tutorReply ?? null } : null,
-    canReview: role === "student" && b.status === "completed" && !review,
+    canReview: role === "student" && reviewOpen(b) && !review,
     canReport: !b.issue?.reportedAt && now >= Date.parse(b.startsAt) && now <= Date.parse(b.endsAt) + REPORT_WINDOW_H * 3600_000 && ["confirmed", "completed", "no_show"].includes(b.status),
     reported: Boolean(b.issue?.reportedAt),
     canFinish: role === "tutor" && (b.status === "confirmed" || b.status === "completed") && now >= Date.parse(b.startsAt),

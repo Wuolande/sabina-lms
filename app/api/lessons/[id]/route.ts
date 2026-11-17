@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { user } = (await payload.auth({ headers: req.headers })) as { user: User | null };
   if (!user) return fail("Please sign in.", 401);
   const id = Number((await params).id);
-  const b = (await req.json().catch(() => ({}))) as { action?: string; notes?: string; text?: string; rating?: number; comment?: string };
+  const b = (await req.json().catch(() => ({}))) as { action?: string; notes?: string; text?: string; rating?: number; comment?: string; highlights?: unknown };
   try {
     switch (b.action) {
       case "join":
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         await reportProblem(payload, user, id, String(b.text ?? ""));
         return NextResponse.json({ success: true });
       case "review":
-        await submitReview(payload, user, id, Number(b.rating), String(b.comment ?? ""));
+        await submitReview(payload, user, id, Number(b.rating), String(b.comment ?? ""), Array.isArray(b.highlights) ? b.highlights.map(String).slice(0, 6) : []);
         return NextResponse.json({ success: true }, { status: 201 });
       default:
         return fail("Unknown action.");

@@ -24,8 +24,16 @@ export async function homeData(user: User): Promise<HomeData> {
     const s = await payload.find({ collection: "schedules", where: { user: { equals: user.id } }, limit: 1, depth: 0, overrideAccess: true });
     hasHours = Boolean(s.docs[0]?.weekly?.length);
   }
+  let reviewsGiven = 0;
+  let toRate: HomeData["toRate"] = [];
+  if (user.role === "student") {
+    const { unratedLessons } = await import("../lessons/server");
+    [reviewsGiven, toRate] = await Promise.all([payload.count({ collection: "reviews", where: { student: { equals: user.id } }, overrideAccess: true }).then((r) => r.totalDocs), unratedLessons(payload, user)]);
+  }
   return {
     tz: safeTz(user.timezone),
+    reviewsGiven,
+    toRate,
     upcoming: live.slice(0, 4),
     upcomingCount: live.filter((l) => l.phase === "upcoming").length,
     hours: done.reduce((n, l) => n + l.minutes, 0) / 60,

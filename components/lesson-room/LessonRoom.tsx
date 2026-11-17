@@ -1,4 +1,5 @@
 "use client";
+import { RateLesson } from "@/components/reviews/RateLesson";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LiveKitRoom, RoomAudioRenderer, VideoTrack, useChat, useConnectionQualityIndicator, useConnectionState, useDataChannel, useIsSpeaking, useLocalParticipant, useMediaDeviceSelect, useParticipants, useTrackToggle, useTracks, type TrackReferenceOrPlaceholder } from "@livekit/components-react";
@@ -22,6 +23,8 @@ export type RoomLesson = {
   joinOpensAt: string;
   joinClosesAt: string;
   tz: string;
+  /** The student already rated this lesson. */
+  reviewed?: boolean;
 };
 export type RoomRecording = { available: boolean; status: string; consent: { student: boolean; tutor: boolean }; startedAt: string | null; ready: boolean };
 /** Classroom events shared over the "room" data topic. */
@@ -998,10 +1001,15 @@ function Left({ lesson, finished, onRejoin }: { lesson: RoomLesson; finished: bo
   const home = lesson.role === "tutor" ? "/tutor/lessons" : "/student/lessons";
   return (
     <div className="grid min-h-[100dvh] place-items-center bg-black px-6 text-center text-white" style={font}>
-      <div className="max-w-sm">
+      <div className="w-full max-w-md">
         <Avatar name={lesson.other.name} src={lesson.other.avatar} size={72} />
         <h1 className="mt-5 text-[28px] font-semibold tracking-tight">{finished ? "Lesson finished" : "You left the lesson"}</h1>
         <p className="mt-2 text-white/60">{finished ? `Your notes have been sent to ${lesson.other.name.split(" ")[0]}.` : canRejoin ? `You can go back in until ${fmtTime(lesson.joinClosesAt, lesson.tz)}.` : "The classroom is now closed."}</p>
+        {lesson.role === "student" && !lesson.reviewed && now != null && now >= Date.parse(lesson.endsAt) - 10 * 60_000 && (
+          <div className="mt-8 rounded-3xl bg-white/[0.06] p-5 text-left ring-1 ring-white/10">
+            <RateLesson lessonId={lesson.id} tutor={lesson.other.name} dark />
+          </div>
+        )}
         <div className="mt-8 space-y-3">
           {canRejoin && (
             <button type="button" onClick={onRejoin} className="h-[52px] w-full rounded-full bg-brand-700 text-[17px] font-semibold hover:bg-brand-600">

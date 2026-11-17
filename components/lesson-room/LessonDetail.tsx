@@ -1,4 +1,6 @@
 "use client";
+import { RateLesson } from "@/components/reviews/RateLesson";
+import { Stars } from "@/components/reviews/Stars";
 import { LessonFiles } from "./LessonFiles";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,67 +30,7 @@ function Group({ title, children }: { title?: string; children: React.ReactNode 
   );
 }
 
-export function Stars({ value, onChange, size = 28 }: { value: number; onChange?: (n: number) => void; size?: number }) {
-  return (
-    <div className="flex gap-1" role={onChange ? "radiogroup" : undefined} aria-label={onChange ? "Rating" : `${value} out of 5 stars`}>
-      {[1, 2, 3, 4, 5].map((n) =>
-        onChange ? (
-          <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={`${n} star${n > 1 ? "s" : ""}`} onClick={() => onChange(n)} className="rounded-md p-0.5 transition active:scale-90">
-            <Star size={size} className={n <= value ? "fill-amber-400 text-amber-400" : "text-slate-300"} />
-          </button>
-        ) : (
-          <Star key={n} size={size} className={n <= value ? "fill-amber-400 text-amber-400" : "text-slate-200"} />
-        ),
-      )}
-    </div>
-  );
-}
-
-const PROMPT = ["", "What went wrong?", "What could have been better?", "What was OK, and what wasn't?", "What did you like?", "What made it great?"];
-
-function ReviewForm({ id, tutor }: { id: number; tutor: string }) {
-  const router = useRouter();
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  return (
-    <div className="p-5 sm:p-6">
-      <p className="font-semibold text-slate-900">How was your lesson with {tutor}?</p>
-      <p className="mt-0.5 text-sm text-slate-500">Your review helps other students choose. It shows your first name only.</p>
-      <div className="mt-4">
-        <Stars value={rating} onChange={setRating} size={32} />
-      </div>
-      {rating > 0 && (
-        <>
-          <label className="mt-4 block">
-            <span className="text-sm font-medium text-slate-700">{PROMPT[rating]} (optional)</span>
-            <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} maxLength={1500} className="mt-1.5 w-full rounded-2xl border-0 bg-slate-50 px-4 py-3 text-[15px] ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-500" />
-          </label>
-          {error && <p className="mt-2 text-sm font-medium text-rose-600">{error}</p>}
-          <button
-            type="button"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              setError(null);
-              try {
-                await post(id, { action: "review", rating, comment });
-                router.refresh();
-              } catch (e) {
-                setError((e as Error).message);
-                setBusy(false);
-              }
-            }}
-            className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-brand-700 px-6 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60"
-          >
-            {busy && <Loader2 size={16} className="animate-spin" />} Post review
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
+export { Stars } from "@/components/reviews/Stars";
 
 function NotesEditor({ id, initial, done }: { id: number; initial: Lexical | null; done: boolean }) {
   const router = useRouter();
@@ -191,6 +133,7 @@ function ReportProblem({ id }: { id: number }) {
 }
 
 export function LessonDetail({ l, tz }: { l: LessonDetailView; tz: string }) {
+  const router = useRouter();
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     setNow(Date.now());
@@ -313,7 +256,9 @@ export function LessonDetail({ l, tz }: { l: LessonDetailView; tz: string }) {
               )}
             </div>
           ) : (
-            <ReviewForm id={l.id} tutor={first!} />
+            <div id="review" className="p-5 sm:p-6">
+              <RateLesson lessonId={l.id} tutor={l.other.name} onDone={() => router.refresh()} />
+            </div>
           )}
         </Group>
       )}

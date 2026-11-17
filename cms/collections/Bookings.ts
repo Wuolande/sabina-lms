@@ -96,6 +96,7 @@ export const Bookings: CollectionConfig = {
     { name: "respondedAt", type: "date", admin: { readOnly: true, position: "sidebar" } },
     { name: "remindedDayAt", type: "date", admin: { readOnly: true, position: "sidebar", description: "Day-before reminder sent." } },
     { name: "remindedHourAt", type: "date", admin: { readOnly: true, position: "sidebar", description: "Hour-before reminder sent." } },
+    { name: "reviewPromptedAt", type: "date", admin: { readOnly: true, position: "sidebar", description: "Asked the student to rate the lesson." } },
     {
       type: "collapsible",
       label: "Classroom & attendance",

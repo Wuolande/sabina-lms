@@ -6,8 +6,38 @@ import type { PortalUser } from "./types";
 import type { LessonView } from "@/cms/scheduling/server";
 import { fmtDay, fmtRange } from "@/lib/time";
 import { money } from "@/lib/money";
+import { RateLesson } from "@/components/reviews/RateLesson";
 
-export type HomeData = { tz: string; upcoming: LessonView[]; upcomingCount: number; hours: number; people: number; requests: number; hasHours: boolean; booked: boolean; earned: number | null; currency: string };
+export type ToRate = { id: number; tutor: string; photo: string | null; subject: string | null; endsAt: string };
+export type HomeData = { tz: string; upcoming: LessonView[]; upcomingCount: number; hours: number; people: number; requests: number; hasHours: boolean; booked: boolean; earned: number | null; currency: string; reviewsGiven?: number; toRate?: ToRate[] };
+
+/** Finished lessons the student hasn't rated yet, at the top of their home page. */
+function RateBanner({ lessons, tz }: { lessons: ToRate[]; tz: string }) {
+  const [l] = lessons;
+  if (!l) return null;
+  return (
+    <section aria-labelledby="rate-title" className="rounded-3xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-2 ring-accent-300 sm:p-6">
+      <div className="flex items-start gap-4">
+        {l.photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={l.photo} alt="" className="h-12 w-12 shrink-0 rounded-2xl object-cover" />
+        ) : (
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-accent-100 text-accent-800"><Star size={22} /></span>
+        )}
+        <div className="min-w-0 flex-1">
+          <h2 id="rate-title" className="font-heading text-lg font-semibold text-slate-900">How was your lesson with {l.tutor.split(" ")[0]}?</h2>
+          <p className="text-sm text-slate-500">
+            {l.subject ? `${l.subject}, ` : ""}{fmtDay(l.endsAt, tz)}. Tap a star, it takes ten seconds.
+            {lessons.length > 1 ? ` ${lessons.length - 1} more lesson${lessons.length > 2 ? "s" : ""} to rate after this.` : ""}
+          </p>
+          <div className="mt-1">
+            <RateLesson key={l.id} lessonId={l.id} tutor={l.tutor} heading={false} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function UpcomingPanel({ data, role }: { data: HomeData; role: "student" | "tutor" }) {
   const href = role === "tutor" ? "/tutor/lessons" : "/student/lessons";
@@ -160,11 +190,12 @@ export function StudentHome({ data }: { data: HomeData }) {
   return (
     <div className="space-y-6">
       <Hero user={user} line="Ready to learn something new today? Your lessons, tutors and progress live here." cta={{ href: "/find-tutors", label: "Find a tutor", icon: Search }} />
+      {data.toRate?.length ? <RateBanner lessons={data.toRate} tz={data.tz} /> : null}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Stat icon={CalendarDays} label="Upcoming lessons" value={String(data.upcomingCount)} note={data.upcomingCount ? "Booked and confirmed" : "Nothing booked yet"} tone="brand" />
         <Stat icon={Clock} label="Hours learned" value={String(Math.round(data.hours * 10) / 10)} note="Starts with your first lesson" tone="accent" />
         <Stat icon={Users} label="My tutors" value={String(data.people)} note="Tutors you've booked" tone="emerald" />
-        <Stat icon={Star} label="Reviews given" value="0" note="Help others choose" tone="slate" />
+        <Stat icon={Star} label="Reviews given" value={String(data.reviewsGiven ?? 0)} note={data.toRate?.length ? `${data.toRate.length} lesson${data.toRate.length > 1 ? "s" : ""} to rate` : "Help others choose"} tone="slate" />
       </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Checklist steps={steps} />

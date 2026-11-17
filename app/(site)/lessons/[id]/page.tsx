@@ -16,7 +16,7 @@ export default async function ClassroomPage({ params }: { params: Promise<{ id: 
   if (!l.classroom) redirect(`/${l.role}/lessons/${l.id}`);
   return (
     <LessonRoom
-      lesson={{ id: l.id, title: l.title, role: l.role, other: { name: l.other.name, avatar: l.other.avatar }, me: l.me, startsAt: l.startsAt, endsAt: l.endsAt, joinOpensAt: l.joinOpensAt, joinClosesAt: l.joinClosesAt, tz: safeTz(user.timezone) }}
+      lesson={{ id: l.id, title: l.title, role: l.role, other: { name: l.other.name, avatar: l.other.avatar }, me: l.me, startsAt: l.startsAt, endsAt: l.endsAt, joinOpensAt: l.joinOpensAt, joinClosesAt: l.joinClosesAt, tz: safeTz(user.timezone), reviewed: Boolean(l.review) }}
     />
   );
 }

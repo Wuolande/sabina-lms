@@ -11,6 +11,7 @@ export const EMAIL_CATALOGUE = [
   { key: "lesson_reminder_hour", name: "Reminder: starting soon", audience: "Student and tutor", description: "About 1 hour before a lesson. People can turn reminders off." },
   { key: "new_message", name: "New message", audience: "Student or tutor", description: "Someone sent a message. At most one email per conversation every 30 minutes." },
   { key: "review_received", name: "New review", audience: "Tutor", description: "A student reviewed a lesson." },
+  { key: "rate_lesson", name: "Rate your lesson", audience: "Student", description: "About 2 hours after a lesson, if the student hasn't rated it yet. Sent once." },
   { key: "homework_set", name: "Homework set", audience: "Student", description: "A tutor set homework or a quiz." },
   { key: "homework_submitted", name: "Homework handed in", audience: "Tutor", description: "A student handed in homework or finished a quiz." },
   { key: "homework_reviewed", name: "Homework marked", audience: "Student", description: "The tutor left feedback on homework." },

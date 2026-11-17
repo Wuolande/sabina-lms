@@ -323,9 +323,10 @@ export async function expireStale(payload: Payload) {
   }
   const { expirePackages } = await import("../packages/server");
   await expirePackages(payload).catch((err) => payload.logger.error({ err }, "[packages] expiry failed"));
-  const { settleAttendance, sendReminders } = await import("../lessons/server");
+  const { settleAttendance, sendReminders, sendReviewPrompts } = await import("../lessons/server");
   await settleAttendance(payload);
   await sendReminders(payload).catch((err) => payload.logger.error({ err }, "[reminders] failed"));
+  await sendReviewPrompts(payload).catch((err) => payload.logger.error({ err }, "[review prompts] failed"));
 }
 
 /* ------------------------------------------------------------------ views */

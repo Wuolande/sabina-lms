@@ -44,6 +44,20 @@ export function newMessage(to: MailPerson, from: string, preview: string, href: 
   };
 }
 
+/** A couple of hours after a lesson, if the student hasn't rated it. */
+export function rateLesson(to: MailPerson, l: { id: number; tutorName: string; subject?: string | null }): Mail {
+  const what = l.subject ? `${l.subject} lesson with ${l.tutorName}` : `lesson with ${l.tutorName}`;
+  return {
+    subject: `How was your ${what}?`,
+    ...mailOf("rate_lesson", {
+      preheader: "Tap a star. It takes ten seconds and helps other students choose.",
+      heading: `How was your lesson with ${l.tutorName}?`,
+      body: [hi(to), `Rate your ${what}. It takes ten seconds, shows only your first name, and helps other students choose the right tutor.`],
+      cta: { label: "Rate the lesson", href: `${siteUrl()}/student/lessons/${l.id}#review` },
+    }),
+  };
+}
+
 export function reviewReceived(to: MailPerson, from: string, rating: number, comment: string): Mail {
   return {
     subject: `${from} left you a ${rating}-star review`,

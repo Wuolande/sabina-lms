@@ -1,5 +1,6 @@
 import type { CollectionConfig, Where } from "payload";
 import { hasRole, isAdmin } from "../access";
+import { HIGHLIGHTS } from "../reviews/highlights";
 
 /** Recompute a tutor's rating and review count from published reviews. */
 async function refreshTutorStats(req: import("payload").PayloadRequest, tutorId: number) {
@@ -37,6 +38,7 @@ export const Reviews: CollectionConfig = {
       ],
     },
     { name: "comment", type: "textarea", maxLength: 1500 },
+    { name: "highlights", type: "select", hasMany: true, options: HIGHLIGHTS.map((h) => ({ label: h.label, value: h.value })), admin: { description: "What the student said stood out." } },
     { name: "tutorReply", type: "textarea", maxLength: 1000 },
     { name: "booking", type: "relationship", relationTo: "bookings", required: true, unique: true, admin: { readOnly: true } },
     { name: "tutor", type: "relationship", relationTo: "tutor-profiles", required: true, index: true, admin: { readOnly: true } },

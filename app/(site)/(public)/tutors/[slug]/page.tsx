@@ -277,11 +277,44 @@ export default async function TutorProfilePage({ params }: Props) {
           <Section icon={Star} title={reviews.total ? `Reviews (${reviews.total})` : "Reviews"}>
             {reviews.items.length ? (
               <div>
-                <div className="flex items-center gap-3">
-                  <span className="font-heading text-3xl font-bold text-slate-900">{t.rating.toFixed(1)}</span>
-                  <Stars value={Math.round(t.rating)} size={18} />
+                <div className="grid gap-6 rounded-2xl bg-slate-50 p-5 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center" data-testid="rating-summary">
+                  <div className="text-center sm:pr-6 sm:text-left">
+                    <p className="font-heading text-5xl font-bold leading-none text-slate-900">{t.rating.toFixed(1)}</p>
+                    <div className="mt-2 flex justify-center sm:justify-start">
+                      <Stars value={Math.round(t.rating)} size={20} />
+                    </div>
+                    <p className="mt-1.5 text-sm text-slate-500">
+                      {reviews.total} review{reviews.total === 1 ? "" : "s"} from real lessons
+                    </p>
+                  </div>
+                  <ul className="space-y-1.5" aria-label="Ratings by number of stars">
+                    {reviews.breakdown.map((n, i) => {
+                      const stars = 5 - i;
+                      return (
+                        <li key={stars} className="flex items-center gap-3 text-sm">
+                          <span className="w-12 shrink-0 text-slate-600">{stars} star{stars > 1 ? "s" : ""}</span>
+                          <span className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200" aria-hidden="true">
+                            <span className="block h-full rounded-full bg-amber-400" style={{ width: `${reviews.total ? (n / reviews.total) * 100 : 0}%` }} />
+                          </span>
+                          <span className="w-8 shrink-0 text-right tabular-nums text-slate-500">{n}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
-                <ul className="mt-5 divide-y divide-slate-100">
+                {reviews.highlights.length > 0 && (
+                  <div className="mt-5">
+                    <p className="text-sm font-semibold text-slate-700">What students say</p>
+                    <ul className="mt-2 flex flex-wrap gap-2">
+                      {reviews.highlights.map((h) => (
+                        <li key={h.label} className="rounded-full bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-800 ring-1 ring-brand-100">
+                          {h.label} <span className="text-brand-500">· {h.count}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <ul className="mt-6 divide-y divide-slate-100">
                   {reviews.items.map((r) => (
                     <li key={r.id} className="py-4 first:pt-0 last:pb-0">
                       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -291,6 +324,7 @@ export default async function TutorProfilePage({ params }: Props) {
                       <div className="mt-1">
                         <Stars value={r.rating} size={14} />
                       </div>
+                      {r.highlights.length > 0 && <p className="mt-1.5 text-sm text-slate-500">{r.highlights.join(" · ")}</p>}
                       {r.comment && <p className="mt-2 text-[15px] leading-relaxed text-slate-700">{r.comment}</p>}
                       {r.reply && (
                         <p className="mt-3 rounded-2xl bg-slate-50 p-3 text-sm text-slate-600">

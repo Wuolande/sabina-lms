@@ -692,6 +692,10 @@ export interface Booking {
    * Hour-before reminder sent.
    */
   remindedHourAt?: string | null;
+  /**
+   * Asked the student to rate the lesson.
+   */
+  reviewPromptedAt?: string | null;
   studentJoinedAt?: string | null;
   tutorJoinedAt?: string | null;
   completedAt?: string | null;
@@ -949,6 +953,10 @@ export interface Review {
   rating: number;
   status: 'published' | 'hidden';
   comment?: string | null;
+  /**
+   * What the student said stood out.
+   */
+  highlights?: ('clear' | 'patient' | 'prepared' | 'encouraging' | 'feedback' | 'on_time')[] | null;
   tutorReply?: string | null;
   booking: number | Booking;
   tutor: number | TutorProfile;
@@ -1166,6 +1174,7 @@ export interface EmailTemplate {
     | 'lesson_reminder_hour'
     | 'new_message'
     | 'review_received'
+    | 'rate_lesson'
     | 'homework_set'
     | 'homework_submitted'
     | 'homework_reviewed'
@@ -1943,6 +1952,7 @@ export interface BookingsSelect<T extends boolean = true> {
   respondedAt?: T;
   remindedDayAt?: T;
   remindedHourAt?: T;
+  reviewPromptedAt?: T;
   studentJoinedAt?: T;
   tutorJoinedAt?: T;
   completedAt?: T;
@@ -2052,6 +2062,7 @@ export interface ReviewsSelect<T extends boolean = true> {
   rating?: T;
   status?: T;
   comment?: T;
+  highlights?: T;
   tutorReply?: T;
   booking?: T;
   tutor?: T;
