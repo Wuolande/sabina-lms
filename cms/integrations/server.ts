@@ -1,5 +1,6 @@
-import type { Payload } from "payload";
+import type { Payload, PayloadRequest } from "payload";
 import { KEYS } from "./keys";
+import { decrypt } from "./crypto";
 
 /**
  * Makes the keys saved in Settings › Integrations & keys available to the rest of the site, by
@@ -15,16 +16,18 @@ const state: State = (g.__sabinaIntegrations ??= { at: 0, inflight: null, origin
 
 const FRESH_MS = 60_000;
 
-export function applyIntegrations(payload: Payload, force = false): Promise<void> {
+/** `req` is passed after a save, so the new values are read inside the same database transaction. */
+export function applyIntegrations(payload: Payload, force = false, req?: PayloadRequest): Promise<void> {
   if (process.env.NEXT_PHASE === "phase-production-build") return Promise.resolve();
   if (!force && Date.now() - state.at < FRESH_MS) return Promise.resolve();
   if (state.inflight && !force) return state.inflight;
   state.inflight = (async () => {
     try {
-      const doc = (await payload.findGlobal({ slug: "integrations" as never, depth: 0, overrideAccess: true, context: { reveal: true } })) as unknown as Record<string, Record<string, unknown> | undefined>;
+      // Raw stored values (no hooks); secrets are decrypted here. With `req`, this reads inside the save's transaction.
+      const doc = ((await payload.db.findGlobal({ slug: "integrations", ...(req ? { req } : {}) })) ?? {}) as Record<string, Record<string, unknown> | undefined>;
       for (const k of KEYS) {
         const v = doc?.[k.tab]?.[k.name];
-        const value = typeof v === "string" ? v.trim() : "";
+        const value = typeof v === "string" ? (k.secret ? decrypt(v) : v).trim() : "";
         if (value) process.env[k.env] = value;
         else if (state.original[k.env] !== undefined) process.env[k.env] = state.original[k.env];
         else delete process.env[k.env];

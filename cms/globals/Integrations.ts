@@ -62,13 +62,13 @@ export const Integrations: GlobalConfig = {
       },
     ],
     afterRead: [
-      ({ doc, context }) => {
+      // Secrets always leave the database masked. The server reads them raw (cms/integrations/server.ts).
+      ({ doc }) => {
         const d = doc as Doc;
         for (const [tab, name] of SECRET_PATHS) {
           const v = d[tab]?.[name];
           if (typeof v !== "string" || !v) continue;
-          const plain = decrypt(v);
-          d[tab]![name] = context?.reveal === true ? plain : mask(plain);
+          d[tab]![name] = mask(decrypt(v));
         }
         return doc;
       },
@@ -76,7 +76,7 @@ export const Integrations: GlobalConfig = {
     afterChange: [
       async ({ req }) => {
         const { applyIntegrations } = await import("../integrations/server");
-        await applyIntegrations(req.payload, true);
+        await applyIntegrations(req.payload, true, req);
       },
     ],
   },
