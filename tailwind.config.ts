@@ -126,10 +126,10 @@ const config: Config = {
       },
 
       backgroundImage: {
-        "gradient-brand":   "linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%)",
+        "gradient-brand":   "linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%)",
         "gradient-emerald": "linear-gradient(135deg, #059669 0%, #10B981 100%)",
         "gradient-gold":    "linear-gradient(135deg, var(--brand-accent-dark) 0%, var(--brand-accent) 100%)",
-        "gradient-hero":    "linear-gradient(135deg, rgb(var(--brand-950)) 0%, var(--brand-primary) 55%, var(--brand-accent) 100%)",
+        "gradient-hero":    "linear-gradient(135deg, rgb(var(--brand-950)) 0%, var(--brand-primary) 60%, var(--brand-primary-light) 100%)",
         "gradient-radial":  "radial-gradient(ellipse at center, var(--tw-gradient-stops))",
         "gradient-conic":   "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
         "shimmer":          "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)",

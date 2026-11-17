@@ -40,7 +40,7 @@ export function emailLayout({
       ${p}<!--sabina:note-->${button}
       ${footnote ? `<p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:#94a3b8">${esc(footnote)}</p>` : ""}
     </td></tr>
-    <tr><td style="padding:20px 8px;font-size:12px;line-height:1.5;color:#94a3b8;text-align:center">Sabina Education · Learn from verified tutors, live.<br><a href="${siteUrl()}" style="color:#94a3b8">${esc(siteUrl().replace(/^https?:\/\//, ""))}</a></td></tr>
+    <tr><td style="padding:20px 8px;font-size:12px;line-height:1.5;color:#94a3b8;text-align:center">Sabina Edge · Building minds. Impacting lives.<br><a href="${siteUrl()}" style="color:#94a3b8">${esc(siteUrl().replace(/^https?:\/\//, ""))}</a></td></tr>
   </table>
 </td></tr></table></body></html>`;
 }

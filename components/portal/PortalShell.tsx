@@ -171,7 +171,7 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
         {/* Desktop sidebar */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-[264px] flex-col border-r border-slate-200/70 bg-white lg:flex">
           <div className="flex h-[72px] items-center px-6">
-            <SabinaLogo href={`/${role}`} size={32} />
+            <SabinaLogo href={`/${role}`} size={40} />
           </div>
           <div className="flex-1 overflow-y-auto px-4 pb-4">
             {role === "student" && (
@@ -199,7 +199,7 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
             <button type="button" aria-label="Close menu" className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setDrawer(false)} />
             <div className="absolute inset-y-0 left-0 flex w-[86%] max-w-[320px] flex-col bg-white shadow-2xl">
               <div className="flex h-16 items-center justify-between px-5">
-                <SabinaLogo href={`/${role}`} size={30} />
+                <SabinaLogo href={`/${role}`} size={38} />
                 <button type="button" onClick={() => setDrawer(false)} className="grid h-10 w-10 place-items-center rounded-xl text-slate-500 hover:bg-slate-100" aria-label="Close menu">
                   <X size={20} />
                 </button>
@@ -221,7 +221,7 @@ export function PortalShell({ user, role, children }: { user: PortalUser; role: 
               <Menu size={21} />
             </button>
             <div className="lg:hidden">
-              <SabinaLogo href={`/${role}`} size={28} />
+              <SabinaLogo href={`/${role}`} size={34} />
             </div>
             <h2 className="hidden font-heading text-lg font-semibold text-slate-900 lg:block">{current?.label ?? ""}</h2>
             <div className="ml-auto flex items-center gap-2">

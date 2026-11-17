@@ -305,7 +305,7 @@ export function HomePageClient({
                 <div className="absolute inset-0 rounded-full border-2 border-brand/70 -rotate-12 scale-100 sm:scale-105 pointer-events-none transition-transform duration-700 hover:rotate-0" />
 
                 {/* Dynamic Brand Circular Backdrop */}
-                <div className="absolute inset-2 sm:inset-3 rounded-full bg-gradient-to-br from-accent-300 via-accent-500 to-brand-700 shadow-2xl overflow-hidden" />
+                <div className="absolute inset-2 sm:inset-3 rounded-full bg-gradient-to-br from-brand-500 via-brand-600 to-brand-800 shadow-2xl overflow-hidden" />
 
                 {/* Dynamic Accent Circle Accent */}
                 <div className="absolute right-1 sm:right-0 top-1/2 -translate-y-1/2 sm:translate-x-3 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-accent shadow-md z-20 animate-float" />

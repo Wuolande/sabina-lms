@@ -36,7 +36,7 @@ export type WhiteboardHandle = {
 const RATIO = 10 / 16;
 const MAX_PAGES = 40;
 const MAX_PDF_PAGES = 20;
-const COLORS = ["#0f172a", "#0000FE", "#009EFF", "#dc2626", "#16a34a", "#f59e0b"];
+const COLORS = ["#0f172a", "#1800AB", "#dc2626", "#16a34a", "#f59e0b", "#9333ea"];
 const SIZES = [2, 4, 8];
 const round = (n: number) => Math.round(n * 10000) / 10000;
 const uid = () => Math.random().toString(36).slice(2, 10);

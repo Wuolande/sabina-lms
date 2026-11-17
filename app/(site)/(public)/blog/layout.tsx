@@ -26,12 +26,12 @@ export default function BlogRootLayout({
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Blog',
-    name: 'Sabina Education Blog',
+    name: 'Sabina Edge Blog',
     description: 'Study tips, exam advice and teaching ideas from Sabina tutors and our team.',
     url: `${baseUrl}/blog`,
     publisher: {
       '@type': 'EducationalOrganization',
-      name: 'Sabina Education',
+      name: 'Sabina Edge',
       url: baseUrl,
     },
   };

@@ -32,7 +32,7 @@ export async function contentRules(payload: Payload | null) {
   };
   const lengths = [...((p.regularLessonMinutes as number[] | undefined) ?? [])].sort((a, b) => a - b);
   return {
-    siteName: g?.platformName || "Sabina Education",
+    siteName: g?.platformName || "Sabina Edge",
     cancelHours: Number(p.cancellationRefundHours),
     trialMinutes: Number(p.trialLessonMinutes),
     lessonLengths: lengths.length < 2 ? String(lengths[0] ?? 60) : `${lengths.slice(0, -1).join(", ")} or ${lengths[lengths.length - 1]}`,
@@ -222,7 +222,7 @@ export const siteSeo = cache(async () => {
   const g = payload && await payload.findGlobal({ slug: "site-settings", depth: 1, overrideAccess: true }).catch(() => null);
   const seo = (g as { seo?: Record<string, unknown> } | null)?.seo ?? {};
   return {
-    name: (g as { platformName?: string } | null)?.platformName || "Sabina Education",
+    name: (g as { platformName?: string } | null)?.platformName || "Sabina Edge",
     title: (seo.title as string) || "Sabina: live 1-on-1 tutoring with verified tutors",
     description: (seo.description as string) || "Find a tutor for maths, sciences, languages, KCSE and IELTS. Book a time that suits you and learn live in your browser.",
     image: mediaUrl(seo.image),
@@ -259,7 +259,7 @@ export const siteChrome = cache(async () => {
     .slice(0, 5)
     .map((s) => ({ name: s.name, slug: s.slug }));
   return {
-    name: g?.platformName || "Sabina Education",
+    name: g?.platformName || "Sabina Edge",
     tagline: g?.tagline || "",
     supportEmail: g?.supportEmail || null,
     supportPhone: g?.supportPhone || null,

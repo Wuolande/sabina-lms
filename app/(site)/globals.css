@@ -13,18 +13,18 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 8%;
 
-    /* Brand: #0000FE */
-    --primary: 240 100% 50%;
+    /* Brand: royal blue #1800AB */
+    --primary: 248 100% 34%;
     --primary-foreground: 0 0% 100%;
 
-    /* Accent: #009EFF */
-    --secondary: 203 100% 50%;
+    /* Accent: gold #FCC10D */
+    --secondary: 45 98% 52%;
     --secondary-foreground: 222 47% 8%;
 
     --muted: 220 14% 96%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 203 100% 50%;
+    --accent: 45 98% 52%;
     --accent-foreground: 222 47% 8%;
 
     --destructive: 0 84% 60%;
@@ -32,39 +32,40 @@
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 240 100% 50%;
+    --ring: 248 100% 34%;
 
     /* Brand defaults (cms/brand.ts). The layout overrides these with the colours saved in Site settings. */
-    --brand-primary:#0000FE;
-    --brand-primary-light:#009EFF;
-    --brand-primary-dark:#00007A;
-    --brand-accent:#009EFF;
-    --brand-accent-dark:#0077C2;
+    --brand-primary:#1800AB;
+    --brand-primary-light:#2D419B;
+    --brand-primary-dark:#06368F;
+    --brand-accent:#FCC10D;
+    --brand-accent-dark:#C99400;
     --brand-success:#10B981;
-    --brand-50:237 248 255;
-    --brand-100:214 239 255;
-    --brand-200:173 224 255;
-    --brand-300:115 202 255;
-    --brand-400:0 126 255;
-    --brand-500:0 87 255;
-    --brand-600:0 44 254;
-    --brand-700:0 0 254;
-    --brand-800:5 8 176;
-    --brand-900:10 15 106;
-    --brand-950:12 18 73;
-    --accent-50:237 248 255;
-    --accent-100:209 238 255;
-    --accent-200:163 220 255;
-    --accent-300:92 193 255;
-    --accent-400:0 158 255;
-    --accent-500:0 139 224;
-    --accent-600:0 119 191;
-    --accent-700:0 95 153;
-    --accent-800:0 71 115;
-    --accent-900:0 51 82;
-    --accent-950:0 32 51;
-    --color-primary:#0000FE;
-    --color-secondary:#009EFF;
+    --brand-gold:#FCC10D;
+    --brand-50:242 244 249;
+    --brand-100:226 228 241;
+    --brand-200:192 198 225;
+    --brand-300:140 151 200;
+    --brand-400:87 103 175;
+    --brand-500:45 65 155;
+    --brand-600:32 26 165;
+    --brand-700:24 0 171;
+    --brand-800:20 8 124;
+    --brand-900:17 15 82;
+    --brand-950:15 18 63;
+    --accent-50:255 251 238;
+    --accent-100:254 244 211;
+    --accent-200:254 233 168;
+    --accent-300:253 215 100;
+    --accent-400:252 193 13;
+    --accent-500:222 170 11;
+    --accent-600:189 145 10;
+    --accent-700:151 116 8;
+    --accent-800:113 87 6;
+    --accent-900:81 62 4;
+    --accent-950:50 39 3;
+    --color-primary:#1800AB;
+    --color-secondary:#FCC10D;
 
 
     --radius: 0.75rem;
@@ -151,7 +152,7 @@
   /* Gradient text */
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent) 100%);
+    background-image: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-light) 100%);
   }
 
   .text-gradient-gold {

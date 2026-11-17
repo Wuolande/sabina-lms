@@ -88,7 +88,7 @@ export function Logo({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={logoUrl}
-          alt="Platform Logo"
+          alt="Sabina Edge"
           onError={() => setHasError(true)}
           className={cn(
             "object-contain object-left shrink-0 transition-transform duration-200 group-hover:scale-[1.02]",
@@ -112,7 +112,7 @@ export function Logo({
   // Fallback: Geometric mortarboard cap + dynamic theme brand wordmark
   // Without an uploaded logo, use the same Sabina mark as the portals.
   if (showIcon && showText) {
-    const px = size === "sm" ? 28 : size === "lg" ? 40 : 32;
+    const px = size === "sm" ? 34 : size === "lg" ? 52 : size === "xl" ? 60 : 42;
     return (
       <span className={className}>
         <SabinaLogo tone={variant === "dark" || variant === "light" ? "light" : "dark"} href={href ?? null} size={px} />

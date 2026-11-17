@@ -39,11 +39,11 @@ const statusColors = {
 const gradients = [
   // Brand blues only, in a few depths so people are still easy to tell apart.
   "from-brand-400 to-brand-700",
-  "from-accent-300 to-accent-600",
-  "from-brand-500 to-brand-900",
-  "from-accent-400 to-brand-700",
   "from-brand-300 to-brand-600",
-  "from-accent-500 to-brand-950",
+  "from-brand-500 to-brand-900",
+  "from-brand-500 to-brand-800",
+  "from-brand-300 to-brand-600",
+  "from-brand-600 to-brand-950",
 ];
 
 function getGradient(name?: string): string {

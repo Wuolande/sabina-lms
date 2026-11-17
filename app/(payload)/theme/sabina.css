@@ -5,8 +5,8 @@
 /* Login screen: brand gradient panel behind the form. */
 .template-minimal {
   background:
-    radial-gradient(1200px 600px at 10% -10%, color-mix(in srgb, var(--brand-primary-light, #009EFF) 18%, transparent), transparent 60%),
-    radial-gradient(900px 500px at 110% 110%, color-mix(in srgb, var(--brand-accent, #009EFF) 16%, transparent), transparent 60%),
+    radial-gradient(1200px 600px at 10% -10%, color-mix(in srgb, var(--brand-primary-light, #FCC10D) 18%, transparent), transparent 60%),
+    radial-gradient(900px 500px at 110% 110%, color-mix(in srgb, var(--brand-accent, #FCC10D) 16%, transparent), transparent 60%),
     var(--ep-canvas);
 }
 
@@ -17,7 +17,7 @@
 .sb-role--student { background: var(--ep-info-soft); color: var(--ep-info-ink); }
 
 /* Dashboard hero: gold accent line under the greeting. */
-.sb-hero__title::after { content: ""; display: block; width: 44px; height: 4px; margin-top: 10px; border-radius: 4px; background: var(--brand-accent, #009EFF); }
+.sb-hero__title::after { content: ""; display: block; width: 44px; height: 4px; margin-top: 10px; border-radius: 4px; background: var(--brand-accent, #FCC10D); }
 
 /* Roadmap card on the dashboard. */
 .sb-roadmap { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
@@ -34,9 +34,9 @@
 .ep-quick__item:hover { background: var(--ep-surface-2); }
 
 /* Hero card in brand blue with a gold glow. */
-.ep-hero { background: linear-gradient(150deg, var(--brand-primary, #0000FE) 0%, var(--brand-primary-dark, #00007A) 100%); }
-.ep-hero::before { background: radial-gradient(circle, color-mix(in srgb, var(--brand-accent, #009EFF) 40%, transparent), transparent 65%); }
-html[data-theme="dark"] .ep-hero { background: linear-gradient(150deg, #0000FE 0%, #00007A 100%); }
+.ep-hero { background: linear-gradient(150deg, var(--brand-primary, #1800AB) 0%, var(--brand-primary-dark, #06368F) 100%); }
+.ep-hero::before { background: radial-gradient(circle, color-mix(in srgb, var(--brand-accent, #FCC10D) 40%, transparent), transparent 65%); }
+html[data-theme="dark"] .ep-hero { background: linear-gradient(150deg, #1800AB 0%, #06368F 100%); }
 
 /* Tutor review actions (tutor page header). */
 .sb-review { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-right: 8px; }
@@ -63,7 +63,7 @@ html[data-theme="dark"] .ep-hero { background: linear-gradient(150deg, #0000FE 0
 .sb-attn a:hover span:first-child { text-decoration: underline; }
 .sb-attn span:first-child { flex: 1; min-width: 0; }
 .sb-attn b { min-width: 28px; padding: 2px 9px; border-radius: 999px; text-align: center; font-variant-numeric: tabular-nums; background: var(--theme-elevation-100, #eef0f4); color: var(--theme-elevation-600, #64748b); }
-.sb-attn .is-due b { background: var(--brand-primary, #0000FE); color: #fff; }
+.sb-attn .is-due b { background: var(--brand-primary, #1800AB); color: #fff; }
 .sb-attn__clear { margin: 0; padding: 8px 2px; color: var(--theme-elevation-600, #64748b); }
 
 /* Scheduled jobs */

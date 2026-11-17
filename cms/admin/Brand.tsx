@@ -1,5 +1,6 @@
 import type { Payload } from "payload";
 import { brandColours, brandCss } from "../brand";
+import { SabinaMark } from "@/components/brand/SabinaMark";
 
 type Img = { url?: string | null } | number | string | null | undefined;
 type Settings = { platformName?: string; brand?: { logo?: Img; logoDark?: Img; icon?: Img; colours?: Record<string, unknown> } };
@@ -19,21 +20,13 @@ function BrandStyle({ s }: { s: Settings | null }) {
   return <style hidden style={{ display: "none" }} dangerouslySetInnerHTML={{ __html: brandCss(brandColours(s?.brand?.colours), "admin") }} />;
 }
 
-/** Sabina mark: an open book with a spark, in brand blue and gold. */
-const Mark = ({ size = 28 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-    <rect width="32" height="32" rx="9" style={{ fill: "var(--brand-primary, #0000FE)" }} />
-    <path d="M7 11.5c3.2-1.4 6.2-1.2 9 .8v11c-2.8-2-5.8-2.2-9-.8v-11Z" style={{ fill: "#fff" }} opacity="0.95" />
-    <path d="M25 11.5c-3.2-1.4-6.2-1.2-9 .8v11c2.8-2 5.8-2.2 9-.8v-11Z" style={{ fill: "#fff" }} opacity="0.75" />
-    <circle cx="23.5" cy="7.5" r="2.6" style={{ fill: "var(--brand-accent, #009EFF)" }} />
-  </svg>
-);
+const Mark = ({ size = 28 }: { size?: number }) => <SabinaMark size={size} />;
 
 export async function Logo({ payload }: { payload?: Payload }) {
   const s = await settingsOf(payload);
   const logo = url(s?.brand?.logo);
   const logoDark = url(s?.brand?.logoDark) ?? logo;
-  const name = s?.platformName || "Sabina Education";
+  const name = s?.platformName || "Sabina Edge";
   if (logo) {
     return (
       <span className="ep-brand-logo">
@@ -47,11 +40,12 @@ export async function Logo({ payload }: { payload?: Payload }) {
     );
   }
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 12, fontFamily: "Outfit, 'Plus Jakarta Sans', sans-serif", fontWeight: 700, fontSize: 26, letterSpacing: "-0.02em" }}>
+    <span aria-label={name} style={{ display: "inline-flex", alignItems: "center", gap: 10, fontFamily: "Outfit, 'Plus Jakarta Sans', sans-serif", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 0.92 }}>
       <BrandStyle s={s} />
-      <Mark size={36} />
-      <span>
-        Sabina<span style={{ color: "var(--brand-accent-dark, #C77F02)" }}>.</span>
+      <Mark size={40} />
+      <span aria-hidden="true" style={{ display: "flex", flexDirection: "column", fontSize: 17 }}>
+        <span style={{ color: "var(--ep-brand-word, #06368F)" }}>Sabina</span>
+        <span style={{ color: "var(--brand-gold, #FCC10D)" }}>Edge</span>
       </span>
     </span>
   );
@@ -64,7 +58,7 @@ export async function Icon({ payload }: { payload?: Payload }) {
     <>
       <BrandStyle s={s} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      {icon ? <img className="ep-brand-icon" src={icon} alt="" width={26} height={26} /> : <Mark size={26} />}
+      {icon ? <img className="ep-brand-icon" src={icon} alt="" width={26} height={26} /> : <Mark size={30} />}
     </>
   );
 }

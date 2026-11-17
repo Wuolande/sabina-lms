@@ -1,9 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 32 32">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0000FE"/><stop offset="1" stop-color="#0C1249"/></linearGradient></defs>
-  <rect width="32" height="32" rx="9" fill="url(#g)"/>
-  <g transform="translate(0 0) scale(1)">
-    <path d="M7 11.5c3.2-1.4 6.2-1.2 9 .8v11c-2.8-2-5.8-2.2-9-.8v-11Z" fill="#fff" opacity="0.95"/>
-    <path d="M25 11.5c-3.2-1.4-6.2-1.2-9 .8v11c2.8-2 5.8-2.2 9-.8v-11Z" fill="#fff" opacity="0.75"/>
-    <circle cx="23.5" cy="7.5" r="2.6" fill="#009EFF"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 153.06122448979593 153.06122448979593">
+  
+  <g transform="translate(16.530612244897966 1.5306122448979664)">
+  <defs><linearGradient id="face" x1="0" y1="0" x2="0.6" y2="1"><stop offset="0" stop-color="#1800AB"/><stop offset="1" stop-color="#14087C"/></linearGradient></defs>
+  <path d="M60 2C61 10 62 13 69 14C62 15 61 18 60 26C59 18 58 15 51 14C58 13 59 10 60 2Z" fill="#FCC10D"/>
+  <path d="M60 22C78 22 96 26 111 33V80C111 111 89 132 60 146C31 132 9 111 9 80V33C24 26 42 22 60 22Z" fill="#06368F"/>
+  <path d="M111 40V80C111 111 89 132 60 146V139C85 127 104 108 104 80V46Z" fill="#FCC10D"/>
+  <path d="M60 29C76 29 91 32 104 38V80C104 107 85 125 60 137C35 125 16 107 16 80V38C29 32 44 29 60 29Z" fill="url(#face)"/>
+  <path d="M88 40C88.6 45 89.4 46 94 46.6C89.4 47.2 88.6 48.2 88 53C87.4 48.2 86.6 47.2 82 46.6C86.6 46 87.4 45 88 40Z" fill="#FCC10D"/>
+  <path d="M55 64H37Q28 64 28 73V74Q28 83 37 83H46Q55 83 55 92V94Q55 103 46 103H26" fill="none" stroke="#fff" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M93 64H70V103H93M70 83.5H89" fill="none" stroke="#FCC10D" stroke-width="9" stroke-linejoin="round"/>
+  <path d="M12 111C40 128 92 120 110 60C96 110 46 122 12 111Z" fill="#FCC10D"/></g>
 </svg>

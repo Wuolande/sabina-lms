@@ -243,7 +243,7 @@ export function ModalProvider({ children }: ModalProviderProps) {
       case 'info':
       default:
         return (
-          <div className="p-3 rounded-2xl bg-accent-50 dark:bg-accent-950/50 text-accent-600 dark:text-accent-400 ring-8 ring-accent-500/10 border border-accent-200/80 dark:border-accent-900/50 shrink-0">
+          <div className="p-3 rounded-2xl bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 ring-8 ring-brand-500/10 border border-brand-200/80 dark:border-brand-900/50 shrink-0">
             <Info className="w-6 h-6 stroke-[2.2]" />
           </div>
         );
@@ -647,7 +647,7 @@ function ToastItemView({ toast, onDismiss }: ToastItemViewProps) {
       case 'info':
       default:
         return (
-          <div className="p-2 rounded-xl bg-accent-100 dark:bg-accent-950/60 text-accent-600 dark:text-accent-400 shrink-0">
+          <div className="p-2 rounded-xl bg-brand-100 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 shrink-0">
             <Info className="w-4.5 h-4.5 stroke-[2.5]" />
           </div>
         );
@@ -666,7 +666,7 @@ function ToastItemView({ toast, onDismiss }: ToastItemViewProps) {
         return 'bg-brand-700';
       case 'info':
       default:
-        return 'bg-accent-500';
+        return 'bg-brand-500';
     }
   };
 

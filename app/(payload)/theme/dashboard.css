@@ -84,7 +84,7 @@ html[data-theme="dark"] .ep-hero {
   width: 70%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle, rgb(var(--brand-700, 0 0 254) / 0.45), transparent 65%);
+  background: radial-gradient(circle, rgb(var(--brand-700, 24 0 171) / 0.45), transparent 65%);
   z-index: -1;
   pointer-events: none;
 }

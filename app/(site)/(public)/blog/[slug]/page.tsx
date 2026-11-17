@@ -35,7 +35,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     datePublished: card.publishedAt,
     dateModified: post.updatedAt,
     image: card.cover ?? undefined,
-    author: card.author ? { "@type": "Person", name: card.author } : { "@type": "Organization", name: "Sabina Education" },
+    author: card.author ? { "@type": "Person", name: card.author } : { "@type": "Organization", name: "Sabina Edge" },
     mainEntityOfPage: `${base}/blog/${card.slug}`,
   };
   return (

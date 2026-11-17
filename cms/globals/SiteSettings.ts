@@ -7,7 +7,7 @@ const colour = (name: keyof typeof BRAND_COLOURS, label: string) => ({
   label,
   type: "text" as const,
   defaultValue: BRAND_COLOURS[name],
-  validate: (v: unknown) => (!v || /^#[0-9a-f]{6}$/i.test(String(v)) ? true : "Use a hex colour like #0000FE"),
+  validate: (v: unknown) => (!v || /^#[0-9a-f]{6}$/i.test(String(v)) ? true : "Use a hex colour like #1800AB"),
   admin: { width: "33%" },
 });
 
@@ -25,8 +25,8 @@ export const SiteSettings: GlobalConfig = {
         {
           label: "General",
           fields: [
-            { name: "platformName", type: "text", defaultValue: "Sabina Education", required: true },
-            { name: "tagline", type: "text", defaultValue: "Learn from verified tutors, live." },
+            { name: "platformName", type: "text", defaultValue: "Sabina Edge", required: true },
+            { name: "tagline", type: "text", defaultValue: "Building minds. Impacting lives." },
             { name: "supportEmail", type: "email" },
             { name: "supportPhone", type: "text" },
             {
@@ -60,6 +60,7 @@ export const SiteSettings: GlobalConfig = {
               fields: [
                 { type: "row", fields: [colour("primary", "Primary"), colour("primaryLight", "Primary light"), colour("primaryDark", "Primary dark")] },
                 { type: "row", fields: [colour("accent", "Accent"), colour("accentDark", "Accent dark"), colour("success", "Success")] },
+                { type: "row", fields: [colour("gold", "Logo gold")] },
               ],
             },
           ],

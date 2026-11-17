@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CalendarClock, Lock, ShieldCheck } from "lucide-react";
-import { Logo } from "@/components/ui/Logo";
-import { siteChrome, siteText, type SocialKey } from "@/cms/content/server";
+import { SabinaLogo } from "@/components/brand/SabinaMark";
+import { siteChrome, siteSeo, siteText, type SocialKey } from "@/cms/content/server";
 
 const ICONS: Record<SocialKey, string> = {
   x: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
@@ -32,7 +32,7 @@ function Column({ title, links }: { title: string; links: { href: string; label:
 }
 
 export async function Footer() {
-  const [site, all] = await Promise.all([siteChrome(), siteText()]);
+  const [site, all, seo] = await Promise.all([siteChrome(), siteText(), siteSeo()]);
   const t = all.footer;
   const subjectLinks = [
     ...site.footerSubjects.map((s) => ({ href: `/subjects/${s.slug}`, label: s.name })),
@@ -42,7 +42,7 @@ export async function Footer() {
     <footer className="bg-brand-950 text-slate-300">
       <div className="border-b border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
-          <Logo size="default" variant="dark" href="/" />
+          <SabinaLogo tone="light" size={48} tagline />
           <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3">
             {t.trust.map((label, i) => {
               const Icon = TRUST_ICONS[i % TRUST_ICONS.length]!;
@@ -63,7 +63,7 @@ export async function Footer() {
         <div className="grid grid-cols-2 gap-8 sm:gap-10 md:grid-cols-4 lg:grid-cols-5">
           <div className="col-span-2 space-y-5">
             <p className="max-w-sm text-sm leading-relaxed text-slate-400">
-              {site.tagline || "Live 1-on-1 lessons with tutors our team has checked. Book a time that suits you and learn in your browser."}
+              {seo.description}
             </p>
             {(site.supportEmail || site.supportPhone) && (
               <ul className="space-y-1.5 text-sm">

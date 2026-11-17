@@ -14,7 +14,7 @@ export function AuthShell({ children, audience = "student", footer }: { children
     <div className="min-h-dvh grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] bg-white">
       <div className="flex flex-col px-5 py-6 sm:px-10 lg:px-16">
         <header className="flex items-center justify-between">
-          <SabinaLogo />
+          <SabinaLogo size={44} />
         </header>
         <main className="flex flex-1 items-center justify-center py-10">
           <div className="w-full max-w-[420px]">{children}</div>

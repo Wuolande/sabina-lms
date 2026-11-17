@@ -3,17 +3,23 @@
  * and the fallback when the database can't be reached. The website, the admin, the student and
  * tutor portals, the classroom and emails all read them from there.
  *
- * Two colours carry the brand: the primary blue (#0000FE) and the bright sky blue (#009EFF).
- * Every shade the site uses (brand-50 … brand-950, accent-50 … accent-950) is worked out from
- * them, so changing a colour in the admin changes it everywhere.
+ * The colours come from the Sabina Edge logo: royal blue (#1800AB), navy (#06368F) and gold
+ * (#FCC10D). Every shade the site uses (brand-50 … brand-950, accent-50 … accent-950) is worked
+ * out from them, so changing a colour in the admin changes it everywhere.
  */
 export const BRAND_COLOURS = {
-  primary: "#0000FE",
-  primaryLight: "#009EFF",
-  primaryDark: "#00007A",
-  accent: "#009EFF",
-  accentDark: "#0077C2",
+  /** Royal blue of the shield. Buttons, links, the main brand colour. */
+  primary: "#1800AB",
+  /** Blue of the logo's tagline. Light tints (brand-50 … brand-500) are made from it. */
+  primaryLight: "#2D419B",
+  /** Navy of the "SABINA" wordmark and the shield rim. */
+  primaryDark: "#06368F",
+  /** Gold of "EDGE", the stars and the swoosh. Highlights. */
+  accent: "#FCC10D",
+  accentDark: "#C99400",
   success: "#10B981",
+  /** The gold in the logo itself (star, edge, "E", orbit). */
+  gold: "#FCC10D",
 } as const;
 export type BrandColours = Record<keyof typeof BRAND_COLOURS, string>;
 
@@ -42,20 +48,19 @@ const INK: RGB = [14, 21, 48];
 const STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
 /**
- * The brand scale: dark shades are the primary blue deepened into navy, the middle runs from the primary
- * towards the sky blue, and light shades are the sky blue softened with white. So brand-700 is
- * the primary, and tints such as brand-50 still read as "our blue".
+ * The brand scale: brand-700 is the royal blue, darker shades deepen it into navy, and lighter
+ * shades soften the logo's tagline blue with white, so tints such as brand-50 still read as blue.
  */
 export function brandScale(c: BrandColours): Record<(typeof STEPS)[number], RGB> {
-  const p = rgb(c.primary), a = rgb(c.accent);
+  const p = rgb(c.primary), l = rgb(c.primaryLight);
   return {
-    50: mix(a, WHITE, 0.93),
-    100: mix(a, WHITE, 0.84),
-    200: mix(a, WHITE, 0.68),
-    300: mix(a, WHITE, 0.45),
-    400: mix(p, a, 0.8),
-    500: mix(p, a, 0.55),
-    600: mix(p, a, 0.28),
+    50: mix(l, WHITE, 0.94),
+    100: mix(l, WHITE, 0.86),
+    200: mix(l, WHITE, 0.7),
+    300: mix(l, WHITE, 0.45),
+    400: mix(l, WHITE, 0.2),
+    500: l,
+    600: mix(p, l, 0.4),
     700: p,
     800: mix(p, INK, 0.38),
     900: mix(p, INK, 0.72),
@@ -63,7 +68,7 @@ export function brandScale(c: BrandColours): Record<(typeof STEPS)[number], RGB>
   };
 }
 
-/** The accent scale, with the sky blue itself at accent-400. */
+/** The accent scale, with the logo gold itself at accent-400. */
 export function accentScale(c: BrandColours): Record<(typeof STEPS)[number], RGB> {
   const a = rgb(c.accent);
   return {

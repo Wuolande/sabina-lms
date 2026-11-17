@@ -2606,6 +2606,7 @@ export interface SiteSetting {
       accent?: string | null;
       accentDark?: string | null;
       success?: string | null;
+      gold?: string | null;
     };
   };
   seo?: {
@@ -3067,6 +3068,7 @@ export interface SiteSettingsSelect<T extends boolean = true> {
               accent?: T;
               accentDark?: T;
               success?: T;
+              gold?: T;
             };
       };
   seo?:

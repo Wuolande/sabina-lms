@@ -222,7 +222,7 @@
   color: #fff;
   font: 650 13px/1 var(--ep-font);
   flex: none;
-  box-shadow: 0 1px 3px rgb(var(--brand-700, 0 0 254) / 0.25);
+  box-shadow: 0 1px 3px rgb(var(--brand-700, 24 0 171) / 0.25);
 }
 .ep-avatar {
   width: 32px;

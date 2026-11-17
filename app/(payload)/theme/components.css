@@ -140,11 +140,11 @@ a.ep-card:hover {
   background: var(--ep-accent-fill);
   color: #fff;
   border-color: var(--ep-accent);
-  box-shadow: 0 1px 3px rgb(var(--brand-700, 0 0 254) / 0.28);
+  box-shadow: 0 1px 3px rgb(var(--brand-700, 24 0 171) / 0.28);
 }
 .ep-btn--accent:hover:not(:disabled) {
   background: var(--ep-accent-fill-hover);
-  box-shadow: 0 3px 12px rgb(var(--brand-700, 0 0 254) / 0.38);
+  box-shadow: 0 3px 12px rgb(var(--brand-700, 24 0 171) / 0.38);
 }
 .ep-btn--alert {
   background: var(--ep-alert);

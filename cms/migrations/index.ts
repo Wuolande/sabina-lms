@@ -18,6 +18,7 @@ import * as migration_20261116_105627_text_reminders from './20261116_105627_tex
 import * as migration_20261116_120638_contact_and_social from './20261116_120638_contact_and_social';
 import * as migration_20261116_123512_brand_colours from './20261116_123512_brand_colours';
 import * as migration_20261116_124104_page_wording from './20261116_124104_page_wording';
+import * as migration_20261117_034139_sabina_edge_logo from './20261117_034139_sabina_edge_logo';
 
 export const migrations = [
   {
@@ -118,6 +119,11 @@ export const migrations = [
   {
     up: migration_20261116_124104_page_wording.up,
     down: migration_20261116_124104_page_wording.down,
-    name: '20261116_124104_page_wording'
+    name: '20261116_124104_page_wording',
+  },
+  {
+    up: migration_20261117_034139_sabina_edge_logo.up,
+    down: migration_20261117_034139_sabina_edge_logo.down,
+    name: '20261117_034139_sabina_edge_logo'
   },
 ];

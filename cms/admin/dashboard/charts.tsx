@@ -4,7 +4,7 @@ import type { Bucket } from "./data";
 
 const SERIES = [
   { key: "students", label: "Students", color: "var(--ep-chart-progress)" },
-  { key: "tutors", label: "Tutors", color: "var(--brand-accent, #009EFF)" },
+  { key: "tutors", label: "Tutors", color: "var(--brand-accent, #FCC10D)" },
   { key: "staff", label: "Staff", color: "var(--ep-chart-done)" },
 ] as const;
 

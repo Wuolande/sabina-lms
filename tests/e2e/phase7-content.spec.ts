@@ -28,7 +28,8 @@ test("homepage, pages, blog, SEO and academy", async ({ browser }, info) => {
   await expect(page.getByText("LIVE 1-ON-1 TUTORING")).toBeVisible();
   await expect(page.getByText(/free cancellation up to 24 hours before/i).first()).toBeVisible();
   const html = await page.content();
-  expect(html).not.toMatch(/Sabina Edge|whiteboard|\{cancelHours\}|\{tutorShare\}/i);
+  // Rule tags are always filled in; nothing is left as a raw {tag}.
+  expect(html).not.toMatch(/\{cancelHours\}|\{tutorShare\}|\{trialMinutes\}/i);
   // An edit in the admin shows up.
   await api("/api/cms/globals/home-page", { method: "POST", cookie: admin, body: JSON.stringify({ hero: { pretitle: `TUTORS FOR EVERY EXAM ${tag}` } }) });
   await page.goto("/");
