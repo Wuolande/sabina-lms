@@ -9,6 +9,8 @@ import crypto from "node:crypto";
  *  - dev: a simulated checkout for local development and tests; never enabled in production.
  */
 export type ProviderId = "stripe" | "paystack" | "dev";
+/** Paid entirely with lesson credit: no outside provider. */
+export type PaymentProvider = ProviderId | "credit";
 export type ProviderInfo = { id: ProviderId; label: string; sub: string };
 export type CheckoutInput = { reference: string; amount: number; currency: string; email: string; description: string; successUrl: string; cancelUrl: string };
 export type Verified = { status: "succeeded" | "pending" | "failed"; chargeRef?: string; method?: string };

@@ -60,6 +60,7 @@ export const MENU: MenuSection[] = [
       { kind: "collection", slug: "refunds", label: "Refunds", icon: "Repeat" },
       { kind: "collection", slug: "payouts", label: "Tutor payouts", icon: "Banknote" },
       { kind: "collection", slug: "payout-methods", label: "Payout details", icon: "Landmark" },
+      { kind: "collection", slug: "credits", label: "Credits & referrals", icon: "Gift" },
     ],
   },
   {

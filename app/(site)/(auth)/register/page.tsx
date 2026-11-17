@@ -2,7 +2,8 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, GraduationCap } from "lucide-react";
+import { BookOpen, Gift, GraduationCap } from "lucide-react";
+import { money } from "@/lib/money";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { Alert, Honeypot, PasswordChecklist, PasswordInput, SubmitButton, TextInput, passwordOk, postJSON } from "@/components/auth/fields";
 
@@ -41,6 +42,16 @@ function RegisterForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [taken, setTaken] = useState(false);
+  const ref = (params.get("ref") ?? "").trim().toUpperCase();
+  const [invite, setInvite] = useState<{ name: string; welcome: number; currency: string } | null>(null);
+
+  useEffect(() => {
+    if (!ref) return;
+    fetch(`/api/referrals/lookup?code=${encodeURIComponent(ref)}`)
+      .then((r) => r.json())
+      .then((d: { found?: boolean; name: string; welcome: number; currency: string }) => d.found && setInvite(d))
+      .catch(() => undefined);
+  }, [ref]);
 
   useEffect(() => {
     try {
@@ -58,7 +69,7 @@ function RegisterForm() {
     if (!passwordOk(password)) return setError("Choose a password with 8+ characters, including a letter and a number.");
     if (!accept) return setError("Please accept the terms and privacy policy to continue.");
     setBusy(true);
-    const { ok, data } = await postJSON<{ code?: string }>("/api/auth/register", { role, firstName, lastName, email, password, acceptTerms: accept, timezone: tz, _hp_company: hp });
+    const { ok, data } = await postJSON<{ code?: string }>("/api/auth/register", { role, firstName, lastName, email, password, acceptTerms: accept, timezone: tz, _hp_company: hp, ref: invite ? ref : undefined });
     if (ok) {
       router.push(`/verify-email?email=${encodeURIComponent(email.trim().toLowerCase())}&sent=1`);
       return;
@@ -74,6 +85,15 @@ function RegisterForm() {
         <h1 className="font-heading text-3xl sm:text-[2.1rem] font-bold tracking-tight text-slate-900">Create your account</h1>
         <p className="text-slate-600">Free to join. It takes less than a minute.</p>
       </div>
+      {invite && (
+        <p role="status" className="flex items-start gap-3 rounded-2xl bg-accent-50 px-4 py-3 text-sm text-slate-800 ring-1 ring-accent-200">
+          <Gift size={18} className="mt-0.5 shrink-0 text-accent-700" />
+          <span>
+            <b>{invite.name} invited you to Sabina.</b>{" "}
+            {invite.welcome > 0 ? <>Join as a student and get {money(invite.welcome, invite.currency)} of lesson credit after your first paid lesson.</> : <>Welcome aboard.</>}
+          </span>
+        </p>
+      )}
 
       <form onSubmit={submit} className="relative space-y-5" noValidate>
         <Honeypot value={hp} onChange={setHp} />

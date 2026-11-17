@@ -23,6 +23,7 @@ import * as migration_20261117_040210_integrations from './20261117_040210_integ
 import * as migration_20261117_045913_ratings from './20261117_045913_ratings';
 import * as migration_20261117_050000_analytics from './20261117_050000_analytics';
 import * as migration_20261117_050323_badges_settings from './20261117_050323_badges_settings';
+import * as migration_20261117_051342_referrals from './20261117_051342_referrals';
 
 export const migrations = [
   {
@@ -148,6 +149,11 @@ export const migrations = [
   {
     up: migration_20261117_050323_badges_settings.up,
     down: migration_20261117_050323_badges_settings.down,
-    name: '20261117_050323_badges_settings'
+    name: '20261117_050323_badges_settings',
+  },
+  {
+    up: migration_20261117_051342_referrals.up,
+    down: migration_20261117_051342_referrals.down,
+    name: '20261117_051342_referrals'
   },
 ];

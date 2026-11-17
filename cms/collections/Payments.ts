@@ -22,14 +22,14 @@ export const Payments: CollectionConfig = {
       type: "row",
       fields: [
         { name: "status", type: "select", required: true, defaultValue: "pending", options: PAYMENT_STATUSES.map((v) => ({ label: v.replace("_", " "), value: v })), index: true, admin: { width: "34%" } },
-        { name: "provider", type: "select", required: true, options: ["stripe", "paystack", "dev"].map((v) => ({ label: v, value: v })), admin: { width: "33%" } },
+        { name: "provider", type: "select", required: true, options: ["stripe", "paystack", "dev", "credit"].map((v) => ({ label: v, value: v })), admin: { width: "33%" } },
         { name: "method", type: "text", admin: { width: "33%", description: "card, mobile_money, …" } },
       ],
     },
     {
       type: "row",
       fields: [
-        { name: "amount", type: "number", required: true, admin: { width: "34%" } },
+        { name: "amount", type: "number", required: true, admin: { width: "34%", description: "Charged to the card or M-Pesa (after any lesson credit)." } },
         { name: "currency", type: "text", required: true, admin: { width: "33%" } },
         { name: "refundedAmount", type: "number", defaultValue: 0, admin: { width: "33%" } },
       ],
@@ -43,6 +43,7 @@ export const Payments: CollectionConfig = {
         { name: "tutor", type: "relationship", relationTo: "tutor-profiles", index: true, admin: { width: "33%" } },
       ],
     },
+    { name: "creditUsed", type: "number", defaultValue: 0, admin: { readOnly: true, description: "Lesson credit used towards this payment." } },
     { name: "providerRef", type: "text", index: true, admin: { description: "Stripe Checkout session / Paystack reference." } },
     { name: "chargeRef", type: "text", admin: { description: "Stripe payment intent / Paystack transaction id, used for refunds." } },
     { name: "checkoutUrl", type: "text", admin: { readOnly: true } },

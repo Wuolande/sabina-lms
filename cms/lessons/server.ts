@@ -92,6 +92,8 @@ async function markCompleted(payload: Payload, b: Booking, notes: Lexical | null
     overrideAccess: true,
   });
   await (await import("../analytics/store")).track(payload, "lesson_completed", { userId: idOf(b.student), meta: { bookingId: b.id, tutor: idOf(b.tutor) } });
+  // Invite rewards: the first finished paid lesson of an invited student or tutor.
+  await (await import("../referrals/server")).rewardReferrals(payload, b).catch((err) => payload.logger.error({ err }, "[referrals] reward failed"));
   // Tutor stats: lessons taught and distinct students.
   const tutorId = idOf(b.tutor)!;
   const done = await payload.find({ collection: "bookings", where: { and: [{ tutor: { equals: tutorId } }, { status: { equals: "completed" } }] }, limit: 10000, pagination: false, depth: 0, select: { student: true }, overrideAccess: true });

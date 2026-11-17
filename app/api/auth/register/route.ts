@@ -1,4 +1,5 @@
 import { track } from "@/cms/analytics/store";
+import { attachReferral } from "@/cms/referrals/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { getPayloadClient } from "@/cms/auth/session";
 import { EMAIL_RE, fail, guard, normEmail, passwordProblem } from "@/cms/auth/http";
@@ -43,6 +44,10 @@ export async function POST(req: NextRequest) {
       data: { email, password: String(body.password), firstName, lastName, role, timezone, status: "active" } as never,
     });
     await track(payload, "signup", { userId: created.id, visitor: req.cookies.get("sb_vid")?.value ?? null, meta: { role } });
+    // Joined with an invite link (cookie from /r/CODE, or a code typed on the form).
+    const inviteCode = typeof body.ref === "string" && body.ref ? body.ref : req.cookies.get("sb_ref")?.value;
+    const inviter = await attachReferral(payload, created, inviteCode).catch(() => null);
+    if (inviter) await track(payload, "referral_signup", { userId: created.id, meta: { inviter: inviter.id } });
     return NextResponse.json({ success: true, requiresEmailConfirmation: true, email, role }, { status: 201 });
   } catch (err) {
     payload.logger.error({ err }, "[auth/register]");

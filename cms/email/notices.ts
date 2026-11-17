@@ -44,6 +44,21 @@ export function newMessage(to: MailPerson, from: string, preview: string, href: 
   };
 }
 
+/** Credit (or an earnings bonus) from a friend's invite. */
+export function referralReward(to: MailPerson, r: { amount: number; currency: string; friend: string; asEarnings?: boolean; welcome?: boolean }): Mail {
+  const amt = new Intl.NumberFormat("en", { style: "currency", currency: r.currency, maximumFractionDigits: 2 }).format(r.amount);
+  const heading = r.welcome ? `You have ${amt} of lesson credit` : r.asEarnings ? `${amt} bonus for inviting ${r.friend}` : `${amt} of lesson credit for inviting ${r.friend}`;
+  const body = r.welcome
+    ? [hi(to), `You joined with ${r.friend}'s invite and finished your first lesson, so we've added ${amt} of lesson credit to your account. It's taken off your next lesson automatically.`]
+    : r.asEarnings
+      ? [hi(to), `${r.friend} joined with your invite and finished their first lesson. We've added a ${amt} bonus to your earnings; it's paid out with your next withdrawal.`]
+      : [hi(to), `${r.friend} joined with your invite and finished their first lesson. We've added ${amt} of lesson credit to your account; it's taken off your next lesson automatically.`];
+  return {
+    subject: heading,
+    ...mailOf("referral_reward", { preheader: "Thanks for spreading the word.", heading, body, cta: { label: r.asEarnings ? "See your earnings" : "Invite more friends", href: `${siteUrl()}/${r.asEarnings ? "tutor/earnings" : "student/invite"}` } }),
+  };
+}
+
 /** A couple of hours after a lesson, if the student hasn't rated it. */
 export function rateLesson(to: MailPerson, l: { id: number; tutorName: string; subject?: string | null }): Mail {
   const what = l.subject ? `${l.subject} lesson with ${l.tutorName}` : `lesson with ${l.tutorName}`;

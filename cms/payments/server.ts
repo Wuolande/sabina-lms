@@ -17,58 +17,52 @@ export { enabledProviders };
 
 /* ------------------------------------------------------------------ checkout */
 
-/** Pay for a lesson package: same providers, no time held. */
-export async function startPackageCheckout(payload: Payload, student: User, packageId: number, provider: ProviderId) {
-  if (!enabledProviders().some((p) => p.id === provider)) throw new BookingError("That payment method isn't available.");
-  const k = await payload.findByID({ collection: "lesson-packages", id: packageId, depth: 1, overrideAccess: true }).catch(() => null);
-  if (!k || idOf(k.student) !== student.id) throw new BookingError("Package not found.", 404);
-  if (k.status !== "pending_payment") throw new BookingError(k.paidAt ? "This package is already paid." : "This package can no longer be paid. Please choose it again.", 409);
-  const tutorName = typeof k.tutor === "object" ? k.tutor.displayName : "your tutor";
-  const reference = ref("PAY");
-  const payment = await payload.create({
-    collection: "payments",
-    data: { reference, status: "pending", provider, amount: k.price, currency: k.currency, package: k.id, student: student.id, tutor: idOf(k.tutor) },
-    overrideAccess: true,
-  });
-  try {
-    const { url, providerRef } = await createCheckout(provider, {
-      reference,
-      amount: k.price,
-      currency: k.currency,
-      email: student.email,
-      description: `${k.lessons} × ${k.minutes}-minute lessons with ${tutorName} (${k.reference})`,
-      successUrl: `${siteUrl()}/checkout/return?ref=${reference}`,
-      cancelUrl: `${siteUrl()}/checkout/return?ref=${reference}&cancelled=1`,
-    });
-    await payload.update({ collection: "payments", id: payment.id, data: { providerRef, checkoutUrl: url }, overrideAccess: true });
-    return { url, reference };
-  } catch (err) {
-    await payload.update({ collection: "payments", id: payment.id, data: { status: "failed", failureReason: (err as Error).message.slice(0, 300) }, overrideAccess: true });
-    payload.logger.error({ err }, "[payments] package checkout failed");
-    throw new BookingError("We couldn't start the payment. Please try again or choose another method.", 502);
-  }
+/**
+ * Credit the student can use now: their balance minus credit already set aside for payments
+ * still in progress (so the same credit can't pay for two lessons at once).
+ */
+export async function usableCredit(payload: Payload, studentId: number, currency: string) {
+  const policies = await getPolicies(payload);
+  if (currency !== policies.currency) return 0;
+  const { creditBalance } = await import("../referrals/server");
+  const balance = await creditBalance(payload, studentId);
+  if (balance <= 0) return 0;
+  const pending = await payload.find({ collection: "payments", where: { and: [{ student: { equals: studentId } }, { status: { equals: "pending" } }, { creditUsed: { greater_than: 0 } }, { createdAt: { greater_than: new Date(Date.now() - 3600_000).toISOString() } }] }, limit: 50, depth: 0, select: { creditUsed: true }, overrideAccess: true });
+  return Math.max(0, round2(balance - pending.docs.reduce((n, p) => n + (p.creditUsed ?? 0), 0)));
 }
 
-export async function startCheckout(payload: Payload, student: User, bookingId: number, provider: ProviderId) {
-  if (!enabledProviders().some((p) => p.id === provider)) throw new BookingError("That payment method isn't available.");
-  const b = await payload.findByID({ collection: "bookings", id: bookingId, depth: 1, overrideAccess: true }).catch(() => null);
-  if (!b || idOf(b.student) !== student.id) throw new BookingError("Booking not found.", 404);
-  if (b.status !== "pending_payment") throw new BookingError(b.paymentStatus === "paid" ? "This lesson is already paid." : "This booking can no longer be paid. Please pick a time again.", 409);
-  if (!b.holdUntil || Date.parse(b.holdUntil) <= Date.now()) throw new BookingError("The time we held for you has run out. Please pick a time again.", 409);
-  const tutorName = typeof b.tutor === "object" ? b.tutor.displayName : "your tutor";
+/**
+ * Create the payment and send the student to checkout. Lesson credit is taken off first; when it
+ * covers everything, the payment is settled straight away with no card or M-Pesa needed.
+ */
+async function charge(
+  payload: Payload,
+  student: User,
+  provider: ProviderId | "credit",
+  item: { price: number; currency: string; booking?: number; package?: number; tutor: number | null; description: string; useCredit?: boolean },
+) {
+  const credit = item.useCredit === false ? 0 : round2(Math.min(await usableCredit(payload, student.id, item.currency), item.price));
+  const amount = round2(item.price - credit);
+  const viaCredit = amount <= 0;
+  if (provider === "credit" && !viaCredit) throw new BookingError("Your lesson credit doesn't cover this. Choose a payment method.", 409);
+  if (!viaCredit && !enabledProviders().some((p) => p.id === provider)) throw new BookingError("That payment method isn't available.");
   const reference = ref("PAY");
   const payment = await payload.create({
     collection: "payments",
-    data: { reference, status: "pending", provider, amount: b.price, currency: b.currency, booking: b.id, student: student.id, tutor: idOf(b.tutor) },
+    data: { reference, status: "pending", provider: viaCredit ? "credit" : provider, amount: viaCredit ? 0 : amount, creditUsed: credit, currency: item.currency, booking: item.booking ?? null, package: item.package ?? null, student: student.id, tutor: item.tutor } as never,
     overrideAccess: true,
   });
+  if (viaCredit) {
+    await settlePayment(payload, reference, { status: "succeeded", method: "credit" });
+    return { url: `/checkout/return?ref=${reference}`, reference };
+  }
   try {
-    const { url, providerRef } = await createCheckout(provider, {
+    const { url, providerRef } = await createCheckout(provider as ProviderId, {
       reference,
-      amount: b.price,
-      currency: b.currency,
+      amount,
+      currency: item.currency,
       email: student.email,
-      description: `${b.kind === "trial" ? "Trial lesson" : `${b.minutes}-minute lesson`} with ${tutorName} (${b.reference})`,
+      description: item.description,
       successUrl: `${siteUrl()}/checkout/return?ref=${reference}`,
       cancelUrl: `${siteUrl()}/checkout/return?ref=${reference}&cancelled=1`,
     });
@@ -79,6 +73,24 @@ export async function startCheckout(payload: Payload, student: User, bookingId: 
     payload.logger.error({ err }, "[payments] checkout failed");
     throw new BookingError("We couldn't start the payment. Please try again or choose another method.", 502);
   }
+}
+
+/** Pay for a lesson package: same providers, no time held. */
+export async function startPackageCheckout(payload: Payload, student: User, packageId: number, provider: ProviderId | "credit", opts: { useCredit?: boolean } = {}) {
+  const k = await payload.findByID({ collection: "lesson-packages", id: packageId, depth: 1, overrideAccess: true }).catch(() => null);
+  if (!k || idOf(k.student) !== student.id) throw new BookingError("Package not found.", 404);
+  if (k.status !== "pending_payment") throw new BookingError(k.paidAt ? "This package is already paid." : "This package can no longer be paid. Please choose it again.", 409);
+  const tutorName = typeof k.tutor === "object" ? k.tutor.displayName : "your tutor";
+  return charge(payload, student, provider, { price: k.price, currency: k.currency, package: k.id, tutor: idOf(k.tutor), description: `${k.lessons} × ${k.minutes}-minute lessons with ${tutorName} (${k.reference})`, useCredit: opts.useCredit });
+}
+
+export async function startCheckout(payload: Payload, student: User, bookingId: number, provider: ProviderId | "credit", opts: { useCredit?: boolean } = {}) {
+  const b = await payload.findByID({ collection: "bookings", id: bookingId, depth: 1, overrideAccess: true }).catch(() => null);
+  if (!b || idOf(b.student) !== student.id) throw new BookingError("Booking not found.", 404);
+  if (b.status !== "pending_payment") throw new BookingError(b.paymentStatus === "paid" ? "This lesson is already paid." : "This booking can no longer be paid. Please pick a time again.", 409);
+  if (!b.holdUntil || Date.parse(b.holdUntil) <= Date.now()) throw new BookingError("The time we held for you has run out. Please pick a time again.", 409);
+  const tutorName = typeof b.tutor === "object" ? b.tutor.displayName : "your tutor";
+  return charge(payload, student, provider, { price: b.price, currency: b.currency, booking: b.id, tutor: idOf(b.tutor), description: `${b.kind === "trial" ? "Trial lesson" : `${b.minutes}-minute lesson`} with ${tutorName} (${b.reference})`, useCredit: opts.useCredit });
 }
 
 /* ------------------------------------------------------------------ settle */
@@ -104,6 +116,10 @@ export async function settlePayment(payload: Payload, reference: string, outcome
   }
 
   const paid = await payload.update({ collection: "payments", id: p.id, data: { status: "succeeded", paidAt: new Date().toISOString(), chargeRef: outcome.chargeRef || p.chargeRef, method: outcome.method || p.method }, overrideAccess: true });
+  if ((p.creditUsed ?? 0) > 0) {
+    const { addCredit } = await import("../referrals/server");
+    await addCredit(payload, { user: idOf(p.student)!, amount: -(p.creditUsed ?? 0), currency: p.currency, kind: "spent", note: p.package ? "Used for a lesson package" : "Used for a lesson", booking: idOf(p.booking), payment: p.id });
+  }
   await (await import("../analytics/store")).track(payload, "payment_succeeded", { userId: idOf(p.student), meta: { paymentId: p.id, amount: p.amount, currency: p.currency, provider: p.provider, package: Boolean(p.package) } });
   if (p.package) {
     const { activatePackage } = await import("../packages/server");
@@ -178,8 +194,11 @@ export async function refundBooking(payload: Payload, bookingId: number, percent
   if (b.package) return refundPackageLesson(payload, b, percent, reason);
   const pays = await payload.find({ collection: "payments", where: { and: [{ booking: { equals: bookingId } }, { status: { in: ["succeeded", "partially_refunded"] } }] }, limit: 5, depth: 0, overrideAccess: true });
   if (!pays.docs.length || percent <= 0) return 0;
+  const share = Math.min(100, percent) / 100;
+  // Money paid by card or M-Pesa goes back there; lesson credit used goes back as credit.
   const paidTotal = pays.docs.reduce((n, p) => n + p.amount, 0);
-  let due = round2(Math.min(paidTotal, (paidTotal * percent) / 100) - (b.refundedAmount ?? 0));
+  const cashBack = pays.docs.reduce((n, p) => n + (p.refundedAmount ?? 0), 0);
+  let due = round2(paidTotal * share - cashBack);
   let done = 0;
   for (const p of pays.docs) {
     if (due <= 0) break;
@@ -197,11 +216,26 @@ export async function refundBooking(payload: Payload, bookingId: number, percent
     due = round2(due - amount);
     done = round2(done + amount);
   }
-  if (done > 0) {
-    const total = round2((b.refundedAmount ?? 0) + done);
-    await payload.update({ collection: "bookings", id: b.id, data: { refundedAmount: total, paymentStatus: total >= paidTotal ? "refunded" : "partially_refunded" }, overrideAccess: true });
+  const creditUsed = round2(pays.docs.reduce((n, p) => n + (p.creditUsed ?? 0), 0));
+  let creditBack = 0;
+  if (creditUsed > 0) {
+    const returned = await payload.find({ collection: "credits", where: { and: [{ booking: { equals: b.id } }, { kind: { equals: "returned" } }] }, limit: 20, depth: 0, select: { amount: true }, overrideAccess: true });
+    creditBack = round2(creditUsed * share - returned.docs.reduce((n, c) => n + (c.amount ?? 0), 0));
+    if (creditBack > 0) {
+      const { addCredit } = await import("../referrals/server");
+      await addCredit(payload, { user: idOf(b.student)!, amount: creditBack, currency: b.currency, kind: "returned", note: `Returned: ${reason}`, booking: b.id });
+      if (pays.docs.every((p) => p.amount <= 0)) await payload.update({ collection: "payments", where: { booking: { equals: b.id } }, data: { status: "refunded" }, overrideAccess: true });
+    } else creditBack = 0;
+  }
+  if (done > 0 || creditBack > 0) {
+    const total = round2((b.refundedAmount ?? 0) + done + creditBack);
+    await payload.update({ collection: "bookings", id: b.id, data: { refundedAmount: total, paymentStatus: total >= b.price - 0.005 ? "refunded" : "partially_refunded" }, overrideAccess: true });
     const student = await payload.findByID({ collection: "users", id: idOf(b.student)!, depth: 0, overrideAccess: true });
-    void send(payload, student, refundIssued(personOf(student), { amount: done, currency: b.currency, bookingRef: b.reference ?? "", reason }));
+    if (done > 0) void send(payload, student, refundIssued(personOf(student), { amount: done, currency: b.currency, bookingRef: b.reference ?? "", reason }));
+    if (creditBack > 0) {
+      const { notify } = await import("../notify/server");
+      await notify(payload, student.id, { kind: "credit_returned", title: `${new Intl.NumberFormat("en", { style: "currency", currency: b.currency }).format(creditBack)} of lesson credit returned`, body: reason, href: "/student/invite" });
+    }
   }
   return done;
 }
@@ -222,7 +256,13 @@ async function refundPackageLesson(payload: Payload, b: Booking, percent: number
     return 0;
   }
   const pays = await payload.find({ collection: "payments", where: { and: [{ package: { equals: packageId } }, { status: { in: ["succeeded", "partially_refunded"] } }] }, limit: 5, depth: 0, overrideAccess: true });
-  let due = round2((b.price * Math.min(100, percent)) / 100 - (b.refundedAmount ?? 0));
+  // Split what's owed between card/M-Pesa and lesson credit in the same ratio the package was paid.
+  const paidCash = pays.docs.reduce((n, p) => n + p.amount, 0);
+  const paidCredit = pays.docs.reduce((n, p) => n + (p.creditUsed ?? 0), 0);
+  const owed = round2((b.price * Math.min(100, percent)) / 100 - (b.refundedAmount ?? 0));
+  const whole = paidCash + paidCredit || 1;
+  let due = round2((owed * paidCash) / whole);
+  const creditBack = owed > 0 ? round2((owed * paidCredit) / whole) : 0;
   let done = 0;
   for (const p of pays.docs) {
     if (due <= 0) break;
@@ -234,12 +274,16 @@ async function refundPackageLesson(payload: Payload, b: Booking, percent: number
     due = round2(due - amount);
     done = round2(done + amount);
   }
-  if (done > 0) {
-    const total = round2((b.refundedAmount ?? 0) + done);
-    await payload.update({ collection: "bookings", id: b.id, data: { refundedAmount: total, paymentStatus: total >= b.price ? "refunded" : "partially_refunded" }, overrideAccess: true });
-    await payload.update({ collection: "lesson-packages", id: k.id, data: { refundedAmount: round2((k.refundedAmount ?? 0) + done) }, overrideAccess: true });
+  if (creditBack > 0) {
+    const { addCredit } = await import("../referrals/server");
+    await addCredit(payload, { user: idOf(b.student)!, amount: creditBack, currency: b.currency, kind: "returned", note: `Returned: ${reason}`, booking: b.id });
+  }
+  if (done > 0 || creditBack > 0) {
+    const total = round2((b.refundedAmount ?? 0) + done + creditBack);
+    await payload.update({ collection: "bookings", id: b.id, data: { refundedAmount: total, paymentStatus: total >= b.price - 0.005 ? "refunded" : "partially_refunded" }, overrideAccess: true });
+    await payload.update({ collection: "lesson-packages", id: k.id, data: { refundedAmount: round2((k.refundedAmount ?? 0) + done + creditBack) }, overrideAccess: true });
     const student = await payload.findByID({ collection: "users", id: idOf(b.student)!, depth: 0, overrideAccess: true });
-    void send(payload, student, refundIssued(personOf(student), { amount: done, currency: b.currency, bookingRef: b.reference ?? "", reason }));
+    if (done > 0) void send(payload, student, refundIssued(personOf(student), { amount: done, currency: b.currency, bookingRef: b.reference ?? "", reason }));
   }
   return done;
 }
@@ -277,6 +321,9 @@ export async function tutorEarnings(payload: Payload, user: User) {
     }),
     payload.find({ collection: "payouts", where: { tutorUser: { equals: user.id } }, sort: "-createdAt", limit: 200, depth: 0, pagination: false, overrideAccess: true }),
   ]);
+  // Bonuses for inviting people are paid out with lesson earnings.
+  const bonuses = await payload.find({ collection: "credits", where: { and: [{ user: { equals: user.id } }, { kind: { equals: "tutor_bonus" } }] }, sort: "-createdAt", limit: 500, depth: 1, pagination: false, overrideAccess: true });
+  const payoutStatus = new Map(payouts.docs.map((p) => [p.id, p.status]));
   const inPayout = new Map<number, string>();
   for (const p of payouts.docs) if (!["failed", "cancelled"].includes(p.status)) for (const b of p.bookings ?? []) inPayout.set(idOf(b)!, p.status);
   const now = Date.now();
@@ -306,6 +353,24 @@ export async function tutorEarnings(payload: Payload, user: User) {
       availableOn: state === "pending" || state === "upcoming" ? new Date(availableAt).toISOString() : null,
     });
   }
+  for (const c of bonuses.docs) {
+    if ((c.amount ?? 0) <= 0) continue;
+    const ps = c.payout ? payoutStatus.get(idOf(c.payout)!) : undefined;
+    const live = ps && !["failed", "cancelled"].includes(ps);
+    rows.push({
+      bookingId: -c.id,
+      reference: "",
+      date: c.createdAt,
+      student: c.friend && typeof c.friend === "object" ? studentName(c.friend) : "A friend",
+      lesson: "Invite bonus",
+      gross: round2(c.amount),
+      fee: 0,
+      net: round2(c.amount),
+      state: live ? (ps === "paid" ? "paid_out" : "in_payout") : "available",
+      availableOn: null,
+    });
+  }
+  rows.sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
   const sum = (s: EarningRow["state"][]) => round2(rows.filter((r) => s.includes(r.state)).reduce((n, r) => n + r.net, 0));
   const method = (await payload.find({ collection: "payout-methods", where: { user: { equals: user.id } }, limit: 1, depth: 0, overrideAccess: true })).docs[0] ?? null;
   return {
@@ -339,9 +404,12 @@ export async function requestPayout(payload: Payload, user: User): Promise<Payou
     const details = m.method === "mpesa" ? `M-Pesa number: ${m.mpesaPhone}` : m.method === "paypal" ? `PayPal: ${m.paypalEmail}` : `Bank: ${m.bankName}\nAccount name: ${m.accountName}\nAccount number: ${m.accountNumber}\nSWIFT/branch: ${m.swift}`;
     const payout = await payload.create({
       collection: "payouts",
-      data: { reference: ref("OUT"), status: "requested", amount, currency: e.currency, tutorUser: user.id, destination: { method: m.method, details }, bookings: rows.map((r) => r.bookingId) },
+      data: { reference: ref("OUT"), status: "requested", amount, currency: e.currency, tutorUser: user.id, destination: { method: m.method, details }, bookings: rows.filter((r) => r.bookingId > 0).map((r) => r.bookingId) },
       overrideAccess: true,
     });
+    // Invite bonuses in this payout (rows with negative ids are credits).
+    const bonusIds = rows.filter((r) => r.bookingId < 0).map((r) => -r.bookingId);
+    if (bonusIds.length) await payload.update({ collection: "credits", where: { id: { in: bonusIds } }, data: { payout: payout.id } as never, overrideAccess: true });
     void send(payload, user, payoutRequested(personOf(user), { amount, currency: e.currency, reference: payout.reference, to: summarize(m) }));
     return payout;
   });

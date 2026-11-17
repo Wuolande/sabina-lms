@@ -29,6 +29,7 @@ import { SiteText } from "./cms/globals/SiteText";
 import { Integrations } from "./cms/globals/Integrations";
 import { Conversations, EmailLog, EmailTemplates, Messages, Notifications, TextLog, ContactMessages } from "./cms/collections/Messaging";
 import { PayoutMethods, Payouts } from "./cms/collections/Payouts";
+import { Credits } from "./cms/collections/Credits";
 import { r2Config, r2PublicUrl, r2Ready } from "./cms/storage/r2";
 import { migrations } from "./cms/migrations";
 import { seedCatalogue } from "./cms/seed/catalogue";
@@ -97,7 +98,7 @@ export default buildConfig({
     },
     importMap: { baseDir: path.resolve(dirname) },
   },
-  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Assignments, Goals, Reviews, Payments, LessonPackages, Payouts, PayoutMethods, Conversations, Messages, Notifications, PushSubscriptions, EmailTemplates, EmailLog, TextLog, ContactMessages, Posts, BlogCategories, Pages, TrainingCourses, TrainingProgress, Subjects, Languages, Countries, Timezones, Media, PrivateFiles],
+  collections: [Users, TutorProfiles, StudentProfiles, Schedules, Bookings, Assignments, Goals, Reviews, Payments, LessonPackages, Payouts, PayoutMethods, Credits, Conversations, Messages, Notifications, PushSubscriptions, EmailTemplates, EmailLog, TextLog, ContactMessages, Posts, BlogCategories, Pages, TrainingCourses, TrainingProgress, Subjects, Languages, Countries, Timezones, Media, PrivateFiles],
   globals: [SiteSettings, PlatformSettings, HomePage, SiteText, Integrations],
   upload: { limits: { fileSize: 20 * 1024 * 1024 } },
   editor: fullEditor,

@@ -17,9 +17,9 @@ export async function api(path: string, init: RequestInit & { cookie?: string } 
 
 export type Account = { id: number; email: string; cookie: string; token: string };
 
-export async function account(role: "student" | "tutor", first: string, last: string, timezone = "Africa/Nairobi"): Promise<Account> {
+export async function account(role: "student" | "tutor", first: string, last: string, timezone = "Africa/Nairobi", ref?: string): Promise<Account> {
   const email = uniqueEmail(`p3${role}`);
-  const reg = await api("/api/auth/register", { method: "POST", body: JSON.stringify({ email, password: PASSWORD, firstName: first, lastName: last, role, acceptTerms: true, timezone }) });
+  const reg = await api("/api/auth/register", { method: "POST", body: JSON.stringify({ email, password: PASSWORD, firstName: first, lastName: last, role, acceptTerms: true, timezone, ref }) });
   if (!reg.res.ok) throw new Error(`register ${reg.res.status} ${JSON.stringify(reg.data)}`);
   await api("/api/auth/verify-email", { method: "POST", body: JSON.stringify({ token: await tokenFor(email, "_verificationtoken") }) });
   const login = await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email, password: PASSWORD }) });

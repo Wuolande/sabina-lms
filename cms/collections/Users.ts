@@ -154,6 +154,16 @@ export const Users: CollectionConfig = {
     { name: "legacyId", type: "text", index: true, hidden: true },
     { name: "legacyPasswordHash", type: "text", hidden: true },
     { name: "legacyAvatarUrl", type: "text", hidden: true },
+    {
+      type: "collapsible",
+      label: "Referrals",
+      admin: { initCollapsed: true, position: "sidebar" },
+      fields: [
+        { name: "referralCode", type: "text", unique: true, index: true, access: { update: isAdminField }, admin: { readOnly: true, description: "Their personal invite code." } },
+        { name: "referredBy", type: "relationship", relationTo: "users", index: true, access: { update: isAdminField }, admin: { readOnly: true, description: "Who invited them." } },
+        { name: "referralRewardedAt", type: "date", access: { update: isAdminField }, admin: { readOnly: true, description: "When the invite reward was given." } },
+      ],
+    },
     { name: "textReminders", type: "checkbox", defaultValue: false, label: "Lesson reminders by SMS or WhatsApp", admin: { description: "The person turns this on themselves. Needs a phone number with a country code." } },
     {
       name: "emailPrefs",

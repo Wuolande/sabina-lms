@@ -79,6 +79,7 @@ export interface Config {
     'lesson-packages': LessonPackage;
     payouts: Payout;
     'payout-methods': PayoutMethod;
+    credits: Credit;
     conversations: Conversation;
     messages: Message;
     notifications: Notification;
@@ -117,6 +118,7 @@ export interface Config {
     'lesson-packages': LessonPackagesSelect<false> | LessonPackagesSelect<true>;
     payouts: PayoutsSelect<false> | PayoutsSelect<true>;
     'payout-methods': PayoutMethodsSelect<false> | PayoutMethodsSelect<true>;
+    credits: CreditsSelect<false> | CreditsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     messages: MessagesSelect<false> | MessagesSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
@@ -214,6 +216,18 @@ export interface User {
   legacyId?: string | null;
   legacyPasswordHash?: string | null;
   legacyAvatarUrl?: string | null;
+  /**
+   * Their personal invite code.
+   */
+  referralCode?: string | null;
+  /**
+   * Who invited them.
+   */
+  referredBy?: (number | null) | User;
+  /**
+   * When the invite reward was given.
+   */
+  referralRewardedAt?: string | null;
   /**
    * The person turns this on themselves. Needs a phone number with a country code.
    */
@@ -996,11 +1010,14 @@ export interface Payment {
   id: number;
   reference: string;
   status: 'pending' | 'succeeded' | 'failed' | 'cancelled' | 'refunded' | 'partially_refunded';
-  provider: 'stripe' | 'paystack' | 'dev';
+  provider: 'stripe' | 'paystack' | 'dev' | 'credit';
   /**
    * card, mobile_money, …
    */
   method?: string | null;
+  /**
+   * Charged to the card or M-Pesa (after any lesson credit).
+   */
   amount: number;
   currency: string;
   refundedAmount?: number | null;
@@ -1008,6 +1025,10 @@ export interface Payment {
   package?: (number | null) | LessonPackage;
   student: number | User;
   tutor?: (number | null) | TutorProfile;
+  /**
+   * Lesson credit used towards this payment.
+   */
+  creditUsed?: number | null;
   /**
    * Stripe Checkout session / Paystack reference.
    */
@@ -1090,6 +1111,36 @@ export interface PayoutMethod {
   swift?: string | null;
   paypalEmail?: string | null;
   summary?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "credits".
+ */
+export interface Credit {
+  id: number;
+  user: number | User;
+  /**
+   * Positive adds credit, negative takes it away.
+   */
+  amount: number;
+  currency: string;
+  kind: 'referral_reward' | 'referral_welcome' | 'tutor_bonus' | 'spent' | 'returned' | 'adjustment';
+  /**
+   * Shown to the person, e.g. "Thanks for inviting Amani".
+   */
+  note: string;
+  /**
+   * The invited friend, for referral rows.
+   */
+  friend?: (number | null) | User;
+  booking?: (number | null) | Booking;
+  payment?: (number | null) | Payment;
+  /**
+   * Tutor bonuses: the payout they were paid in.
+   */
+  payout?: (number | null) | Payout;
   updatedAt: string;
   createdAt: string;
 }
@@ -1193,6 +1244,7 @@ export interface EmailTemplate {
     | 'lesson_reminder_hour'
     | 'new_message'
     | 'review_received'
+    | 'referral_reward'
     | 'rate_lesson'
     | 'homework_set'
     | 'homework_submitted'
@@ -1620,6 +1672,10 @@ export interface PayloadLockedDocument {
         value: number | PayoutMethod;
       } | null)
     | ({
+        relationTo: 'credits';
+        value: number | Credit;
+      } | null)
+    | ({
         relationTo: 'conversations';
         value: number | Conversation;
       } | null)
@@ -1755,6 +1811,9 @@ export interface UsersSelect<T extends boolean = true> {
   legacyId?: T;
   legacyPasswordHash?: T;
   legacyAvatarUrl?: T;
+  referralCode?: T;
+  referredBy?: T;
+  referralRewardedAt?: T;
   textReminders?: T;
   emailPrefs?:
     | T
@@ -2109,6 +2168,7 @@ export interface PaymentsSelect<T extends boolean = true> {
   package?: T;
   student?: T;
   tutor?: T;
+  creditUsed?: T;
   providerRef?: T;
   chargeRef?: T;
   checkoutUrl?: T;
@@ -2197,6 +2257,23 @@ export interface PayoutMethodsSelect<T extends boolean = true> {
   swift?: T;
   paypalEmail?: T;
   summary?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "credits_select".
+ */
+export interface CreditsSelect<T extends boolean = true> {
+  user?: T;
+  amount?: T;
+  currency?: T;
+  kind?: T;
+  note?: T;
+  friend?: T;
+  booking?: T;
+  payment?: T;
+  payout?: T;
   updatedAt?: T;
   createdAt?: T;
 }

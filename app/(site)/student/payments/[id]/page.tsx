@@ -63,7 +63,8 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
               {row("Package", k.reference)}
             </>
           ) : null}
-          {row("Paid with", `${p.provider === "paystack" ? "Paystack" : p.provider === "stripe" ? "Stripe" : "Test payment"}${p.method ? ` (${p.method.replace("_", " ")})` : ""}`)}
+          {row("Paid with", p.provider === "credit" ? "Lesson credit" : `${p.provider === "paystack" ? "Paystack" : p.provider === "stripe" ? "Stripe" : "Test payment"}${p.method ? ` (${p.method.replace("_", " ")})` : ""}`)}
+          {(p.creditUsed ?? 0) > 0 && p.provider !== "credit" && row("Lesson credit used", money(p.creditUsed ?? 0, p.currency))}
           {(p.refunds ?? []).map((r, i) => row(`Refund${r.at ? ` · ${fmtDay(r.at, tz, { month: "short", day: "numeric" })}` : ""}`, `−${money(r.amount ?? 0, p.currency)} (${r.reason})`))}
         </dl>
         <div className="mt-6 flex items-baseline justify-between border-t-2 border-slate-900 pt-4">

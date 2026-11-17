@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { CreditCard, FlaskConical, Loader2, Lock, Smartphone, Timer } from "lucide-react";
+import { CreditCard, FlaskConical, Gift, Loader2, Lock, Smartphone, Timer } from "lucide-react";
 import { money } from "@/lib/money";
 
 export type Provider = { id: "stripe" | "paystack" | "dev"; label: string; sub: string };
@@ -24,16 +24,30 @@ export function PayStep({ bookingId, packageId, amount, currency, holdUntil, pro
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const left = useCountdown(holdUntil);
+  // Lesson credit (from invites) is taken off first.
+  const [credit, setCredit] = useState(0);
+  const [useCredit, setUseCredit] = useState(true);
+  useEffect(() => {
+    fetch("/api/credits", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { balance: number; currency: string } | null) => d && d.currency === currency && setCredit(d.balance))
+      .catch(() => undefined);
+  }, [currency]);
+  const applied = useCredit ? Math.min(credit, amount) : 0;
+  const due = Math.round((amount - applied) * 100) / 100;
+  const coveredByCredit = applied > 0 && due <= 0;
   const expired = left === 0;
   useEffect(() => {
     if (expired) onExpired?.();
   }, [expired, onExpired]);
 
   async function pay() {
-    if (!choice) return;
+    const provider = coveredByCredit ? "credit" : choice;
+    if (!provider) return;
     setBusy(true);
     setError(null);
-    const res = await fetch("/api/payments/checkout", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(packageId ? { packageId, provider: choice } : { bookingId, provider: choice }) }).catch(() => null);
+    const item = packageId ? { packageId } : { bookingId };
+    const res = await fetch("/api/payments/checkout", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...item, provider, useCredit }) }).catch(() => null);
     const d = (await res?.json().catch(() => ({}))) as { url?: string; error?: string };
     if (res?.ok && d.url) return window.location.assign(d.url);
     setBusy(false);
@@ -49,7 +63,25 @@ export function PayStep({ bookingId, packageId, amount, currency, holdUntil, pro
           {expired ? "The time we held for you has run out. Please pick a time again." : <>We&apos;re holding this time for you for <b className="tabular-nums">{mm}</b>.</>}
         </p>
       )}
-      {providers.length ? (
+      {credit > 0 && (
+        <div className="rounded-2xl bg-accent-50 p-4 ring-1 ring-accent-200">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input type="checkbox" checked={useCredit} onChange={(e) => setUseCredit(e.target.checked)} className="mt-1 h-4 w-4 accent-brand-700" />
+            <span className="text-sm text-slate-800">
+              <b className="flex items-center gap-1.5"><Gift size={15} className="text-accent-700" /> Use my lesson credit</b>
+              You have {money(credit, currency)} of credit.{useCredit && applied > 0 && <> {money(applied, currency)} comes off this payment.</>}
+            </span>
+          </label>
+          {useCredit && applied > 0 && (
+            <dl className="mt-3 space-y-1 border-t border-accent-200 pt-3 text-sm">
+              <div className="flex justify-between"><dt className="text-slate-600">Price</dt><dd className="tabular-nums">{money(amount, currency)}</dd></div>
+              <div className="flex justify-between"><dt className="text-slate-600">Lesson credit</dt><dd className="tabular-nums">−{money(applied, currency)}</dd></div>
+              <div className="flex justify-between font-semibold"><dt>To pay</dt><dd className="tabular-nums">{money(due, currency)}</dd></div>
+            </dl>
+          )}
+        </div>
+      )}
+      {coveredByCredit ? null : providers.length ? (
         <div className="space-y-2.5" role="radiogroup" aria-label="Payment method">
           {providers.map((p) => {
             const Icon = ICON[p.id];
@@ -82,8 +114,8 @@ export function PayStep({ bookingId, packageId, amount, currency, holdUntil, pro
           {error}
         </p>
       )}
-      <button type="button" onClick={pay} disabled={!choice || busy || expired} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-700 font-semibold text-white transition hover:bg-brand-800 disabled:opacity-50">
-        {busy ? <Loader2 size={18} className="animate-spin" /> : <Lock size={17} />} Pay {money(amount, currency)}
+      <button type="button" onClick={pay} disabled={(!choice && !coveredByCredit) || busy || expired} className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-700 font-semibold text-white transition hover:bg-brand-800 disabled:opacity-50">
+        {busy ? <Loader2 size={18} className="animate-spin" /> : <Lock size={17} />} {coveredByCredit ? "Confirm with lesson credit" : `Pay ${money(due, currency)}`}
       </button>
       <p className="text-center text-xs text-slate-500">Secure checkout. Sabina never sees your card or M-Pesa PIN.</p>
     </div>
