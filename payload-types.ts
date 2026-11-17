@@ -468,6 +468,21 @@ export interface TutorProfile {
   isFeatured?: boolean | null;
   isSuperTutor?: boolean | null;
   /**
+   * Worked out automatically from reviews, replies and lessons (thresholds in Fees & policies).
+   */
+  badges?:
+    | (
+        | 'top_rated'
+        | 'fast_responder'
+        | 'in_demand'
+        | 'lessons_500'
+        | 'lessons_100'
+        | 'lessons_50'
+        | 'lessons_10'
+        | 'new_tutor'
+      )[]
+    | null;
+  /**
    * Updated automatically from lessons and reviews.
    */
   stats?: {
@@ -475,6 +490,10 @@ export interface TutorProfile {
     reviewCount?: number | null;
     lessonsTaught?: number | null;
     studentsTaught?: number | null;
+    /**
+     * Typical time to reply to a student's message, last 60 days.
+     */
+    responseMinutes?: number | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -1856,6 +1875,7 @@ export interface TutorProfilesSelect<T extends boolean = true> {
   approvedAt?: T;
   isFeatured?: T;
   isSuperTutor?: T;
+  badges?: T;
   stats?:
     | T
     | {
@@ -1863,6 +1883,7 @@ export interface TutorProfilesSelect<T extends boolean = true> {
         reviewCount?: T;
         lessonsTaught?: T;
         studentsTaught?: T;
+        responseMinutes?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -2670,6 +2691,24 @@ export interface PlatformSetting {
    * Off: every booking is a request the tutor accepts.
    */
   instantBookingEnabled?: boolean | null;
+  badgeTopRatedRating?: number | null;
+  badgeTopRatedReviews?: number | null;
+  badgeFastReplyHours?: number | null;
+  badgeInDemandLessons?: number | null;
+  badgeNewTutorDays?: number | null;
+  referralsEnabled?: boolean | null;
+  /**
+   * Lesson credit, in the platform currency.
+   */
+  referralRewardReferrer?: number | null;
+  /**
+   * Lesson credit for their next lesson.
+   */
+  referralRewardFriend?: number | null;
+  /**
+   * Added to their earnings.
+   */
+  referralRewardTutor?: number | null;
   packagesEnabled?: boolean | null;
   packageMaxDiscountPercent?: number | null;
   /**
@@ -3203,6 +3242,15 @@ export interface PlatformSettingsSelect<T extends boolean = true> {
   classroomEarlyJoinMinutes?: T;
   bookingWindowDays?: T;
   instantBookingEnabled?: T;
+  badgeTopRatedRating?: T;
+  badgeTopRatedReviews?: T;
+  badgeFastReplyHours?: T;
+  badgeInDemandLessons?: T;
+  badgeNewTutorDays?: T;
+  referralsEnabled?: T;
+  referralRewardReferrer?: T;
+  referralRewardFriend?: T;
+  referralRewardTutor?: T;
   packagesEnabled?: T;
   packageMaxDiscountPercent?: T;
   packageValidityDays?: T;

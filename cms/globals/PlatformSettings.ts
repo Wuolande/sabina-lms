@@ -22,6 +22,15 @@ export const PLATFORM_DEFAULTS = {
   packageMaxDiscountPercent: 25,
   packageValidityDays: 180,
   recordingEnabled: false,
+  badgeTopRatedRating: 4.8,
+  badgeTopRatedReviews: 5,
+  badgeFastReplyHours: 3,
+  badgeInDemandLessons: 8,
+  badgeNewTutorDays: 30,
+  referralsEnabled: true,
+  referralRewardReferrer: 5,
+  referralRewardFriend: 5,
+  referralRewardTutor: 10,
 } as const;
 
 /** Fees, price limits and booking policies. Read by the tutor application, marketplace and checkout. */
@@ -66,6 +75,44 @@ export const PlatformSettings: GlobalConfig = {
       fields: [
         { name: "bookingWindowDays", type: "number", min: 7, max: 180, defaultValue: PLATFORM_DEFAULTS.bookingWindowDays, label: "Students can book up to (days ahead)", admin: { width: "50%" } },
         { name: "instantBookingEnabled", type: "checkbox", defaultValue: PLATFORM_DEFAULTS.instantBookingEnabled, label: "Allow instant booking", admin: { width: "50%", description: "Off: every booking is a request the tutor accepts." } },
+      ],
+    },
+    {
+      type: "collapsible",
+      label: "Tutor badges",
+      admin: { description: "Badges are worked out automatically several times a day and shown on tutor cards and profiles." },
+      fields: [
+        {
+          type: "row",
+          fields: [
+            { name: "badgeTopRatedRating", type: "number", min: 3, max: 5, defaultValue: PLATFORM_DEFAULTS.badgeTopRatedRating, label: "Top rated: average at least", admin: { width: "33%", step: 0.1 } },
+            { name: "badgeTopRatedReviews", type: "number", min: 1, defaultValue: PLATFORM_DEFAULTS.badgeTopRatedReviews, label: "Top rated: from at least (reviews)", admin: { width: "33%" } },
+            { name: "badgeFastReplyHours", type: "number", min: 1, max: 48, defaultValue: PLATFORM_DEFAULTS.badgeFastReplyHours, label: "Fast responder: usually replies within (hours)", admin: { width: "34%" } },
+          ],
+        },
+        {
+          type: "row",
+          fields: [
+            { name: "badgeInDemandLessons", type: "number", min: 1, defaultValue: PLATFORM_DEFAULTS.badgeInDemandLessons, label: "In demand: lessons booked in 30 days", admin: { width: "50%" } },
+            { name: "badgeNewTutorDays", type: "number", min: 0, max: 180, defaultValue: PLATFORM_DEFAULTS.badgeNewTutorDays, label: "New on Sabina: for (days after approval)", admin: { width: "50%" } },
+          ],
+        },
+      ],
+    },
+    {
+      type: "collapsible",
+      label: "Referrals",
+      admin: { description: "Rewards are added as lesson credit once the friend's first paid lesson is finished, so no credit is given for accounts that never take a lesson." },
+      fields: [
+        {
+          type: "row",
+          fields: [
+            { name: "referralsEnabled", type: "checkbox", defaultValue: PLATFORM_DEFAULTS.referralsEnabled, label: "Referrals are on", admin: { width: "25%" } },
+            { name: "referralRewardReferrer", type: "number", min: 0, defaultValue: PLATFORM_DEFAULTS.referralRewardReferrer, label: "Student who invites gets", admin: { width: "25%", description: "Lesson credit, in the platform currency." } },
+            { name: "referralRewardFriend", type: "number", min: 0, defaultValue: PLATFORM_DEFAULTS.referralRewardFriend, label: "Invited friend gets", admin: { width: "25%", description: "Lesson credit for their next lesson." } },
+            { name: "referralRewardTutor", type: "number", min: 0, defaultValue: PLATFORM_DEFAULTS.referralRewardTutor, label: "Tutor who invites gets", admin: { width: "25%", description: "Added to their earnings." } },
+          ],
+        },
       ],
     },
     {

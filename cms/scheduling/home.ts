@@ -24,6 +24,23 @@ export async function homeData(user: User): Promise<HomeData> {
     const s = await payload.find({ collection: "schedules", where: { user: { equals: user.id } }, limit: 1, depth: 0, overrideAccess: true });
     hasHours = Boolean(s.docs[0]?.weekly?.length);
   }
+  let rating: HomeData["rating"];
+  let badges: HomeData["badges"];
+  if (user.role === "tutor") {
+    const t = (await payload.find({ collection: "tutor-profiles", where: { user: { equals: user.id } }, limit: 1, depth: 0, overrideAccess: true })).docs[0];
+    if (t) {
+      const [{ BADGES }, { getPolicies }] = await Promise.all([import("../tutors/badges"), import("../tutors/server")]);
+      const p = (await getPolicies(payload)) as unknown as import("../tutors/badges").Thresholds;
+      const have = new Set((t.badges as string[] | null) ?? []);
+      const milestone = BADGES.filter((b) => b.value.startsWith("lessons_")).find((b) => have.has(b.value));
+      rating = { value: t.stats?.rating ?? 0, count: t.stats?.reviewCount ?? 0 };
+      // One lesson milestone at a time: the one they have, or the next to reach.
+      const next = milestone ?? BADGES.filter((b) => b.value.startsWith("lessons_")).reverse().find((b) => Number(b.value.split("_")[1]) > (t.stats?.lessonsTaught ?? 0));
+      badges = BADGES.filter((b) => !b.value.startsWith("lessons_") || b.value === next?.value)
+        .filter((b) => b.value !== "new_tutor" || have.has("new_tutor"))
+        .map((b) => ({ value: b.value, label: b.label, hint: b.hint(p), earned: have.has(b.value) }));
+    }
+  }
   let reviewsGiven = 0;
   let toRate: HomeData["toRate"] = [];
   if (user.role === "student") {
@@ -34,6 +51,8 @@ export async function homeData(user: User): Promise<HomeData> {
     tz: safeTz(user.timezone),
     reviewsGiven,
     toRate,
+    rating,
+    badges,
     upcoming: live.slice(0, 4),
     upcomingCount: live.filter((l) => l.phase === "upcoming").length,
     hours: done.reduce((n, l) => n + l.minutes, 0) / 60,

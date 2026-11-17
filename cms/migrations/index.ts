@@ -22,6 +22,7 @@ import * as migration_20261117_034139_sabina_edge_logo from './20261117_034139_s
 import * as migration_20261117_040210_integrations from './20261117_040210_integrations';
 import * as migration_20261117_045913_ratings from './20261117_045913_ratings';
 import * as migration_20261117_050000_analytics from './20261117_050000_analytics';
+import * as migration_20261117_050323_badges_settings from './20261117_050323_badges_settings';
 
 export const migrations = [
   {
@@ -142,6 +143,11 @@ export const migrations = [
   {
     up: migration_20261117_050000_analytics.up,
     down: migration_20261117_050000_analytics.down,
-    name: '20261117_050000_analytics'
+    name: '20261117_050000_analytics',
+  },
+  {
+    up: migration_20261117_050323_badges_settings.up,
+    down: migration_20261117_050323_badges_settings.down,
+    name: '20261117_050323_badges_settings'
   },
 ];

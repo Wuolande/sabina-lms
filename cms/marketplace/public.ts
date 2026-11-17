@@ -1,3 +1,4 @@
+import { sortBadges } from "../tutors/badges";
 import "server-only";
 import type { Payload, Where } from "payload";
 import type { Media, Subject, TutorProfile, Language } from "@/payload-types";
@@ -31,6 +32,8 @@ export type PublicTutor = {
   lessonsTaught: number;
   isFeatured: boolean;
   isSuperTutor: boolean;
+  badges: string[];
+  responseMinutes: number | null;
   verified: boolean;
   introVideoUrl: string | null;
   education: { degree: string; institution: string; field?: string | null; endYear?: number | null; verified: boolean }[];
@@ -71,6 +74,8 @@ export function toPublicTutor(t: TutorProfile, policies: Policies): PublicTutor 
     lessonsTaught: t.stats?.lessonsTaught ?? 0,
     isFeatured: Boolean(t.isFeatured),
     isSuperTutor: Boolean(t.isSuperTutor),
+    badges: sortBadges((t.badges as string[] | null) ?? []),
+    responseMinutes: t.stats?.responseMinutes ?? null,
     verified: t.status === "approved",
     introVideoUrl: t.introVideoUrl || null,
     education: (t.education ?? []).map((e) => ({ degree: e.degree, institution: e.institution, field: e.field, endYear: e.endYear, verified: Boolean(e.verified) })),

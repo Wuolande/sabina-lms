@@ -1,5 +1,6 @@
 import { APIError, type Access, type CollectionConfig, type FieldAccess, type Where } from "payload";
 import { hasRole, isAdmin, isStaffUser } from "../access";
+import { BADGES } from "../tutors/badges";
 import { slugify } from "../fields/slug";
 import { PACKAGE_SIZES } from "./Packages";
 import { reviewEndpoint } from "../tutors/review";
@@ -297,6 +298,14 @@ export const TutorProfiles: CollectionConfig = {
     { name: "isFeatured", type: "checkbox", defaultValue: false, access: { update: reviewerField }, admin: { position: "sidebar" } },
     { name: "isSuperTutor", type: "checkbox", defaultValue: false, label: "Super tutor", access: { update: reviewerField }, admin: { position: "sidebar" } },
     {
+      name: "badges",
+      type: "select",
+      hasMany: true,
+      options: BADGES.map((b) => ({ label: b.label, value: b.value })),
+      access: { update: staffField },
+      admin: { position: "sidebar", readOnly: true, description: "Worked out automatically from reviews, replies and lessons (thresholds in Fees & policies)." },
+    },
+    {
       name: "stats",
       type: "group",
       access: { update: staffField },
@@ -306,6 +315,7 @@ export const TutorProfiles: CollectionConfig = {
         { name: "reviewCount", type: "number", defaultValue: 0, admin: { readOnly: true } },
         { name: "lessonsTaught", type: "number", defaultValue: 0, admin: { readOnly: true } },
         { name: "studentsTaught", type: "number", defaultValue: 0, admin: { readOnly: true } },
+        { name: "responseMinutes", type: "number", admin: { readOnly: true, description: "Typical time to reply to a student's message, last 60 days." } },
       ],
     },
   ],

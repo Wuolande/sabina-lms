@@ -6,6 +6,7 @@ import { getPayloadClient } from "@/cms/auth/session";
 import { getTutorBySlug } from "@/cms/marketplace/public";
 import { publicReviews } from "@/cms/lessons/server";
 import { Stars } from "@/components/lesson-room/LessonDetail";
+import { TutorBadges, replyLine } from "@/components/marketplace/TutorBadges";
 import { marketplaceViewer } from "@/cms/marketplace/viewer";
 import { Rating, TutorAvatar } from "@/components/marketplace/TutorCard";
 import { SaveTutorButton } from "@/components/marketplace/SaveTutorButton";
@@ -148,9 +149,15 @@ export default async function TutorProfilePage({ params }: Props) {
                   {t.isSuperTutor && <span className="rounded-full bg-accent-400 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-brand-950">Super tutor</span>}
                 </h1>
                 <p className="mt-1 text-slate-500">{[t.primarySubject?.name && `${t.primarySubject.name} tutor`, t.country].filter(Boolean).join(" · ")}</p>
+                {t.badges.length > 0 && (
+                  <div className="mt-2.5">
+                    <TutorBadges badges={t.badges} size="md" />
+                  </div>
+                )}
                 <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-slate-600">
                   <Rating tutor={t} />
                   {t.lessonsTaught > 0 && <span>{t.lessonsTaught} lessons taught</span>}
+                  {replyLine(t.responseMinutes) && <span>{replyLine(t.responseMinutes)}</span>}
                   {t.languages.length > 0 && (
                     <span className="inline-flex items-center gap-1.5">
                       <Languages size={15} /> {t.languages.map((l) => l.name).join(", ")}

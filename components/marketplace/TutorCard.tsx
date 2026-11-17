@@ -1,3 +1,4 @@
+import { TutorBadges } from "./TutorBadges";
 import Link from "next/link";
 import { BadgeCheck, Languages, Sparkles, Star, Zap } from "lucide-react";
 import type { PublicTutor } from "@/cms/marketplace/public";
@@ -56,6 +57,11 @@ export function TutorCard({ tutor, currency, saved, signedIn, showSave = true }:
           <div className="mt-1.5">
             <Rating tutor={tutor} />
           </div>
+          {tutor.badges.length > 0 && (
+            <div className="mt-2">
+              <TutorBadges badges={tutor.badges} max={2} />
+            </div>
+          )}
         </div>
         {showSave && (
           <div className="absolute right-4 top-4 z-10">

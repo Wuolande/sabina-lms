@@ -29,6 +29,7 @@ export async function runHousekeeping(payload: Payload, source: JobSource = "tra
     const { moveLegacyPhotos } = await import("../media/legacy-photos");
     await moveLegacyPhotos(payload).catch((err) => payload.logger.error({ err }, "[housekeeping] legacy photos"));
     await (await import("../analytics/store")).pruneEvents(payload);
+    await (await import("../tutors/badges-server")).refreshBadges(payload, forced).catch((err) => payload.logger.error({ err }, "[housekeeping] badges"));
     run = { at: new Date().toISOString(), source, ok: true, ms: Date.now() - started };
   } catch (err) {
     payload.logger.error({ err }, "[housekeeping] failed");

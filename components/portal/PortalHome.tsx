@@ -7,9 +7,37 @@ import type { LessonView } from "@/cms/scheduling/server";
 import { fmtDay, fmtRange } from "@/lib/time";
 import { money } from "@/lib/money";
 import { RateLesson } from "@/components/reviews/RateLesson";
+import { TutorBadges } from "@/components/marketplace/TutorBadges";
 
 export type ToRate = { id: number; tutor: string; photo: string | null; subject: string | null; endsAt: string };
-export type HomeData = { tz: string; upcoming: LessonView[]; upcomingCount: number; hours: number; people: number; requests: number; hasHours: boolean; booked: boolean; earned: number | null; currency: string; reviewsGiven?: number; toRate?: ToRate[] };
+export type HomeData = { tz: string; upcoming: LessonView[]; upcomingCount: number; hours: number; people: number; requests: number; hasHours: boolean; booked: boolean; earned: number | null; currency: string; reviewsGiven?: number; toRate?: ToRate[]; rating?: { value: number; count: number }; badges?: { value: string; label: string; hint: string; earned: boolean }[] };
+
+/** The tutor's badges: earned ones first, and how to earn the rest. */
+function BadgesPanel({ badges }: { badges: NonNullable<HomeData["badges"]> }) {
+  const earned = badges.filter((b) => b.earned);
+  return (
+    <section aria-labelledby="badges-title" className="rounded-3xl bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/70 sm:p-6">
+      <h2 id="badges-title" className="font-heading text-lg font-semibold text-slate-900">Your badges</h2>
+      <p className="text-sm text-slate-500">Badges show on your profile and in search. They update automatically several times a day.</p>
+      {earned.length > 0 && (
+        <div className="mt-3">
+          <TutorBadges badges={earned.map((b) => b.value)} size="md" />
+        </div>
+      )}
+      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+        {badges.map((b) => (
+          <li key={b.value} className={`flex items-start gap-2.5 rounded-2xl p-3 text-sm ${b.earned ? "bg-emerald-50" : "bg-slate-50"}`}>
+            {b.earned ? <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-600" /> : <Circle size={18} className="mt-0.5 shrink-0 text-slate-300" />}
+            <span>
+              <b className="font-semibold text-slate-900">{b.label}</b>
+              <span className="block text-slate-600">{b.hint}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 /** Finished lessons the student hasn't rated yet, at the top of their home page. */
 function RateBanner({ lessons, tz }: { lessons: ToRate[]; tz: string }) {
@@ -238,12 +266,13 @@ export function TutorHome({ data }: { data: HomeData }) {
         <Stat icon={Wallet} label="Earned this month" value={data.earned != null ? money(data.earned, data.currency) : "—"} note="After the platform fee" tone="emerald" />
         <Stat icon={CalendarDays} label="Upcoming lessons" value={String(data.upcomingCount)} note={data.requests ? `${data.requests} request${data.requests > 1 ? "s" : ""} to answer` : data.upcomingCount ? "Confirmed lessons" : "Nothing booked yet"} tone="brand" />
         <Stat icon={Users} label="Active students" value={String(data.people)} note="Students who booked you" tone="accent" />
-        <Stat icon={Star} label="Rating" value="—" note="After your first reviews" tone="slate" />
+        <Stat icon={Star} label="Rating" value={data.rating?.count ? data.rating.value.toFixed(1) : "—"} note={data.rating?.count ? `From ${data.rating.count} review${data.rating.count > 1 ? "s" : ""}` : "After your first reviews"} tone="slate" />
       </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <Checklist steps={steps} />
         {data.upcoming.length ? <UpcomingPanel data={data} role="tutor" /> : <EmptyPanel icon={GraduationCap} title="Your teaching hub" body="Upcoming lessons, new booking requests and messages from students will appear here." action={data.hasHours ? undefined : { href: "/tutor/availability", label: "Set your hours" }} />}
       </div>
+      {live && data.badges?.length ? <BadgesPanel badges={data.badges} /> : null}
     </div>
   );
 }
