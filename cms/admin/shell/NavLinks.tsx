@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useNav } from "@payloadcms/ui";
 import { Icon } from "./icons";
@@ -15,7 +15,23 @@ export type NavSection = {
 export function NavLinks({ sections }: { sections: NavSection[] }) {
   const path = usePathname() ?? "";
   const { navOpen, setNavOpen } = useNav();
-  const isActive = (href: string) => (href === "/admin" ? path === "/admin" : path === href || path.startsWith(`${href}/`));
+  const search = useSearchParams();
+  // Some links are a list with a filter (e.g. Tutor applications = Tutors where status is submitted).
+  // Those are active when the filter is in the address; the plain list link then isn't.
+  const filterMatches = (href: string) => {
+    const [base, query] = href.split("?");
+    if (!query || path !== base) return false;
+    const want = new URLSearchParams(query);
+    for (const [k, v] of want) if (search?.get(k) !== v) return false;
+    return true;
+  };
+  const filtered = sections.flatMap((s) => s.items.map((i) => i.href)).filter((h) => h.includes("?"));
+  const isActive = (href: string) => {
+    if (href.includes("?")) return filterMatches(href);
+    if (href === "/admin") return path === "/admin";
+    if (path === href && filtered.some((h) => h.startsWith(`${href}?`) && filterMatches(h))) return false;
+    return path === href || path.startsWith(`${href}/`);
+  };
 
   // Groups start closed (except active one) and remember user toggle state on this device.
   const [open, setOpen] = useState<Record<string, boolean>>({});

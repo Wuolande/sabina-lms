@@ -7,6 +7,7 @@ import { getPlatformSeo } from "@/src/shared/seo/platformSeo";
 import { brandCss } from "@/cms/brand";
 import { Suspense } from "react";
 import { Tracker } from "@/components/analytics/Tracker";
+import { ImpersonationBanner } from "@/components/admin/ImpersonationBanner";
 import { siteChrome } from "@/cms/content/server";
 
 const sans = Plus_Jakarta_Sans({
@@ -180,6 +181,7 @@ export default async function RootLayout({
         <Suspense fallback={null}>
           <Tracker />
         </Suspense>
+        <ImpersonationBanner />
         <LogoProvider initialLogoUrl={seo.logoUrl}>
           <ModalProvider>
             {children}

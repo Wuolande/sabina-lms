@@ -107,6 +107,7 @@ export const Users: CollectionConfig = {
     ],
   },
   fields: [
+    { name: "loginAs", type: "ui", admin: { position: "sidebar", components: { Field: "@/cms/admin/fields/LoginAsUser#LoginAsUser" } } },
     {
       type: "row",
       fields: [

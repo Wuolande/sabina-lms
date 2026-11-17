@@ -10,7 +10,7 @@ import { sql } from "@payloadcms/db-postgres";
  * users' actions carry their user id so the funnel can follow sign-up → booking → repeat booking.
  * Browsers that send "Do Not Track" are not counted. Events older than 25 months are deleted.
  */
-export type EventType = "pageview" | "signup" | "login" | "booking_created" | "payment_succeeded" | "lesson_completed" | "review_submitted" | "referral_signup";
+export type EventType = "pageview" | "signup" | "login" | "booking_created" | "payment_succeeded" | "lesson_completed" | "review_submitted" | "referral_signup" | "impersonation";
 export type Channel = "direct" | "search" | "social" | "email" | "referral" | "campaign";
 
 export type EventInput = {

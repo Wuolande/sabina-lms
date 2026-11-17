@@ -1,3 +1,4 @@
+import { LoginAsUser as LoginAsUser_468945e2756eee45388baeae49e6093e } from '@/cms/admin/fields/LoginAsUser'
 import { CountrySelect as CountrySelect_2abdd5d695caf61d3d03253ee6644bae } from '../../../cms/admin/fields/GeoSelect'
 import { TimezoneSelect as TimezoneSelect_2abdd5d695caf61d3d03253ee6644bae } from '../../../cms/admin/fields/GeoSelect'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -44,6 +45,7 @@ import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc056
 
 /** @type import('payload').ImportMap */
 export const importMap = {
+  "@/cms/admin/fields/LoginAsUser#LoginAsUser": LoginAsUser_468945e2756eee45388baeae49e6093e,
   "/cms/admin/fields/GeoSelect#CountrySelect": CountrySelect_2abdd5d695caf61d3d03253ee6644bae,
   "/cms/admin/fields/GeoSelect#TimezoneSelect": TimezoneSelect_2abdd5d695caf61d3d03253ee6644bae,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
