@@ -138,11 +138,11 @@ export default async function TutorProfilePage({ params }: Props) {
           {/* Header */}
           <section className="relative overflow-hidden rounded-3xl bg-white p-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-slate-200/70 sm:p-8">
             <div aria-hidden className="absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-brand-700 via-brand-600 to-brand-800" />
-            <div className="relative flex flex-col gap-5 pt-8 sm:flex-row sm:items-end">
+            <div className="relative flex flex-col gap-5 pt-8 sm:flex-row sm:items-start">
               <div className="w-fit rounded-[22px] bg-white p-1.5 shadow-lg">
                 <TutorAvatar tutor={t} size={128} rounded="rounded-[18px]" />
               </div>
-              <div className="min-w-0 flex-1 pb-1">
+              <div className="min-w-0 flex-1 pb-1 sm:pt-12">
                 <h1 className="flex flex-wrap items-center gap-2 font-heading text-3xl font-bold tracking-tight text-slate-900">
                   {t.name}
                   <BadgeCheck size={24} className="text-brand-600" aria-label="Verified tutor" />
