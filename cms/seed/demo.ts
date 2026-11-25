@@ -72,6 +72,8 @@ function localTime(tz: string, daysFromToday: number, hour: number, minute = 0) 
 }
 const weekdayIn = (tz: string, d: Date) => new Date(d.getTime() + tzOffset(tz, d) * 60000).getUTCDay();
 const fill = (text: string, v: Record<string, string>) => text.replace(/\{(\w)\}/g, (_, k: string) => v[k] ?? "");
+/** Array rows written straight to the database need their own id. */
+const rid = () => randomBytes(12).toString("hex");
 const iso = (d: Date | number) => new Date(d).toISOString();
 const ref = (prefix: string) => `${prefix}-${randomBytes(4).toString("hex").toUpperCase().slice(0, 7)}`;
 const email = (first: string, last: string, tag: string) => `${slugify(`${first}.${last}`)}.${tag}@${DEMO_DOMAIN}`.toLowerCase();
@@ -330,8 +332,8 @@ async function addTutor(payload: Payload, admin: User, t: DemoTutor, index: numb
           : {}),
         ...(status === "cancelled" ? { cancelledBy: "student", cancelReason: r.pick(["Something came up at school.", "I'm travelling that week.", "Feeling unwell, sorry!"]), cancelledAt: iso(startsAt.getTime() - r.int(1, 3) * DAY) } : {}),
         history: [
-          { action: "paid", by: student.id, at: iso(createdAt.getTime() + 120_000) },
-          ...(status === "completed" ? [{ action: "completed", at: iso(endsAt) }] : status === "cancelled" ? [{ action: "cancelled by student", by: student.id, at: iso(startsAt.getTime() - DAY) }] : []),
+          { id: rid(), action: "paid", by: student.id, at: iso(createdAt.getTime() + 120_000) },
+          ...(status === "completed" ? [{ id: rid(), action: "completed", at: iso(endsAt) }] : status === "cancelled" ? [{ id: rid(), action: "cancelled by student", by: student.id, at: iso(startsAt.getTime() - DAY) }] : []),
         ],
         createdAt: iso(createdAt),
         updatedAt: iso(past ? Math.min(now, endsAt.getTime()) : createdAt.getTime()),
@@ -351,7 +353,7 @@ async function addTutor(payload: Payload, admin: User, t: DemoTutor, index: numb
         student: student.id,
         tutor: profile.id,
         paidAt: iso(createdAt.getTime() + 120_000),
-        ...(status === "cancelled" ? { refunds: [{ amount: price, reason: "Cancelled in time", at: iso(startsAt.getTime() - DAY) }] } : {}),
+        ...(status === "cancelled" ? { refunds: [{ id: rid(), amount: price, reason: "Cancelled in time", at: iso(startsAt.getTime() - DAY) }] } : {}),
         createdAt: iso(createdAt),
         updatedAt: iso(createdAt),
       },
@@ -486,7 +488,7 @@ async function addExtras(payload: Payload) {
       const doneCount = r.int(1, steps.length - 1);
       await payload.db.create({
         collection: "goals",
-        data: { student: base.student, createdBy: base.tutorUser, subject: base.subject, title, status: "active", targetDate: iso(now + r.int(30, 150) * DAY), milestones: steps.map((text, k) => ({ text, done: k < doneCount, doneAt: k < doneCount ? iso(now - (doneCount - k) * 9 * DAY) : null })), createdAt: iso(now - 60 * DAY), updatedAt: iso(now - 2 * DAY) },
+        data: { student: base.student, createdBy: base.tutorUser, subject: base.subject, title, status: "active", targetDate: iso(now + r.int(30, 150) * DAY), milestones: steps.map((text, k) => ({ id: rid(), text, done: k < doneCount, doneAt: k < doneCount ? iso(now - (doneCount - k) * 9 * DAY) : null })), createdAt: iso(now - 60 * DAY), updatedAt: iso(now - 2 * DAY) },
       });
     }
   }
