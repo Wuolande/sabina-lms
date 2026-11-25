@@ -107,6 +107,7 @@ export const MENU: MenuSection[] = [
       { kind: "collection", slug: "countries", label: "Countries", icon: "Flag" },
       { kind: "collection", slug: "timezones", label: "Time zones", icon: "Globe2" },
       { kind: "view", slug: "jobs", label: "Scheduled jobs", icon: "Clock", href: "/admin/jobs", adminOnly: true },
+      { kind: "view", slug: "demo", label: "Demo data", icon: "Sparkles", href: "/admin/demo", adminOnly: true },
       { kind: "global", slug: "platform-settings", label: "Fees & policies", icon: "Percent", adminOnly: true },
     ],
   },

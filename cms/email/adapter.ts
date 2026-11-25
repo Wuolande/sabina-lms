@@ -1,5 +1,6 @@
 import type { EmailAdapter, SendEmailOptions } from "payload";
 import nodemailer from "nodemailer";
+import { isDemoEmail } from "../seed/demo-domain";
 
 /**
  * Sends email over SMTP using the settings in Settings › Integrations & keys › Email (or the
@@ -13,6 +14,9 @@ export const smtpAdapter: EmailAdapter = ({ payload }) => ({
   defaultFromAddress: DEFAULT_FROM,
   defaultFromName: "Sabina Edge",
   async sendEmail(message: SendEmailOptions) {
+    // Demo accounts (Admin › Demo data) have made-up addresses, so nothing is ever sent to them.
+    const to = [message.to].flat().map((t) => (typeof t === "string" ? t : (t as { address?: string } | undefined)?.address));
+    if (to.length && to.every(isDemoEmail)) return { skipped: true };
     const { applyIntegrations } = await import("../integrations/server");
     await applyIntegrations(payload);
     const e = process.env;

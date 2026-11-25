@@ -7,6 +7,7 @@ import { paymentReceipt, payoutRequested, refundIssued } from "../email/payments
 import { siteUrl } from "../email/layout";
 import { getPolicies } from "../tutors/server";
 import { BookingError, busyFor, mailContext, personOf, send, withLocks } from "../scheduling/server";
+import { isDemoTutor } from "../seed/demo";
 import { createCheckout, enabledProviders, refundCharge, verifyCheckout, type ProviderId } from "./providers";
 
 const idOf = (v: unknown): number | null => (v == null ? null : typeof v === "object" ? ((v as { id: number }).id ?? null) : Number(v));
@@ -41,6 +42,8 @@ async function charge(
   provider: ProviderId | "credit",
   item: { price: number; currency: string; booking?: number; package?: number; tutor: number | null; description: string; useCredit?: boolean },
 ) {
+  // Demo tutors (Admin › Demo data) can be browsed and booked, but never charged.
+  if (item.tutor && (await isDemoTutor(payload, item.tutor))) throw new BookingError("This is a demo tutor, so payment is turned off. Choose another tutor to book a real lesson.", 409);
   const credit = item.useCredit === false ? 0 : round2(Math.min(await usableCredit(payload, student.id, item.currency), item.price));
   const amount = round2(item.price - credit);
   const viaCredit = amount <= 0;

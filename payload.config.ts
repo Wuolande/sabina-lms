@@ -93,6 +93,7 @@ export default buildConfig({
         dashboard: { Component: "/cms/admin/dashboard/DashboardView#DashboardView" },
         reports: { Component: "/cms/admin/reports/ReportsView#ReportsView", path: "/reports" },
         jobs: { Component: "/cms/admin/jobs/JobsView#JobsView", path: "/jobs" },
+        demo: { Component: "/cms/admin/demo/DemoView#DemoView", path: "/demo" },
         analytics: { Component: "/cms/admin/analytics/AnalyticsView#AnalyticsView", path: "/analytics" },
       },
     },
